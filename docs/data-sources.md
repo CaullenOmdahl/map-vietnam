@@ -184,7 +184,7 @@ through the public Overpass servers, which are often busy; if this part fails, r
 
 The US Air Force's Theater History of Operations database for Vietnam: one row per strike
 mission, 1965–1973, published on Kaggle (`usaf/vietnam-war-bombing-operations`). Public domain;
-the Kaggle copy is marked CC0. Kaggle needs a free account and API key (see the README); once the
+the Kaggle copy is marked CC0. Kaggle needs a free account and API key (see the [user guide](guide.md#air-strike-records)); once the
 320 MB zip is downloaded, no key is needed again.
 
 Positions are re-derived from the original grid reference on Indian 1960 when there is one,

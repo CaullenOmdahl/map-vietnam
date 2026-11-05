@@ -1,6 +1,7 @@
 # Contributing
 
 Thank you for helping. Corrections to records, new maps, new sources and fixes are all welcome.
+Please read the [code of conduct](CODE_OF_CONDUCT.md) first. It's short.
 
 ## Reporting a problem with a record or a map
 
