@@ -33,6 +33,35 @@ Style, in short:
 - `start.py` uses only the standard library, because it runs before `.venv` exists.
 - Behaviour changes come with a test. Bug fixes come with a test that fails without the fix.
 
+## Where things are
+
+```text
+start.py                    one-command setup and server (standard library only)
+Start Map Vietnam.command   macOS double-click launcher for start.py
+requirements.txt            pinned Python dependencies
+scripts/
+  library.py                the map library: adds and removes old maps (python3 start.py maps ...)
+  map_library_catalogue.py  builds data/sources/map_library.json, every map that can be added
+  download_maps.py          fetches one map's file from the addresses in that catalogue
+  l7014_meta.py             reads title, date and datum from a US GeoPDF (kept in its map's metadata)
+  build_tiles.py            a GeoPDF sheet -> web/tiles/<id>.mbtiles
+  georef_scan.py            a scanned map + control points (data/scans/<id>.json) -> web/tiles/<id>.mbtiles
+  tiling.py, datums.py      shared tiling (WebP tiles in one MBTiles file per map) and datum code
+  catalog.py                web/tiles/ -> web/catalog.json, the viewer's list of installed maps
+  gridref.py                wartime MGRS grid references on Indian 1960 or WGS84
+  store.py                  the SQLite evidence store, data/evidence.sqlite
+  server.py                 local web server and JSON API
+  compare_overlay.py        side-by-side image to check how well a map lines up
+  ingest/<source>.py        one ingester per record source; common.py holds shared helpers
+web/app/                    the viewer: index.html, app.js, app.css (MapLibre GL, no build step)
+tests/                      pytest suite; tests/fixtures/ holds small source excerpts
+docs/                       how it works, data sources, known limits
+```
+
+Downloads go to `data/raw/`, intermediate files to `data/work/`, records to
+`data/evidence.sqlite` and the maps a person added to `web/tiles/`. All of these are kept out of
+git: `start.py` rebuilds the records, and each map is rebuilt when it is added again.
+
 ## Adding a record source
 
 Read [docs/how-it-works.md](docs/how-it-works.md) first. A new ingester:
@@ -51,9 +80,22 @@ Read [docs/how-it-works.md](docs/how-it-works.md) first. A new ingester:
 
 ## Adding a map
 
-See "Adding a map" in the [README](README.md#adding-a-map). Give the holder, the page the file
-came from and its licence, and add the map to [NOTICE](NOTICE). Only add maps that their holder
-lets anyone download.
+Every map that can be added is listed in `data/sources/map_library.json`, which
+`scripts/map_library_catalogue.py` generates (do not edit it by hand):
+
+- **US GeoPDF sheets** (1:50,000 and 1:250,000) come from a probe of the USGS store and the PDFs'
+  own metadata; see the script's docstring. Each sheet is placed by the georeferencing inside
+  its GeoPDF and cut at its frame.
+- **A scanned map:** add an entry to the `scans` list in `data/sources/maps.json` (the script copies
+  it into the catalogue), write `data/scans/<id>.json` with at least three control points (pixel
+  to longitude and latitude) and the map's title, date and source, then regenerate the catalogue.
+
+Then add the map with `python3 start.py maps add <id>`. To rebuild a map that is already added,
+remove it and add it again (`python3 start.py maps remove <id>`).
+[docs/how-it-works.md](docs/how-it-works.md) explains both pipelines.
+
+Give the holder, the page the file came from and its licence, and add the map to [NOTICE](NOTICE).
+Only add maps that their holder lets anyone download.
 
 ## What not to commit
 
