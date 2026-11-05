@@ -1,14 +1,18 @@
 """The local API, exercised over HTTP against a temporary store."""
 
 import json
+import stat
 import threading
 import urllib.error
 import urllib.request
 
+import library
 import pytest
+import records
 import server
 import store
 import tiling
+from fakerecords import KEY, USER, fake_sources, make_home, ran, set_plan, wait_for
 from fakeweb import FakeArchive, make_library
 
 DB = {}  # the fixture's temporary store, for tests that change it directly
@@ -358,3 +362,298 @@ def test_a_failure_inside_the_server_is_answered_not_dropped(maps, monkeypatch):
     monkeypatch.setattr(lib, "remove", lambda ids: (_ for _ in ()).throw(OSError("disk on fire")))
     status, body = post(f"{base}/api/library/remove", {"ids": ["L7014A"]}, JSON)
     assert status == 500 and "disk on fire" in body["error"]
+
+
+# ---- the record sources --------------------------------------------------------------------------
+@pytest.fixture
+def recs(tmp_path, monkeypatch):
+    """A server over a project folder under tmp_path whose record sources are small fakes
+    (tests/fakerecords.py) and whose map library is empty. Yields (address, Records, server)."""
+    root = make_home(tmp_path / "root", monkeypatch)
+    (root / "web").mkdir()
+    rec = records.Records(root, sources=fake_sources())
+    srv = server.make_server(0, rec.db_path, library.Library(root), web=root / "web", record_sources=rec)
+    thread = threading.Thread(target=srv.serve_forever, daemon=True)
+    thread.start()
+    yield f"http://127.0.0.1:{srv.server_address[1]}", rec, srv
+    rec.stop()
+    srv.shutdown()
+    thread.join(10)
+
+
+def delete(url, headers=None):
+    """DELETE with chosen headers; returns (status, json)."""
+    req = urllib.request.Request(url, method="DELETE", headers=headers or {})
+    try:
+        with urllib.request.urlopen(req) as r:
+            return r.status, json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        return e.code, json.loads(e.read())
+
+
+def source_of(listing, sid):
+    return next(s for s in listing["sources"] if s["id"] == sid)
+
+
+def test_records_are_listed_added_and_show_on_the_map_without_a_restart(recs):
+    base, rec, _ = recs
+    listing = call(f"{base}/api/records")
+    assert listing["first_run"] is True and listing["busy"] is False
+    assert listing["key"] == {"needed": False, "present": False, "source": None}
+    assert {s["state"] for s in listing["sources"]} == {"available"}
+    wanted = {"id", "title", "description", "size_mb", "time_text", "licence", "needs", "also_adds", "needed_by"}
+    wanted |= {"opt_in", "warning", "standard", "wants_key", "state", "removing", "progress", "status_text", "error"}
+    wanted |= {"error_detail", "records", "held_in_cases", "added_at", "disk_bytes", "options", "area_text"}
+    assert wanted <= set(listing["sources"][0]) and "needs_key" not in listing["sources"][0]
+    assert [s["id"] for s in listing["sources"] if not s["standard"]] == ["optional", "thor"]
+    assert call(f"{base}/api/search?q=child%20record") == []  # this search is remembered by the server ...
+
+    status, answer = post(f"{base}/api/records/add", {"ids": ["child"]}, JSON)
+    assert status == 200 and answer["queued"] == ["base", "child"] and answer["busy"] is True
+    assert source_of(answer, "child")["state"] in ("queued", "running")
+    assert rec.wait_idle(30)
+    listing = call(f"{base}/api/records")
+    assert source_of(listing, "child")["state"] == "added" and source_of(listing, "child")["records"] == 2
+    assert listing["first_run"] is False and listing["revision"] > 0
+    # ... and still the new records are found at once, on the map and by name.
+    assert len(call(f"{base}/api/evidence?bbox=105,10,106,11")["features"]) == 4
+    assert {h["title"] for h in call(f"{base}/api/search?q=child%20record")} == {"child record 0", "child record 1"}
+    assert {s["id"] for s in call(f"{base}/api/sources")} == {"base", "child"}
+
+    status, answer = post(f"{base}/api/records/remove", {"ids": ["child"]}, JSON)
+    assert status == 200 and answer["removing"] == ["child"]
+    assert source_of(answer, "child")["state"] == "available"  # the answer waited for the removal
+    assert call(f"{base}/api/search?q=child%20record") == []
+    assert len(call(f"{base}/api/evidence?bbox=105,10,106,11")["features"]) == 2
+
+
+def test_records_requests_that_cannot_be_honoured_say_why(recs):
+    base, rec, _ = recs
+    for bad in ({}, {"ids": "base"}, {"ids": []}, {"ids": [1]}, {"ids": ["nope"]}, {"ids": ["check"]}):
+        assert post(f"{base}/api/records/add", bad, JSON)[0] == 400
+    assert post(f"{base}/api/records/add", {"ids": ["base"], "refresh": "yes"}, JSON)[0] == 400
+    assert post(f"{base}/api/records/remove", {"ids": ["base"], "cascade": 1}, JSON)[0] == 400
+    assert post(f"{base}/api/records/welcome", {"dismissed": "yes"}, JSON)[0] == 400
+    assert post(f"{base}/api/records/nonsense", {}, JSON)[0] == 404
+
+    status, answer = post(f"{base}/api/records/add", {"ids": ["optional"]}, JSON)  # opt-in: needs a yes
+    assert status == 400 and answer == {
+        "error": "This one is slow and comes from a copyrighted site.",
+        "needs_accept": ["optional"],
+    }
+    for area in ([106, 10, 105, 11], [2.2, 48.8, 2.4, 48.9], "105,10,106,11", [105, 10, 106]):
+        status, answer = post(f"{base}/api/records/add", {"ids": ["thor"], "options": {"thor": {"area": area}}}, JSON)
+        assert status == 400 and "area" in answer["error"].lower()
+    status, answer = post(
+        f"{base}/api/records/add", {"ids": ["thor"], "options": {"thor": {"all_vietnam": True}}}, JSON
+    )
+    assert status == 400 and "3 million" in answer["error"]
+    assert not rec.listing()["busy"] and ran(rec.root) == []
+
+    post(f"{base}/api/records/add", {"ids": ["child", "optional"], "accept": ["optional"]}, JSON)
+    assert rec.wait_idle(30)
+    status, answer = post(f"{base}/api/records/remove", {"ids": ["base"]}, JSON)
+    assert status == 409 and answer["also_removes"] == [{"id": "child", "title": "Source child"}]
+    assert "“Source child”" in answer["error"] and rec.state_of("base") == "added"
+    status, answer = post(f"{base}/api/records/remove", {"ids": ["base"], "cascade": True}, JSON)
+    assert status == 200 and answer["removing"] == ["child", "base"]
+    assert source_of(answer, "base")["state"] == source_of(answer, "child")["state"] == "available"
+    assert source_of(answer, "optional")["state"] == "added"
+
+
+def test_a_running_source_is_stopped_over_the_api_and_the_welcome_is_dismissed(recs):
+    base, rec, _ = recs
+    set_plan(rec.root, base={"wait": True})
+    post(f"{base}/api/records/add", {"ids": ["base"]}, JSON)
+    wait_for((rec.root / "base.started").exists)
+    running = source_of(call(f"{base}/api/records"), "base")
+    assert running["state"] == "running" and running["progress"] == 0.25
+    assert running["status_text"] == "Downloading 1.0 MB of 4.0 MB"
+    status, answer = post(f"{base}/api/records/cancel", {"ids": ["base"]}, JSON)
+    assert status == 200 and answer["stopped"] == ["base"]
+    assert source_of(answer, "base")["state"] == "available" and answer["busy"] is False  # the answer waited for it
+    assert rec.wait_idle(20) and source_of(call(f"{base}/api/records"), "base")["state"] == "available"
+
+    assert call(f"{base}/api/records")["first_run"] is True
+    status, answer = post(f"{base}/api/records/welcome", {"dismissed": True}, JSON)
+    assert status == 200 and answer["first_run"] is False
+
+
+def test_the_kaggle_key_is_saved_and_forgotten_and_never_comes_back_out(recs, capfd):
+    base, rec, _ = recs
+    said = []  # every answer the server gives while the key is around
+
+    def ask(method, path, body=None):
+        if method == "DELETE":
+            status, answer = delete(f"{base}{path}")
+        elif method == "POST":
+            status, answer = post(f"{base}{path}", body, JSON)
+        else:
+            status, answer = 200, call(f"{base}{path}")
+        said.append(json.dumps(answer))
+        return status, answer
+
+    # No key is asked for up front. Kaggle asks: the source fails wanting one, and the listing says so.
+    wanted = "Kaggle asked for a key before it would hand over the air strike records, and none is saved yet."
+    set_plan(rec.root, thor={"wants_key": wanted})
+    status, answer = ask("POST", "/api/records/add", {"ids": ["thor"]})
+    assert status == 200 and answer["queued"] == ["thor"]
+    assert rec.wait_idle(30)
+    _, listing = ask("GET", "/api/records")
+    assert source_of(listing, "thor")["wants_key"] is True and source_of(listing, "thor")["error"] == wanted
+    assert listing["key"] == {"needed": True, "present": False, "source": None}
+
+    (rec.root / ".env").write_text("MAPVIETNAM_CONTACT=me@example.org\n")
+    status, answer = ask("POST", "/api/records/key", {"username": USER, "key": KEY})
+    assert status == 200 and answer["key"] == {"needed": True, "present": True, "source": "env file"}
+    assert (
+        rec.root / ".env"
+    ).read_text() == f"MAPVIETNAM_CONTACT=me@example.org\nKAGGLE_USERNAME={USER}\nKAGGLE_KEY={KEY}\n"
+    assert stat.S_IMODE((rec.root / ".env").stat().st_mode) == 0o600
+
+    # Used: an ingester that is refused says so in plain words, and even one that printed the key is scrubbed.
+    set_plan(
+        rec.root, thor={"says": [f"sending {KEY}"], "wants_key": "Kaggle did not accept this key (it answered 401)."}
+    )
+    ask("POST", "/api/records/add", {"ids": ["thor"]})
+    assert rec.wait_idle(30)
+    _, listing = ask("GET", "/api/records")
+    assert source_of(listing, "thor")["error"] == "Kaggle did not accept this key (it answered 401)."
+    assert source_of(listing, "thor")["wants_key"] is True and listing["key"]["needed"] is True
+    # Refused forms are answered without repeating what was sent.
+    for bad in ({"username": USER, "key": KEY + " x"}, {"username": USER + "\nA=1", "key": KEY}, {"key": KEY}, {}):
+        assert ask("POST", "/api/records/key", bad)[0] == 400
+    assert ask("POST", "/api/records/key", {"username": USER, "key": [KEY]})[0] == 400
+    ask("GET", "/api/sources")
+    ask("POST", "/api/records/cancel", {"ids": ["thor"]})
+
+    status, answer = ask("DELETE", "/api/records/key")
+    assert status == 200 and answer["key"] == {"needed": False, "present": False, "source": None}
+    assert (rec.root / ".env").read_text() == "MAPVIETNAM_CONTACT=me@example.org\n"
+
+    printed = capfd.readouterr()
+    logs = "".join(p.read_text() for p in (rec.root / "data" / "work" / "setup").rglob("*") if p.is_file())
+    for where in (*said, printed.out, printed.err, logs):
+        assert KEY not in where and USER not in where
+    assert "[hidden]" in logs  # the ingester's slip was caught on its way into the log
+
+
+def new_routes(base):
+    """Every route added for the records, quitting and the old-map conversion that changes something."""
+    return [
+        (f"{base}/api/records/add", {"ids": ["base"]}),
+        (f"{base}/api/records/remove", {"ids": ["base"]}),
+        (f"{base}/api/records/cancel", {"ids": ["base"]}),
+        (f"{base}/api/records/welcome", {"dismissed": True}),
+        (f"{base}/api/records/key", {"username": USER, "key": KEY}),
+        (f"{base}/api/library/migrate", {}),
+        (f"{base}/api/quit", {}),
+    ]
+
+
+def test_the_new_routes_refuse_cross_site_requests(recs):
+    base, rec, srv = recs
+    port = base.rsplit(":", 1)[1]
+    for url, body in new_routes(base):
+        assert post(url, body, {**JSON, "Origin": "https://evil.example"})[0] == 403, url
+        assert post(url, body, {**JSON, "Origin": "null"})[0] == 403, url
+        assert post(url, body, {**JSON, "Sec-Fetch-Site": "cross-site"})[0] == 403, url
+        assert post(url, body, {**JSON, "Sec-Fetch-Site": "same-site"})[0] == 403, url
+        assert post(url, body, {"Content-Type": "text/plain"})[0] == 415, url  # what a plain form can send
+        assert post(url, body, {**JSON, "Host": f"evil.example:{port}"})[0] == 403, url  # DNS rebinding
+    assert delete(f"{base}/api/records/key", {"Origin": "https://evil.example"})[0] == 403
+    assert delete(f"{base}/api/records/key", {"Sec-Fetch-Site": "cross-site"})[0] == 403
+    assert delete(f"{base}/api/records/key", {"Host": f"evil.example:{port}"})[0] == 403
+    req = urllib.request.Request(f"{base}/api/records", headers={"Host": f"evil.example:{port}"})
+    with pytest.raises(urllib.error.HTTPError) as e:  # reads too: the listing says what is installed
+        urllib.request.urlopen(req)
+    assert e.value.code == 403
+    # Nothing happened: no source queued, no key saved, the welcome not dismissed, the server still up.
+    assert not rec.listing()["busy"] and ran(rec.root) == [] and not (rec.root / ".env").exists()
+    assert rec.listing()["first_run"] is True and call(f"{base}/api/records")["busy"] is False
+    # The viewer's own requests pass, under either local name.
+    for host in (f"127.0.0.1:{port}", f"localhost:{port}"):
+        headers = {**JSON, "Origin": f"http://{host}", "Host": host, "Sec-Fetch-Site": "same-origin"}
+        assert post(f"{base}/api/records/welcome", {"dismissed": False}, headers)[0] == 200
+        assert delete(f"{base}/api/records/key", {k: v for k, v in headers.items() if k != "Content-Type"})[0] == 200
+
+
+def test_quit_stops_the_jobs_then_the_server(tmp_path, monkeypatch):
+    root = make_home(tmp_path / "root", monkeypatch)
+    (root / "web").mkdir()
+    rec = records.Records(root, sources=fake_sources())
+    srv = server.make_server(0, rec.db_path, library.Library(root), web=root / "web", record_sources=rec)
+    thread = threading.Thread(target=srv.serve_forever)
+    thread.start()
+    base = f"http://127.0.0.1:{srv.server_address[1]}"
+    set_plan(root, base={"wait": True})
+    post(f"{base}/api/records/add", {"ids": ["child"]}, JSON)
+    wait_for((root / "base.started").exists)
+    ingester = rec._jobs["base"].proc
+
+    assert post(f"{base}/api/quit", [], JSON)[0] == 400  # like every POST, the body must be an object
+    assert post(f"{base}/api/quit", {}, JSON) == (200, {"quitting": True})  # answered before it stops
+    thread.join(20)
+    assert not thread.is_alive()  # serve_forever returned: server.py's main() then exits with status 0
+    srv.server_close()
+    assert ingester.poll() is not None  # no ingester is left running without its server
+    assert ran(root) == ["base"] and rec.state_of("base") == "available" and rec.state_of("child") == "available"
+    with pytest.raises(urllib.error.URLError):
+        urllib.request.urlopen(f"{base}/api/records", timeout=2)
+    srv.quit()  # asking again, after the fact, is harmless
+
+
+def test_old_format_maps_are_reported_and_converted_from_the_viewer(maps):
+    base, lib = maps
+    assert call(f"{base}/api/library")["legacy"] == {
+        "count": 0,
+        "bytes": 0,
+        "state": "idle",
+        "error": None,
+        "converted": 0,
+    }
+    folder = lib.root / "web" / "tiles" / "L7014A"
+    (folder / "8" / "203").mkdir(parents=True)
+    from PIL import Image
+
+    Image.new("RGBA", (256, 256), (10, 20, 30, 255)).save(folder / "8" / "203" / "120.png")
+    legacy = call(f"{base}/api/library")["legacy"]
+    assert legacy["count"] == 1 and legacy["bytes"] == (folder / "8" / "203" / "120.png").stat().st_size
+
+    status, answer = post(f"{base}/api/library/migrate", {}, JSON)
+    assert status == 200 and answer["legacy"]["state"] in ("converting", "idle")
+    wait_for(lambda: call(f"{base}/api/library")["legacy"]["state"] == "idle")
+    listing = call(f"{base}/api/library")
+    assert listing["legacy"] == {"count": 0, "bytes": 0, "state": "idle", "error": None, "converted": 1}
+    assert next(m for m in listing["maps"] if m["id"] == "L7014A")["state"] == "installed"
+    assert not folder.exists() and [layer["id"] for layer in call(f"{base}/catalog.json")["layers"]] == ["L7014A"]
+
+
+def test_an_old_map_that_cannot_be_converted_is_reported_and_kept(maps):
+    base, lib = maps
+    folder = lib.root / "web" / "tiles" / "L7014B"
+    (folder / "8" / "203").mkdir(parents=True)
+    (folder / "8" / "203" / "120.png").write_bytes(b"not a png")
+    post(f"{base}/api/library/migrate", {}, JSON)
+    wait_for(lambda: call(f"{base}/api/library")["legacy"]["state"] != "converting")
+    legacy = call(f"{base}/api/library")["legacy"]
+    assert legacy["state"] == "failed" and legacy["count"] == 1 and legacy["converted"] == 0
+    assert "L7014B" in legacy["error"] and "Nothing was lost" in legacy["error"] and folder.exists()
+
+
+def test_slim_evidence_reads_only_what_the_map_draws(base):
+    """The slim answer carries the same records as the full one, with fewer fields."""
+    full = call(f"{base}/api/evidence?bbox=105,10,107,11")
+    slim = call(f"{base}/api/evidence?bbox=105,10,107,11&slim=1")
+    assert [f["geometry"] for f in slim["features"]] == [f["geometry"] for f in full["features"]]
+    assert [set(f["properties"]) for f in slim["features"]] == [set(server.SLIM_PROPS)] * 3
+    for s, f in zip(slim["features"], full["features"], strict=True):
+        assert s["properties"] == {k: f["properties"][k] for k in server.SLIM_PROPS}
+
+
+def test_search_follows_changes_to_the_store_made_behind_its_back(base):
+    assert [h["title"] for h in call(f"{base}/api/search?q=saigon")] == ["Saigon"]
+    db = store.connect(DB["path"])
+    store.sync_source(db, "t", [])  # another process (the command line) removes every record
+    db.close()
+    assert call(f"{base}/api/search?q=saigon") == []

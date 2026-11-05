@@ -1,8 +1,8 @@
 """The evidence store: one SQLite file holding normalised records from every source.
 
 Ingesters (scripts/ingest/) build Evidence records and write them with upsert_source plus
-sync_source or upsert_many; the server reads them and keeps cases (pinned records, candidate
-sites, notes) in the same file. Default location: data/evidence.sqlite. Import it; there is
+sync_source or upsert_many; scripts/records.py takes a source out again with remove_source; the
+server reads them and keeps cases (pinned records, candidate sites, notes) in the same file. Default location: data/evidence.sqlite. Import it; there is
 nothing to run.
 
 Rules the schema and the Evidence class enforce (the four rules at the top of docs/how-it-works.md):
@@ -198,3 +198,16 @@ def sync_source(db, source, records, reason="no longer in the source"):
     )
     db.commit()
     return len(kept), len(gone), len(held)
+
+
+def remove_source(db, source, reason="its source was removed"):
+    """Take a whole source out of the store, without breaking anyone's case.
+
+    Its records go the way sync_source removes them: deleted, unless an analyst has put them in a
+    case, in which case they are kept and marked withdrawn. The source's own entry goes too, unless
+    such records still refer to it. Returns (deleted, withdrawn)."""
+    _, deleted, withdrawn = sync_source(db, source, [], reason)
+    if not db.execute("select 1 from evidence where source = ? limit 1", (source,)).fetchone():
+        db.execute("delete from sources where id = ?", (source,))
+        db.commit()
+    return deleted, withdrawn

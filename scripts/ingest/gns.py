@@ -345,6 +345,7 @@ def main(argv=None):
     ap.add_argument("--refresh", action="store_true", help="re-download the pinned zip")
     args = ap.parse_args(argv)
     path = common.cached_get(URL, SOURCE, name=ZIP_NAME, refresh=args.refresh, timeout=600)
+    common.progress(None, "Reading the place names")
     rows = load_zip(path)
     records, index, stats = build(rows)
 
@@ -366,6 +367,7 @@ def main(argv=None):
     )
     tmp.replace(INDEX_PATH)
 
+    common.progress(None, f"Saving {len(records):,} place names")
     db = store.connect()
     stats["kept"], stats["deleted"], stats["withdrawn"] = write(db, records)
     stats["index_keys"] = len(index)

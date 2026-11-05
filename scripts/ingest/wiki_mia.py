@@ -1082,7 +1082,9 @@ def main(argv=None):
     ap.add_argument("--refresh", action="store_true", help="re-download the Wikipedia pages")
     args = ap.parse_args(argv)
     pages = fetch_pages(refresh=args.refresh)
+    common.progress(None, "Reading the lists of the missing")
     recs, stats = records(pages, load_provinces(), load_gns())
+    common.progress(None, f"Saving {len(recs):,} records of the missing")
     n, deleted, withdrawn = save(store.connect(), recs)
     in_aoi = sum(common.in_bbox(e.lon, e.lat) for e in recs)
     summary = {

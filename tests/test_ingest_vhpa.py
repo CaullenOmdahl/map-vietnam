@@ -1171,3 +1171,21 @@ def test_document_number_in_a_war_story_is_not_a_grid():
     """68050310KIA: '(TT 1201031016.pdf p27)' is a Texas Tech archive file, not a grid."""
     inc = vhpa.parse_incident(page("68050310KIA.HTM"))
     assert not [w for w in vhpa.war_story_places(inc) if w["place"].startswith("TT")]
+
+
+def test_the_crawl_reports_its_progress_by_pages(raw_dir, monkeypatch, capsys):
+    """Cached pages count too, so a crawl that was stopped races through what it has and goes on."""
+    folder, fake = raw_dir
+    (folder / "panelind.htm").write_text('<a href="PANEL28E.HTM">', encoding="cp1252")
+    (folder / "PANEL28E.HTM").write_text(page("PANEL28E_excerpt.HTM"), encoding="cp1252")
+    (folder / "incident_07838ACD.HTM").write_text(page("07838ACD.HTM"), encoding="cp1252")
+    monkeypatch.setenv(common.PROGRESS_ENV, "1")
+    panels, incidents, inc_pages, person_pages = vhpa.crawl()
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0] == "progress - Reading the list of losses: page 1 of 1"
+    pages = [line for line in lines if " Reading page " in line]
+    assert len(pages) >= len(incidents) > 0
+    fractions = [float(line.split()[1]) for line in pages]
+    assert fractions == sorted(fractions) and fractions[-1] == 1.0  # ends at the last page, never past it
+    last = pages[-1].split(" Reading page ")[1]
+    assert last.split(" of ")[0] == last.split(" of ")[1]  # "Reading page N of N"
