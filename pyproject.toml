@@ -1,0 +1,28 @@
+[project]
+name = "map-vietnam"
+version = "0.1.0"
+description = "Dated historical maps of Vietnam over today's map, with war-era records you can search, filter, pin and export."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+# The pinned rasterio, numpy and pyproj in requirements.txt need Python 3.12 or newer.
+requires-python = ">=3.12"
+keywords = ["vietnam", "historical maps", "georeferencing", "MGRS", "vietnam war", "gis"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: GIS",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]

@@ -1,0 +1,78 @@
+{
+ "image": "data/raw/scans/atlas_1909_sadec/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1507.2,
+   1636.8,
+   105.657229,
+   10.62
+  ],
+  [
+   1505.7,
+   2792.5,
+   105.657229,
+   10.44
+  ],
+  [
+   1501.8,
+   3942.3,
+   105.657229,
+   10.26
+  ],
+  [
+   2652.4,
+   1637.6,
+   105.837229,
+   10.62
+  ],
+  [
+   2655.0,
+   2796.3,
+   105.837229,
+   10.44
+  ],
+  [
+   2655.0,
+   3943.0,
+   105.837229,
+   10.26
+  ]
+ ],
+ "neatline": [
+  [
+   462,
+   626
+  ],
+  [
+   3141,
+   625
+  ],
+  [
+   3132,
+   4679
+  ],
+  [
+   2000,
+   4677
+  ],
+  [
+   800,
+   4698
+  ],
+  [
+   456,
+   4702
+  ]
+ ],
+ "max_zoom": 13,
+ "meta": {
+  "title": "Province de Sadec (Planche XVI)",
+  "series": "Atlas general de l'Indo-Chine francaise (Chabert & Gallois)",
+  "scale": "1:200000",
+  "date": "1909",
+  "dateNote": "atlas publication date (1909); compilation of earlier provincial surveys; graticule-georeferenced, datum unknown; affine fit to 6 graticule crossings; west side (Lấp Vò) off by ~1.5 km — province-scale map",
+  "source": "https://humazur.univ-cotedazur.fr/files/original/53e27b11d309317b583204a6deb45a28cbf6c4ac.jpg"
+ },
+ "order": 1
+}

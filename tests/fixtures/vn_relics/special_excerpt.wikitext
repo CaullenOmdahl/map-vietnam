@@ -1,0 +1,114 @@
+===Đợt 1 (2009)===
+{| class="wikitable sortable" style="font-size:90%;width:100%;border:0px;text-align:left;line-height:150%;"
+! width="25%"| Di tích
+! width="15%" class="unsortable"| Hình ảnh
+! width="20%"| Địa điểm
+! width="15%"| Hạng mục
+! width="25%" class="unsortable"| Ghi chú
+|-
+|Chiến trường Điện Biên Phủ<ref name="DTĐBP">{{Chú thích web|url=http://www.dsvh.gov.vn/pages/news/preview.aspx?n=586&c=25|tiêu đề=Di tích lịch sử Chiến trường Điện Biên Phủ|website=dsvh.gov.vn|archive-url=https://web.archive.org/web/20170219020203/http://www.dsvh.gov.vn/pages/news/preview.aspx?n=586&c=25|archive-date =2017-02-19|ngày truy cập=2017-02-07|url-status=dead}}</ref>
+|[[Tập tin:Hầm chỉ huy cứ điểm Điện Biên Phủ.jpg|180px]]
+|Các xã, phường: [[Điện Biên Phủ (phường)|Điện Biên Phủ]], [[Mường Phăng]], [[Thanh Nưa]], tỉnh [[Điện Biên]]<br />{{Coord|21|23|13|N|103|0|56|E}}
+|Di tích lịch sử<ref name="DTĐBP"/>
+|
+|}
+
+=== Đợt 2 (2012) ===
+{| class="wikitable sortable" style="font-size:90%;width:100%;border:0px;text-align:left;line-height:150%;"
+! width="25%"| Di tích
+! width="15%" class="unsortable"| Hình ảnh
+! width="20%"| Địa điểm
+! width="15%"| Hạng mục
+! width="25%" class="unsortable"| Ghi chú
+|-
+|[[Nhà tù Côn Đảo]]<ref name="ntcđ">{{Chú thích web|url=http://www.dsvh.gov.vn/pages/news/preview.aspx?n=573&c=25|tiêu đề=Di tích lịch sử Nhà tù Côn Đảo|website=dsvh.gov.vn|archive-url=https://web.archive.org/web/20170219020715/http://www.dsvh.gov.vn/pages/news/preview.aspx?n=573&c=25|archive-date =2017-02-19|ngày truy cập=2017-02-07|url-status=dead}}</ref>
+|[[Tập tin:Nhà tù Côn Đảo.JPG|180px]]
+|Đặc khu [[Côn Đảo]], [[thành phố Hồ Chí Minh]]<ref name="ntcđ" /> {{coord|8|40|57|N|106|36|26|E|scale:500000|name=đảo Côn Sơn|display=inline}}
+|Di tích lịch sử<ref name="ntcđ" />
+|
+|-
+|[[Nhà tù Phú Quốc]]<ref name="TGPQ">{{Chú thích web|url=http://www.dsvh.gov.vn/pages/news/preview.aspx?n=1111&c=25|tiêu đề=Di tích lịch sử Trại giam Phú Quốc|website=dsvh.gov.vn|archive-url=https://web.archive.org/web/20170213222711/http://dsvh.gov.vn/pages/news/preview.aspx?n=1111&c=25|archive-date =2017-02-13|ngày truy cập=2017-02-07|url-status=dead}}</ref>
+|[[Tập tin:Phu Quoc Prison DSC 0631.jpg|180px]]
+|Đặc khu [[Phú Quốc]], tỉnh [[An Giang]]<ref name="TGPQ" />
+|Di tích lịch sử<ref name="TGPQ" />
+|
+|}
+
+=== Đợt 13 (2022) ===
+{| class="wikitable sortable" style="font-size:90%;width:100%;border:0px;text-align:left;line-height:150%;"
+! width="25%" |Di tích
+! width="15%" class="unsortable" |Hình ảnh
+! width="20%" |Địa điểm
+! width="15%" |Hạng mục
+! width="25%" class="unsortable" |Ghi chú
+|-
+|Rộc Tưng – Gò Đá
+|[[Tập_tin:Natural_landmark_without_photo.svg|liên kết=Đặc biệt:Tải lên|180x180px]]
+|thị xã [[An Khê (thị xã)|An Khê]], tỉnh [[Gia Lai]]
+|Di tích khảo cổ<ref>{{Chú thích web|url=http://dsvh.gov.vn/roc-tung-%E2%80%93-go-da-tinh-gia-lai-3364|tựa đề=Rộc Tưng – Gò Đá, tỉnh Gia Lai|website=dsvh.gov.vn|url lưu trữ=https://web.archive.org/web/20220806173952/http://dsvh.gov.vn/roc-tung-%E2%80%93-go-da-tinh-gia-lai-3364|ngày lưu trữ=2022-08-06|url-status=live}}</ref>
+|
+|-
+|[[Trận Ấp Bắc|Địa điểm Chiến thắng Ấp Bắc]]
+|[[Tập_tin:Ap Bac Victory Tien Giang.jpg|180px]]
+|Xã [[Tân Phú, Đồng Tháp|Tân Phú]], tỉnh [[Đồng Tháp]]
+|Di tích lịch sử<ref>{{Chú thích web|url=https://baophapluat.vn/thu-tuong-chinh-phu-cong-nhan-di-tich-chien-thang-ap-bac-la-di-tich-quoc-gia-dac-biet-post463477.html|tựa đề=Thủ tướng Chính phủ công nhận di tích Chiến thắng Ấp Bắc là di tích Quốc gia đặc biệt|tác giả=Nhựt Nam|ngày=2023-01-01|website=Báo Pháp Luật|url lưu trữ=https://web.archive.org/web/20230101031909/https://baophapluat.vn/thu-tuong-chinh-phu-cong-nhan-di-tich-chien-thang-ap-bac-la-di-tich-quoc-gia-dac-biet-post463477.html|ngày lưu trữ=2023-01-01|url-status=live}}</ref>
+|
+|}
+
+== Các di tích đang tiến hành lập hồ sơ ==
+{| class="wikitable"
+!Tên di tích
+!Địa điểm
+!Loại hình
+|-
+|Đình Long Hưng (Khu di tích Nam Kỳ Khởi Nghĩa năm 1940) 
+|Xã [[Long Hưng, Đồng Tháp|Long Hưng]], tỉnh [[Đồng Tháp]]
+|Lịch sử
+|-
+|Địa điểm Chiến thắng Núi Thành (đang lập hồ sơ)
+|Xã [[Tam Mỹ]], thành phố [[Đà Nẵng]]
+|Lịch sử
+|-
+|Chiến khu Đ (đang lập hồ sơ) 
+|Huyện Vĩnh Cửu, tỉnh Đồng Nai
+|Lịch sử
+|}
+
+=== Đợt bổ sung (round-2 fixture rows, copied verbatim from list_special.wikitext) ===
+{| class="wikitable sortable" style="font-size:90%;width:100%;border:0px;text-align:left;line-height:150%;"
+! width="25%"| Di tích
+! width="15%" class="unsortable"| Hình ảnh
+! width="20%"| Địa điểm
+! width="15%"| Hạng mục
+! width="25%" class="unsortable"| Ghi chú
+|-
+|Trận địa pháo 105mm của Đại đội 805
+|
+|Phường [[Điện Biên Phủ (phường)|Điện Biên Phủ]] và xã [[Điện Biên (huyện)|Điện Biên]], tỉnh [[Điện Biên]]
+|Di tích lịch sử<ref name=":29" />
+|Bổ sung vào Di tích quốc gia đặc biệt [[Chiến trường Điện Biên Phủ]] xếp hạng tại đợt 1 năm 2009
+|-
+|[[ATK|An toàn khu (ATK) Chợ Đồn]]<ref name=":7">{{Chú thích web|url=http://dsvh.gov.vn/di-tich-tich-lich-su-an-toan-khu-atk-cho-don-3000|tựa đề=Di tích tích lịch sử An toàn khu (ATK) Chợ Đồn|website=dsvh.gov.vn|url lưu trữ=https://web.archive.org/web/20221126162554/http://dsvh.gov.vn/di-tich-tich-lich-su-an-toan-khu-atk-cho-don-3000|ngày lưu trữ=2022-11-26|url-status=live}}</ref>
+|[[Tập tin:Natural landmark without photo.svg|180px|link=Đặc biệt:Tải lên]]
+|Các xã: [[Yên Thịnh]], [[Nghĩa Tá]], [[Chợ Đồn (xã)|Chợ Đồn]], tỉnh [[Thái Nguyên]]
+|Di tích lịch sử<ref name=":7" />
+|
+|-
+|Căn cứ Bộ chỉ huy Quân giải phóng miền Nam Việt Nam<ref name=":2">{{Chú thích web|url=http://dsvh.gov.vn/di-tich-lich-su-can-cu-bo-chi-huy-quan-giai-phong-mien-nam-viet-nam-1328|tựa đề=Di tích lịch sử Căn cứ Bộ Chỉ huy Quân giải phóng miền Nam Việt Nam|website=Cục di sản văn hóa|url lưu trữ=https://web.archive.org/web/20221215075342/http://dsvh.gov.vn/di-tich-lich-su-can-cu-bo-chi-huy-quan-giai-phong-mien-nam-viet-nam-1328|ngày lưu trữ=2022-12-15|url-status=live}}</ref>
+|[[Tập tin:Natural landmark without photo.svg|180px|link=Đặc biệt:Tải lên]]
+|huyện [[Lộc Ninh (huyện)|Lộc Ninh]], tỉnh [[Bình Phước (tỉnh)|Bình Phước]]
+|Di tích lịch sử<ref name=":2" />
+|
+|-
+|[[Di tích lịch sử Các địa điểm khởi nghĩa Trương Định]]
+|[[Tập tin:Đền và mộ Trương Định.JPG|180px]]
+|thành phố [[Gò Công (thành phố)|Gò Công]], huyện [[Gò Công Đông (huyện)|Gò Công Đông]] và huyện [[Tân Phú Đông (huyện)|Tân Phú Đông]], tỉnh [[Tiền Giang]].
+|Di tích lịch sử<ref name=BĐTCP/>
+|
+|-
+|[[An toàn khu II|An toàn khu II Hiệp Hòa]]
+|[[Tập tin:Natural landmark without photo.svg|180px|link=Đặc biệt:Tải lên]]
+|Các xã: [[Xuân Cẩm]], [[Hợp Thịnh]], [[Hoàng Vân]], thành phố [[Bắc Ninh]]
+|Di tích lịch sử
+|
+|}

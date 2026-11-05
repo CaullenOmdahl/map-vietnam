@@ -1,0 +1,54 @@
+{
+ "hes": [
+  {
+   "usid": "101010102",
+   "title": "MY-THUY (HES hamlet, HAI LANG, QUANG TRI)",
+   "original_coord": "YD466583",
+   "zone": "48Q",
+   "gvn_hamlet": "MY-THUY",
+   "gvn_province": "QUANG TRI"
+  },
+  {
+   "usid": "103010501",
+   "title": "DA PHUOC (HES hamlet, HOA VANG, QUANG NAM)",
+   "original_coord": "AT948767",
+   "zone": "49P",
+   "gvn_hamlet": "DA PHUOC",
+   "gvn_province": "QUANG NAM"
+  },
+  {
+   "usid": "206011816",
+   "title": "KON SOLANG (HES hamlet, KONTUM, KONTUM)",
+   "original_coord": "AR870772",
+   "zone": "49P",
+   "gvn_hamlet": "KON SOLANG",
+   "gvn_province": "KONTUM"
+  }
+ ],
+ "gns": [
+  {
+   "title": "Mỹ Thuy",
+   "lon": 107.332431,
+   "lat": 16.778437,
+   "ufi": "-3730725",
+   "full_nm_nd": "My Thuy",
+   "minute_rounded": 0
+  },
+  {
+   "title": "Ấp Đa Phước",
+   "lon": 108.142097,
+   "lat": 16.071548,
+   "ufi": "-3702525",
+   "full_nm_nd": "Ap Da Phuoc",
+   "minute_rounded": 0
+  },
+  {
+   "title": "Kon Sơ Lăng",
+   "lon": 108.095684,
+   "lat": 14.261971,
+   "ufi": "-3717646",
+   "full_nm_nd": "Kon So Lang",
+   "minute_rounded": 0
+  }
+ ]
+}

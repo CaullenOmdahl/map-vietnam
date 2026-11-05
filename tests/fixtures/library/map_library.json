@@ -1,0 +1,18 @@
+{
+  "about": "A small map library catalogue for the tests, in the shape of data/sources/map_library.json. The archive host https://archive.example is replaced by a local fake server; bytes and sha256 that are null are filled in from the files the tests serve. Each GeoPDF's bounds are its frame, on its own datum, around the synthetic sheet the tests serve (tests/geopdf.py); the JOG frame stops short of the sheet's neatline on every side, as a real JOG frame stops short of the margin around its scan.",
+  "series": {
+    "l7014": {"name": "AMS L7014", "scale": "1:50,000", "publisher": "US Army Map Service", "years": "1965-1970", "licence": "US Government work", "notes": ""},
+    "jog1501": {"name": "JOG 1501", "scale": "1:250,000", "publisher": "US NGA", "years": "1966-2000", "licence": "US Government work", "notes": ""},
+    "scans": {"name": "Scanned maps", "scale": "various", "publisher": "various", "years": "1873-1962", "licence": "various", "notes": ""}
+  },
+  "maps": [
+    {"id": "L7014A", "series": "l7014", "title": "6129 II, near Cần Thơ", "bounds": [105.548, 10.403, 105.601, 10.443], "region": "south",
+     "urls": ["https://archive.example/primary/L7014A_geo.pdf", "https://archive.example/mirror/L7014A_geo.pdf"], "bytes": null, "sha256": null, "kind": "geopdf"},
+    {"id": "L7014B", "series": "l7014", "title": "6129 I, near Sa Đéc", "bounds": [105.548, 10.493, 105.602, 10.534], "region": "south",
+     "urls": ["https://archive.example/primary/L7014B_geo.pdf", "https://archive.example/mirror/L7014B_geo.pdf"], "bytes": null, "sha256": null, "kind": "geopdf"},
+    {"id": "JOG_NF4811", "series": "jog1501", "title": "NF 48-11, Hà Nội", "bounds": [105.05, 21.1, 105.2, 21.24], "region": "north",
+     "urls": ["https://archive.example/primary/1501ANF4811_geo.pdf"], "bytes": null, "sha256": null, "kind": "geopdf"},
+    {"id": "scan_test", "series": "scans", "title": "A test scan", "bounds": [105.0, 10.0, 105.6, 10.4], "region": "south",
+     "urls": ["https://archive.example/primary/scan_test.jpg"], "bytes": null, "sha256": null, "kind": "scan", "work_size": [600, 400]}
+  ]
+}

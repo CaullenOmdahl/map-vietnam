@@ -1,0 +1,65 @@
+Real rows from data/raw/wiki_mia/page_*.wikitext (fetched 2026-11-03), rowspans expanded so each row has 9 cells.
+
+==1966==
+{|class="wikitable sortable"
+|-
+! Date !! Name !! Rank !! Service !! Unit !! Operation !! Location !! Circumstances !! Status
+|-
+| May 18 || Wall, Jerry M || Airman First Class || USAF || 310th Air Commando Squadron ||  || South Vietnam, Bình Định Province || Crewman on a C-123B shot down on a night flareship mission east of Pleiku<ref>{{cite web|url=https://www.virtualwall.org/dw/WallJM01a.htm|title=A1C Jerry Mack Wall|publisher=Virtualwall.org|access-date=9 September 2012}}</ref> || Killed in action, body not recovered.<ref name="DPMO-MIA/KIA-BNR1"/> On 30 August 2012 the DPMO announced that his remains had been identified<ref name="Recently Accounted-for">{{cite web|url=http://www.dtic.mil/dpmo/accounted_for/|title=Recently Accounted-for|work=Defense Prisoner of Ware/Missing Personnel Office|access-date=6 October 2012|archive-url=https://web.archive.org/web/20100911234351/http://www.dtic.mil/dpmo/accounted_for/|archive-date=11 September 2010|url-status=dead}}</ref>
+|-
+| November 19 || Johnstone, James M || Captain || US Army || 131st Aviation Company ||  || Laos, [[Attapeu Province]] || Observer on an OV-1A #13115 that hit the ground on a low-level reconnaissance mission, no ejection observed<ref>{{cite web|url=https://www.virtualwall.org/dj/JohnstoneJM01a.htm |title=CPT James Montgomery Johnstone |publisher=Virtualwall.org|access-date=23 September 2012}}</ref> || Killed in action, body not recovered.<ref name="DPMO-MIA/KIA-BNR1"/> On 6 September 2012 the DPMO announced that his remains had been identified<ref name="Recently Accounted-for"/>
+|-
+| November 19 || Whited, James L || Major || US Army || 20th Aviation Detachment ||  || Laos, Attapeu Province || Pilot of OV-1A #13115 that hit the ground on a low-level reconnaissance mission, no ejection observed<ref>{{cite web|url=https://www.virtualwall.org/dw/WhitedJL01a.htm |title=MAJ James Lafayette Whited |publisher=Virtualwall.org|access-date=23 September 2012}}</ref> || Killed in action, body not recovered.<ref name="DPMO-MIA/KIA-BNR1"/> On 5 September 2012 the DPMO announced that his remains had been identified<ref name="Recently Accounted-for"/>
+|-
+| December 23 || Kerns, Arthur W || Private || US Army || 2nd Battalion, 14th Infantry Regiment ||  || South Vietnam, [[Gia Định Province]] || Disappeared while cashing checks near Tan Son Nhut Air BaseUnaccounted for<ref>{{cite web|url=https://dpaa-mil.sites.crmforce.mil/dpaaProfile?id=a0Jt00000001UWWEA2|title=PV2 ARTHUR WILLIAM KERNS|publisher=Defense POW/MIA Accounting Agency|access-date=3 June 2024}}</ref> || Presumptive finding of death<ref name="DPMO-MIA/KIA-BNR1" />
+|}
+
+==1967==
+{|class="wikitable sortable"
+|-
+! Date !! Name !! Rank !! Service !! Unit !! Operation !! Location !! Circumstances !! Status
+|-
+| July 2 || Wilson, Wayne V || Sergeant || USMC || [[1st Battalion 9th Marines]] || [[Operation Buffalo (1967)]] || South Vietnam, [[Con Thien]] || Disappeared when his unit was ambushed<ref>{{cite web |url=https://www.virtualwall.org/dw/WilsonWV01a.htm |title=Wayne Wilson, SSG |work=The Virtual Wall |access-date=27 January 2013}}</ref> || Presumptive finding of death<ref name="DPMO-MIA/KIA-BNR1" />
+|-
+| August 11 || Berube, Kenneth A || 1st Lieutenant || USMC || [[VMA-211]] ||  || South Vietnam, Chu Lai || His A-4E #151088 was hit by enemy fire and crashed<ref>{{cite web |url=https://www.virtualwall.org/db/BerubeKA01a.htm |title=1LT Kenneth Allen Berube |work=The Virtual Wall |access-date=3 February 2013}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR1"/>
+|-
+| September 26 || Moe, Harold J || 1st Lieutenant || USMC || [[Marine Aviation Logistics Squadron 13]] ||  || South Vietnam, Chu Lai || Passenger on F-4B #148422 hit by ground fire<ref>{{cite web |url=https://www.virtualwall.org/dm/MoeHJ01a.htm |title=CAPT Harold John Moe |work=The Virtual Wall |access-date=6 February 2013}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR1"/>
+|}
+
+==1968==
+{|class="wikitable sortable"
+|-
+! Date !! Name !! Rank !! Service !! Unit !! Operation !! Location !! Circumstances !! Status
+|-
+| February 7 || Phillips, Daniel R || Specialist 5 || US Army || Detachment A-101, 5th Special Forces Group || Battle of Lang Vei || South Vietnam, Lang Vei || Wounded in the battle and last seen trying to evade PAVN troops <ref>{{cite web|url=http://www.virtualwall.org/dp/PhillipsDR01a.htm |title=Daniel Phillips, SFC |work=The Virtual Wall|accessdate=2 November 2012}}</ref> || Presumptive finding of death<ref name="DPMO-MIA/KIA-BNR" />
+|-
+| April 6 || Pepper, Anthony J || Private First Class || USMC || [[2nd Battalion, 26th Marines]] || [[Operation Scotland II]] || South Vietnam, Khe Sanh || His unit was ambushed on patrol and he took shelter in a bomb crater which received a direct hit from a mortar round, no identifiable remains were recovered<ref>{{cite web|url=http://www.virtualwall.org/dp/PepperAJ01a.htm |title=PFC Anthony John Pepper |work=The Virtual Wall|accessdate=12 November 2012}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR" />
+|-
+| April 26 || Stow, Lilburn R || Major || USAF || 772d Tactical Airlift Squadron || Operation Delaware || South Vietnam, A Luoi || Pilot of C-130B #60-0298 hit by enemy fire while on approach to A Lưới Camp, the aircraft crashed and burnt on the airfield<ref>{{cite web|url=http://www.virtualwall.org/ds/StowLR01a.htm |title=MAJ Lilburn Ray Stow |work=The Virtual Wall|accessdate=15 November 2012}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR" />
+|-
+| April 26 || Todd, Larry R || Sergeant || USAF || 772d Tactical Airlift Squadron || Operation Delaware || South Vietnam, A Luoi || Crewman on C-130B #60-0298 hit by enemy fire while on approach to A Lưới Camp, the aircraft crashed and burnt on the airfield<ref>{{cite web|url=http://www.virtualwall.org/dt/ToddLR01a.htm |title=Larry Todd, SGT |work=The Virtual Wall|accessdate=15 November 2012}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR" />
+|}
+
+==1970==
+{|class="wikitable sortable"
+|-
+! Date !! Name !! Rank !! Service !! Unit !! Operation !! Location !! Circumstances !! Status
+|-
+| February 5 || Lyon, James M || Captain || US Army || HHC, 2nd Brigade, [[101st Airborne Division]] ||  || South Vietnam, Quang Nam Province || Pilot of UH-1H #68-16441 that crashed on a flight from Hue to [[Phu Bai Combat Base|Phu Bai]]. He was severely injured in the crash and the entire crew was captured by enemy forces. He was killed by one of the guards and buried near the crash site. The remaining crew members Capt. John W. Parsels, SP5 Tom Y. Kobashigawa and SP4 Daniel Hefel were released in 1973<ref>{{cite web|url=http://www.virtualwall.org/dl/LyonJM01a.htm |title=CPT James Michael Lyon |publisher=Virtualwall.org|accessdate=26 March 2013}}</ref> || Died in captivity, remains not returned<ref name="DPMO-MIA/KIA-BNR"/>
+|}
+
+==1971==
+{|class="wikitable sortable"
+|-
+! Date !! Name !! Rank !! Service !! Unit !! Operation !! Location !! Circumstances !! Status
+|-
+| May 16 || Crook, Elliott || Specialist 5 || US Army || Company A, [[101st Aviation Battalion]] ||  || South Vietnam, A Shau Valley || Crew chief on a UH-1H shot down after inserting ARVN Marines, the helicopter burnt on impact. SAR forces were inserted 8 days later but were unable to evacuate all remains from the burnt wreckage due to heavy enemy fire.<ref>{{cite web|url=http://www.virtualwall.org/dc/CrookEx01a.htm |title=SP5 Elliott Crook |publisher=Virtualwall.org|accessdate=18 October 2012}}</ref> The remains of the 4th crewman, SP4 Timothy J Jacobsen, were identified in 2008.<ref>{{cite web |url=http://www.times-standard.com/localnews/ci_9368303 |archive-url=https://archive.today/20130204093433/http://www.times-standard.com/localnews/ci_9368303 |url-status=dead |archive-date=February 4, 2013 |title=Ferndale man's remains to be returned to family 37 years after he was shot down in Vietnam |publisher=Times-Standard |accessdate=18 October 2012 }}</ref> || Presumptive finding of death<ref name="DPMO-MIA/KIA-BNR"/>
+|}
+
+==1972==
+{|class="wikitable sortable"
+|-
+! Date !! Name !! Rank !! Service !! Unit !! Operation !! Location !! Circumstances !! Status
+|-
+| April 14 || Greenleaf, Joseph G || Lieutenant || US Navy || [[VF-114]], USS ''Kitty Hawk'' || Easter Offensive || South Vietnam, Cam Lo District || Pilot of an F-4J hit by ground fire and seen to hit the ground with no ejection observed. The remains of the weapons systems office Lt. Clemie McKinney were returned in 1985<ref>{{cite web |url=http://www.virtualwall.org/dg/GreenleafJG01a.htm|title=LT Joseph Gales Greenleaf|work=The Virtual Wall|accessdate=24 July 2012}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR1"/>
+|}

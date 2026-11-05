@@ -1,0 +1,880 @@
+{
+ "head": {
+  "vars": [
+   "loc",
+   "t",
+   "tl",
+   "a"
+  ]
+ },
+ "results": {
+  "bindings": [
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q131217"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "320000"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1322134"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "gulf"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q180573"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "173809"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3024240"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "historical country"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q334868"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "16925"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q15673297"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "province of Laos"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q652818"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "10299"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q7252589"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "province of Cambodia"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q6425873"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "3.9"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q23442"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "island"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1850"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "678.46"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q14846916"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "provincial municipality of Cambodia"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1850"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "678.46"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q51929311"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "largest city"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1850"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "678.46"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1549591"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "big city"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1850"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "678.46"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q515"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "city"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1854"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "6772.59"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q51929311"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "largest city"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1854"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "6772.59"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1549591"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "big city"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1854"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "6772.59"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1381899"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "cities in Vietnam"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1854"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "6772.59"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q174844"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "megacity"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19316"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "264.08"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3249005"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "provincial city of Vietnam"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19316"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "264.08"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1549591"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "big city"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q30599"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "266.61"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3249005"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "provincial city of Vietnam"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q33356"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "10574.86"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q137325529"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "former provinces of Vietnam"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q33356"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "10438.4"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q137325529"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "former provinces of Vietnam"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q33425"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "81.55"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3249005"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "provincial city of Vietnam"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q33994"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "160.1534"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3249005"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "provincial city of Vietnam"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q33994"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "160.1534"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2112349"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "district-level town of Vietnam"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q36167"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "265.99"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3249005"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "provincial city of Vietnam"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q36167"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "265.99"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q27554677"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "former capital"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q36399"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "4947.11"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q27554677"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "former capital"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q36399"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "4947.11"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1381899"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "cities in Vietnam"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q36399"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "4947.11"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2824648"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "provinces of Vietnam"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q36399"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "4947.11"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q515"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "city"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q50203"
+    },
+    "a": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+     "type": "literal",
+     "value": "843.26"
+    },
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q17143371"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "county of South Korea"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1322134"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "gulf"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q212428"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q94993988"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "commercial traffic aerodrome"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q478595"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1248784"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "airport"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q478595"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q644371"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "international airport"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q478595"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q56061"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "administrative territorial entity"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q622778"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q82794"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "region"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q622778"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2114972"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "presidential palace"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q933384"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q10831626"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "province of South Vietnam"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1760239"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2389082"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "commune of Vietnam"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1924264"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q695850"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "airbase"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1926602"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q184358"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "reef"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1927337"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q12413618"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "international border"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2349960"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q41691"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "demilitarized zone"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2349960"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q4022"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "river"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2904975"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q695850"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "airbase"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q4115006"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2582669"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "district"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q4846962"
+    }
+   },
+   {
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q6487948"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2221906"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "geographic location"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q10823351"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2663913"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "PLA theater command"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q22442974"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q41176"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "building"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q55652939"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q137325529"
+    },
+    "tl": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "former provinces of Vietnam"
+    },
+    "loc": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q10822747"
+    }
+   }
+  ]
+ }
+}

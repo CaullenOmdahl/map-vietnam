@@ -1,0 +1,81 @@
+{
+ "results": {
+  "bindings": [
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q178561"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q60524462"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(105.942 10.535)"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q644371"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q478595"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(106.652 10.8188)"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q1248784"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q478595"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(106.652 10.8188)"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q3199915"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q183421"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(108.869444444 15.178333333)"
+    }
+   },
+   {
+    "t": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q245016"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q60785495"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(105.767654 10.298316)"
+    }
+   }
+  ]
+ }
+}

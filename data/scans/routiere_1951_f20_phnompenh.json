@@ -1,0 +1,129 @@
+{
+ "image": "data/raw/scans/routiere_1951_f20_phnompenh/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1338.1,
+   3613.9,
+   104.037229,
+   11.7
+  ],
+  [
+   1327.0,
+   6535.0,
+   104.037229,
+   10.8
+  ],
+  [
+   4221.3,
+   3619.2,
+   104.937229,
+   11.7
+  ],
+  [
+   4221.9,
+   6537.5,
+   104.937229,
+   10.8
+  ],
+  [
+   7120.5,
+   3615.8,
+   105.837229,
+   11.7
+  ],
+  [
+   7130.5,
+   6536.9,
+   105.837229,
+   10.8
+  ],
+  [
+   473.3,
+   786.5,
+   103.765109,
+   12.57079
+  ],
+  [
+   7100.6,
+   760.4,
+   105.837229,
+   12.58013
+  ],
+  [
+   7131.5,
+   8088.4,
+   105.837229,
+   10.321662
+  ],
+  [
+   498.0,
+   8118.0,
+   103.78227,
+   10.311273
+  ],
+  [
+   1347.9,
+   785.8,
+   104.037229,
+   12.571723
+  ],
+  [
+   1320.5,
+   8113.9,
+   104.037229,
+   10.31321
+  ],
+  [
+   4215.1,
+   777.6,
+   104.937229,
+   12.575438
+  ],
+  [
+   4219.8,
+   8100.4,
+   104.937229,
+   10.318579
+  ],
+  [
+   482.4,
+   3610.7,
+   103.772001,
+   11.7
+  ],
+  [
+   492.4,
+   6533.7,
+   103.778772,
+   10.8
+  ]
+ ],
+ "neatline": [
+  [
+   473.3,
+   786.5
+  ],
+  [
+   7100.6,
+   760.4
+  ],
+  [
+   7131.5,
+   8088.4
+  ],
+  [
+   498.0,
+   8118.0
+  ]
+ ],
+ "max_zoom": 13,
+ "meta": {
+  "title": "Phnom Penh (feuille 20)",
+  "series": "Carte routière de l'Indochine",
+  "scale": "1:400,000",
+  "date": "1951",
+  "dateNote": "Compiled by Service Géographique de l'Indochine, drawn and published by IGN 1950; printing code '1-51' (January 1951) in lower-right margin; graticule-georeferenced, datum unknown; within ~450 m of the 1965 sheets around Long Xuyên/My An",
+  "source": "http://hdl.handle.net/1885/133607 (JPG: https://openresearch-repository.anu.edu.au/server/api/core/bitstreams/73727af7-90c2-4c2b-8fad-cfde757f8ef4/content)"
+ }
+}

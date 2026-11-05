@@ -1,0 +1,157 @@
+{
+ "image": "data/raw/scans/fr_sgi_100k_228_longxuyen/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2473,
+   2746,
+   105.297229,
+   10.62
+  ],
+  [
+   4801,
+   2762,
+   105.477229,
+   10.62
+  ],
+  [
+   7129,
+   2774,
+   105.657229,
+   10.62
+  ],
+  [
+   9457,
+   2786.5,
+   105.837229,
+   10.62
+  ],
+  [
+   2461,
+   5099,
+   105.297229,
+   10.44
+  ],
+  [
+   4795,
+   5115,
+   105.477229,
+   10.44
+  ],
+  [
+   7123,
+   5128,
+   105.657229,
+   10.44
+  ],
+  [
+   9457,
+   5140,
+   105.837229,
+   10.44
+  ],
+  [
+   590,
+   742,
+   105.151565,
+   10.772513
+  ],
+  [
+   2473,
+   749,
+   105.297044,
+   10.772811
+  ],
+  [
+   4801,
+   759,
+   105.476904,
+   10.773076
+  ],
+  [
+   7129,
+   768,
+   105.656764,
+   10.773417
+  ],
+  [
+   9457,
+   777,
+   105.836624,
+   10.773759
+  ],
+  [
+   572,
+   6670,
+   105.151342,
+   10.319104
+  ],
+  [
+   2461,
+   6677,
+   105.297285,
+   10.319404
+  ],
+  [
+   4795,
+   6687,
+   105.477608,
+   10.319672
+  ],
+  [
+   7123,
+   6696,
+   105.657468,
+   10.320013
+  ],
+  [
+   9457,
+   6705,
+   105.837792,
+   10.320357
+  ],
+  [
+   585,
+   2740,
+   105.151572,
+   10.619695
+  ],
+  [
+   577,
+   5093,
+   105.151417,
+   10.439723
+  ]
+ ],
+ "neatline": [
+  [
+   590,
+   742
+  ],
+  [
+   9468,
+   777
+  ],
+  [
+   9460,
+   6705
+  ],
+  [
+   572,
+   6670
+  ]
+ ],
+ "max_zoom": 14,
+ "meta": {
+  "title": "Carte de l'Indochine 1:100 000, feuille 228 Long-Xuyên",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100000",
+  "date": "",
+  "dateNote": "Undated print: no edition/survey/print date in the margins (only 'Travaux exécutés au 25.000e', geodesy by Capt. Dumont; catalogue says 'sans date'). Style suggests early SGI edition, roughly 1910s-1930s. Graticule-georeferenced, datum unknown.; whole sheet shifted +0.0045° east (~490 m): its graticule sits ~470 m west of the 1965 sheets everywhere (old longitude origin)",
+  "source": "https://api.nakala.fr/data/10.34847/nkl.f2ffx15y/05684761a6be339b73fee0f51b1ecb7b6866090d"
+ },
+ "offset_deg": [
+  0.0045,
+  0.0
+ ]
+}
