@@ -15,6 +15,10 @@
      /api/library             -> S.lib (every map that can be added, with its state); polled only while maps are on
                                  their way. /api/library/add and /remove queue or delete maps: nothing downloads
                                  unless the person taps Add
+     /api/records             -> S.rec (every record source that can be added, with its state); polled only while
+                                 one is on its way. /api/records/add, /remove and /cancel queue, delete or stop
+                                 sources; /api/records/key saves a Kaggle key if Kaggle asks for one; /api/quit
+                                 stops the local server
      /api/evidence?bbox=…     -> fetched per grid cell (CELL / PCELL degrees) as the view moves, cached in
                                  evById / pnById, pushed to the "ev" / "pn" GeoJSON sources of every map
      /api/search, /api/gridref, /api/lonlat -> the search box, grid-square card and coordinate rows
@@ -28,7 +32,8 @@
    Sections, in order: constants, helpers, state, maps, historical maps, compare, evidence loading, filters,
    selection and position, map clicks, panel / sheet, panel views (home, record, nearby, pin, grid square,
    historical map, cases, sites), search, popovers, base map and theme, keyboard, boot. The map library (adding
-   and removing old maps) follows the historical-map card. */
+   and removing old maps) follows the historical-map card, and the records section (adding and removing record
+   sources, the first-run welcome and Quit) follows the library. */
 
 // ================================================================ constants
 // Today's base maps (raster XYZ tiles, Web Mercator).
@@ -85,7 +90,7 @@ async function api(path, opts = {}) {
   const r = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts, body: opts.body ? JSON.stringify(opts.body) : undefined });
   const ct = r.headers.get("Content-Type") || "";
   const data = ct.includes("json") ? await r.json() : await r.text();
-  if (!r.ok) throw new Error((data && data.error) || r.statusText);
+  if (!r.ok) throw Object.assign(new Error((data && data.error) || r.statusText), { data });
   return data;
 }
 // A short status message; with an undo callback it shows an Undo button (or another label) and stays up for at least 6 s.
@@ -266,7 +271,9 @@ const S = {
   view: { name: "home" }, history: [], placing: false, draft: null,
   nearR: store.get("nearR", 1000), nearPN: false, sheet: "half", panelHidden: false,
   // The map library (see "map library" below): every map that can be added, by id, with its state.
-  lib: { maps: [], byId: new Map(), series: {}, queueBytes: 0, loaded: false, err: null }, catalogLoaded: false,
+  lib: { maps: [], byId: new Map(), series: {}, queueBytes: 0, legacy: null, loaded: false, err: null }, catalogLoaded: false,
+  // The record sources (see "records" below): every source that can be added, by id, with its state.
+  rec: { sources: [], byId: new Map(), key: {}, busy: false, firstRun: false, revision: null, loaded: false, err: null },
 };
 window.S = S; // console handle for debugging (with window.map, set in boot)
 // Resolves once the old-map catalogue is in S.catalog (set in boot); overlays are added only after it.
@@ -826,15 +833,17 @@ function queueCell(type, [x, y], size) {
 }
 function pump() {
   while (active < 4 && pendingQ.length) {
-    const job = pendingQ.shift(); active++;
+    const job = pendingQ.shift(), gen = evGen; active++;
     const kinds = job.type === "e" ? EV_KINDS.join(",") : "placename";
     api(`/api/evidence?bbox=${job.bbox.map(v => v.toFixed(4)).join(",")}&kinds=${kinds}&slim=1&limit=50000`).then(fc => {
+      if (gen !== evGen) return; // the records changed while this was on its way; the cell is asked for again
       const into = job.type === "e" ? evById : pnById;
       for (const f of fc.features) if (!into.has(f.properties.id)) into.set(f.properties.id, prep(f));
       cellState.set(job.key, "done");
       if (fc.truncated) console.info("cell truncated", job.key);
       flushSoon(job.type);
     }).catch(err => {
+      if (gen !== evGen) return;
       cellState.delete(job.key);
       if (!loadErrShown) { loadErrShown = true; toast("Some evidence could not be loaded: " + err.message, 5000); }
     }).finally(() => { active--; pump(); updateLoading(); });
@@ -1325,9 +1334,11 @@ function pushRecentGrid(ref, datum) {
 // Second line of a recent row: what it is, when, and the record id (identical titles stay distinguishable).
 const recentMeta = r => r.kind === "gridref" ? `Grid square · ${r.datum === "wgs84" ? "WGS84 / GPS" : "Indian 1960"}`
   : [kindOne(r), r.date ? fmtDay(r.date) : "", r.rid ? `${srcShort(r.src).split(" ")[0]} ${r.rid}` : ""].filter(Boolean).join(" · ");
-VIEWS.home = () => {
+VIEWS.home = v => {
   const rec = recent();
+  homeLastSig = homeSig();
   return `
+    ${welcomeHTML()}
     ${S.kase ? `<div class="case-pill"><span class="sw site"></span><div class="grow"><span class="small-t muted">Open case</span><b>${esc(S.kase.name)}</b></div>
       <button class="btn small" data-act="openCase" data-id="${S.kase.id}">Open</button></div>` : ""}
     <h3 class="section-title">Cases <span class="right"><button class="linkish" data-act="newCaseToggle">New case</button></span></h3>
@@ -1354,11 +1365,15 @@ VIEWS.home = () => {
       <span class="grow"><span class="t">${esc(filterWords().kinds || "All evidence layers")}</span>
         <span class="m">${esc(S.years ? "Years " + yearsText() : "All years")} · ${esc(S.eraA ? eraTitle(S.eraA) + " map" + (eraInYears(eraById(S.eraA)) ? "" : " (hidden: outside years)") : "No old map")}</span></span>
       ${icon.chevR}</button>
-      <button class="summary-row" data-act="openLibrary"><span class="sym" aria-hidden="true" style="color:var(--accent)">${icon.map}</span>
-        <span class="grow"><span class="t">Old maps</span><span class="m">${esc(libHomeLine())}</span></span>${icon.chevR}</button></div>
-    <div class="foot-note"><details><summary style="cursor:pointer">Sources (${Object.keys(S.sources).length})</summary>
-      ${Object.values(S.sources).map(s => `<p style="margin:6px 0">${esc(s.name)} · ${fmtInt(s.records)} records</p>`).join("")}</details>
-      <span>${coarse ? "Touch and hold the map to drop a pin. " : "Click an empty spot (or right-click) to drop a pin. "}Runs on your computer only. Records can be wrong: check each source.</span></div>`;
+      <button class="summary-row" data-act="openLibrary"><span class="row-ico" aria-hidden="true">${icon.map}</span>
+        <span class="grow"><span class="t">Old maps</span><span class="m">${esc(libHomeLine())}</span></span>${icon.chevR}</button>
+      <button class="summary-row" data-act="openRecords"><span class="row-ico" aria-hidden="true">${S.rec.busy ? '<span class="spin"></span>' : icon.doc}</span>
+        <span class="grow"><span class="t">Records</span><span class="m" data-rec-line>${esc(recHomeLine())}</span></span>${icon.chevR}</button></div>
+    <div class="foot-note"><span>${coarse ? "Touch and hold the map to drop a pin. " : "Click an empty spot (or right-click) to drop a pin. "}Runs on your computer only. Records can be wrong: check each source.</span></div>
+    ${v.quit ? `<div class="confirm-box calm quit-box" role="alertdialog" aria-label="Quit Map Vietnam">
+        <span>Quit Map Vietnam? The map stops working in this window until you start it again.${S.rec.busy || libBusyMaps().length ? " What is being added now stops; what was already downloaded is kept." : ""}</span>
+        <div class="row"><button class="btn small primary" data-act="quit">Quit</button><button class="btn small" data-act="quitCancel">Cancel</button></div></div>`
+      : `<button class="linkish quit-link" data-act="quitAsk">Quit Map Vietnam</button>`}`;
 };
 VIEWS.home.after = () => {
   $("#newCase")?.addEventListener("submit", async e => {
@@ -1848,7 +1863,7 @@ async function loadLibrary() {
 // put a finished map in the picker).
 function scheduleLibraryPoll() {
   clearTimeout(libTimer);
-  if (libBusyMaps().length) libTimer = setTimeout(loadLibrary, S.view.name === "library" ? LIB_POLL_OPEN_MS : LIB_POLL_CLOSED_MS);
+  if ((libBusyMaps().length || S.lib.legacy?.state === "converting") && !stopped) libTimer = setTimeout(loadLibrary, S.view.name === "library" ? LIB_POLL_OPEN_MS : LIB_POLL_CLOSED_MS);
 }
 const justInstalled = new Set(); // maps seen to finish, announced once their layer is on the map
 function applyLibrary(r) {
@@ -1857,7 +1872,7 @@ function applyLibrary(r) {
   // A sheet's catalogue corners are on its own old datum, a few hundred metres off today's map; the server sends
   // each map's outline on WGS84 (its real extent once added), which is what is drawn and compared with the view.
   for (const m of maps) if (m.outline) m.bounds = m.outline;
-  S.lib = { maps, byId: new Map(maps.map(m => [m.id, m])), series: r.series || {}, queueBytes: r.queue_bytes || 0, loaded: true, err: null };
+  S.lib = { maps, byId: new Map(maps.map(m => [m.id, m])), series: r.series || {}, queueBytes: r.queue_bytes || 0, legacy: r.legacy || null, loaded: true, err: null };
   if (!first) for (const m of maps) {
     const was = before.get(m.id)?.state;
     if (!was || was === m.state) continue;
@@ -2069,7 +2084,7 @@ function libModel() {
 function libSig(md = libModel()) {
   const ids = l => l.map(m => m.id + ":" + m.state).join();
   return JSON.stringify([S.lib.loaded, S.lib.err, md.series, md.seriesHere, ids(md.adding), ids(md.installed), ids(md.available),
-    S.view.sel, S.view.confirm, S.eraA, S.catalog.length]);
+    S.view.sel, S.view.confirm, S.eraA, S.catalog.length, S.lib.legacy]);
 }
 let libLastSig = "";
 function libRefreshView(force = false) {
@@ -2156,6 +2171,22 @@ function libRow(m) {
       <span class="t">${esc(m.title)}</span><span class="m${m.state === "failed" ? " bad" : ""}" data-prog-t="${id}">${esc(libMeta(m))}</span></button>
     ${libControl(m)}${sel ? libDetail(m) : ""}</li>`;
 }
+// Maps added by an older version of Map Vietnam are stored the old way and do not show until they are converted.
+function legacyHTML() {
+  const l = S.lib.legacy;
+  if (!l || !l.count) return "";
+  const n = `${l.count} map${l.count === 1 ? "" : "s"}`;
+  if (l.state === "converting") return `<div class="lib-status" role="status"><span class="spin" aria-hidden="true"></span>
+    <span class="grow"><b>Converting ${n} from an older version</b><span class="small-t muted">${l.converted ? `${l.converted} done. ` : ""}They show here as each one finishes.</span></span></div>`;
+  return `<div class="confirm-box calm" role="group" aria-label="Maps from an older version">
+    <span><b>${n} from an older version</b> of Map Vietnam ${l.count === 1 ? "is" : "are"} on this computer${l.bytes ? ` (${fmtMB(l.bytes)})` : ""}. Convert ${l.count === 1 ? "it" : "them"} to use ${l.count === 1 ? "it" : "them"} here; nothing is downloaded.</span>
+    ${l.state === "failed" && l.error ? `<span class="err">${esc(l.error)}</span>` : ""}
+    <div class="row"><button class="btn small primary" data-act="libMigrate">${l.state === "failed" ? "Try again" : `Convert ${l.count === 1 ? "it" : "them"}`}</button></div></div>`;
+}
+ACTIONS.libMigrate = async () => {
+  try { applyLibrary(await api("/api/library/migrate", { method: "POST", body: {} })); }
+  catch (e) { toast("Could not convert: " + e.message, 6000); }
+};
 VIEWS.library = v => {
   const md = libModel();
   libLastSig = libSig(md);
@@ -2178,6 +2209,7 @@ VIEWS.library = v => {
   // The series switch comes first and stays put; the maps on their way follow under one status line (it is their
   // heading), then the ones that failed, then the rest.
   return `${headHTML("Old maps", `<span>${esc(sub)}</span>`)}
+    ${legacyHTML()}
     ${md.seriesHere.length > 1 ? `<div class="seg lib-seg" role="group" aria-label="Show maps of one scale">
       ${["all", ...md.seriesHere].map(k => `<button data-act="libSeries" data-s="${k}" aria-pressed="${md.series === k}">${k === "all" ? "All" : SERIES_SEG[k]}</button>`).join("")}</div>` : ""}
     ${busy.length ? `<div class="lib-status" role="status"><span class="spin" aria-hidden="true"></span>
@@ -2256,6 +2288,372 @@ ACTIONS.libAddAll = el => {
 };
 
 ACTIONS.eraRemove = el => openLibrary(el.dataset.id, "remove:" + el.dataset.id);
+
+// ================================================================ records (adding and removing record sources)
+// The records on the map come from public archives, one "source" at a time (place names, hamlets, casualty
+// records, air strikes and so on). Nothing is downloaded until the person asks: the Records card lists every
+// source from /api/records with its state (available, queued, running, added or failed) and Add, Stop, Update and
+// Remove. The server adds one source at a time in the background, so the viewer polls only while something is on
+// its way. Each answer carries a revision number that changes when the stored records changed; the evidence on
+// the map is then fetched again.
+const REC_BUSY = new Set(["queued", "running"]);
+const REC_POLL_OPEN_MS = 1000, REC_POLL_CLOSED_MS = 3000; // card open / closed; no polling at all when idle
+const BIG_AREA_KM = 250; // above this width or height, the air-strike chooser suggests zooming in first
+let recTimer = null, recInflight = false, recWasAdding = false, stopped = false;
+const recBusy = () => S.rec.sources.filter(s => REC_BUSY.has(s.state));
+async function loadRecords() {
+  if (recInflight || stopped) return;
+  recInflight = true; clearTimeout(recTimer);
+  try { applyRecords(await api("/api/records")); }
+  catch (e) { S.rec.err = e.message; S.rec.loaded = true; recRefreshView(); }
+  finally { recInflight = false; scheduleRecordsPoll(); }
+}
+function scheduleRecordsPoll() {
+  clearTimeout(recTimer);
+  if (S.rec.busy && !stopped) recTimer = setTimeout(loadRecords, S.view.name === "records" ? REC_POLL_OPEN_MS : REC_POLL_CLOSED_MS);
+}
+function applyRecords(r) {
+  const before = S.rec, first = !before.loaded;
+  const sources = r.sources || [];
+  S.rec = { sources, byId: new Map(sources.map(s => [s.id, s])), key: r.key || {}, busy: !!r.busy, firstRun: !!r.first_run, revision: r.revision, loaded: true, err: null };
+  if (!first) for (const s of sources) {
+    const was = before.byId.get(s.id);
+    if (was && was.state !== "failed" && s.state === "failed")
+      toast(`${s.title} could not be ${s.removing ? "removed" : "added"}.`, 7000, async () => openRecords(s.id), "See why");
+  }
+  // One note when the whole queue is done, not one per source.
+  if (sources.some(s => REC_BUSY.has(s.state) && !s.removing)) recWasAdding = true;
+  else if (recWasAdding) {
+    recWasAdding = false;
+    if (!sources.some(s => s.state === "failed")) toast("The records are ready");
+  }
+  if (!first && before.revision !== r.revision) reloadEvidence();
+  // A phone starts with the sheet tucked away; on the very first run it opens so the welcome is seen.
+  if (first && S.rec.firstRun && !isDesk() && S.view.name === "home" && S.sheet === "peek") setSheet("half");
+  recRefreshView(); scheduleRecordsPoll();
+}
+// The stored records changed: forget the cached cells and fetch the view again, with the source and layer lists.
+let evGen = 0; // answers to requests made before the last reload are dropped (see pump)
+function reloadEvidence() {
+  evGen++;
+  evById.clear(); pnById.clear(); cellState.clear(); pendingQ = []; fullById.clear();
+  loadView(); flushSoon("e"); flushSoon("p");
+  loadSources(); checkEmptyKinds();
+}
+async function recAdd(ids, extra = {}) {
+  if (S.view.name === "records") S.view.ask = null;
+  try { applyRecords(await api("/api/records/add", { method: "POST", body: { ids, ...extra } })); }
+  catch (e) { toast("Could not add: " + e.message, 7000); recRefreshView(true); }
+}
+// Stops sources that are queued or running (what was downloaded is kept), or clears a failure.
+async function recCancel(ids) {
+  try { applyRecords(await api("/api/records/cancel", { method: "POST", body: { ids } })); }
+  catch (e) { toast("Could not stop: " + e.message, 5000); }
+}
+async function recRemove(id) {
+  const s = S.rec.byId.get(id);
+  if (!s) return;
+  if (S.view.name === "records") S.view.ask = null;
+  try { applyRecords(await api("/api/records/remove", { method: "POST", body: { ids: [id], cascade: s.needed_by.length > 0 } })); }
+  catch (e) { toast("Could not remove: " + e.message, 6000); recRefreshView(true); return; }
+  const now = S.rec.byId.get(id);
+  if (now?.state === "available") toast(`Removed ${s.title}`);
+}
+function openRecords(sel = null, ask = null) {
+  const from = document.activeElement;
+  closePopovers();
+  show("records", { sel, ask });
+  if (from && from !== document.body && !$("#panel").contains(from)) S.opener = from;
+  focusCard();
+  loadRecords();
+  if (sel) reveal($(`#view [data-lib-row="${CSS.escape(sel)}"]`));
+}
+
+// ---- words
+const kmWide = a => (a[2] - a[0]) * 111.32 * Math.cos((a[1] + a[3]) / 2 * Math.PI / 180), kmTall = a => (a[3] - a[1]) * 110.6;
+const sizeWords = a => `about ${fmtInt(Math.max(1, Math.round(kmWide(a))))} km wide and ${fmtInt(Math.max(1, Math.round(kmTall(a))))} km tall`;
+// The part of the map on screen that the air strikes can be added for ([w, s, e, n], to about 100 m), or null
+// when the view lies outside the region the records cover.
+function strikeArea() {
+  const v = viewBounds(), lim = S.rec.byId.get("thor")?.area_choice?.within;
+  if (!v || !lim) return null;
+  const a = [Math.max(v[0], lim[0]), Math.max(v[1], lim[1]), Math.min(v[2], lim[2]), Math.min(v[3], lim[3])].map(x => +x.toFixed(3));
+  return a[0] < a[2] && a[1] < a[3] ? a : null;
+}
+function strikeAreaWords() {
+  const a = strikeArea();
+  if (!a) return "Move the map over Vietnam, Laos or Cambodia first.";
+  const big = kmWide(a) > BIG_AREA_KM || kmTall(a) > BIG_AREA_KM;
+  return `The map now shows an area ${sizeWords(a)}.${big ? " That may hold too many strikes: zoom in for a result you can count on." : ""}`;
+}
+const dayWords = iso => { const d = new Date(iso); return isNaN(d) ? "" : `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`; };
+const keyAskWords = () => S.rec.key.present ? "Kaggle did not accept the saved key" : "Kaggle asked for a key";
+// The second line of a source's row: what is happening to it, how many records it holds, or what adding it costs.
+function recMeta(s) {
+  if (REC_BUSY.has(s.state)) return s.status_text || (s.removing ? "Removing these records" : "Waiting for its turn");
+  if (s.state === "failed") return s.removing ? "Could not be removed" : s.wants_key ? keyAskWords() : "Could not be added";
+  if (s.state === "added") return `${fmtInt(s.records)} record${s.records === 1 ? "" : "s"}`;
+  return [s.size_mb ? `${fmtInt(s.size_mb)} MB` : "", s.time_text].filter(Boolean).join(" · ");
+}
+// One line for the home card: what is being added now, or what is on this computer.
+function recHomeLine() {
+  if (!S.rec.loaded) return "";
+  const busy = recBusy(), now = busy.find(s => s.state === "running") || busy[0];
+  if (now) return `${now.removing ? "Removing" : "Adding"} ${now.title}${now.status_text && now.state === "running" ? ": " + now.status_text : ""}`;
+  if (S.rec.busy) return "Being changed in another window";
+  const added = S.rec.sources.filter(s => s.state === "added");
+  if (!added.length) return "None yet. Add place names, bases, losses and more";
+  return `${added.length} source${added.length === 1 ? "" : "s"} · ${fmtInt(added.reduce((a, s) => a + (s.records || 0), 0))} records`;
+}
+// "A", "A and B", "A, B and C".
+const listWords = l => l.length < 2 ? l.join("") : `${l.slice(0, -1).join(", ")} and ${l.at(-1)}`;
+const stdToAdd = () => S.rec.sources.filter(s => s.standard && (s.state === "available" || s.state === "failed"));
+const stdMB = list => list.reduce((a, s) => a + (s.size_mb || 0), 0);
+// "about 15 minutes" for a list of sources, from each one's own estimate, rounded up to five minutes.
+function stdTime(list) {
+  const mins = list.reduce((a, s) => a + (+(/(\d+) minute/.exec(s.time_text || "") || [0, 0])[1]), 0);
+  return mins ? `about ${Math.ceil(mins / 5) * 5} minutes` : "a while";
+}
+
+// ---- the card
+// Everything the card's HTML depends on except progress and status words, which are patched in place (recPatch).
+function recSig() {
+  return JSON.stringify([S.rec.loaded, S.rec.err, S.rec.busy, S.rec.key, S.view.sel, S.view.ask,
+    S.rec.sources.map(s => [s.id, s.state, s.removing, s.wants_key, s.error, s.records, s.held_in_cases, s.area_text, s.disk_bytes > 0, s.progress == null])]);
+}
+let recLastSig = "";
+function recRefreshView(force = false) {
+  if (S.view.name === "home") return homeRefresh();
+  if (S.view.name !== "records") return;
+  if (force || recSig() !== recLastSig) rerenderKeepingFocus();
+  else recPatch();
+}
+function recPatch() {
+  for (const s of recBusy()) {
+    const id = CSS.escape(s.id), bar = $(`#view [data-prog="${id}"]`);
+    if (bar) bar.style.strokeDashoffset = ringOffset({ state: s.state === "queued" ? "queued" : "", progress: s.progress });
+    $$(`#view [data-prog-t="${id}"]`).forEach(t => { t.textContent = recMeta(s); });
+  }
+  const area = $("#view [data-rec-area]");
+  if (area) { area.textContent = strikeAreaWords(); const go = $('#view [data-act="recAddArea"]'); if (go) go.disabled = !strikeArea(); }
+}
+// The control at the end of a row: Add, Retry, a progress ring that stops it, or a chevron for a source that is
+// on this computer (its row opens to Update and Remove).
+function recControl(s) {
+  const t = esc(s.title), id = esc(s.id);
+  if (s.state === "available") return `<button class="lib-pill" data-act="recAdd" data-id="${id}" aria-label="Add ${t}">Add</button>`;
+  if (s.state === "failed") return `<button class="lib-pill" data-act="recRetry" data-id="${id}" aria-label="Try ${t} again">Retry</button>`;
+  if (REC_BUSY.has(s.state)) {
+    const wait = s.state === "queued" || s.progress == null;
+    return `<button class="lib-ring" data-act="recStop" data-id="${id}" aria-label="Stop ${s.removing ? "removing" : "adding"} ${t}" title="Stop"${s.removing ? " disabled" : ""}>
+      <svg viewBox="0 0 24 24" class="${wait ? "wait" : ""}" aria-hidden="true"><circle class="track" cx="12" cy="12" r="9"/>
+      <circle class="bar" data-prog="${id}" cx="12" cy="12" r="9" style="stroke-dasharray:${RING_C};stroke-dashoffset:${ringOffset({ state: wait ? "queued" : "", progress: s.progress })}"/>
+      ${s.removing ? "" : '<rect class="stop" x="9" y="9" width="6" height="6" rx="1"/>'}</svg></button>`;
+  }
+  return `<span class="rec-chev" aria-hidden="true">${icon.chevR}</span>`;
+}
+// How to get a Kaggle key and where to put it. The file is read here in the browser; only the user name and key
+// in it are sent on to the local server, which saves them on this computer.
+const keyBox = () => `<div class="confirm-box calm key-box">
+    <b>${keyAskWords()}</b>
+    <ol class="steps"><li>Sign in at <a href="https://www.kaggle.com/settings" target="_blank" rel="noopener">kaggle.com</a>. An account is free.</li>
+      <li>Open Settings and, under API, click “Create Legacy API Key”. A file called kaggle.json is downloaded.</li>
+      <li>Choose that file here.</li></ol>
+    <div class="row"><button class="btn small primary" data-act="recKeyPick">Choose kaggle.json</button><input type="file" id="keyFile" accept=".json,application/json" hidden></div>
+    <details><summary>Or type the user name and key</summary>
+      <form id="keyForm" class="stack" autocomplete="off">
+        <label class="field"><span>Kaggle user name</span><input type="text" name="username" required autocapitalize="none" spellcheck="false"></label>
+        <label class="field"><span>Key</span><input type="password" class="txt" name="key" required autocomplete="off"></label>
+        <div class="row"><button class="btn small primary" type="submit">Save and add the air strikes</button></div></form></details>
+    <div class="err" id="keyErr" role="alert"></div>
+    <p class="muted small-t">The key is saved on this computer and is only ever sent to Kaggle.${S.rec.key.present && S.rec.key.source === "env file" ? ` <button class="linkish" data-act="recKeyForget">Forget the saved key</button>` : ""}</p></div>`;
+// The opened row: what the source is, what it costs or holds, and every action on it.
+function recDetail(s) {
+  const t = esc(s.title), id = esc(s.id), ask = S.view.ask, busy = REC_BUSY.has(s.state);
+  const facts = s.state === "added"
+    ? [dayWords(s.added_at) ? `Added ${dayWords(s.added_at)}` : "", s.disk_bytes ? `keeps ${fmtMB(s.disk_bytes)} of downloads` : ""].filter(Boolean).join(" · ")
+    : !busy ? [s.size_mb ? `Downloads about ${fmtInt(s.size_mb)} MB` : "Nothing to download", s.time_text].filter(Boolean).join(" · ") : "";
+  const also = s.state !== "added" && s.also_adds.length ? `Adding it also adds ${listWords(s.also_adds.map(x => `“${esc(x.title)}”`))}, which it is made from.` : "";
+  let box = "";
+  if (s.id === "thor" && s.wants_key && s.state === "failed") box = keyBox();
+  else if (ask === "area:" + s.id) box = `<div class="confirm-box calm" role="group" aria-label="Choose the area for the air strikes">
+      <span>Air strikes are added for one area at a time, up to ${fmtInt(s.area_choice.max_records)} strikes. Move and zoom the map until it shows the area you want.</span>
+      <span class="muted" data-rec-area>${esc(strikeAreaWords())}</span>
+      <div class="row"><button class="btn small primary" data-act="recAddArea" data-id="${id}"${strikeArea() ? "" : " disabled"}>${s.state === "added" ? "Replace with strikes for this area" : "Add strikes for this area"}</button>
+      <button class="btn small" data-act="recAskCancel">Cancel</button></div></div>`;
+  else if (ask === "accept:" + s.id) box = `<div class="confirm-box calm" role="alertdialog" aria-label="Add ${t}">
+      <span>${esc(s.warning)}</span>
+      <div class="row"><button class="btn small primary" data-act="recAccept" data-id="${id}">Add ${t.toLowerCase()}</button><button class="btn small" data-act="recAskCancel">Cancel</button></div></div>`;
+  else if (ask === "remove:" + s.id) box = `<div class="confirm-box" role="alertdialog" aria-label="Remove ${t}">
+      <span>Remove <b>${t}</b> from this computer? Its ${fmtInt(s.records)} records leave the map${s.disk_bytes ? ` and ${fmtMB(s.disk_bytes)} of downloads are deleted` : ""}.
+        ${s.needed_by.length ? `This also removes ${listWords(s.needed_by.map(x => `<b>${esc(x.title)}</b>`))}, which ${s.needed_by.length === 1 ? "is" : "are"} made from it.` : ""}
+        Records you put in a case are kept. You can add it again later.</span>
+      <div class="row"><button class="btn small danger solid" data-act="recRemove" data-id="${id}">Remove</button><button class="btn small" data-act="recAskCancel">Keep it</button></div></div>`;
+  // Where the strikes are, in words a person can picture; "Zoom to its area" shows it on the map.
+  const box4 = s.id === "thor" && s.state === "added" && s.options?.area;
+  const area = box4 ? `<p>Covers ${/^Around /.test(s.area_text || "") ? "the area a" + s.area_text.split(":")[0].slice(1) : "one area"}, ${esc(sizeWords(box4))}.</p>` : "";
+  let acts = "";
+  if (s.state === "added") acts = `${s.id === "thor" ? `<button class="btn small" data-act="recFitArea">Zoom to its area</button><button class="btn small" data-act="recAskArea" data-id="${id}">Change area</button>` : ""}
+      ${s.standard ? `<button class="btn small" data-act="recUpdate" data-id="${id}" title="Download it again, for corrections made since">Update</button>` : ""}
+      <button class="btn small danger" data-act="recAskRemove" data-id="${id}">${icon.trash}Remove</button>`;
+  else if (s.state === "failed") acts = `<button class="btn small" data-act="recDismiss" data-id="${id}">${s.wants_key ? "Not now" : "Dismiss"}</button>`;
+  const savedKey = s.id === "thor" && S.rec.key.present && S.rec.key.source === "env file" && !(s.wants_key && s.state === "failed")
+    ? `<p class="muted">A Kaggle key is saved on this computer. <button class="linkish" data-act="recKeyForget">Forget it</button></p>` : "";
+  return `<div class="lib-detail" id="recd-${id}">
+    <p>${esc(s.description)}</p>
+    ${area}
+    ${facts ? `<p class="muted">${esc(facts)}</p>` : ""}
+    ${also ? `<p class="muted">${also}</p>` : ""}
+    ${s.held_in_cases ? `<p class="muted">${fmtInt(s.held_in_cases)} of its records ${s.held_in_cases === 1 ? "is" : "are"} kept because a case holds ${s.held_in_cases === 1 ? "it" : "them"}.</p>` : ""}
+    ${s.state === "failed" && s.error && !s.wants_key ? `<p class="err">${esc(s.error)}</p>${s.error_detail ? `<details><summary>Details</summary><p class="muted mono">${esc(s.error_detail)}</p></details>` : ""}` : ""}
+    ${acts ? `<div class="row">${acts}</div>` : ""}
+    ${box}${savedKey}
+    ${s.licence ? `<details><summary>Licence</summary><p class="muted">${esc(s.licence)}</p></details>` : ""}</div>`;
+}
+function recRow(s) {
+  const sel = S.view.sel === s.id, id = esc(s.id);
+  return `<li class="lib-row${sel ? " sel" : ""}" data-lib-row="${id}">
+    <button class="main" data-act="recSel" data-id="${id}" aria-expanded="${sel}"${sel ? ` aria-controls="recd-${id}"` : ""}>
+      <span class="t">${esc(s.title)}</span><span class="m${s.state === "failed" ? " bad" : ""}" data-prog-t="${id}">${esc(recMeta(s))}</span></button>
+    ${recControl(s)}${sel ? recDetail(s) : ""}</li>`;
+}
+VIEWS.records = () => {
+  recLastSig = recSig();
+  const src = S.rec.sources, by = st => src.filter(s => s.state === st);
+  const busy = recBusy(), added = by("added"), failed = by("failed"), available = by("available");
+  const total = added.reduce((a, s) => a + (s.records || 0), 0);
+  const sub = !S.rec.loaded ? "Looking…" : S.rec.err ? "The list of records could not be loaded"
+    : added.length ? `${fmtInt(total)} records from ${added.length} source${added.length === 1 ? "" : "s"} on this computer` : "No records on this computer yet";
+  const rows = list => `<div class="group"><ul class="list lib-list">${list.map(recRow).join("")}</ul></div>`;
+  const list = (title, l) => l.length ? `<h3 class="sub-head">${title}</h3>${rows(l)}` : "";
+  const std = stdToAdd(), adding = busy.filter(s => !s.removing).length;
+  const bulk = std.length >= 2 ? `<button class="btn lib-bulk" data-act="recAddStd">${icon.plus}<span>Add the standard records</span><span class="muted">${fmtInt(stdMB(std))} MB</span></button>` : "";
+  return `${headHTML("Records", `<span>${esc(sub)}</span>`)}
+    ${busy.length ? `<div class="lib-status" role="status"><span class="spin" aria-hidden="true"></span>
+      <span class="grow"><b>${adding ? `Adding ${adding} source${adding === 1 ? "" : "s"}` : "Removing"}</b><span class="small-t muted">One at a time. You can keep using the map.</span></span>
+      ${adding > 1 ? `<button class="linkish small-t" data-act="recStopAll">Stop all</button>` : ""}</div>${rows(busy)}` : ""}
+    ${!busy.length && S.rec.busy ? `<div class="lib-status" role="status"><span class="spin" aria-hidden="true"></span><span class="grow"><b>Busy in another window</b><span class="small-t muted">Records are being changed from a terminal or another Map Vietnam window.</span></span></div>` : ""}
+    ${list("Could not be added", failed)}
+    ${list("On this computer", added)}
+    ${available.length ? `<h3 class="sub-head">Available</h3>${bulk}${rows(available)}` : ""}
+    <p class="foot-note">Records come from public archives and stay on this computer. Nothing downloads until you add it. Records can be wrong: check each source.</p>`;
+};
+VIEWS.records.after = () => {
+  // The key, from the file Kaggle hands out or typed in. Neither is kept in the page afterwards.
+  const err = msg => { const e = $("#keyErr"); if (e) e.textContent = msg; };
+  $("#keyFile")?.addEventListener("change", async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    let cfg = null;
+    try { cfg = JSON.parse(await file.text()); } catch { /* not JSON: reported below */ }
+    e.target.value = "";
+    if (!cfg || typeof cfg.username !== "string" || typeof cfg.key !== "string") return err("That is not a kaggle.json file: it should hold a user name and a key. Download a new one from Kaggle and choose it again.");
+    saveKey(cfg.username, cfg.key, err);
+  });
+  $("#keyForm")?.addEventListener("submit", e => {
+    e.preventDefault();
+    const f = e.target; saveKey(f.username.value.trim(), f.key.value.trim(), err);
+  });
+};
+// Saves the key on this computer, then tries the air strikes again for the area that was asked for.
+async function saveKey(username, key, err) {
+  try { applyRecords(await api("/api/records/key", { method: "POST", body: { username, key } })); }
+  catch (e) { return err(e.message); }
+  const thor = S.rec.byId.get("thor");
+  toast("Key saved on this computer");
+  if (thor && thor.state === "failed") recAdd(["thor"], thor.options ? { options: { thor: thor.options } } : {});
+}
+function recSelect(id) {
+  const v = S.view;
+  if (v.name !== "records") return;
+  v.sel = v.sel === id ? null : id; v.ask = null;
+  rerenderKeepingFocus();
+  if (v.sel) reveal($(`#view [data-lib-row="${CSS.escape(id)}"]`));
+}
+// Opens a row on one of its questions (the area, the long-download warning, removal) and puts focus on its answer.
+function recAsk(id, ask) {
+  if (S.view.name !== "records") return openRecords(id, `${ask}:${id}`);
+  S.view.sel = id; S.view.ask = `${ask}:${id}`;
+  rerenderKeepingFocus();
+  const box = $(`#view [data-lib-row="${CSS.escape(id)}"] .confirm-box`);
+  box?.querySelector("button:not([disabled])")?.focus({ preventScroll: true });
+  reveal(box);
+}
+ACTIONS.openRecords = () => openRecords();
+ACTIONS.recSel = el => recSelect(el.dataset.id);
+ACTIONS.recAdd = el => {
+  const s = S.rec.byId.get(el.dataset.id);
+  if (!s) return;
+  if (s.id === "thor") recAsk(s.id, "area");
+  else if (s.opt_in) recAsk(s.id, "accept");
+  else recAdd([s.id]);
+};
+ACTIONS.recRetry = el => {
+  const s = S.rec.byId.get(el.dataset.id);
+  if (!s) return;
+  if (s.wants_key) { if (S.view.sel !== s.id) recSelect(s.id); return; } // the key box is the way forward
+  if (s.removing) return recRemove(s.id);
+  recAdd([s.id], { ...(s.opt_in ? { accept: [s.id] } : {}), ...(s.options ? { options: { [s.id]: s.options } } : {}) });
+};
+ACTIONS.recAddArea = el => { const area = strikeArea(); if (area) recAdd([el.dataset.id], { options: { [el.dataset.id]: { area } } }); };
+ACTIONS.recAccept = el => recAdd([el.dataset.id], { accept: [el.dataset.id] });
+ACTIONS.recAskArea = el => recAsk(el.dataset.id, "area");
+ACTIONS.recAskRemove = el => recAsk(el.dataset.id, "remove");
+ACTIONS.recAskCancel = () => { S.view.ask = null; rerenderKeepingFocus(); };
+ACTIONS.recRemove = el => recRemove(el.dataset.id);
+ACTIONS.recUpdate = el => { const s = S.rec.byId.get(el.dataset.id); if (s) recAdd([s.id], { refresh: true, ...(s.opt_in ? { accept: [s.id] } : {}) }); };
+ACTIONS.recStop = el => recCancel([el.dataset.id]);
+ACTIONS.recDismiss = el => recCancel([el.dataset.id]);
+ACTIONS.recStopAll = () => recCancel(recBusy().filter(s => !s.removing).map(s => s.id));
+ACTIONS.recAddStd = () => recAdd(stdToAdd().map(s => s.id));
+ACTIONS.recFitArea = () => {
+  const a = S.rec.byId.get("thor")?.options?.area;
+  if (!a) return;
+  if (!isDesk()) setSheet("peek");
+  primary().fitBounds([[a[0], a[1]], [a[2], a[3]]], { padding: mapPadding(), duration: reduceMotion ? 0 : 600 });
+};
+ACTIONS.recKeyPick = () => $("#keyFile")?.click();
+ACTIONS.recKeyForget = async () => {
+  try { applyRecords(await api("/api/records/key", { method: "DELETE" })); toast("The key was removed from this computer"); }
+  catch (e) { toast("Could not remove the key: " + e.message, 5000); }
+};
+
+// ---- first run, and quitting
+// The first time, the home card offers the standard records in one tap. Nothing downloads before that tap.
+function welcomeHTML() {
+  if (!S.rec.loaded || !S.rec.firstRun || S.rec.busy) return "";
+  const std = stdToAdd();
+  if (!std.length) return "";
+  return `<div class="welcome"><h2>Add records to the map</h2>
+    <p>Place names, wartime hamlets, bases, battles and casualty records, from public archives. About ${fmtInt(stdMB(std))} MB to download. It takes ${stdTime(std)}, and you can use the map meanwhile.</p>
+    <div class="row"><button class="btn primary" data-act="welcomeAdd">Add the standard records</button><button class="btn" data-act="welcomeChoose">Choose which</button></div>
+    <button class="linkish small-t" data-act="welcomeSkip">Not now</button></div>`;
+}
+const dismissWelcome = () => api("/api/records/welcome", { method: "POST", body: { dismissed: true } }).then(applyRecords).catch(() => {});
+ACTIONS.welcomeAdd = async () => { await recAdd(stdToAdd().map(s => s.id)); dismissWelcome(); };
+ACTIONS.welcomeChoose = () => { dismissWelcome(); openRecords(); };
+ACTIONS.welcomeSkip = () => { S.rec.firstRun = false; render(); dismissWelcome(); };
+// The home card shows a line about the records; it is patched in place while that is all that changed, so typing
+// in the new-case form is never interrupted by a poll.
+const homeSig = () => JSON.stringify([S.rec.loaded, S.rec.firstRun, S.rec.busy, recBusy().length]);
+let homeLastSig = "";
+function homeRefresh() {
+  const line = $("#view [data-rec-line]");
+  if (line && homeSig() === homeLastSig) { line.textContent = recHomeLine(); return; }
+  // Typing in the new-case form is never interrupted: the line is patched and the rest waits for the next change.
+  if (document.activeElement?.closest?.("#view input, #view textarea")) { if (line) line.textContent = recHomeLine(); return; }
+  rerenderKeepingFocus();
+}
+ACTIONS.quitAsk = () => { S.view.quit = true; render(); $('#view [data-act="quit"]')?.focus(); };
+ACTIONS.quitCancel = () => { S.view.quit = false; render(); $('#view [data-act="quitAsk"]')?.focus(); };
+// Stops the local server. The page cannot go on without it, so it is replaced by a note saying how to start again.
+ACTIONS.quit = async () => {
+  try { await api("/api/quit", { method: "POST", body: {} }); }
+  catch (e) { toast("Could not quit: " + e.message, 5000); return; }
+  stopped = true; clearTimeout(recTimer); clearTimeout(libTimer);
+  $("#gone").hidden = false;
+  $("#goneTitle").focus();
+};
 
 // ================================================================ cases
 // A case gathers records, candidate sites (a point with a search radius) and notes, and exports them as
@@ -2706,6 +3104,17 @@ document.addEventListener("keydown", e => {
   }
 });
 
+// The names and record counts of the sources in the store, for record cards.
+function loadSources() {
+  return api("/api/sources").then(list => { S.sources = Object.fromEntries(list.map(s => [s.id, s])); }).catch(() => {});
+}
+// Kinds with no records at all are listed quietly instead of as toggles.
+function checkEmptyKinds() {
+  const none = new Set();
+  return Promise.all(EV_KINDS.map(k => api(`/api/evidence?bbox=100,7,112,24&kinds=${k}&slim=1&limit=1`).then(fc => { if (!fc.features.length) none.add(k); }).catch(() => {})))
+    .then(() => { emptyKinds.clear(); none.forEach(k => emptyKinds.add(k)); if (!$("#popLayers").hidden) renderLayersPop(true); updateCounts(); });
+}
+
 // ================================================================ boot
 (async function boot() {
   setSheet(isDesk() ? "half" : "peek"); // before any await, so the sheet's first paint is already in place
@@ -2752,17 +3161,16 @@ document.addEventListener("keydown", e => {
   m.on("moveend", () => {
     clearTimeout(saveViewTimer);
     saveViewTimer = setTimeout(() => { store.set("center", m.getCenter().toArray()); store.set("zoom", m.getZoom()); }, 250);
-    updateCounts(); scheduleLoad(); renderMapbar(); libRefreshView();
+    updateCounts(); scheduleLoad(); renderMapbar(); libRefreshView(); if (S.view.name === "records") recRefreshView();
   });
 
   show("home", {}, { push: false });
   // Enable sheet animation only after the first layout, so the sheet doesn't visibly jump on load.
   requestAnimationFrame(() => requestAnimationFrame(() => $("#panel").classList.remove("booting")));
-  // Kinds with no records at all are listed quietly instead of as toggles. Checked once the first view has
-  // drawn, so these requests don't hold up the evidence on screen.
-  m.once("idle", () => Promise.all(EV_KINDS.map(k => api(`/api/evidence?bbox=100,7,112,24&kinds=${k}&slim=1&limit=1`).then(fc => { if (!fc.features.length) emptyKinds.add(k); }).catch(() => {})))
-    .then(() => { if (!$("#popLayers").hidden) renderLayersPop(true); if (S.view.name === "home") render(); }));
-  api("/api/sources").then(list => { S.sources = Object.fromEntries(list.map(s => [s.id, s])); if (S.view.name === "home") render(); }).catch(() => {});
+  // Checked once the first view has drawn, so these requests don't hold up the evidence on screen.
+  m.once("idle", checkEmptyKinds);
+  loadSources();
+  loadRecords();
   await loadCases();
   if (S.caseId) await selectCase(S.caseId);
   if (S.view.name === "home") render();

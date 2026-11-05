@@ -389,6 +389,31 @@ input[type=range] { accent-color: var(--accent); height: 28px; }
 .draft-pin { width: 26px; height: 26px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--site); border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.4); cursor: grab; }
 .foot-note { font-size: 12px; color: var(--faint); margin-top: 18px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 
+/* ---------- Records card, first-run welcome, Quit ---------- */
+.welcome { margin-top: 12px; padding: 16px; border-radius: 14px; background: var(--accent-soft); display: grid; gap: 12px; justify-items: start; }
+.welcome h2 { margin: 0; font-size: 20px; font-weight: 700; }
+.welcome p { margin: 0; font-size: 14.5px; }
+.welcome .btn:not(.primary) { background: var(--surface); }
+.rec-chev { flex: none; width: 44px; height: 44px; display: grid; place-items: center; color: var(--faint); }
+.rec-chev svg { transition: transform .15s; }
+.lib-row.sel .rec-chev svg { transform: rotate(90deg); }
+.lib-ring:disabled { cursor: default; opacity: .7; }
+.lib-detail .confirm-box .muted { font-size: 13.5px; }
+.lib-detail .mono { font-size: 12px; overflow-wrap: anywhere; }
+.steps { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.list .steps li { display: list-item; min-height: 0; padding: 0; border: 0; }
+.lib-detail a { color: var(--accent); }
+.key-box details summary { cursor: pointer; color: var(--accent); font-size: 13.5px; }
+.key-box form { margin-top: 10px; }
+.key-box p { margin: 0; }
+.btn:disabled { opacity: .5; cursor: default; }
+.quit-link { display: block; margin: 18px 0 4px; font-size: 13px; color: var(--muted); min-height: 32px; }
+.quit-box { margin-top: 16px; font-size: 14px; }
+#gone { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 24px; background: var(--bg); text-align: center; }
+#gone[hidden] { display: none; }
+#gone h1 { margin: 0 0 8px; font-size: 26px; outline: none; }
+#gone p { margin: 0 auto; max-width: 34em; color: var(--muted); }
+
 /* ---------- Map library ("Old maps" card, map bar invitation, footprints) ---------- */
 /* No old map on this computer: the map bar is one calm "Add old maps" button. */
 .mb-pick .add { display: none; color: var(--accent); }
@@ -401,6 +426,8 @@ body.no-old-maps.lib-open #mapbar { display: none; }
 .map-opt.invite .yr { color: var(--accent); display: grid; place-items: start; }
 .maps-pop .pop-foot { flex-wrap: wrap; }
 .summary-row + .summary-row { border-top: 1px solid var(--line); }
+/* A line icon at the start of a row (the record symbols in .sym are filled shapes with a white outline). */
+.row-ico { width: 22px; height: 20px; flex: none; display: inline-grid; place-items: center; color: var(--accent); }
 
 /* Rows: title and state on the left, one control on the right; the selected row opens below. */
 .lib-row { flex-wrap: wrap; }
