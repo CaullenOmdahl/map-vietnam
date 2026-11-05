@@ -1,0 +1,610 @@
+{
+ "_about": "Trimmed copy of data/work/hes_provinces.json (written by scripts/ingest/hes_gazetteer.py from the NARA RG 472 HES gazetteers): every GVN province, with only the fields caccf.load_places reads (names, region, centroid, covering radius) plus max_hamlet_m for the radius test.",
+ "provinces": {
+  "101": {
+   "code": "101",
+   "region": "1",
+   "names": [
+    "QUANG TRI"
+   ],
+   "lon": 107.092136,
+   "lat": 16.789687,
+   "radius_m": 71913,
+   "max_hamlet_m": 61913
+  },
+  "102": {
+   "code": "102",
+   "region": "1",
+   "names": [
+    "THUA THIEN"
+   ],
+   "lon": 107.619983,
+   "lat": 16.469556,
+   "radius_m": 74456,
+   "max_hamlet_m": 56692
+  },
+  "103": {
+   "code": "103",
+   "region": "1",
+   "names": [
+    "QUANG NAM"
+   ],
+   "lon": 108.173661,
+   "lat": 15.871407,
+   "radius_m": 104958,
+   "max_hamlet_m": 87597
+  },
+  "104": {
+   "code": "104",
+   "region": "1",
+   "names": [
+    "QUANG TIN"
+   ],
+   "lon": 108.391191,
+   "lat": 15.550445,
+   "radius_m": 128337,
+   "max_hamlet_m": 39139
+  },
+  "105": {
+   "code": "105",
+   "region": "1",
+   "names": [
+    "QUANG NGAI"
+   ],
+   "lon": 108.797145,
+   "lat": 15.054579,
+   "radius_m": 101214,
+   "max_hamlet_m": 91214
+  },
+  "191": {
+   "code": "191",
+   "region": "1",
+   "names": [
+    "HUE"
+   ],
+   "lon": 107.577511,
+   "lat": 16.471763,
+   "radius_m": 12664,
+   "max_hamlet_m": 2664
+  },
+  "192": {
+   "code": "192",
+   "region": "1",
+   "names": [
+    "DANANG"
+   ],
+   "lon": 108.217957,
+   "lat": 16.068885,
+   "radius_m": 17273,
+   "max_hamlet_m": 7273
+  },
+  "206": {
+   "code": "206",
+   "region": "2",
+   "names": [
+    "KONTUM"
+   ],
+   "lon": 107.941391,
+   "lat": 14.696508,
+   "radius_m": 139242,
+   "max_hamlet_m": 129242
+  },
+  "207": {
+   "code": "207",
+   "region": "2",
+   "names": [
+    "BINH DINH"
+   ],
+   "lon": 108.947039,
+   "lat": 14.084094,
+   "radius_m": 90180,
+   "max_hamlet_m": 80180
+  },
+  "208": {
+   "code": "208",
+   "region": "2",
+   "names": [
+    "PLEIKU"
+   ],
+   "lon": 107.999694,
+   "lat": 13.861709,
+   "radius_m": 93287,
+   "max_hamlet_m": 83287
+  },
+  "209": {
+   "code": "209",
+   "region": "2",
+   "names": [
+    "PHU BON"
+   ],
+   "lon": 108.474586,
+   "lat": 13.348582,
+   "radius_m": 132542,
+   "max_hamlet_m": 122542
+  },
+  "210": {
+   "code": "210",
+   "region": "2",
+   "names": [
+    "PHU YEN"
+   ],
+   "lon": 109.157915,
+   "lat": 13.160189,
+   "radius_m": 87373,
+   "max_hamlet_m": 77373
+  },
+  "211": {
+   "code": "211",
+   "region": "2",
+   "names": [
+    "DARLAC"
+   ],
+   "lon": 108.210641,
+   "lat": 12.714077,
+   "radius_m": 107159,
+   "max_hamlet_m": 97159
+  },
+  "212": {
+   "code": "212",
+   "region": "2",
+   "names": [
+    "KHANH HOA"
+   ],
+   "lon": 109.094634,
+   "lat": 12.485596,
+   "radius_m": 70306,
+   "max_hamlet_m": 50413
+  },
+  "213": {
+   "code": "213",
+   "region": "2",
+   "names": [
+    "NINH THUAN"
+   ],
+   "lon": 108.940312,
+   "lat": 11.596088,
+   "radius_m": 59460,
+   "max_hamlet_m": 38232
+  },
+  "214": {
+   "code": "214",
+   "region": "2",
+   "names": [
+    "TUYEN DUC"
+   ],
+   "lon": 108.385823,
+   "lat": 11.90793,
+   "radius_m": 134434,
+   "max_hamlet_m": 115344
+  },
+  "215": {
+   "code": "215",
+   "region": "2",
+   "names": [
+    "QUANG DUC"
+   ],
+   "lon": 107.618658,
+   "lat": 12.138327,
+   "radius_m": 62972,
+   "max_hamlet_m": 52972
+  },
+  "216": {
+   "code": "216",
+   "region": "2",
+   "names": [
+    "LAM DONG"
+   ],
+   "lon": 107.969219,
+   "lat": 11.561604,
+   "radius_m": 125371,
+   "max_hamlet_m": 115371
+  },
+  "217": {
+   "code": "217",
+   "region": "2",
+   "names": [
+    "BINH THUAN"
+   ],
+   "lon": 108.339491,
+   "lat": 11.050901,
+   "radius_m": 104329,
+   "max_hamlet_m": 90223
+  },
+  "291": {
+   "code": "291",
+   "region": "2",
+   "names": [
+    "THI-XA NHA TRANG"
+   ],
+   "lon": 109.194348,
+   "lat": 12.249762,
+   "radius_m": 25097,
+   "max_hamlet_m": 15097
+  },
+  "292": {
+   "code": "292",
+   "region": "2",
+   "names": [
+    "THI-XA QUI NHON"
+   ],
+   "lon": 109.215196,
+   "lat": 13.780328,
+   "radius_m": 18303,
+   "max_hamlet_m": 8303
+  },
+  "293": {
+   "code": "293",
+   "region": "2",
+   "names": [
+    "THI-XA CAM RANH"
+   ],
+   "lon": 109.148009,
+   "lat": 11.968104,
+   "radius_m": 32195,
+   "max_hamlet_m": 22195
+  },
+  "294": {
+   "code": "294",
+   "region": "2",
+   "names": [
+    "DALAT"
+   ],
+   "lon": 108.439003,
+   "lat": 11.952058,
+   "radius_m": 17287,
+   "max_hamlet_m": 7287
+  },
+  "318": {
+   "code": "318",
+   "region": "3",
+   "names": [
+    "BINH TUY"
+   ],
+   "lon": 107.690905,
+   "lat": 10.907397,
+   "radius_m": 71499,
+   "max_hamlet_m": 42668
+  },
+  "319": {
+   "code": "319",
+   "region": "3",
+   "names": [
+    "LONG KHANH"
+   ],
+   "lon": 107.248643,
+   "lat": 10.998971,
+   "radius_m": 72747,
+   "max_hamlet_m": 57656
+  },
+  "321": {
+   "code": "321",
+   "region": "3",
+   "names": [
+    "PHUOC-LONG"
+   ],
+   "lon": 106.990345,
+   "lat": 11.817102,
+   "radius_m": 72695,
+   "max_hamlet_m": 33110
+  },
+  "322": {
+   "code": "322",
+   "region": "3",
+   "names": [
+    "BINH LONG"
+   ],
+   "lon": 106.615312,
+   "lat": 11.665959,
+   "radius_m": 86563,
+   "max_hamlet_m": 33455
+  },
+  "323": {
+   "code": "323",
+   "region": "3",
+   "names": [
+    "BINH DUONG"
+   ],
+   "lon": 106.653927,
+   "lat": 11.039716,
+   "radius_m": 53734,
+   "max_hamlet_m": 42073
+  },
+  "324": {
+   "code": "324",
+   "region": "3",
+   "names": [
+    "TAY-NINH"
+   ],
+   "lon": 106.157849,
+   "lat": 11.237093,
+   "radius_m": 66425,
+   "max_hamlet_m": 27256
+  },
+  "325": {
+   "code": "325",
+   "region": "3",
+   "names": [
+    "HAU NGHIA"
+   ],
+   "lon": 106.408325,
+   "lat": 10.947634,
+   "radius_m": 108595,
+   "max_hamlet_m": 17377
+  },
+  "326": {
+   "code": "326",
+   "region": "3",
+   "names": [
+    "BIEN HOA"
+   ],
+   "lon": 106.861969,
+   "lat": 10.881909,
+   "radius_m": 84703,
+   "max_hamlet_m": 30895
+  },
+  "327": {
+   "code": "327",
+   "region": "3",
+   "names": [
+    "PHUOC TUY"
+   ],
+   "lon": 107.214809,
+   "lat": 10.501992,
+   "radius_m": 50377,
+   "max_hamlet_m": 24259
+  },
+  "328": {
+   "code": "328",
+   "region": "3",
+   "names": [
+    "LONG AN"
+   ],
+   "lon": 106.529881,
+   "lat": 10.556852,
+   "radius_m": 115547,
+   "max_hamlet_m": 28462
+  },
+  "329": {
+   "code": "329",
+   "region": "3",
+   "names": [
+    "GIA-DINH"
+   ],
+   "lon": 106.685735,
+   "lat": 10.775671,
+   "radius_m": 84279,
+   "max_hamlet_m": 50960
+  },
+  "395": {
+   "code": "395",
+   "region": "3",
+   "names": [
+    "VUNG TAU"
+   ],
+   "lon": 107.094735,
+   "lat": 10.376188,
+   "radius_m": 20333,
+   "max_hamlet_m": 10333
+  },
+  "396": {
+   "code": "396",
+   "region": "3",
+   "names": [
+    "SAIGON"
+   ],
+   "lon": 106.674605,
+   "lat": 10.759389,
+   "radius_m": 76906,
+   "max_hamlet_m": 66906
+  },
+  "430": {
+   "code": "430",
+   "region": "4",
+   "names": [
+    "GO CONG"
+   ],
+   "lon": 106.656267,
+   "lat": 10.357575,
+   "radius_m": 27672,
+   "max_hamlet_m": 17672
+  },
+  "431": {
+   "code": "431",
+   "region": "4",
+   "names": [
+    "KIEN TUONG"
+   ],
+   "lon": 105.955774,
+   "lat": 10.731922,
+   "radius_m": 52170,
+   "max_hamlet_m": 29302
+  },
+  "432": {
+   "code": "432",
+   "region": "4",
+   "names": [
+    "KIEN PHONG"
+   ],
+   "lon": 105.563544,
+   "lat": 10.594049,
+   "radius_m": 62276,
+   "max_hamlet_m": 52276
+  },
+  "433": {
+   "code": "433",
+   "region": "4",
+   "names": [
+    "DINH TUONG"
+   ],
+   "lon": 106.218152,
+   "lat": 10.385449,
+   "radius_m": 53415,
+   "max_hamlet_m": 43415
+  },
+  "434": {
+   "code": "434",
+   "region": "4",
+   "names": [
+    "KIEN HOA"
+   ],
+   "lon": 106.430785,
+   "lat": 10.134176,
+   "radius_m": 50815,
+   "max_hamlet_m": 40185
+  },
+  "435": {
+   "code": "435",
+   "region": "4",
+   "names": [
+    "VINH BINH"
+   ],
+   "lon": 106.305659,
+   "lat": 9.809912,
+   "radius_m": 45741,
+   "max_hamlet_m": 35136
+  },
+  "436": {
+   "code": "436",
+   "region": "4",
+   "names": [
+    "VINH LONG"
+   ],
+   "lon": 106.027609,
+   "lat": 10.120079,
+   "radius_m": 47268,
+   "max_hamlet_m": 35776
+  },
+  "437": {
+   "code": "437",
+   "region": "4",
+   "names": [
+    "AN GIANG"
+   ],
+   "lon": 105.424063,
+   "lat": 10.378753,
+   "radius_m": 45455,
+   "max_hamlet_m": 35455
+  },
+  "438": {
+   "code": "438",
+   "region": "4",
+   "names": [
+    "KIEN GIANG"
+   ],
+   "lon": 105.03035,
+   "lat": 9.977276,
+   "radius_m": 142157,
+   "max_hamlet_m": 126792
+  },
+  "439": {
+   "code": "439",
+   "region": "4",
+   "names": [
+    "CHUONG THIEN"
+   ],
+   "lon": 105.451638,
+   "lat": 9.688425,
+   "radius_m": 45719,
+   "max_hamlet_m": 33847
+  },
+  "440": {
+   "code": "440",
+   "region": "4",
+   "names": [
+    "PHONG DINH"
+   ],
+   "lon": 105.696762,
+   "lat": 9.977358,
+   "radius_m": 46902,
+   "max_hamlet_m": 34640
+  },
+  "441": {
+   "code": "441",
+   "region": "4",
+   "names": [
+    "BA XUYEN"
+   ],
+   "lon": 105.93295,
+   "lat": 9.594649,
+   "radius_m": 52135,
+   "max_hamlet_m": 39719
+  },
+  "442": {
+   "code": "442",
+   "region": "4",
+   "names": [
+    "AN XUYEN"
+   ],
+   "lon": 105.085041,
+   "lat": 9.117812,
+   "radius_m": 78670,
+   "max_hamlet_m": 64125
+  },
+  "443": {
+   "code": "443",
+   "region": "4",
+   "names": [
+    "BAC LIEU"
+   ],
+   "lon": 105.628987,
+   "lat": 9.304713,
+   "radius_m": 64106,
+   "max_hamlet_m": 54106
+  },
+  "444": {
+   "code": "444",
+   "region": "4",
+   "names": [
+    "CHAU DOC"
+   ],
+   "lon": 105.113832,
+   "lat": 10.655896,
+   "radius_m": 67925,
+   "max_hamlet_m": 57925
+  },
+  "446": {
+   "code": "446",
+   "region": "4",
+   "names": [
+    "SA DEC"
+   ],
+   "lon": 105.711965,
+   "lat": 10.288915,
+   "radius_m": 34395,
+   "max_hamlet_m": 24242
+  },
+  "491": {
+   "code": "491",
+   "region": "4",
+   "names": [
+    "RACH GIA"
+   ],
+   "lon": 105.089368,
+   "lat": 9.991857,
+   "radius_m": 37203,
+   "max_hamlet_m": 27203
+  },
+  "492": {
+   "code": "492",
+   "region": "4",
+   "names": [
+    "MY THO"
+   ],
+   "lon": 106.36558,
+   "lat": 10.358004,
+   "radius_m": 11957,
+   "max_hamlet_m": 1957
+  },
+  "493": {
+   "code": "493",
+   "region": "4",
+   "names": [
+    "CAN THO"
+   ],
+   "lon": 105.770994,
+   "lat": 10.032165,
+   "radius_m": 14156,
+   "max_hamlet_m": 4156
+  }
+ }
+}

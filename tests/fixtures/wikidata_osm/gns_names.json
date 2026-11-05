@@ -1,0 +1,992 @@
+{
+ "_about": "Excerpt of data/work/gns_index.json (GNS Vietnam name index, written by scripts/ingest/gns.py): the entries for the place names the fixture items' labels name, plus 'ky hoa'. GNS Vietnam name index: key = accent-stripped lowercase name (also with generic/admin prefixes like 'xa', 'ap', 'thi tran' removed); value = features. WGS84. Source: http://web.archive.org/web/20260903061555id_/https://geonames.nga.mil/geonames/GNSData/Vietnam.zip. unc = evidence uncertainty_m. Burials excluded.",
+ "names": {
+  "a sau": [
+   {
+    "lon": 107.35,
+    "lat": 16.116667,
+    "fc": "H",
+    "dsg": "STM",
+    "adm1": "VN-000",
+    "name": "A Sầu",
+    "nt": "N",
+    "ufi": "-3704474",
+    "unc": 5170.0
+   },
+   {
+    "lon": 107.366667,
+    "lat": 16.1,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-26",
+    "name": "A Sầu",
+    "nt": "N",
+    "ufi": "-3704473",
+    "unc": 1320.0
+   }
+  ],
+  "a shau": [
+   {
+    "lon": 107.35,
+    "lat": 16.116667,
+    "fc": "H",
+    "dsg": "STM",
+    "adm1": "VN-000",
+    "name": "A Shau",
+    "nt": "V",
+    "ufi": "-3704474",
+    "unc": 5170.0
+   },
+   {
+    "lon": 107.366667,
+    "lat": 16.1,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-26",
+    "name": "A Shau",
+    "nt": "V",
+    "ufi": "-3704473",
+    "unc": 1320.0
+   }
+  ],
+  "ba chuc": [
+   {
+    "lon": 104.907203,
+    "lat": 10.494274,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-44",
+    "name": "Ấp Ba Chúc",
+    "nt": "V",
+    "ufi": "-3702099",
+    "unc": 270.0
+   },
+   {
+    "lon": 104.902806,
+    "lat": 10.488657,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-44",
+    "name": "Thị Trấn Ba Chúc",
+    "nt": "N",
+    "ufi": "11582770",
+    "unc": 3000.0
+   }
+  ],
+  "bach dang": [
+   {
+    "lon": 106.815295,
+    "lat": 20.829253,
+    "fc": "H",
+    "dsg": "STMM",
+    "adm1": "VN-000",
+    "name": "Cửa Bạch Đằng",
+    "nt": "N",
+    "ufi": "-3704593",
+    "unc": 1000.0
+   },
+   {
+    "lon": 106.807552,
+    "lat": 20.830582,
+    "fc": "H",
+    "dsg": "STM",
+    "adm1": "VN-000",
+    "name": "Sông Bạch Đắng",
+    "nt": "V",
+    "ufi": "-3704594",
+    "unc": 5000.0
+   },
+   {
+    "lon": 106.186267,
+    "lat": 22.604428,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-04",
+    "name": "Xã Bạch Đằng",
+    "nt": "N",
+    "ufi": "11710491",
+    "unc": 3000.0
+   },
+   {
+    "lon": 106.253067,
+    "lat": 20.516417,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-20",
+    "name": "Xã Bạch Đằng",
+    "nt": "N",
+    "ufi": "11789783",
+    "unc": 3000.0
+   },
+   {
+    "lon": 106.57062,
+    "lat": 20.705999,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-HP",
+    "name": "Xã Bạch Đằng",
+    "nt": "N",
+    "ufi": "11794649",
+    "unc": 3000.0
+   },
+   {
+    "lon": 106.468406,
+    "lat": 21.043726,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-61",
+    "name": "Xã Bạch Đằng",
+    "nt": "N",
+    "ufi": "11813066",
+    "unc": 3000.0
+   },
+   {
+    "lon": 105.864275,
+    "lat": 21.014885,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-HN",
+    "name": "Phường Bạch Đằng",
+    "nt": "N",
+    "ufi": "11835411",
+    "unc": 3000.0
+   },
+   {
+    "lon": 106.792609,
+    "lat": 11.036531,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-57",
+    "name": "Xã Bạch Đằng",
+    "nt": "N",
+    "ufi": "12088332",
+    "unc": 3000.0
+   }
+  ],
+  "bu dop": [
+   {
+    "lon": 107.00351,
+    "lat": 11.629728,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-58",
+    "name": "Bu Đóp",
+    "nt": "N",
+    "ufi": "-3708837",
+    "unc": 270.0
+   },
+   {
+    "lon": 107.537592,
+    "lat": 11.930372,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-72",
+    "name": "Bù Đốp",
+    "nt": "N",
+    "ufi": "-3708979",
+    "unc": 270.0
+   },
+   {
+    "lon": 106.800177,
+    "lat": 11.954861,
+    "fc": "P",
+    "dsg": "PPLA2",
+    "adm1": "VN-58",
+    "name": "Bù Đốp",
+    "nt": "N",
+    "ufi": "-3708500",
+    "unc": 1500.0
+   },
+   {
+    "lon": 106.80361833,
+    "lat": 11.9895416,
+    "fc": "A",
+    "dsg": "ADM2",
+    "adm1": "VN-58",
+    "name": "Huyện Bù Đốp",
+    "nt": "N",
+    "ufi": "12063013",
+    "unc": 12000.0
+   }
+  ],
+  "duc duc": [
+   {
+    "lon": 108.05,
+    "lat": 15.766667,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-27",
+    "name": "Đức Dục",
+    "nt": "N",
+    "ufi": "-3713906",
+    "unc": 1320.0
+   },
+   {
+    "lon": 108.05,
+    "lat": 15.783333,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-27",
+    "name": "Đức Dục",
+    "nt": "V",
+    "ufi": "-3708067",
+    "unc": 1320.0
+   }
+  ],
+  "ia drang": [
+   {
+    "lon": 107.761138,
+    "lat": 13.229251,
+    "fc": "H",
+    "dsg": "STM",
+    "adm1": "VN-33",
+    "name": "Ia Drang",
+    "nt": "V",
+    "ufi": "-3713790",
+    "unc": 5000.0
+   },
+   {
+    "lon": 107.843313,
+    "lat": 13.762216,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-30",
+    "name": "Xã Ia Drang",
+    "nt": "N",
+    "ufi": "11928243",
+    "unc": 3000.0
+   }
+  ],
+  "khe sanh": [
+   {
+    "lon": 105.783333,
+    "lat": 17.766667,
+    "fc": "H",
+    "dsg": "STM",
+    "adm1": "VN-000",
+    "name": "Khê Sanh",
+    "nt": "N",
+    "ufi": "-3728059",
+    "unc": 5170.0
+   },
+   {
+    "lon": 106.73884,
+    "lat": 16.628248,
+    "fc": "P",
+    "dsg": "PPLA2",
+    "adm1": "VN-25",
+    "name": "Khe Sanh",
+    "nt": "N",
+    "ufi": "-3716769",
+    "unc": 1500.0
+   },
+   {
+    "lon": 106.735563,
+    "lat": 16.631176,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-25",
+    "name": "Thị Trấn Khe Sanh",
+    "nt": "N",
+    "ufi": "11876452",
+    "unc": 3000.0
+   }
+  ],
+  "ky hoa": [
+   {
+    "lon": 106.273721,
+    "lat": 18.015464,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-23",
+    "name": "Xã Kỳ Hoa",
+    "nt": "N",
+    "ufi": "11859090",
+    "unc": 3000.0
+   }
+  ],
+  "my lai": [
+   {
+    "lon": 108.889041,
+    "lat": 15.187639,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-29",
+    "name": "Mỹ Lại",
+    "nt": "N",
+    "ufi": "-3722033",
+    "unc": 270.0
+   }
+  ],
+  "my tho": [
+   {
+    "lon": 105.7,
+    "lat": 19.133333,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-22",
+    "name": "My Tho",
+    "nt": "V",
+    "ufi": "-3734955",
+    "unc": 1320.0
+   },
+   {
+    "lon": 105.916667,
+    "lat": 18.416667,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-23",
+    "name": "My Tho",
+    "nt": "V",
+    "ufi": "-3734954",
+    "unc": 1320.0
+   },
+   {
+    "lon": 106.85,
+    "lat": 17.2,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-24",
+    "name": "Mỹ Thổ",
+    "nt": "N",
+    "ufi": "-3722121",
+    "unc": 1320.0
+   },
+   {
+    "lon": 109.056387,
+    "lat": 14.463605,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-31",
+    "name": "Mỹ Tho",
+    "nt": "V",
+    "ufi": "-3722125",
+    "unc": 270.0
+   },
+   {
+    "lon": 106.35996,
+    "lat": 10.360045,
+    "fc": "P",
+    "dsg": "PPLA",
+    "adm1": "VN-45",
+    "name": "Mỹ Tho",
+    "nt": "N",
+    "ufi": "-3722119",
+    "unc": 3000.0
+   },
+   {
+    "lon": 106.016667,
+    "lat": 20.5,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-63",
+    "name": "Mỹ Thọ",
+    "nt": "N",
+    "ufi": "-3722122",
+    "unc": 1320.0
+   },
+   {
+    "lon": 105.695075,
+    "lat": 10.442667,
+    "fc": "P",
+    "dsg": "PPLA2",
+    "adm1": "VN-45",
+    "name": "Mỹ Thọ",
+    "nt": "N",
+    "ufi": "-3722118",
+    "unc": 1500.0
+   },
+   {
+    "lon": 105.783333,
+    "lat": 10.566667,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-45",
+    "name": "Mỹ Thọ",
+    "nt": "N",
+    "ufi": "-3722120",
+    "unc": 1320.0
+   },
+   {
+    "lon": 106.740933,
+    "lat": 10.194818,
+    "fc": "H",
+    "dsg": "STMD",
+    "adm1": "VN-000",
+    "name": "Sông Mỹ Tho",
+    "nt": "N",
+    "ufi": "-3711512",
+    "unc": 3000.0
+   },
+   {
+    "lon": 105.833333,
+    "lat": 10.6,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-45",
+    "name": "Ấp Mỹ Thọ",
+    "nt": "N",
+    "ufi": "-3703243",
+    "unc": 1320.0
+   },
+   {
+    "lon": 105.577778,
+    "lat": 9.4525,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-52",
+    "name": "Ấp Mỹ Thọ",
+    "nt": "N",
+    "ufi": "-3703242",
+    "unc": 270.0
+   },
+   {
+    "lon": 106.35545384,
+    "lat": 10.3648057,
+    "fc": "A",
+    "dsg": "ADM2",
+    "adm1": "VN-46",
+    "name": "Thành Phố Mỹ Tho",
+    "nt": "N",
+    "ufi": "392261",
+    "unc": 12000.0
+   },
+   {
+    "lon": 105.995005,
+    "lat": 20.482261,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-63",
+    "name": "Xã Mỹ Thọ",
+    "nt": "N",
+    "ufi": "11780232",
+    "unc": 3000.0
+   },
+   {
+    "lon": 109.162195,
+    "lat": 14.216755,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-31",
+    "name": "Mỹ Thọ",
+    "nt": "N",
+    "ufi": "11937306",
+    "unc": 270.0
+   },
+   {
+    "lon": 109.147016,
+    "lat": 14.221529,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-31",
+    "name": "Xã Mỹ Thọ",
+    "nt": "N",
+    "ufi": "11937258",
+    "unc": 3000.0
+   },
+   {
+    "lon": 105.696184,
+    "lat": 10.437277,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-45",
+    "name": "Thị Trấn Mỹ Thọ",
+    "nt": "N",
+    "ufi": "12224061",
+    "unc": 3000.0
+   },
+   {
+    "lon": 105.72625,
+    "lat": 10.46614,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-45",
+    "name": "Xã Mỹ Thọ",
+    "nt": "N",
+    "ufi": "12224052",
+    "unc": 3000.0
+   },
+   {
+    "lon": 109.086084,
+    "lat": 14.279439,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-31",
+    "name": "Mỹ Thọ",
+    "nt": "N",
+    "ufi": "12532945",
+    "unc": 270.0
+   }
+  ],
+  "nghia lo": [
+   {
+    "lon": 106.5,
+    "lat": 21.066667,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-000",
+    "name": "Nghĩa Lộ",
+    "nt": "N",
+    "ufi": "-3723583",
+    "unc": 1320.0
+   },
+   {
+    "lon": 104.516667,
+    "lat": 21.6,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-06",
+    "name": "Nghĩa Lộ",
+    "nt": "N",
+    "ufi": "-3723584",
+    "unc": 1320.0
+   },
+   {
+    "lon": 106.05,
+    "lat": 20.983333,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-000",
+    "name": "Nghĩa Lộ",
+    "nt": "N",
+    "ufi": "-3723582",
+    "unc": 1320.0
+   },
+   {
+    "lon": 105.416667,
+    "lat": 21.616667,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-07",
+    "name": "Nghĩa Lộ",
+    "nt": "N",
+    "ufi": "-3723585",
+    "unc": 1320.0
+   },
+   {
+    "lon": 104.299352,
+    "lat": 21.356975,
+    "fc": "A",
+    "dsg": "ADM2",
+    "adm1": "VN-06",
+    "name": "Thị Xã Nghĩa Lộ",
+    "nt": "N",
+    "ufi": "411195",
+    "unc": 12000.0
+   },
+   {
+    "lon": 106.86348,
+    "lat": 20.805714,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-HP",
+    "name": "Xã Nghĩa Lộ",
+    "nt": "N",
+    "ufi": "11794443",
+    "unc": 3000.0
+   },
+   {
+    "lon": 108.794046,
+    "lat": 15.105712,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-29",
+    "name": "Phường Nghĩa Lộ",
+    "nt": "N",
+    "ufi": "11899029",
+    "unc": 3000.0
+   }
+  ],
+  "nhu nguyet": [
+   {
+    "lon": 106.099729,
+    "lat": 21.202693,
+    "fc": "S",
+    "dsg": "BDG",
+    "adm1": "VN-000",
+    "name": "Cầu Như Nguyệt",
+    "nt": "N",
+    "ufi": "12358465",
+    "unc": 270.0
+   }
+  ],
+  "song be": [
+   {
+    "lon": 106.833333,
+    "lat": 11.666667,
+    "fc": "A",
+    "dsg": "ADM1",
+    "adm1": "VN-000",
+    "name": "Tỉnh Sông Bé",
+    "nt": "N",
+    "ufi": "-3728431",
+    "unc": 40020.0
+   },
+   {
+    "lon": 106.966667,
+    "lat": 11.1,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-000",
+    "name": "Sông Bé",
+    "nt": "N",
+    "ufi": "-3728430",
+    "unc": 1320.0
+   },
+   {
+    "lon": 106.983333,
+    "lat": 11.816667,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-58",
+    "name": "Sông-Bé",
+    "nt": "V",
+    "ufi": "-3725911",
+    "unc": 1320.0
+   },
+   {
+    "lon": 108.733333,
+    "lat": 14.8,
+    "fc": "H",
+    "dsg": "STM",
+    "adm1": "VN-000",
+    "name": "Song Be",
+    "nt": "V",
+    "ufi": "-3723402",
+    "unc": 5170.0
+   },
+   {
+    "lon": 107.081509,
+    "lat": 11.904727,
+    "fc": "H",
+    "dsg": "STM",
+    "adm1": "VN-000",
+    "name": "Song Be",
+    "nt": "V",
+    "ufi": "-3714570",
+    "unc": 5000.0
+   },
+   {
+    "lon": 106.965659,
+    "lat": 11.109232,
+    "fc": "H",
+    "dsg": "STM",
+    "adm1": "VN-000",
+    "name": "Sông Bé",
+    "nt": "N",
+    "ufi": "-3708029",
+    "unc": 5000.0
+   },
+   {
+    "lon": 106.966667,
+    "lat": 11.833333,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-58",
+    "name": "Song Be",
+    "nt": "V",
+    "ufi": "-3707879",
+    "unc": 1320.0
+   },
+   {
+    "lon": 106.833089,
+    "lat": 21.314667,
+    "fc": "H",
+    "dsg": "STM",
+    "adm1": "VN-54",
+    "name": "Sông Be",
+    "nt": "N",
+    "ufi": "11584031",
+    "unc": 5000.0
+   }
+  ],
+  "thanh my": [
+   {
+    "lon": 107.947948,
+    "lat": 10.74231,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-40",
+    "name": "Thạnh Mỹ",
+    "nt": "V",
+    "ufi": "-3730061",
+    "unc": 270.0
+   },
+   {
+    "lon": 108.166667,
+    "lat": 15.833333,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-27",
+    "name": "Thanh Mỹ",
+    "nt": "N",
+    "ufi": "-3730059",
+    "unc": 1320.0
+   },
+   {
+    "lon": 108.366667,
+    "lat": 15.85,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-27",
+    "name": "Thành Mỹ",
+    "nt": "N",
+    "ufi": "-3730060",
+    "unc": 1320.0
+   },
+   {
+    "lon": 106.35,
+    "lat": 9.833333,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-51",
+    "name": "Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "-3730057",
+    "unc": 1320.0
+   },
+   {
+    "lon": 105.724444,
+    "lat": 9.930833,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-73",
+    "name": "Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "-3730058",
+    "unc": 270.0
+   },
+   {
+    "lon": 107.836776,
+    "lat": 15.748889,
+    "fc": "P",
+    "dsg": "PPLA2",
+    "adm1": "VN-27",
+    "name": "Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "-3721994",
+    "unc": 1500.0
+   },
+   {
+    "lon": 106.052778,
+    "lat": 9.605278,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-52",
+    "name": "Ấp Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "-3704049",
+    "unc": 270.0
+   },
+   {
+    "lon": 106.516667,
+    "lat": 9.983333,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-50",
+    "name": "Ấp Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "-3704053",
+    "unc": 1320.0
+   },
+   {
+    "lon": 105.441111,
+    "lat": 9.768056,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-73",
+    "name": "Ấp Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "-3704051",
+    "unc": 270.0
+   },
+   {
+    "lon": 105.421389,
+    "lat": 9.744722,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-73",
+    "name": "Ấp Thanh Mỹ",
+    "nt": "N",
+    "ufi": "-3704050",
+    "unc": 270.0
+   },
+   {
+    "lon": 105.766667,
+    "lat": 9.983333,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-CT",
+    "name": "Ấp Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "-3704052",
+    "unc": 1320.0
+   },
+   {
+    "lon": 105.473843,
+    "lat": 21.122061,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-HN",
+    "name": "Xã Thanh Mỹ",
+    "nt": "N",
+    "ufi": "11384283",
+    "unc": 3000.0
+   },
+   {
+    "lon": 105.755605,
+    "lat": 10.00263,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-CT",
+    "name": "Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "11458818",
+    "unc": 270.0
+   },
+   {
+    "lon": 105.986057,
+    "lat": 10.246108,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-49",
+    "name": "Thanh Mỹ",
+    "nt": "N",
+    "ufi": "11470492",
+    "unc": 270.0
+   },
+   {
+    "lon": 105.54886,
+    "lat": 20.273471,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-21",
+    "name": "Xã Thành Mỹ",
+    "nt": "N",
+    "ufi": "11756250",
+    "unc": 3000.0
+   },
+   {
+    "lon": 105.596144,
+    "lat": 20.276066,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-21",
+    "name": "Thành Mỹ",
+    "nt": "N",
+    "ufi": "11756396",
+    "unc": 270.0
+   },
+   {
+    "lon": 105.208718,
+    "lat": 18.807149,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-22",
+    "name": "Xã Thanh Mỹ",
+    "nt": "N",
+    "ufi": "11844868",
+    "unc": 3000.0
+   },
+   {
+    "lon": 107.784422,
+    "lat": 15.763374,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-27",
+    "name": "Thị Trấn Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "11893717",
+    "unc": 3000.0
+   },
+   {
+    "lon": 108.483874,
+    "lat": 11.767855,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-35",
+    "name": "Thị Trấn Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "11987128",
+    "unc": 3000.0
+   },
+   {
+    "lon": 108.494732,
+    "lat": 11.761653,
+    "fc": "P",
+    "dsg": "PPLA2",
+    "adm1": "VN-35",
+    "name": "Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "11987129",
+    "unc": 1500.0
+   },
+   {
+    "lon": 106.209431,
+    "lat": 10.556287,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-46",
+    "name": "Xã Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "12116942",
+    "unc": 3000.0
+   },
+   {
+    "lon": 105.840757,
+    "lat": 10.415414,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-45",
+    "name": "Xã Thanh Mỹ",
+    "nt": "N",
+    "ufi": "12224042",
+    "unc": 3000.0
+   },
+   {
+    "lon": 106.303182,
+    "lat": 9.826663,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-51",
+    "name": "Xã Thanh Mỹ",
+    "nt": "N",
+    "ufi": "12261116",
+    "unc": 3000.0
+   },
+   {
+    "lon": 105.422354,
+    "lat": 10.241952,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-CT",
+    "name": "Xã Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "12274362",
+    "unc": 3000.0
+   },
+   {
+    "lon": 105.671139,
+    "lat": 9.83177,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-73",
+    "name": "Thạnh Mỹ",
+    "nt": "N",
+    "ufi": "12282784",
+    "unc": 270.0
+   },
+   {
+    "lon": 105.700729,
+    "lat": 18.397653,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-23",
+    "name": "Thanh My",
+    "nt": "N",
+    "ufi": "12763415",
+    "unc": 270.0
+   }
+  ]
+ }
+}

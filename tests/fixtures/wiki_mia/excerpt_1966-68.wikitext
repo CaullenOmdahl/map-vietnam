@@ -1,0 +1,50 @@
+==1966==
+{|class="wikitable sortable"
+|-
+! Date missing !! Surname, First name(s) !! Rank !! Service !! Unit !! [[Military operation|Operation]]/Battle Name !! Location !! Circumstances of loss !!  Recovery status
+|-
+| January 1 || Kirksey, Robert L || Private First Class || US Army || [[46th Engineer Battalion (United States)|46th Engineer Battalion]] ||  || South Vietnam, [[Vũng Tàu]] || Drowned while swimming<ref>{{cite web |url=https://www.virtualwall.org/dk/KirkseyRL01a.htm|title=PFC Robert Louis Kirksey|work=The Virtual Wall|access-date=30 August 2012}}</ref>|| Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR1">{{cite web|url=http://www.dpaa.mil/portals/85/Documents/VietnamAccounting/pmsea_una_p_name.pdf|title=U.S. Unaccounted-For from the Vietnam War (Sorted by Name) Prisoners of War, Missing in Action and Killed in Action/Body not Recovered|publisher=Defense POW/MIA Accounting Agency|access-date=28 December 2015}}</ref>
+|-
+| January 2 || [[McLaughlin Award|MacLaughlin, Donald C]] || Lieutenant (LTJG) || US Navy || [[VA-76 (U.S. Navy)|VA-76]], {{USS|Enterprise|CVN-65|6}}|| || South Vietnam, [[Duc Pho District]] || His [[Douglas A-4 Skyhawk|A-4C]] Skyhawk (Bureau number 147704) hit the ground while making an attack in low cloud and fog, his body was later seen in the wreckage but could not be recovered due to enemy fire<ref>{{cite web |url=https://www.virtualwall.org/dm/MaclaughlinDC01a.htm|title=Donald MacLaughlin, LTJG|work=The Virtual Wall|access-date=30 August 2012}}</ref>  || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR1"/>
+|-
+| January 7 || Callanan, Richard J || Captain || rowspan="3" | USAF || [[774th Troop Carrier Squadron]] ||  || South Vietnam, [[Pleiku]] || Pilot of [[Lockheed C-130 Hercules|C-130B]] Hercules (Tail number 61-0972), shot down while delivering ammunition to [[Camp Radcliff|An Khê]]<ref>{{cite web |url=https://www.virtualwall.org/dc/CallananRJ01a.htm|title=CAPT Richard Joseph Callanan|work=The Virtual Wall|access-date=30 August 2012}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR1"/>
+|-
+| January 7 || Greenley, Jon A || 1st Lieutenant || 774th Troop Carrier Squadron ||  || South Vietnam || Copilot of C-130B Hercules (Tail number 61-0972), shot down while delivering ammunition to An Khe<ref>{{cite web |url=https://www.virtualwall.org/dg/GreenleyJA01a.htm|title=1LT Jon Alfred Greenley|work=The Virtual Wall|access-date=30 August 2012}}</ref>  || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR1"/>
+|-
+| January 11 || Godfrey, Johnny H || Captain || [[1131st Special Activities Squadron]] ||  || South Vietnam, [[Sóc Trăng province|Sóc Trăng]] || His [[Douglas A-1 Skyraider|A-1H]] Skyraider was shot down on a strafing run, no ejection observed<ref>{{cite web |url=https://www.virtualwall.org/dg/GodfreyJH01a.htm|title=CAPT Johnny Howard Godfrey|work=The Virtual Wall|access-date=30 August 2012}}</ref>|| Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR1"/>
+|-
+|}
+
+==1967==
+{|class="wikitable sortable"
+|-
+! Date missing !! Surname, First name(s) !! Rank !! Service !! Unit !! [[Military operation|Operation]]/Battle Name !! Location !! Circumstances of loss !!  Recovery status
+|-
+|-
+| January 16 || Welch, Robert J || Captain || rowspan="4" | USAF || [[11th Tactical Reconnaissance Squadron]] || [[Operation Rolling Thunder]] || North Vietnam || Pilot of [[McDonnell Douglas F-4 Phantom II|RF-4C]] #65-0883 shot down on a photo-reconnaissance mission. The weapons system operator 1LT Michael Scott Kerr ejected successfully and was captured<ref>{{cite web |url=https://www.virtualwall.org/dw/WelchRJ01a.htm |title=COL Robert John Welch |work=The Virtual Wall|access-date=4 December 2012}}</ref> || Presumptive finding of death<ref name="DPMO-MIA/KIA-BNR1" />
+|-
+| January 17 || Krogman, Alva R || 1st Lieutenant || [[23rd Tactical Air Support Squadron]] || [[Operation Steel Tiger]] || Laos, [[Savannakhet Province]] || His [[Cessna O-1 Bird Dog|O-1F]] #57-2789 was shot down on a FAC mission<ref>{{cite web |url=https://www.virtualwall.org/dk/KrogmanAR01a.htm |title=Alva Krogman, 1LT |work=The Virtual Wall|access-date=4 December 2012}}</ref> || Killed in action, body not recovered until 7 July 2020 when he was accounted for<ref>{{cite web|url=https://www.dpaa.mil/News-Stories/News-Releases/PressReleaseArticleView/Article/2273443/pilot-accounted-for-from-vietnam-war-krogman-a/|title=Pilot Accounted For From Vietnam War (Krogman, A.)|publisher=Defense POW/MIA Accounting Agency|date=14 July 2020|accessdate=1 June 2021}}</ref>
+|-
+| January 17 || Wozniak, Frederick J || 1st Lieutenant || 11th Tactical Reconnaissance Squadron || Operation Rolling Thunder || North Vietnam, [[Thanh Hóa Province]] || Weapons system operator on RF-4C #65-0888 shot down on a photo-reconnaissance mission<ref>{{cite web |url=https://www.virtualwall.org/dw/WozniakFJ01a.htm |title=Frederick Wozniak, MAJ |work=The Virtual Wall|access-date=4 December 2012}}</ref> || Presumptive finding of death<ref name="DPMO-MIA/KIA-BNR1" />
+|-
+| January 17 || Wright, Gary G || Major || 11th Tactical Reconnaissance Squadron || Operation Rolling Thunder || North Vietnam, Thanh Hóa Province || Pilot of RF-4C #65-0888 shot down on a photo-reconnaissance mission<ref>{{cite web |url=https://www.virtualwall.org/dw/WrightGG01a.htm |title=COL Gary Gene Wright |work=The Virtual Wall|access-date=4 December 2012}}</ref> || Presumptive finding of death<ref name="DPMO-MIA/KIA-BNR1" />
+|-
+| April 9 || Schworer, Ronald P || Specialist || US Army || 4th Battalion, [[47th Infantry Regiment (United States)|47th Infantry Regiment]] ||  || South Vietnam, Kien Phong Province || Drowned while on patrol<ref>{{cite web |url=https://www.virtualwall.org/ds/SchworerRP01a.htm |title=Ronald Schwoere, SP4 |work=The Virtual Wall |access-date=10 January 2013}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR1"/>
+|-
+| September 11 || Anspach, Robert A || Sergeant First Class || US Army || Detachment A-401, 5th Special Forces Group  ||  || South Vietnam, [[Đồng Tháp Province]] || Killed when the airboat he was riding on was hit by enemy machine gun fire while patrolling near the Cambodian border<ref>{{cite web |url=https://www.virtualwall.org/da/AnspachRA01a.htm |title=Robert Anspach, MSG |work=The Virtual Wall |access-date=5 February 2013}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR1"/>
+|}
+
+==1968==
+{|class="wikitable sortable"
+|-
+! Date missing !! Surname, First name(s) !! Rank !! Service !! Unit !! [[Military operation|Operation]]/Battle Name !! Location !! Circumstances of loss !!  Recovery status
+|-
+| March 17 || Barber, Thomas D || Airman || rowspan="4" | US Navy || [[VS-23]], {{USS|Yorktown|CV-10|6}}||  || North Vietnam, Gulf of Tonkin || Reciprocating engine mechanic on an S-2E that disappeared on a night anti-submarine patrol, some aircraft wreckage was receovered 4 days later<ref>{{cite web|url=http://www.virtualwall.org/db/BarberTD01a.htm |title=ADRAN Thomas David Barber |work=The Virtual Wall|accessdate=8 November 2012}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR" />
+|-
+| March 17 || Benson, Lee D || Lieutenant (LTJG) || VS-23, USS ''Yorktown'' ||  || North Vietnam, Gulf of Tonkin || Copilot of an S-2E that disappeared on a night anti-submarine patrol<ref>{{cite web|url=http://www.virtualwall.org/db/BensonLD01a.htm |title=Lee Benson, LTJG |work=The Virtual Wall|accessdate=8 November 2012}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR" />
+|-
+| March 17 || Hubbs, Donald R || Commander || VS-23, USS ''Yorktown'' ||  || North Vietnam, Gulf of Tonkin ||  Pilot of an S-2E that disappeared on a night anti-submarine patrol<ref>{{cite web|url=http://www.virtualwall.org/dh/HubbsDR01a.htm |title=CDR Donald Richard Hubbs |work=The Virtual Wall|accessdate=8 November 2012}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR" />
+|-
+| March 17 || Nightingale, Randall J || Aviation Antisubmarine Warfare Technician 2nd Class
+ || VS-23, USS ''Yorktown'' ||  || North Vietnam, Gulf of Tonkin || ASW technician on an S-2E that disappeared on a night anti-submarine patrol<ref>{{cite web|url=http://www.virtualwall.org/dn/NightingaleRJ01a.htm |title=AX2 Randall John Nightingale |work=The Virtual Wall|accessdate=8 November 2012}}</ref> || Killed in action, body not recovered<ref name="DPMO-MIA/KIA-BNR" />
+|}

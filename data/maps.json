@@ -1,0 +1,3 @@
+{
+  "about": "Hand corrections to what the viewer shows about an installed map, read by scripts/catalog.py: {\"<map id>\": {\"overrides\": {\"date\": \"1966\", \"title\": \"...\"}}}. Any field of a catalog.json layer can be overridden; the rest comes from the map library catalogue and the map's own metadata. None are needed today."
+}

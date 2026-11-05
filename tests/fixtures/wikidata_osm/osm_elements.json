@@ -1,0 +1,1292 @@
+{
+ "elements": [
+  {
+   "type": "node",
+   "id": 5560875621,
+   "lat": 10.297546,
+   "lon": 105.7669422,
+   "tags": {
+    "description": "Căn cứ hải quân Hoa Kỳ Sadec",
+    "landuse": "military",
+    "military": "naval_base",
+    "name": "PBR",
+    "name:en": "Patrol Boat, Riverine",
+    "name:vi": "Tuần Giang"
+   }
+  },
+  {
+   "type": "way",
+   "id": 371124467,
+   "bounds": {
+    "minlat": 10.2564096,
+    "minlon": 105.5301455,
+    "maxlat": 10.2589809,
+    "maxlon": 105.5333794
+   },
+   "tags": {
+    "landuse": "military",
+    "name": "Tiểu đoàn BB312",
+    "name:en": "Tieu doan BB312"
+   }
+  },
+  {
+   "type": "node",
+   "id": 10784770501,
+   "lat": 10.5170848,
+   "lon": 105.4861451,
+   "tags": {
+    "historic": "memorial",
+    "memorial": "war_memorial",
+    "name": "Cột Dây Thép Long Điền B"
+   }
+  },
+  {
+   "type": "node",
+   "id": 1400908663,
+   "lat": 12.2891903,
+   "lon": 109.1847686,
+   "tags": {
+    "historic": "memorial",
+    "name": "Nghĩa trang liệt sĩ Hòn Dung"
+   }
+  },
+  {
+   "type": "node",
+   "id": 1722516371,
+   "lat": 13.4105314,
+   "lon": 109.2132526,
+   "tags": {
+    "historic": "monument",
+    "name": "Đài Liệt Sĩ Dốc Quýt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 344918979,
+   "bounds": {
+    "minlat": 16.8068205,
+    "minlon": 107.0565493,
+    "maxlat": 16.8100255,
+    "maxlon": 107.0619473
+   },
+   "tags": {
+    "historic": "monument",
+    "landuse": "cemetery",
+    "name": "Nghĩa trang liệt sĩ Quốc gia Đường 9"
+   }
+  },
+  {
+   "type": "node",
+   "id": 2647317689,
+   "lat": 8.6446723,
+   "lon": 111.9203378,
+   "tags": {
+    "aeroway": "aerodrome",
+    "icao": "VVSA",
+    "name": "Sân bay Trường Sa",
+    "name:en": "Truong Sa Airport",
+    "name:id": "Bandar Udara Truong Sa",
+    "name:ms": "Lapangan Terbang Truong Sa",
+    "name:th": "สนามบินเจื่องซา",
+    "name:vi": "Sân bay Trường Sa",
+    "name:zh": "长沙机场(南威岛机场)",
+    "name:zh-Hans": "长沙机场(南威岛机场)",
+    "name:zh-Hant": "長沙機場(南威島機場)",
+    "operator": "People's Army of Vietnam"
+   }
+  },
+  {
+   "type": "node",
+   "id": 357476290,
+   "lat": 11.2665904,
+   "lon": 108.6921215,
+   "tags": {
+    "historic": "ruins",
+    "name": "Tháp Po Dam",
+    "name:en": "Po Dam Cham Tower"
+   }
+  },
+  {
+   "type": "node",
+   "id": 369522525,
+   "lat": 17.7256977,
+   "lon": 105.7698394,
+   "tags": {
+    "fixme": "unknown location. former location wrong. \"ca. 6km north of the Border station\"",
+    "historic": "battlefield",
+    "name": "Cha Lo",
+    "name:en": "Heavenly Gate of Cha Lo"
+   }
+  },
+  {
+   "type": "node",
+   "id": 6952947810,
+   "lat": 14.6535869,
+   "lon": 107.794334,
+   "tags": {
+    "alt_name": "Đắk Tô 2 Airfield;Phoenix Airfield",
+    "disused:aeroway": "aerodrome",
+    "disused:landuse": "military",
+    "disused:military": "airfield",
+    "name": "Đắk Tô Base Camp",
+    "wikidata": "Q18385844",
+    "wikipedia": "en:Đắk Tô Base Camp"
+   }
+  },
+  {
+   "type": "node",
+   "id": 2645906877,
+   "lat": 11.4294173,
+   "lon": 114.331434,
+   "tags": {
+    "historic": "memorial",
+    "name": "Bia chủ quyền Đảo Song Tử Tây",
+    "name:en": "Sovereignty Monument",
+    "name:vi": "Bia chủ quyền Đảo Song Tử Tây"
+   }
+  },
+  {
+   "type": "node",
+   "id": 12698832683,
+   "lat": 10.9351884,
+   "lon": 108.1457431,
+   "tags": {
+    "historic": "memorial",
+    "memorial": "war_memorial"
+   }
+  },
+  {
+   "type": "way",
+   "id": 354299015,
+   "bounds": {
+    "minlat": 14.6608351,
+    "minlon": 107.8383724,
+    "maxlat": 14.6609144,
+    "maxlon": 107.8384668
+   },
+   "tags": {
+    "historic": "memorial",
+    "memorial": "war_memorial"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1383789529,
+   "bounds": {
+    "minlat": 22.6642208,
+    "minlon": 106.2669511,
+    "maxlat": 22.6642614,
+    "maxlon": 106.2669925
+   },
+   "tags": {
+    "historic": "memorial",
+    "memorial": "war_memorial"
+   }
+  },
+  {
+   "type": "node",
+   "id": 11496910093,
+   "lat": 22.6642398,
+   "lon": 106.2669716,
+   "tags": {
+    "historic": "monument",
+    "name": "Tổ quốc ghi công"
+   }
+  },
+  {
+   "type": "node",
+   "id": 10723988763,
+   "lat": 15.9252377,
+   "lon": 108.3065476,
+   "tags": {
+    "historic": "memorial",
+    "name": "Đài tưởng niệm thảm sát Hà My",
+    "name:ko": "하미마을 위령비"
+   }
+  },
+  {
+   "type": "way",
+   "id": 596624577,
+   "bounds": {
+    "minlat": 15.8031968,
+    "minlon": 108.1602304,
+    "maxlat": 15.8035293,
+    "maxlon": 108.1608376
+   },
+   "tags": {
+    "historic": "memorial",
+    "name": "Khu tưởng niệm vụ thảm sát đập Vĩnh Trinh"
+   }
+  },
+  {
+   "type": "node",
+   "id": 6314163138,
+   "lat": 20.9522596,
+   "lon": 107.0905919,
+   "tags": {
+    "historic": "memorial",
+    "memorial": "bust",
+    "name": "Tượng đài đồng chí Vũ Văn Hiếu"
+   }
+  },
+  {
+   "type": "node",
+   "id": 6314162950,
+   "lat": 20.9530085,
+   "lon": 107.0915616,
+   "tags": {
+    "historic": "monument",
+    "name": "Đài tưởng niệm Liệt sĩ Hạ Long",
+    "name:en": "Ha Long Martyrs Memorial"
+   }
+  },
+  {
+   "type": "node",
+   "id": 11063105906,
+   "lat": 21.0379922,
+   "lon": 105.8268144,
+   "tags": {
+    "historic": "memorial",
+    "inscription": "Di tích lịch sử // Hồ Hữu Tiệp và Xác máy bay B52 / đã được Nhà nước công nhận // * * * // The historical vestige / Huu Tiep Lake and the Wreckage of B.52 Bomber",
+    "memorial": "plaque"
+   }
+  },
+  {
+   "type": "node",
+   "id": 4748953490,
+   "lat": 22.3360467,
+   "lon": 103.8429612,
+   "tags": {
+    "historic": "memorial",
+    "inscription": "Giải Phóng Huyện Sa Pa (Ngày 03/11/1950)",
+    "memorial": "stone"
+   }
+  },
+  {
+   "type": "way",
+   "id": 888611681,
+   "bounds": {
+    "minlat": 21.6247393,
+    "minlon": 105.8433373,
+    "maxlat": 21.6256432,
+    "maxlon": 105.8442016
+   },
+   "tags": {
+    "historic": "monument",
+    "name": "Đài tưởng niệm huyện Đồng Hỷ"
+   }
+  },
+  {
+   "type": "node",
+   "id": 6169503778,
+   "lat": 21.6249639,
+   "lon": 105.8437839,
+   "tags": {
+    "ele": "~20 m",
+    "historic": "memorial",
+    "inscription": "nơi thờ cúng tâm linh",
+    "memorial": "war_memorial",
+    "name": "Đài tưởng niệm liệt sĩ huyện Đồng Hỷ"
+   }
+  },
+  {
+   "type": "way",
+   "id": 358573470,
+   "bounds": {
+    "minlat": 16.0194379,
+    "minlon": 108.2451993,
+    "maxlat": 16.0380428,
+    "maxlon": 108.2575456
+   },
+   "tags": {
+    "access": "no",
+    "aeroway": "aerodrome",
+    "description": "Former US Air Base Danang East",
+    "landuse": "military",
+    "military": "airfield",
+    "name": "Sân bay Nước Mặn",
+    "name:en": "Nuoc Man Airbase"
+   }
+  },
+  {
+   "type": "way",
+   "id": 963999218,
+   "bounds": {
+    "minlat": 12.0170118,
+    "minlon": 109.1771293,
+    "maxlat": 12.0277939,
+    "maxlon": 109.1926539
+   },
+   "tags": {
+    "landuse": "military",
+    "name": "Lữ đoàn Hải quân đánh bộ 101",
+    "name:en": "Dong Ba Thin Base Camp",
+    "start_date": "1964",
+    "wikidata": "Q55138641",
+    "wikipedia": "en:Dong Ba Thin Base Camp"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1158398951,
+   "bounds": {
+    "minlat": 12.2127734,
+    "minlon": 109.2010676,
+    "maxlat": 12.2188349,
+    "maxlon": 109.2092431
+   },
+   "tags": {
+    "abbr_name": "HVHQ",
+    "amenity": "university",
+    "landuse": "military",
+    "name": "Học viện Hải quân",
+    "name:en": "Vietnam Naval Academy",
+    "operator": "Vietnam People's Navy",
+    "operator:type": "military",
+    "start_date": "1955",
+    "wikipedia": "en:Vietnam Naval Academy"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1303522938,
+   "bounds": {
+    "minlat": 21.0322745,
+    "minlon": 105.8444762,
+    "maxlat": 21.0329441,
+    "maxlon": 105.8452021
+   },
+   "tags": {
+    "addr:city": "Hà Nội",
+    "addr:district": "Quận Hoàn Kiếm",
+    "addr:housenumber": "83",
+    "addr:province": "Thành phố Hà Nội",
+    "addr:street": "Phố Lý Nam Đế",
+    "amenity": "library",
+    "landuse": "military",
+    "name": "Thư viện Quân đội",
+    "opening_hours": "Mo-Sa 07:30-17:00",
+    "operator": "Tổng cục Chính trị Quân đội nhân dân Việt Nam",
+    "operator:type": "military",
+    "phone": "+84 69 554 546",
+    "start_date": "1972",
+    "website": "http://thuvienquandoi.vn"
+   }
+  },
+  {
+   "type": "relation",
+   "id": 16294194,
+   "bounds": {
+    "minlat": 21.042264,
+    "minlon": 105.7994202,
+    "maxlat": 21.0432199,
+    "maxlon": 105.800406
+   },
+   "tags": {
+    "addr:city": "Hà Nội",
+    "addr:district": "Quận Cầu Giấy",
+    "addr:housenumber": "17",
+    "addr:province": "Hà Nội",
+    "addr:street": "Phố Hoàng Sâm",
+    "addr:subdistrict": "Phường Nghĩa Đô",
+    "amenity": "research_institute",
+    "landuse": "military",
+    "name": "Viện Khoa học và Công nghệ Quân sự",
+    "name:en": "Academy of Military Science and Technology",
+    "operator": "Bộ Quốc Phòng",
+    "operator:type": "government",
+    "start_date": "1960-10-12",
+    "type": "multipolygon",
+    "wikidata": "Q10832765",
+    "wikipedia": "vi:Viện Khoa học và Công nghệ Quân sự (Việt Nam)"
+   }
+  },
+  {
+   "type": "way",
+   "id": 726864822,
+   "bounds": {
+    "minlat": 10.8147895,
+    "minlon": 107.2309272,
+    "maxlat": 10.8168089,
+    "maxlon": 107.2329649
+   },
+   "tags": {
+    "landuse": "military",
+    "name": "BCH Quân sự Huyện Cẩm Mỹ",
+    "name:en": "Cam My District Military Committee",
+    "name:id": "Komite Militer District Cam My"
+   }
+  },
+  {
+   "type": "way",
+   "id": 54242195,
+   "bounds": {
+    "minlat": 10.8050698,
+    "minlon": 106.6332149,
+    "maxlat": 10.8311754,
+    "maxlon": 106.6782725
+   },
+   "tags": {
+    "aerodrome": "international",
+    "aerodrome:type": "public",
+    "aeroway": "aerodrome",
+    "ele": "10",
+    "iata": "SGN",
+    "icao": "VVTS",
+    "name": "Sân bay quốc tế Tân Sơn Nhất",
+    "name:ar": "مطار تان سون نهات الدولي",
+    "name:de": "Flughafen Tan-Son-Nhat",
+    "name:en": "Tan Son Nhat International Airport",
+    "name:fr": "Aéroport International de Tân Sơn Nhất",
+    "name:id": "Bandar Udara Internasional Tan Son Nhat",
+    "name:it": "Aeroporto Internazionale Tan Son Nhat",
+    "name:ja": "タンソンニャット国際空港",
+    "name:km": "អាកាសយានដ្ឋានអន្តរជាតិតានសូនណាត្ត",
+    "name:ko": "떤선녓 국제공항",
+    "name:la": "ສະໜາມບິນສາກົນເຕິນເຊິນເຍິດ",
+    "name:ms": "Lapangan Terbang Antarabangsa Tan Son Nhat",
+    "name:nl": "Internationale luchthaven Tan Son Nhat",
+    "name:ru": "Международный аэропорт Таншоннят — Хошимин",
+    "name:th": "ท่าอากาศยานนานาชาติเตินเซินเญิ้ต",
+    "name:uk": "Міжнародний аеропорт Тан Сон Нят",
+    "name:vi": "Sân bay quốc tế Tân Sơn Nhất",
+    "name:vi-Hani": "𡓏𩙻國際新山一",
+    "name:zh": "新山一国际机场",
+    "official_name": "Cảng hàng không quốc tế Tân Sơn Nhất",
+    "old_name": "Phi cảng Sài Gòn - Tân Sơn Nhứt;Phi cảng Tân Sơn Nhứt;Phi trường Tân Sơn Nhứt;Căn cứ không quân Tân Sơn Nhứt",
+    "old_name:en": "Tan Son Nhut Air Base",
+    "operator": "Airports Corporation of Vietnam",
+    "ref": "SGN",
+    "wikidata": "Q478595",
+    "wikipedia": "en:Tan Son Nhat International Airport"
+   }
+  },
+  {
+   "type": "way",
+   "id": 197139989,
+   "bounds": {
+    "minlat": 10.8234018,
+    "minlon": 106.6593224,
+    "maxlat": 10.828643,
+    "maxlon": 106.6616625
+   },
+   "tags": {
+    "abandoned:aeroway": "taxiway",
+    "access": "no",
+    "highway": "service"
+   }
+  },
+  {
+   "type": "node",
+   "id": 5244555570,
+   "lat": 20.9245483,
+   "lon": 105.8495834,
+   "tags": {
+    "historic": "monument",
+    "name": "Tượng đài chiến thắng Ngọc Hồi"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1157172166,
+   "bounds": {
+    "minlat": 20.9264885,
+    "minlon": 105.8501051,
+    "maxlat": 20.9275407,
+    "maxlon": 105.8511002
+   },
+   "tags": {
+    "landuse": "cemetery",
+    "name": "Nghĩa trang Liệt sỹ Ngọc Hồi"
+   }
+  },
+  {
+   "type": "node",
+   "id": 6816764807,
+   "lat": 11.1598005,
+   "lon": 107.2756952,
+   "tags": {
+    "historic": "memorial",
+    "name": "Tượng Ðài Chiến Thắng La Ngà"
+   }
+  },
+  {
+   "type": "way",
+   "id": 727386656,
+   "bounds": {
+    "minlat": 11.1602545,
+    "minlon": 107.276811,
+    "maxlat": 11.1618083,
+    "maxlon": 107.2782651
+   },
+   "tags": {
+    "landuse": "cemetery"
+   }
+  },
+  {
+   "type": "node",
+   "id": 4409284591,
+   "lat": 18.3982184,
+   "lon": 105.7402274,
+   "tags": {
+    "historic": "memorial",
+    "name": "Tháp Chuông Đồng Lộc",
+    "name:vi": "Tháp Chuông Đồng Lộc"
+   }
+  },
+  {
+   "type": "node",
+   "id": 5353612634,
+   "lat": 17.5026045,
+   "lon": 106.2603225,
+   "tags": {
+    "historic": "memorial",
+    "name": "Eight ladies cave (this is only a memorial place, entrance to cave not possible!)",
+    "name:vi": "Di tích lịch sử Hang Tám Cô"
+   }
+  },
+  {
+   "type": "node",
+   "id": 13357233094,
+   "lat": 10.2279557,
+   "lon": 103.9631907,
+   "tags": {
+    "historic": "memorial",
+    "image": "https://photos.app.goo.gl/PRX9M9fbQ8p9nSKe9",
+    "memorial": "war_memorial",
+    "name": "中華民國留越國軍病故官兵眷暨義民紀念碑",
+    "name:en": "Memorial Monument for Deceased Officers and Soldiers of the Republic of China Army in Vietnam and Their Families and Volunteers",
+    "name:ru": "Мемориальный памятник погибшим офицерам и солдатам армии Китайской Республики во Вьетнаме, их семьям и добровольцам.",
+    "name:zh-Hant": "中華民國留越國軍病故官兵眷暨義民紀念碑"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1117543945,
+   "bounds": {
+    "minlat": 10.2306797,
+    "minlon": 103.9687057,
+    "maxlat": 10.2322786,
+    "maxlon": 103.9703741
+   },
+   "tags": {
+    "barrier": "wall",
+    "landuse": "cemetery",
+    "name": "Nghĩa trang liệt sĩ Phú Quốc",
+    "url": "https://youtu.be/t1ovvMrIARY"
+   }
+  },
+  {
+   "type": "node",
+   "id": 6251472272,
+   "lat": 9.552905,
+   "lon": 105.9812987,
+   "tags": {
+    "historic": "memorial",
+    "name": "Ban thờ Chiến sĩ trận vong"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1447362087,
+   "bounds": {
+    "minlat": 11.9270759,
+    "minlon": 109.2517314,
+    "maxlat": 11.927678,
+    "maxlon": 109.2521819
+   },
+   "tags": {
+    "building": "bunker",
+    "military": "bunker"
+   }
+  },
+  {
+   "type": "node",
+   "id": 7685720243,
+   "lat": 11.6487163,
+   "lon": 108.9531541,
+   "tags": {
+    "military": "bunker"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1024899770,
+   "bounds": {
+    "minlat": 21.38866,
+    "minlon": 106.2553062,
+    "maxlat": 21.3890505,
+    "maxlon": 106.2558249
+   },
+   "tags": {
+    "building": "bunker",
+    "military": "bunker"
+   }
+  },
+  {
+   "type": "node",
+   "id": 13675000046,
+   "lat": 10.0547427,
+   "lon": 103.9974067,
+   "tags": {
+    "building": "bunker",
+    "image": "https://photos.app.goo.gl/uWDZGFiRKUmQYTJ96",
+    "military": "bunker"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1160479180,
+   "bounds": {
+    "minlat": 9.9730296,
+    "minlon": 109.0838428,
+    "maxlat": 9.9733569,
+    "maxlon": 109.0841745
+   },
+   "tags": {
+    "building": "bunker",
+    "location": "underground",
+    "military": "bunker"
+   }
+  },
+  {
+   "type": "node",
+   "id": 9960625535,
+   "lat": 10.9586203,
+   "lon": 106.8295289,
+   "tags": {
+    "historic": "monument",
+    "name": "Pháo 130 K-59-1"
+   }
+  },
+  {
+   "type": "node",
+   "id": 9960625539,
+   "lat": 10.9579754,
+   "lon": 106.8297075,
+   "tags": {
+    "historic": "monument",
+    "name": "Máy bay 6144"
+   }
+  },
+  {
+   "type": "node",
+   "id": 5256962158,
+   "lat": 10.0559838,
+   "lon": 105.7683514,
+   "tags": {
+    "historic": "monument",
+    "name": "Tượng đài Chiến Thắng"
+   }
+  },
+  {
+   "type": "node",
+   "id": 7375958122,
+   "lat": 10.4120513,
+   "lon": 107.1375789,
+   "tags": {
+    "historic": "memorial",
+    "memorial": "war_memorial",
+    "name": "Tượng đài ghi công Trận đánh Phước Thành"
+   }
+  },
+  {
+   "type": "node",
+   "id": 5922616509,
+   "lat": 11.1450118,
+   "lon": 106.4641359,
+   "tags": {
+    "disused": "yes",
+    "military": "bunker",
+    "name": "Commander bunker"
+   }
+  },
+  {
+   "type": "way",
+   "id": 458851649,
+   "bounds": {
+    "minlat": 20.7228258,
+    "minlon": 107.0522018,
+    "maxlat": 20.7240751,
+    "maxlon": 107.0553346
+   },
+   "tags": {
+    "access": "no",
+    "disused:landuse": "military",
+    "historic": "fort",
+    "name": "Cannon Fort"
+   }
+  },
+  {
+   "type": "node",
+   "id": 12193933204,
+   "lat": 9.0351726,
+   "lon": 104.8170613,
+   "tags": {
+    "historic": "memorial",
+    "memorial": "stele",
+    "name": "Bia tưởng niệm Dân tử nạn Bão số 5"
+   }
+  },
+  {
+   "type": "node",
+   "id": 11086025940,
+   "lat": 21.1655582,
+   "lon": 105.3819923,
+   "tags": {
+    "direction": "25",
+    "historic": "memorial",
+    "inscription": "HỒ CHỨA NƯỚC SUỐI HAI\nKHỞI CÔNG 25.12.58\nKHÁNH THÀNH NGÀY 5.4.1964",
+    "material": "stone",
+    "memorial": "plaque",
+    "name": "Bia khánh thành Hồ Suối Hai"
+   }
+  },
+  {
+   "type": "node",
+   "id": 6894264787,
+   "lat": 21.3471755,
+   "lon": 103.9099095,
+   "tags": {
+    "historic": "monument",
+    "name": "Văn Bia Quế Lâm ngự chế"
+   }
+  },
+  {
+   "type": "node",
+   "id": 7022951440,
+   "lat": 8.6774503,
+   "lon": 106.5927619,
+   "tags": {
+    "historic": "memorial",
+    "memorial": "stele",
+    "name": "Bia xếp hạng Di tích"
+   }
+  },
+  {
+   "type": "node",
+   "id": 6535217831,
+   "lat": 16.471778,
+   "lon": 107.5782705,
+   "tags": {
+    "abandoned:memorial": "stele",
+    "historic": "memorial",
+    "name": "Bia Tiên động phương tung"
+   }
+  },
+  {
+   "type": "node",
+   "id": 12143156601,
+   "lat": 10.2087854,
+   "lon": 106.2203994,
+   "tags": {
+    "historic": "memorial",
+    "name": "Bia tưởng niệm Trương Vĩnh Ký",
+    "outdoor_seating": "no"
+   }
+  },
+  {
+   "type": "node",
+   "id": 7968147349,
+   "lat": 23.3604271,
+   "lon": 105.3171143,
+   "tags": {
+    "historic": "memorial",
+    "memorial": "plaque",
+    "name": "Công trình tặng đồng bào Lũng Cú"
+   }
+  },
+  {
+   "type": "node",
+   "id": 5390051726,
+   "lat": 22.8265379,
+   "lon": 104.9831873,
+   "tags": {
+    "historic": "memorial",
+    "memorial": "statue",
+    "name": "Bác Hồ với đồng bào các dân tộc Hà Giang",
+    "name:en": "Uncle Ho with Ha Giang peoples",
+    "name:zh": "胡主席与河江的各族人民"
+   }
+  },
+  {
+   "type": "node",
+   "id": 14076086101,
+   "lat": 15.9611558,
+   "lon": 108.4982853,
+   "tags": {
+    "historic": "memorial",
+    "name": "Di tích khảo cổ học Bãi Ông",
+    "name:en": "Bãi Ông Archaeological Site",
+    "name:vi": "Di tích khảo cổ học Bãi Ông"
+   }
+  },
+  {
+   "type": "node",
+   "id": 4524565893,
+   "lat": 13.9546021,
+   "lon": 109.0895925,
+   "tags": {
+    "alt_name": "Tháp Phốc Lốc",
+    "historic": "ruins",
+    "historic:civilization": "champa",
+    "name": "Tháp Phú Lốc",
+    "name:en": "Phu Loc Cham Tower",
+    "ruins": "tower",
+    "wikidata": "Q10825851",
+    "wikipedia": "vi:Tháp Phú Lốc"
+   }
+  },
+  {
+   "type": "node",
+   "id": 7513022915,
+   "lat": 10.7740187,
+   "lon": 106.7013967,
+   "tags": {
+    "historic": "ruins",
+    "name": "Di Tích Chuồng Chim Bồ Câu Người Ấn Tamil",
+    "name:en": "Tamil Pigeon Cases since 1920"
+   }
+  },
+  {
+   "type": "node",
+   "id": 11784634072,
+   "lat": 15.6753292,
+   "lon": 108.2943955,
+   "tags": {
+    "historic": "ruins",
+    "name": "Phật viện Đồng Dương",
+    "name:en": "Dong Duong Buddhist Monastery"
+   }
+  },
+  {
+   "type": "node",
+   "id": 13874818779,
+   "lat": 10.0490076,
+   "lon": 104.0176233,
+   "tags": {
+    "historic": "ruins",
+    "inscription": "Di tích quốc gia đặc biệt",
+    "material": "metal",
+    "memorial": "plaque",
+    "name": "Nhà thờ Kiến Văn"
+   }
+  },
+  {
+   "type": "way",
+   "id": 478473546,
+   "bounds": {
+    "minlat": 18.1788865,
+    "minlon": 105.6629482,
+    "maxlat": 18.1810715,
+    "maxlon": 105.665435
+   },
+   "tags": {
+    "historic": "ruins",
+    "name": "Di tích thành Sơn Phòng",
+    "name:vi": "Di tích thành Sơn Phòng",
+    "tourism": "attraction"
+   }
+  },
+  {
+   "type": "node",
+   "id": 6278479148,
+   "lat": 20.9631653,
+   "lon": 106.766042,
+   "tags": {
+    "historic": "battlefield",
+    "name": "Di tích Bạch Đằng Giang"
+   }
+  },
+  {
+   "type": "node",
+   "id": 10291730841,
+   "lat": 10.3286782,
+   "lon": 107.0826765,
+   "tags": {
+    "historic": "battlefield",
+    "name": "Ancient Artillary Battlefield",
+    "tourism": "attraction"
+   }
+  },
+  {
+   "type": "node",
+   "id": 4305631603,
+   "lat": 21.819243,
+   "lon": 105.2149703,
+   "tags": {
+    "historic": "ruins",
+    "name": "Di tích thành nhà Mạc",
+    "tourism": "attraction"
+   }
+  },
+  {
+   "type": "node",
+   "id": 11596828663,
+   "lat": 22.5916551,
+   "lon": 106.0410086,
+   "tags": {
+    "historic": "monument",
+    "name": "Khu di tích rừng Trần Hưng Đạo"
+   }
+  },
+  {
+   "type": "node",
+   "id": 4708186090,
+   "lat": 10.556944,
+   "lon": 107.22222,
+   "tags": {
+    "abandoned": "yes",
+    "description": "Nui Dat (Núi Đất) is a former 1st Australian Task Force (1 ATF) base now part of Ba Ria city in Ba Ria–Vung Tau province, Vietnam. In 1966, when the area was part of the then Phuoc Tuy Province it was the location of a prominent 1 ATF military base.",
+    "historic": "ruins",
+    "military": "base",
+    "name": "Nui dat",
+    "name:vi": "Núi Đất",
+    "wikidata": "Q7068799",
+    "wikipedia": "en:Nui Dat"
+   }
+  },
+  {
+   "type": "node",
+   "id": 13122726423,
+   "lat": 11.9506138,
+   "lon": 108.4116285,
+   "tags": {
+    "abandoned:aeroway": "aerodrome",
+    "name": "Phi trường Cam Ly",
+    "old_name": "Phi trường Cam Ly"
+   }
+  },
+  {
+   "type": "node",
+   "id": 11777724187,
+   "lat": 22.7309117,
+   "lon": 105.3742108,
+   "tags": {
+    "historic": "yes",
+    "military": "barracks",
+    "name": "Căng Bắc Mê"
+   }
+  },
+  {
+   "type": "node",
+   "id": 13765071859,
+   "lat": 21.8280564,
+   "lon": 106.7692388,
+   "tags": {
+    "access": "no",
+    "historic": "fort",
+    "name": "Brière de l'Isle (fort)"
+   }
+  },
+  {
+   "type": "node",
+   "id": 13765071860,
+   "lat": 22.8162401,
+   "lon": 104.9709297,
+   "tags": {
+    "access": "yes",
+    "historic": "fort",
+    "name": "Billotte (fort)"
+   }
+  },
+  {
+   "type": "node",
+   "id": 9240359646,
+   "lat": 21.0795873,
+   "lon": 106.5124726,
+   "tags": {
+    "historic": "fort",
+    "name": "Di tích Đồn Cao"
+   }
+  },
+  {
+   "type": "node",
+   "id": 3482754596,
+   "lat": 11.0610793,
+   "lon": 106.5290725,
+   "tags": {
+    "historic": "yes",
+    "military": "trench",
+    "name": "Kitchen"
+   }
+  },
+  {
+   "type": "way",
+   "id": 971864708,
+   "bounds": {
+    "minlat": 10.7541606,
+    "minlon": 106.6496215,
+    "maxlat": 10.7551893,
+    "maxlon": 106.650833
+   },
+   "tags": {
+    "landuse": "military",
+    "military": "barracks",
+    "name": "Đồn Cây Mai",
+    "name:en": "Fort Cay Mai",
+    "name:fr": "Fort de Cay Mai",
+    "name:vi": "Đồn Cây Mai"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1460504144,
+   "bounds": {
+    "minlat": 20.7209759,
+    "minlon": 107.0521212,
+    "maxlat": 20.7245245,
+    "maxlon": 107.0561944
+   },
+   "tags": {
+    "description": "Cat Ba Cannon Fort",
+    "landuse": "military"
+   }
+  },
+  {
+   "type": "node",
+   "id": 3294335515,
+   "lat": 21.3832192,
+   "lon": 103.0159911,
+   "tags": {
+    "historic": "battlefield",
+    "name": "A1 HILL",
+    "sym": "Scenic Area"
+   }
+  },
+  {
+   "type": "node",
+   "id": 3812282642,
+   "lat": 10.774988,
+   "lon": 106.6866162,
+   "tags": {
+    "historic": "memorial",
+    "memorial": "war_memorial",
+    "name": "Đài Kỷ Niệm Thích Quảng Đức",
+    "name:es": "Memorial Thich Quang Duc"
+   }
+  },
+  {
+   "type": "node",
+   "id": 7368395546,
+   "lat": 21.0062067,
+   "lon": 105.8426706,
+   "tags": {
+    "historic": "memorial",
+    "inscription": "Từ quảng trường này, bao thế hệ cán bộ và sinh viên đã lên đường nhập ngũ vì sự nghiệp bảo vệ Tổ quốc",
+    "material": "marble",
+    "memorial": "war_memorial",
+    "name": "Tượng đài Sinh viên lên đường bảo vệ Tổ quốc",
+    "official_name": "Tượng đài Cán bộ và sinh viên xếp bút nghiên lên đường bảo vệ Tổ quốc"
+   }
+  },
+  {
+   "type": "node",
+   "id": 14152844701,
+   "lat": 14.6011561,
+   "lon": 108.2975443,
+   "tags": {
+    "historic": "memorial",
+    "name": "Military Bulldozer"
+   }
+  },
+  {
+   "type": "way",
+   "id": 934254484,
+   "bounds": {
+    "minlat": 10.2252546,
+    "minlon": 103.9577866,
+    "maxlat": 10.2274499,
+    "maxlon": 103.9696738
+   },
+   "tags": {
+    "abandoned:aeroway": "runway",
+    "highway": "tertiary",
+    "length": "2,128",
+    "name": "Võ Văn Kiệt",
+    "ref": "8/26",
+    "surface": "asphalt",
+    "width": "28"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1135316110,
+   "bounds": {
+    "minlat": 10.2232152,
+    "minlon": 103.9557196,
+    "maxlat": 10.2303124,
+    "maxlon": 103.9794579
+   },
+   "tags": {
+    "abandoned:aeroway": "yes",
+    "alt_name": "Duong Dong Airport",
+    "area": "yes",
+    "historic": "yes",
+    "iata": "PQC",
+    "icao": "VVPQ",
+    "internet_access": "no",
+    "name": "Sân bay Phú Quốc",
+    "name:en": "Phu Quoc Old Airport",
+    "operator": "Southern Airports Services Company",
+    "operator:type": "private"
+   }
+  },
+  {
+   "type": "way",
+   "id": 477496030,
+   "bounds": {
+    "minlat": 10.5622514,
+    "minlon": 107.220437,
+    "maxlat": 10.5632142,
+    "maxlon": 107.2264901
+   },
+   "tags": {
+    "description": "This was the location of a runway that was part of the Nui Dat (Núi Đất) former 1st Australian Task Force (1 ATF) base dating from 1966.",
+    "disused:aeroway": "runway",
+    "historic": "yes",
+    "name": "Nui Dat Runway",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 870400493,
+   "bounds": {
+    "minlat": 16.6544324,
+    "minlon": 106.7226559,
+    "maxlat": 16.6559588,
+    "maxlon": 106.7312711
+   },
+   "tags": {
+    "abandoned:aeroway": "runway",
+    "name": "Đường băng sân bay Tà Cơn"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1041696984,
+   "bounds": {
+    "minlat": 12.0173449,
+    "minlon": 106.8099974,
+    "maxlat": 12.0208446,
+    "maxlon": 106.8109489
+   },
+   "tags": {
+    "abandoned:aeroway": "runway"
+   }
+  },
+  {
+   "type": "node",
+   "id": 3482754609,
+   "lat": 11.0605319,
+   "lon": 106.528259,
+   "tags": {
+    "military": "trench",
+    "natural": "cave_entrance"
+   }
+  },
+  {
+   "type": "node",
+   "id": 3482754612,
+   "lat": 11.0607114,
+   "lon": 106.5284509,
+   "tags": {
+    "military": "trench",
+    "natural": "cave_entrance"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1073109935,
+   "bounds": {
+    "minlat": 21.0303669,
+    "minlon": 105.4872385,
+    "maxlat": 21.0308251,
+    "maxlon": 105.4882979
+   },
+   "tags": {
+    "military": "trench"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1146171154,
+   "bounds": {
+    "minlat": 21.3366287,
+    "minlon": 105.8034906,
+    "maxlat": 21.3370398,
+    "maxlon": 105.8043165
+   },
+   "tags": {
+    "military": "trench"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1165154435,
+   "bounds": {
+    "minlat": 21.3820215,
+    "minlon": 103.0190719,
+    "maxlat": 21.3823428,
+    "maxlon": 103.0191745
+   },
+   "tags": {
+    "barrier": "ditch",
+    "military": "trench"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1165154442,
+   "bounds": {
+    "minlat": 21.3830711,
+    "minlon": 103.0162272,
+    "maxlat": 21.3835928,
+    "maxlon": 103.0178173
+   },
+   "tags": {
+    "barrier": "ditch",
+    "military": "trench"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1447538851,
+   "bounds": {
+    "minlat": 11.9531579,
+    "minlon": 109.2711841,
+    "maxlat": 11.9533962,
+    "maxlon": 109.2713407
+   },
+   "tags": {
+    "military": "trench"
+   }
+  },
+  {
+   "type": "node",
+   "id": 3482754613,
+   "lat": 11.0608086,
+   "lon": 106.5286368,
+   "tags": {
+    "military": "trench",
+    "natural": "cave_entrance"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207074801,
+   "bounds": {
+    "minlat": 11.0574904,
+    "minlon": 106.5251697,
+    "maxlat": 11.0636286,
+    "maxlon": 106.5298842
+   },
+   "tags": {
+    "historic": "battlefield",
+    "leisure": "park",
+    "name": "Địa đạo Bến Đình"
+   }
+  }
+ ]
+}

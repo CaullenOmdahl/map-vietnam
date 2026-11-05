@@ -1,0 +1,133 @@
+{
+  "about": "Input to scripts/map_library_catalogue.py, which copies its scans (and the ids and checksums of the eight L7014 sheets the project started with) into data/sources/map_library.json; nothing reads this file at run time, and setup downloads no maps. l7014: US Army Map Service L7014 1:50,000 GeoPDFs from the USGS store (georeferenced from their own embedded registration points). scans: older scanned maps. data/scans/<id>.json holds control points in pixels of data/raw/scans/<id>/work.jpg, so work.jpg must be reproduced exactly: it is either the archive's file itself (no 'derive'), or the archive's file is kept as 'source_file' and converted as 'derive' says (jp2_reduce: JPEG 2000 resolution levels to drop, each halving the size; width: Lanczos resize to this width; jpeg_quality: JPEG quality, saved without chroma subsampling). bytes and sha256 describe the archive's file as first downloaded; work_size is [width, height] of work.jpg. page, when given, is a human-readable catalogue page.",
+  "l7014": [
+    {
+      "id": "L701460291",
+      "title": "Long Xuyên (6029 I)",
+      "url": "https://store.usgs.gov/assets/yimages/NGA/L701460291_geo.pdf",
+      "bytes": 5807355,
+      "sha256": "18aa2b0c98b35fbf7f5a446c53ec01dac6317b30140c36f0779fec941f62ca98"
+    },
+    {
+      "id": "L701460294",
+      "title": "Tri Ton (6029 IV)",
+      "url": "https://store.usgs.gov/assets/yimages/NGA/L701460294_geo.pdf",
+      "bytes": 9206304,
+      "sha256": "7e4ff076046b9c165d28491f1162e18960032a5d11c5ed87a6f1a38199d2d6ba"
+    },
+    {
+      "id": "L701461291",
+      "title": "Sa Dec (6129 I)",
+      "url": "https://store.usgs.gov/assets/yimages/NGA/L701461291_geo.pdf",
+      "bytes": 8809503,
+      "sha256": "d7e7c9864b44b4bcdc53573074bba4e70e89ebcc17556fc5a6042282b5c2fe65"
+    },
+    {
+      "id": "L701461292",
+      "title": "Can Tho (6129 II)",
+      "url": "https://store.usgs.gov/assets/yimages/NGA/L701461292_geo.pdf",
+      "bytes": 6522618,
+      "sha256": "e901bb863aa176454f2df9b96046474157c2b6e1228eae6216ff3c5cafff4e97"
+    },
+    {
+      "id": "L701461293",
+      "title": "Phong Phu, O Mon (6129 III)",
+      "url": "https://store.usgs.gov/assets/yimages/NGA/L701461293_geo.pdf",
+      "bytes": 6534713,
+      "sha256": "6223e83ed9c73ccaef2aab7c592ca45a1d91db445e674842db5b7c3efeb88bf2"
+    },
+    {
+      "id": "L701461294",
+      "title": "Cao Lanh (6129 IV)",
+      "url": "https://store.usgs.gov/assets/yimages/NGA/L701461294_geo.pdf",
+      "bytes": 8613490,
+      "sha256": "eab1adbce813020243b1bce362402fbbeb302b38b7d34411ccf13dfc404911c2"
+    },
+    {
+      "id": "L701461302",
+      "title": "My An (6130 II)",
+      "url": "https://store.usgs.gov/assets/yimages/NGA/L701461302_geo.pdf",
+      "bytes": 8335363,
+      "sha256": "d596e0a3c45b1f65bcf74aab5aa0cc1da2fb4165ca5942461298e8234802edb3"
+    },
+    {
+      "id": "L701461303",
+      "title": "Phong My (6130 III)",
+      "url": "https://store.usgs.gov/assets/yimages/NGA/L701461303_geo.pdf",
+      "bytes": 6773669,
+      "sha256": "162b40019d3fc3be9340428cbe2ec1fc95f49b6f86dca27a93f60184e8ce3b84"
+    }
+  ],
+  "scans": [
+    {
+      "id": "ams_l509_nc48-6_1954",
+      "title": "Long Xuyên (NC 48-6)",
+      "url": "https://openresearch-repository.anu.edu.au/server/api/core/bitstreams/4b8eed84-423a-4728-855b-45c7cee3377b/content",
+      "bytes": 10018089,
+      "sha256": "153a3b6a37da3c3830ec6fa0978167773ed6818992514b7789daffa43c13e2c8",
+      "work_size": [8504, 6405]
+    },
+    {
+      "id": "ams_l509_nc48-6_1962",
+      "title": "Long Xuyên (NC 48-6)",
+      "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-6-2nd-ed.jpg",
+      "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+      "bytes": 5599133,
+      "sha256": "878e3877f310737eea46d60203c06e6cd4e688c60e76108b1d58536942520e72",
+      "work_size": [5000, 3655]
+    },
+    {
+      "id": "atlas_1909_sadec",
+      "title": "Province de Sadec (Planche XVI)",
+      "url": "https://humazur.univ-cotedazur.fr/files/original/53e27b11d309317b583204a6deb45a28cbf6c4ac.jpg",
+      "bytes": 2293765,
+      "sha256": "351d74d6f96cc47e24eb8425caf6e3f825278b1d17696a47ee6e3e9aa737f0de",
+      "work_size": [3733, 5325]
+    },
+    {
+      "id": "bigrel_1873_f10",
+      "title": "Carte Générale de la Cochinchine Française, 10e feuille",
+      "url": "https://www.davidrumsey.com/static/jp2k/218/16633010.jp2",
+      "source_file": "src.jp2",
+      "bytes": 70473672,
+      "sha256": "877afa9354fd30eef9a87407b029f3a3f3c3fb4b057e28bbd8d537e8a7d72290",
+      "derive": {
+        "jp2_reduce": 1,
+        "width": 10000,
+        "jpeg_quality": 90
+      },
+      "work_size": [10000, 7026]
+    },
+    {
+      "id": "fr_sgi_100k_228_longxuyen",
+      "title": "Carte de l'Indochine 1:100 000, feuille 228 Long-Xuyên",
+      "url": "https://api.nakala.fr/data/10.34847/nkl.f2ffx15y/05684761a6be339b73fee0f51b1ecb7b6866090d",
+      "page": "https://nakala.fr/10.34847/nkl.f2ffx15y",
+      "source_file": "src.jp2",
+      "bytes": 11519795,
+      "sha256": "04004915465f721d3ac4c5d33d7e6a6d3aec6190d46810be1ee92ba1b56a2054",
+      "derive": {
+        "jpeg_quality": 90
+      },
+      "work_size": [10026, 7618]
+    },
+    {
+      "id": "koch_1889_f2",
+      "title": "Carte de la Cochinchine française, feuille 2",
+      "url": "https://api.nakala.fr/iiif/10.34847/nkl.b51ab029/af318bd8cf7001e730903cb9ebd605e688299042/full/max/0/default.jpg",
+      "page": "https://nakala.fr/10.34847/nkl.b51ab029",
+      "bytes": 15300848,
+      "sha256": "72ca1fc573bc2700e5fb62f50a92a29cd229d65d6e3fa6dddeeade65b25630d9",
+      "work_size": [9780, 7227]
+    },
+    {
+      "id": "routiere_1951_f20_phnompenh",
+      "title": "Phnom Penh (feuille 20)",
+      "url": "https://openresearch-repository.anu.edu.au/server/api/core/bitstreams/73727af7-90c2-4c2b-8fad-cfde757f8ef4/content",
+      "page": "http://hdl.handle.net/1885/133607",
+      "bytes": 9326451,
+      "sha256": "f95ce58576150573ea806c9e08904a4b80f7af95f754a4e9a4d86f0487a94917",
+      "work_size": [7685, 9760]
+    }
+  ]
+}

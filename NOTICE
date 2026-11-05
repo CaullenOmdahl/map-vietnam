@@ -1,0 +1,151 @@
+Map Vietnam
+Copyright 2026 The Map Vietnam contributors
+
+This product includes software developed as Map Vietnam, licensed under the Apache License,
+Version 2.0 (see LICENSE).
+
+The Apache License covers the code and documentation in this repository. It does not cover the
+maps and records the code downloads, nor the map content shown in the screenshots (see
+"Screenshots" below). Those are NOT included in or redistributed by this
+repository: each person who runs Map Vietnam downloads them directly from the holders listed
+below, onto their own computer, under the holder's terms. If you share anything made from them
+(a screenshot, an export, a tile set), follow the terms and credit lines below.
+
+The test suite (tests/fixtures/) contains small excerpts of some of these sources, each under the
+source's own licence; tests/fixtures/README.md lists them.
+
+
+Historical maps
+===============
+
+Each map below is downloaded only when a person adds it in Map Vietnam. The full list, with each
+map's download addresses, is data/sources/map_library.json.
+
+US Army Map Service series L7014, with border sheets L7015 and L7016, 1:50,000 (mostly
+1965-1970), 498 sheets
+  Downloaded from the USGS Store (store.usgs.gov), GeoPDFs prepared by the US National
+  Geospatial-Intelligence Agency. Works of the US Government: public domain in the United States.
+  The PDF metadata carries release code "DS" or "OO"; check the printed margin of a sheet before
+  redistributing tiles made from it.
+
+Joint Operations Graphic (Air), series 1501A, 1:250,000 (about 1966-2000), 32 sheets
+  US Defense Mapping Agency; GeoPDFs prepared by the US National Geospatial-Intelligence Agency,
+  downloaded from the USGS Store, or, when the Store fails, from the Perry-Castaneda Library Map
+  Collection, University of Texas Libraries (https://maps.lib.utexas.edu/maps/jog/vietnam/).
+  Works of the US Government: public domain in the United States. Some PDFs carry release code
+  "DS"; check the printed margin before redistributing tiles. When a file came from the
+  University of Texas, credit: "Courtesy of the University of Texas Libraries, The University of
+  Texas at Austin".
+
+Carte Generale de la Cochinchine Francaise, 10e feuille (Bigrel, Depot de la Marine, 1873)
+  David Rumsey Map Collection, David Rumsey Map Center, Stanford Libraries.
+  Licensed CC BY-NC-SA 3.0 (https://creativecommons.org/licenses/by-nc-sa/3.0/): non-commercial use
+  only, with attribution, and adaptations shared alike. Credit: "David Rumsey Map Collection,
+  David Rumsey Map Center, Stanford Libraries".
+
+Carte de la Cochinchine francaise, feuille 2 (A. Koch, Challamel et Cie, 1889)
+  Fonds de cartes de l'Indochine francaise du Centre IST REGARDS (CNRS), published on NAKALA
+  (https://nakala.fr/10.34847/nkl.b51ab029). The NAKALA record gives the licence CC BY 4.0 and
+  describes the map itself as public domain. Credit the holder and link the record.
+
+Carte de l'Indochine 1:100 000, feuille 228 Long-Xuyen (Service Geographique de l'Indochine)
+  Fonds de cartes de l'Indochine francaise du Centre IST REGARDS (CNRS), published on NAKALA
+  (https://nakala.fr/10.34847/nkl.f2ffx15y). Licensed CC BY-NC-SA 4.0
+  (https://creativecommons.org/licenses/by-nc-sa/4.0/): non-commercial use only, with
+  attribution, and adaptations shared alike.
+
+Province de Sadec, planche XVI (Atlas general de l'Indo-Chine francaise, Chabert & Gallois, 1909)
+  Humazur digital library, Universite Cote d'Azur (humazur.univ-cotedazur.fr). Published in 1909;
+  we could not read a licence statement on the holder's site, so check its terms before reusing
+  the image, and credit the holder.
+
+Carte routiere de l'Indochine, feuille 20 Phnom Penh (Institut Geographique National, 1951)
+  Australian National University, Asia Pacific Map Collection, ANU Open Research
+  (http://hdl.handle.net/1885/133607). Rights statement: "Copyright Expired".
+
+Long Xuyen, NC 48-6, series L509, 1:250,000 (US Army Map Service, 1954)
+  Australian National University, Asia Pacific Map Collection, ANU Open Research
+  (http://hdl.handle.net/1885/160075). Rights statement: "Copyright Expired". A work of the US
+  Government.
+
+Long Xuyen, NC 48-6, series L509, 1:250,000, 2nd edition (US Army Map Service, 1962)
+  Perry-Castaneda Library Map Collection, University of Texas Libraries
+  (https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/). A work of the US Government;
+  the library describes such maps as public domain. Credit: "Courtesy of the University of Texas
+  Libraries, The University of Texas at Austin".
+
+
+Records
+=======
+
+NGA GEOnet Names Server (GNS), Vietnam country file
+  US National Geospatial-Intelligence Agency, fetched from an Internet Archive capture of
+  geonames.nga.mil. US Government work. NGA asks for this credit: "Toponymic information is based
+  on the Geographic Names Database, containing official standard names approved by the United
+  States Board on Geographic Names and maintained by the National Geospatial-Intelligence Agency."
+
+Hamlet Evaluation System gazetteers (RG 472) and Combat Area Casualties Current File (RG 330)
+  US National Archives and Records Administration (catalog.archives.gov). US federal records,
+  public domain, access and use unrestricted.
+
+THOR, Theater History of Operations, Vietnam air operations
+  US Air Force data, published on Kaggle as usaf/vietnam-war-bombing-operations. US Government
+  work, public domain; the Kaggle dataset is marked CC0. Downloading it needs a free Kaggle account.
+
+Wikipedia
+  English Wikipedia "List of United States servicemembers and civilians missing in action during
+  the Vietnam War" and Vietnamese Wikipedia "Danh sach Di tich quoc gia Viet Nam" and "Di tich
+  quoc gia dac biet (Viet Nam)", with article coordinates. Text and data by Wikipedia
+  contributors, licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). Every
+  record keeps a link to its page.
+
+Wikidata
+  Data from Wikidata (https://www.wikidata.org), dedicated to the public domain under CC0 1.0.
+
+OpenStreetMap
+  Data (C) OpenStreetMap contributors, available under the Open Database License 1.0
+  (https://opendatacommons.org/licenses/odbl/). See https://www.openstreetmap.org/copyright.
+
+Vietnam Helicopter Pilots Association (VHPA), optional
+  Copyright VHPA. Only short factual fields are stored (dates, tail numbers, grids, status codes,
+  places); no narrative text is stored or quoted. It is downloaded only if the user chooses it.
+
+
+Viewer
+======
+
+MapLibre GL JS (loaded from unpkg.com at run time, not included here)
+  Copyright (c) 2023 MapLibre contributors; Copyright (c) 2020 Mapbox, Inc.
+  Licensed under the 3-Clause BSD License (https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt).
+
+Background maps shown under the old maps (fetched at run time)
+  Street map: tiles from tile.openstreetmap.org, (C) OpenStreetMap contributors, used under the
+  OpenStreetMap Foundation's tile usage policy.
+  Satellite: Esri World Imagery, "Imagery (C) Esri" and its data providers.
+  Map label fonts: from the Protomaps basemaps-assets repository (https://github.com/protomaps/basemaps-assets),
+  under the fonts' own open licences.
+
+
+Screenshots
+===========
+
+The images in docs/images/ show the viewer with map content and records from the holders above.
+The viewer's own interface in them is covered by the Apache License; the map content keeps its
+holders' terms:
+  - Street map background (all images; add-old-maps.jpg shows no old map, only
+    the outlines of the sheets that can be added): (C) OpenStreetMap contributors
+    (https://www.openstreetmap.org/copyright). Map tiles are licensed CC BY-SA 2.0, the data
+    under the Open Database License 1.0.
+  - US Army Map Service L7014 sheets 6129 IV Cao Lanh and 6129 I Sa Dec (1965), in
+    hero-cao-lanh-1965-map.jpg, choose-an-old-map.jpg, swipe-compare-1873-1965.jpg,
+    wartime-grid-reference.jpg, record-card.jpg and phone-layout.jpg: US Government works,
+    public domain.
+  - Carte Generale de la Cochinchine Francaise, 10e feuille (1873), the left half of
+    swipe-compare-1873-1965.jpg: David Rumsey Map Collection, David Rumsey Map Center, Stanford
+    Libraries, licensed CC BY-NC-SA 3.0 (https://creativecommons.org/licenses/by-nc-sa/3.0/).
+    That image, as an adaptation of the map, is shared under the same licence: non-commercial
+    use only, with this credit.
+  - Records drawn on the maps: place names from the NGA GEOnet Names Server and the NARA hamlet
+    gazetteers, air strikes from THOR, and historic sites from Wikidata (CC0, including the Sa
+    Dec Base record in record-card.jpg), OpenStreetMap (ODbL 1.0) and Vietnamese Wikipedia
+    (CC BY-SA 4.0), each credited above. No casualty records are shown.

@@ -1,0 +1,252 @@
+{
+ "_about": "Subset of data/work/gns_index.json (NGA GNS Vietnam name index) for the HES province-extent tests.",
+ "names": {
+  "khe sanh": [
+   {
+    "lon": 105.783333,
+    "lat": 17.766667,
+    "fc": "H",
+    "dsg": "STM",
+    "adm1": "VN-000",
+    "name": "Khê Sanh",
+    "nt": "N",
+    "ufi": "-3728059",
+    "unc": 5170.0
+   },
+   {
+    "lon": 106.73884,
+    "lat": 16.628248,
+    "fc": "P",
+    "dsg": "PPLA2",
+    "adm1": "VN-25",
+    "name": "Khe Sanh",
+    "nt": "N",
+    "ufi": "-3716769",
+    "unc": 1500.0
+   },
+   {
+    "lon": 106.735563,
+    "lat": 16.631176,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-25",
+    "name": "Thị Trấn Khe Sanh",
+    "nt": "N",
+    "ufi": "11876452",
+    "unc": 3000.0
+   }
+  ],
+  "lang vei": [
+   {
+    "lon": 106.683333,
+    "lat": 16.6,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-25",
+    "name": "Làng Vei",
+    "nt": "V",
+    "ufi": "-3719724",
+    "unc": 1320.0
+   }
+  ],
+  "ben dam": [
+   {
+    "lon": 106.566667,
+    "lat": 8.65,
+    "fc": "H",
+    "dsg": "BAY",
+    "adm1": "VN-43",
+    "name": "Bến Đầm",
+    "nt": "N",
+    "ufi": "-3712062",
+    "unc": 3270.0
+   },
+   {
+    "lon": 106.580133,
+    "lat": 8.643174,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-43",
+    "name": "Bến Đầm",
+    "nt": "N",
+    "ufi": "12288371",
+    "unc": 270.0
+   }
+  ],
+  "hong ngu": [
+   {
+    "lon": 105.35,
+    "lat": 10.8,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-45",
+    "name": "Hồng Ngự",
+    "nt": "N",
+    "ufi": "-3715726",
+    "unc": 1320.0
+   },
+   {
+    "lon": 105.292629,
+    "lat": 10.811306,
+    "fc": "A",
+    "dsg": "ADM2",
+    "adm1": "VN-45",
+    "name": "Huyện Hồng Ngự",
+    "nt": "N",
+    "ufi": "392684",
+    "unc": 12000.0
+   },
+   {
+    "lon": 105.382648,
+    "lat": 10.814355,
+    "fc": "A",
+    "dsg": "ADM2",
+    "adm1": "VN-45",
+    "name": "Thị Xã Hồng Ngự",
+    "nt": "N",
+    "ufi": "12223977",
+    "unc": 12000.0
+   }
+  ],
+  "vinh linh": [
+   {
+    "lon": 107.005198,
+    "lat": 17.068362,
+    "fc": "P",
+    "dsg": "PPLA2",
+    "adm1": "VN-25",
+    "name": "Vĩnh Linh",
+    "nt": "V",
+    "ufi": "-3715864",
+    "unc": 1500.0
+   },
+   {
+    "lon": 106.933842,
+    "lat": 17.016001,
+    "fc": "A",
+    "dsg": "ADM2",
+    "adm1": "VN-25",
+    "name": "Huyện Vĩnh Linh",
+    "nt": "N",
+    "ufi": "402480",
+    "unc": 12000.0
+   },
+   {
+    "lon": 106.206915,
+    "lat": 21.278178,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-54",
+    "name": "Vĩnh Linh",
+    "nt": "N",
+    "ufi": "12345540",
+    "unc": 270.0
+   }
+  ],
+  "cao lanh": [
+   {
+    "lon": 105.632944,
+    "lat": 10.460171,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-45",
+    "name": "Cao Lãnh",
+    "nt": "N",
+    "ufi": "-3709962",
+    "unc": 270.0
+   },
+   {
+    "lon": 105.175556,
+    "lat": 9.884167,
+    "fc": "P",
+    "dsg": "PPL",
+    "adm1": "VN-47",
+    "name": "Ấp Cao Lãnh",
+    "nt": "N",
+    "ufi": "-3702422",
+    "unc": 270.0
+   },
+   {
+    "lon": 105.618597,
+    "lat": 10.454726,
+    "fc": "A",
+    "dsg": "ADM2",
+    "adm1": "VN-45",
+    "name": "Thành Phố Cao Lãnh",
+    "nt": "N",
+    "ufi": "392674",
+    "unc": 12000.0
+   },
+   {
+    "lon": 105.709651,
+    "lat": 10.467868,
+    "fc": "A",
+    "dsg": "ADM2",
+    "adm1": "VN-45",
+    "name": "Huyện Cao Lãnh",
+    "nt": "N",
+    "ufi": "392679",
+    "unc": 12000.0
+   }
+  ],
+  "dak to": [
+   {
+    "lon": 107.838901,
+    "lat": 14.660919,
+    "fc": "P",
+    "dsg": "PPLA2",
+    "adm1": "VN-28",
+    "name": "Đắk Tô",
+    "nt": "N",
+    "ufi": "-3711689",
+    "unc": 1500.0
+   },
+   {
+    "lon": 107.808162,
+    "lat": 14.700867,
+    "fc": "A",
+    "dsg": "ADM2",
+    "adm1": "VN-28",
+    "name": "Huyện Đắk Tô",
+    "nt": "N",
+    "ufi": "410955",
+    "unc": 12000.0
+   },
+   {
+    "lon": 107.853707,
+    "lat": 14.663231,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-28",
+    "name": "Thị Trấn Đắk Tô",
+    "nt": "N",
+    "ufi": "11901845",
+    "unc": 3000.0
+   }
+  ],
+  "kham duc": [
+   {
+    "lon": 107.793367,
+    "lat": 15.445076,
+    "fc": "P",
+    "dsg": "PPLA2",
+    "adm1": "VN-27",
+    "name": "Khâm Đức",
+    "nt": "N",
+    "ufi": "11893729",
+    "unc": 1500.0
+   },
+   {
+    "lon": 107.799945,
+    "lat": 15.444843,
+    "fc": "A",
+    "dsg": "ADM3",
+    "adm1": "VN-27",
+    "name": "Thị Trấn Khâm Đức",
+    "nt": "N",
+    "ufi": "11893728",
+    "unc": 3000.0
+   }
+  ]
+ }
+}

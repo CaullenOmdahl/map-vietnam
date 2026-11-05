@@ -1,0 +1,1098 @@
+{
+ "_about": "Subset of data/work/hes_provinces.json (regenerated with covering radii: farthest hamlet + 10 km) for tests.",
+ "provinces": {
+  "101": {
+   "code": "101",
+   "region": "1",
+   "names": [
+    "QUANG TRI"
+   ],
+   "lon": 107.092136,
+   "lat": 16.789687,
+   "radius_m": 71913,
+   "max_hamlet_m": 61913,
+   "radius_p90_m": 27522,
+   "hamlet_count": 566,
+   "max_gns_place_m": 60796,
+   "farthest_gns_place": "Ka Pay 2 (VN-25)",
+   "districts": {
+    "10101": {
+     "names": [
+      "HAI LANG"
+     ],
+     "lon": 107.278283,
+     "lat": 16.691852,
+     "radius_m": 73646,
+     "max_hamlet_m": 63646,
+     "radius_p90_m": 10774,
+     "hamlet_count": 78
+    },
+    "10102": {
+     "names": [
+      "MAI LINH"
+     ],
+     "lon": 107.190798,
+     "lat": 16.736838,
+     "radius_m": 16663,
+     "max_hamlet_m": 6663,
+     "radius_p90_m": 4608,
+     "hamlet_count": 39
+    },
+    "10103": {
+     "names": [
+      "TRIEU PHONG"
+     ],
+     "lon": 107.192121,
+     "lat": 16.813524,
+     "radius_m": 21735,
+     "max_hamlet_m": 11735,
+     "radius_p90_m": 8698,
+     "hamlet_count": 128
+    },
+    "10104": {
+     "names": [
+      "CAM LO"
+     ],
+     "lon": 106.979701,
+     "lat": 16.797112,
+     "radius_m": 36053,
+     "max_hamlet_m": 26053,
+     "radius_p90_m": 19939,
+     "hamlet_count": 154
+    },
+    "10105": {
+     "names": [
+      "GIO LINH"
+     ],
+     "lon": 107.0829,
+     "lat": 16.8999,
+     "radius_m": 21056,
+     "max_hamlet_m": 11056,
+     "radius_p90_m": 9276,
+     "hamlet_count": 83
+    },
+    "10108": {
+     "names": [
+      "HUONG-HOA"
+     ],
+     "lon": 106.715183,
+     "lat": 16.623962,
+     "radius_m": 25679,
+     "max_hamlet_m": 15679,
+     "radius_p90_m": 13498,
+     "hamlet_count": 35
+    },
+    "10109": {
+     "names": [
+      "DONG HA"
+     ],
+     "lon": 107.094371,
+     "lat": 16.833575,
+     "radius_m": 17655,
+     "max_hamlet_m": 7655,
+     "radius_p90_m": 4758,
+     "hamlet_count": 49
+    }
+   }
+  },
+  "102": {
+   "code": "102",
+   "region": "1",
+   "names": [
+    "THUA THIEN"
+   ],
+   "lon": 107.619983,
+   "lat": 16.469556,
+   "radius_m": 74456,
+   "max_hamlet_m": 56692,
+   "radius_p90_m": 35190,
+   "hamlet_count": 499,
+   "max_gns_place_m": 64456,
+   "farthest_gns_place": "Ra Môn (VN-26)",
+   "districts": {
+    "10201": {
+     "names": [
+      "NAM HOA"
+     ],
+     "lon": 107.594025,
+     "lat": 16.374464,
+     "radius_m": 36530,
+     "max_hamlet_m": 26530,
+     "radius_p90_m": 6780,
+     "hamlet_count": 30
+    },
+    "10202": {
+     "names": [
+      "HUONG TRA"
+     ],
+     "lon": 107.533546,
+     "lat": 16.489825,
+     "radius_m": 20278,
+     "max_hamlet_m": 10278,
+     "radius_p90_m": 5783,
+     "hamlet_count": 62
+    },
+    "10203": {
+     "names": [
+      "HUONG DIEN"
+     ],
+     "lon": 107.488127,
+     "lat": 16.653092,
+     "radius_m": 26234,
+     "max_hamlet_m": 16234,
+     "radius_p90_m": 14126,
+     "hamlet_count": 22
+    },
+    "10204": {
+     "names": [
+      "VINH LOC"
+     ],
+     "lon": 107.842351,
+     "lat": 16.395757,
+     "radius_m": 22123,
+     "max_hamlet_m": 12123,
+     "radius_p90_m": 10057,
+     "hamlet_count": 18
+    },
+    "10205": {
+     "names": [
+      "PHU LOC"
+     ],
+     "lon": 107.864336,
+     "lat": 16.303544,
+     "radius_m": 73086,
+     "max_hamlet_m": 63086,
+     "radius_p90_m": 21858,
+     "hamlet_count": 73
+    },
+    "10206": {
+     "names": [
+      "QUANG DIEN"
+     ],
+     "lon": 107.513039,
+     "lat": 16.564012,
+     "radius_m": 24334,
+     "max_hamlet_m": 14334,
+     "radius_p90_m": 8360,
+     "hamlet_count": 71
+    },
+    "10208": {
+     "names": [
+      "PHU VANG"
+     ],
+     "lon": 107.627603,
+     "lat": 16.507048,
+     "radius_m": 24178,
+     "max_hamlet_m": 14178,
+     "radius_p90_m": 9641,
+     "hamlet_count": 53
+    },
+    "10209": {
+     "names": [
+      "PHU THU"
+     ],
+     "lon": 107.727191,
+     "lat": 16.435682,
+     "radius_m": 23153,
+     "max_hamlet_m": 13153,
+     "radius_p90_m": 9371,
+     "hamlet_count": 54
+    },
+    "10210": {
+     "names": [
+      "HUONG THUY"
+     ],
+     "lon": 107.634092,
+     "lat": 16.434488,
+     "radius_m": 22483,
+     "max_hamlet_m": 12483,
+     "radius_p90_m": 10287,
+     "hamlet_count": 64
+    },
+    "10211": {
+     "names": [
+      "PHONG DIEN"
+     ],
+     "lon": 107.383349,
+     "lat": 16.592352,
+     "radius_m": 23685,
+     "max_hamlet_m": 13685,
+     "radius_p90_m": 11089,
+     "hamlet_count": 52
+    }
+   }
+  },
+  "104": {
+   "code": "104",
+   "region": "1",
+   "names": [
+    "QUANG TIN"
+   ],
+   "lon": 108.391191,
+   "lat": 15.550445,
+   "radius_m": 128337,
+   "max_hamlet_m": 39139,
+   "radius_p90_m": 29761,
+   "hamlet_count": 492,
+   "max_gns_place_m": 118337,
+   "farthest_gns_place": "Ta Ko (VN-27)",
+   "districts": {
+    "10401": {
+     "names": [
+      "THANG BINH"
+     ],
+     "lon": 108.359799,
+     "lat": 15.68822,
+     "radius_m": 41679,
+     "max_hamlet_m": 31679,
+     "radius_p90_m": 15409,
+     "hamlet_count": 125
+    },
+    "10403": {
+     "names": [
+      "TAM KY"
+     ],
+     "lon": 108.452998,
+     "lat": 15.549411,
+     "radius_m": 26411,
+     "max_hamlet_m": 16411,
+     "radius_p90_m": 12068,
+     "hamlet_count": 154
+    },
+    "10404": {
+     "names": [
+      "LY TIN"
+     ],
+     "lon": 108.63337,
+     "lat": 15.450615,
+     "radius_m": 25288,
+     "max_hamlet_m": 15288,
+     "radius_p90_m": 9260,
+     "hamlet_count": 62
+    },
+    "10405": {
+     "names": [
+      "HIEP DUC TERRITORY"
+     ],
+     "lon": 108.123337,
+     "lat": 15.572663,
+     "radius_m": 20436,
+     "max_hamlet_m": 10436,
+     "radius_p90_m": 8323,
+     "hamlet_count": 31
+    },
+    "10406": {
+     "names": [
+      "TIEN PHUOC"
+     ],
+     "lon": 108.291873,
+     "lat": 15.479331,
+     "radius_m": 24235,
+     "max_hamlet_m": 14235,
+     "radius_p90_m": 11121,
+     "hamlet_count": 94
+    },
+    "10407": {
+     "names": [
+      "HAU DUC"
+     ],
+     "lon": 108.27695,
+     "lat": 15.362851,
+     "radius_m": 24115,
+     "max_hamlet_m": 14115,
+     "radius_p90_m": 8720,
+     "hamlet_count": 26
+    }
+   }
+  },
+  "105": {
+   "code": "105",
+   "region": "1",
+   "names": [
+    "QUANG NGAI"
+   ],
+   "lon": 108.797145,
+   "lat": 15.054579,
+   "radius_m": 101214,
+   "max_hamlet_m": 91214,
+   "radius_p90_m": 34755,
+   "hamlet_count": 642,
+   "max_gns_place_m": 58900,
+   "farthest_gns_place": "Vĩnh Tuy (VN-29)",
+   "districts": {
+    "10501": {
+     "names": [
+      "BINH SON"
+     ],
+     "lon": 108.791074,
+     "lat": 15.306032,
+     "radius_m": 48037,
+     "max_hamlet_m": 38037,
+     "radius_p90_m": 17306,
+     "hamlet_count": 83
+    },
+    "10502": {
+     "names": [
+      "SON TINH"
+     ],
+     "lon": 108.77704,
+     "lat": 15.176663,
+     "radius_m": 29300,
+     "max_hamlet_m": 19300,
+     "radius_p90_m": 13263,
+     "hamlet_count": 130
+    },
+    "10503": {
+     "names": [
+      "TU NGHIA"
+     ],
+     "lon": 108.808628,
+     "lat": 15.104685,
+     "radius_m": 30957,
+     "max_hamlet_m": 20957,
+     "radius_p90_m": 10024,
+     "hamlet_count": 81
+    },
+    "10506": {
+     "names": [
+      "NGHIA HANH"
+     ],
+     "lon": 108.783587,
+     "lat": 15.012098,
+     "radius_m": 22039,
+     "max_hamlet_m": 12039,
+     "radius_p90_m": 8795,
+     "hamlet_count": 55
+    },
+    "10507": {
+     "names": [
+      "MO DUC"
+     ],
+     "lon": 108.88307,
+     "lat": 14.979194,
+     "radius_m": 22032,
+     "max_hamlet_m": 12032,
+     "radius_p90_m": 8697,
+     "hamlet_count": 95
+    },
+    "10508": {
+     "names": [
+      "DUC PHO"
+     ],
+     "lon": 108.974479,
+     "lat": 14.797223,
+     "radius_m": 34772,
+     "max_hamlet_m": 24772,
+     "radius_p90_m": 16920,
+     "hamlet_count": 84
+    },
+    "10509": {
+     "names": [
+      "SON HA"
+     ],
+     "lon": 108.551794,
+     "lat": 15.044006,
+     "radius_m": 30503,
+     "max_hamlet_m": 20503,
+     "radius_p90_m": 10882,
+     "hamlet_count": 31
+    },
+    "10510": {
+     "names": [
+      "BA TO"
+     ],
+     "lon": 108.686408,
+     "lat": 14.748923,
+     "radius_m": 70234,
+     "max_hamlet_m": 60234,
+     "radius_p90_m": 13890,
+     "hamlet_count": 35
+    },
+    "10511": {
+     "names": [
+      "MINH LONG"
+     ],
+     "lon": 108.682793,
+     "lat": 14.938735,
+     "radius_m": 83415,
+     "max_hamlet_m": 73415,
+     "radius_p90_m": 9416,
+     "hamlet_count": 26
+    },
+    "10512": {
+     "names": [
+      "TRA BONG"
+     ],
+     "lon": 108.539377,
+     "lat": 15.252471,
+     "radius_m": 25652,
+     "max_hamlet_m": 15652,
+     "radius_p90_m": 9440,
+     "hamlet_count": 22
+    }
+   }
+  },
+  "207": {
+   "code": "207",
+   "region": "2",
+   "names": [
+    "BINH DINH"
+   ],
+   "lon": 108.947039,
+   "lat": 14.084094,
+   "radius_m": 90180,
+   "max_hamlet_m": 80180,
+   "radius_p90_m": 58005,
+   "hamlet_count": 1300,
+   "max_gns_place_m": 67552,
+   "farthest_gns_place": "Tổ 3 (VN-31)",
+   "districts": {
+    "20701": {
+     "names": [
+      "TUY PHUOC"
+     ],
+     "lon": 109.114471,
+     "lat": 13.77254,
+     "radius_m": 120030,
+     "max_hamlet_m": 110030,
+     "radius_p90_m": 24564,
+     "hamlet_count": 286
+    },
+    "20702": {
+     "names": [
+      "AN NHON"
+     ],
+     "lon": 109.099056,
+     "lat": 13.903144,
+     "radius_m": 20085,
+     "max_hamlet_m": 10085,
+     "radius_p90_m": 7989,
+     "hamlet_count": 123
+    },
+    "20703": {
+     "names": [
+      "PHU CAT"
+     ],
+     "lon": 109.103579,
+     "lat": 14.02394,
+     "radius_m": 95473,
+     "max_hamlet_m": 85473,
+     "radius_p90_m": 15855,
+     "hamlet_count": 122
+    },
+    "20704": {
+     "names": [
+      "PHU MY"
+     ],
+     "lon": 109.09187,
+     "lat": 14.221822,
+     "radius_m": 27664,
+     "max_hamlet_m": 17664,
+     "radius_p90_m": 13443,
+     "hamlet_count": 120
+    },
+    "20705": {
+     "names": [
+      "HOAI NHON"
+     ],
+     "lon": 108.896649,
+     "lat": 14.533643,
+     "radius_m": 41449,
+     "max_hamlet_m": 31449,
+     "radius_p90_m": 21011,
+     "hamlet_count": 186
+    },
+    "20706": {
+     "names": [
+      "HOAI AN"
+     ],
+     "lon": 108.879792,
+     "lat": 14.373871,
+     "radius_m": 41438,
+     "max_hamlet_m": 31438,
+     "radius_p90_m": 19580,
+     "hamlet_count": 80
+    },
+    "20707": {
+     "names": [
+      "BINH KHE"
+     ],
+     "lon": 108.870017,
+     "lat": 14.046604,
+     "radius_m": 46930,
+     "max_hamlet_m": 36930,
+     "radius_p90_m": 27020,
+     "hamlet_count": 100
+    },
+    "20708": {
+     "names": [
+      "AN TUC"
+     ],
+     "lon": 108.588142,
+     "lat": 13.984607,
+     "radius_m": 65003,
+     "max_hamlet_m": 55003,
+     "radius_p90_m": 41857,
+     "hamlet_count": 236
+    },
+    "20712": {
+     "names": [
+      "TAM QUAN"
+     ],
+     "lon": 109.034134,
+     "lat": 14.565,
+     "radius_m": 20296,
+     "max_hamlet_m": 10296,
+     "radius_p90_m": 7253,
+     "hamlet_count": 47
+    }
+   }
+  },
+  "208": {
+   "code": "208",
+   "region": "2",
+   "names": [
+    "PLEIKU"
+   ],
+   "lon": 107.999694,
+   "lat": 13.861709,
+   "radius_m": 93287,
+   "max_hamlet_m": 83287,
+   "radius_p90_m": 39032,
+   "hamlet_count": 655,
+   "max_gns_place_m": 55926,
+   "farthest_gns_place": "Kong Se Kieng (VN-30)",
+   "districts": {
+    "20801": {
+     "names": [
+      "LE TRUNG"
+     ],
+     "lon": 108.043871,
+     "lat": 13.959024,
+     "radius_m": 102506,
+     "max_hamlet_m": 92506,
+     "radius_p90_m": 30622,
+     "hamlet_count": 372
+    },
+    "20802": {
+     "names": [
+      "THANH AN"
+     ],
+     "lon": 107.815772,
+     "lat": 13.824508,
+     "radius_m": 36335,
+     "max_hamlet_m": 26335,
+     "radius_p90_m": 20530,
+     "hamlet_count": 137
+    },
+    "20803": {
+     "names": [
+      "PHU NHON"
+     ],
+     "lon": 108.059719,
+     "lat": 13.648665,
+     "radius_m": 42985,
+     "max_hamlet_m": 32985,
+     "radius_p90_m": 14562,
+     "hamlet_count": 146
+    }
+   }
+  },
+  "329": {
+   "code": "329",
+   "region": "3",
+   "names": [
+    "GIA-DINH"
+   ],
+   "lon": 106.685735,
+   "lat": 10.775671,
+   "radius_m": 84279,
+   "max_hamlet_m": 50960,
+   "radius_p90_m": 17893,
+   "hamlet_count": 359,
+   "max_gns_place_m": 74279,
+   "farthest_gns_place": "Rang Rang (VN-SG)",
+   "districts": {
+    "32901": {
+     "names": [
+      "GO VAP"
+     ],
+     "lon": 106.686994,
+     "lat": 10.83134,
+     "radius_m": 17773,
+     "max_hamlet_m": 7773,
+     "radius_p90_m": 5401,
+     "hamlet_count": 59
+    },
+    "32902": {
+     "names": [
+      "THU DUC"
+     ],
+     "lon": 106.776325,
+     "lat": 10.832966,
+     "radius_m": 19491,
+     "max_hamlet_m": 9491,
+     "radius_p90_m": 7976,
+     "hamlet_count": 61
+    },
+    "32903": {
+     "names": [
+      "NHA BE"
+     ],
+     "lon": 106.720044,
+     "lat": 10.706718,
+     "radius_m": 17517,
+     "max_hamlet_m": 7517,
+     "radius_p90_m": 5819,
+     "hamlet_count": 35
+    },
+    "32904": {
+     "names": [
+      "BINH CHANH"
+     ],
+     "lon": 106.607622,
+     "lat": 10.700435,
+     "radius_m": 26751,
+     "max_hamlet_m": 16751,
+     "radius_p90_m": 7701,
+     "hamlet_count": 60
+    },
+    "32905": {
+     "names": [
+      "TAN BINH"
+     ],
+     "lon": 106.639961,
+     "lat": 10.793976,
+     "radius_m": 19185,
+     "max_hamlet_m": 9185,
+     "radius_p90_m": 6153,
+     "hamlet_count": 58
+    },
+    "32906": {
+     "names": [
+      "HOC MON"
+     ],
+     "lon": 106.615412,
+     "lat": 10.874138,
+     "radius_m": 18631,
+     "max_hamlet_m": 8631,
+     "radius_p90_m": 5141,
+     "hamlet_count": 59
+    },
+    "32907": {
+     "names": [
+      "QUANG XUYEN"
+     ],
+     "lon": 106.812902,
+     "lat": 10.58875,
+     "radius_m": 23841,
+     "max_hamlet_m": 13841,
+     "radius_p90_m": 11165,
+     "hamlet_count": 17
+    },
+    "32908": {
+     "names": [
+      "CAN GIO"
+     ],
+     "lon": 106.938517,
+     "lat": 10.421119,
+     "radius_m": 17882,
+     "max_hamlet_m": 7882,
+     "radius_p90_m": 7721,
+     "hamlet_count": 10
+    }
+   }
+  },
+  "395": {
+   "code": "395",
+   "region": "3",
+   "names": [
+    "VUNG TAU"
+   ],
+   "lon": 107.094735,
+   "lat": 10.376188,
+   "radius_m": 20333,
+   "max_hamlet_m": 10333,
+   "radius_p90_m": 6212,
+   "hamlet_count": 33,
+   "districts": {
+    "39501": {
+     "names": [
+      "THI-XA"
+     ],
+     "lon": 107.094735,
+     "lat": 10.376188,
+     "radius_m": 20333,
+     "max_hamlet_m": 10333,
+     "radius_p90_m": 6212,
+     "hamlet_count": 33
+    }
+   }
+  },
+  "432": {
+   "code": "432",
+   "region": "4",
+   "names": [
+    "KIEN PHONG"
+   ],
+   "lon": 105.563544,
+   "lat": 10.594049,
+   "radius_m": 62276,
+   "max_hamlet_m": 52276,
+   "radius_p90_m": 37648,
+   "hamlet_count": 210,
+   "max_gns_place_m": 52139,
+   "farthest_gns_place": "Ấp Một (VN-45)",
+   "districts": {
+    "43201": {
+     "names": [
+      "CAO LANH"
+     ],
+     "lon": 105.6257,
+     "lat": 10.469937,
+     "radius_m": 21382,
+     "max_hamlet_m": 11382,
+     "radius_p90_m": 7830,
+     "hamlet_count": 53
+    },
+    "43202": {
+     "names": [
+      "THANH BINH"
+     ],
+     "lon": 105.433554,
+     "lat": 10.597467,
+     "radius_m": 24250,
+     "max_hamlet_m": 14250,
+     "radius_p90_m": 12595,
+     "hamlet_count": 28
+    },
+    "43203": {
+     "names": [
+      "HONG NGU"
+     ],
+     "lon": 105.347792,
+     "lat": 10.824077,
+     "radius_m": 33412,
+     "max_hamlet_m": 23412,
+     "radius_p90_m": 18038,
+     "hamlet_count": 53
+    },
+    "43204": {
+     "names": [
+      "MY AN"
+     ],
+     "lon": 105.833924,
+     "lat": 10.544188,
+     "radius_m": 29835,
+     "max_hamlet_m": 19835,
+     "radius_p90_m": 14178,
+     "hamlet_count": 27
+    },
+    "43205": {
+     "names": [
+      "KIEN VAN"
+     ],
+     "lon": 105.744894,
+     "lat": 10.386787,
+     "radius_m": 17879,
+     "max_hamlet_m": 7879,
+     "radius_p90_m": 7227,
+     "hamlet_count": 30
+    },
+    "43206": {
+     "names": [
+      "DONG TIEN"
+     ],
+     "lon": 105.51299,
+     "lat": 10.691677,
+     "radius_m": 30701,
+     "max_hamlet_m": 20701,
+     "radius_p90_m": 15749,
+     "hamlet_count": 19
+    }
+   }
+  },
+  "441": {
+   "code": "441",
+   "region": "4",
+   "names": [
+    "BA XUYEN"
+   ],
+   "lon": 105.93295,
+   "lat": 9.594649,
+   "radius_m": 52135,
+   "max_hamlet_m": 39719,
+   "radius_p90_m": 32295,
+   "hamlet_count": 322,
+   "max_gns_place_m": 42135,
+   "farthest_gns_place": "Mỹ Thành (VN-52)",
+   "districts": {
+    "44101": {
+     "names": [
+      "MY XUYEN"
+     ],
+     "lon": 105.96265,
+     "lat": 9.556863,
+     "radius_m": 24871,
+     "max_hamlet_m": 14871,
+     "radius_p90_m": 11848,
+     "hamlet_count": 59
+    },
+    "44102": {
+     "names": [
+      "LONG PHU"
+     ],
+     "lon": 106.086545,
+     "lat": 9.656925,
+     "radius_m": 30642,
+     "max_hamlet_m": 20642,
+     "radius_p90_m": 10812,
+     "hamlet_count": 58
+    },
+    "44103": {
+     "names": [
+      "KE SACH"
+     ],
+     "lon": 105.964633,
+     "lat": 9.770989,
+     "radius_m": 22040,
+     "max_hamlet_m": 12040,
+     "radius_p90_m": 11012,
+     "hamlet_count": 62
+    },
+    "44104": {
+     "names": [
+      "THUAN HOA"
+     ],
+     "lon": 105.834403,
+     "lat": 9.625111,
+     "radius_m": 26401,
+     "max_hamlet_m": 16401,
+     "radius_p90_m": 12817,
+     "hamlet_count": 32
+    },
+    "44105": {
+     "names": [
+      "THANH TRI"
+     ],
+     "lon": 105.734691,
+     "lat": 9.442081,
+     "radius_m": 23779,
+     "max_hamlet_m": 13779,
+     "radius_p90_m": 11499,
+     "hamlet_count": 47
+    },
+    "44106": {
+     "names": [
+      "LICH HOI THG"
+     ],
+     "lon": 106.136635,
+     "lat": 9.497587,
+     "radius_m": 18938,
+     "max_hamlet_m": 8938,
+     "radius_p90_m": 8034,
+     "hamlet_count": 27
+    },
+    "44107": {
+     "names": [
+      "HOA TU"
+     ],
+     "lon": 105.936522,
+     "lat": 9.434337,
+     "radius_m": 18295,
+     "max_hamlet_m": 8295,
+     "radius_p90_m": 7364,
+     "hamlet_count": 19
+    },
+    "44108": {
+     "names": [
+      "NGA NAM"
+     ],
+     "lon": 105.615128,
+     "lat": 9.569474,
+     "radius_m": 20168,
+     "max_hamlet_m": 10168,
+     "radius_p90_m": 8424,
+     "hamlet_count": 18
+    }
+   }
+  },
+  "446": {
+   "code": "446",
+   "region": "4",
+   "names": [
+    "SA DEC"
+   ],
+   "lon": 105.711965,
+   "lat": 10.288915,
+   "radius_m": 34395,
+   "max_hamlet_m": 24242,
+   "radius_p90_m": 20574,
+   "hamlet_count": 129,
+   "max_gns_place_m": 24395,
+   "farthest_gns_place": "Bình An (VN-45)",
+   "districts": {
+    "44601": {
+     "names": [
+      "DUC THINH"
+     ],
+     "lon": 105.74615,
+     "lat": 10.31344,
+     "radius_m": 25384,
+     "max_hamlet_m": 15384,
+     "radius_p90_m": 10152,
+     "hamlet_count": 51
+    },
+    "44602": {
+     "names": [
+      "DUC TON"
+     ],
+     "lon": 105.839237,
+     "lat": 10.233621,
+     "radius_m": 19220,
+     "max_hamlet_m": 9220,
+     "radius_p90_m": 7210,
+     "hamlet_count": 28
+    },
+    "44603": {
+     "names": [
+      "DUC THANH"
+     ],
+     "lon": 105.642478,
+     "lat": 10.240844,
+     "radius_m": 19753,
+     "max_hamlet_m": 9753,
+     "radius_p90_m": 8266,
+     "hamlet_count": 26
+    },
+    "44604": {
+     "names": [
+      "LAP VO"
+     ],
+     "lon": 105.566118,
+     "lat": 10.353385,
+     "radius_m": 21739,
+     "max_hamlet_m": 11739,
+     "radius_p90_m": 8507,
+     "hamlet_count": 24
+    }
+   }
+  },
+  "103": {
+   "code": "103",
+   "region": "1",
+   "names": [
+    "QUANG NAM"
+   ],
+   "lon": 108.173661,
+   "lat": 15.871407,
+   "radius_m": 104958,
+   "max_hamlet_m": 87597,
+   "radius_p90_m": 24972,
+   "hamlet_count": 589,
+   "max_gns_place_m": 94958,
+   "farthest_gns_place": "Keguirar (VN-27)",
+   "districts": {
+    "10301": {
+     "names": [
+      "HOA VANG"
+     ],
+     "lon": 108.179647,
+     "lat": 16.029398,
+     "radius_m": 27197,
+     "max_hamlet_m": 17197,
+     "radius_p90_m": 10791,
+     "hamlet_count": 97
+    },
+    "10302": {
+     "names": [
+      "HIEU DUC"
+     ],
+     "lon": 108.115028,
+     "lat": 16.007175,
+     "radius_m": 19352,
+     "max_hamlet_m": 9352,
+     "radius_p90_m": 6015,
+     "hamlet_count": 32
+    },
+    "10303": {
+     "names": [
+      "DIEN BAN"
+     ],
+     "lon": 108.217294,
+     "lat": 15.888322,
+     "radius_m": 20170,
+     "max_hamlet_m": 10170,
+     "radius_p90_m": 7760,
+     "hamlet_count": 110
+    },
+    "10304": {
+     "names": [
+      "DAI LOC"
+     ],
+     "lon": 108.086302,
+     "lat": 15.869939,
+     "radius_m": 27524,
+     "max_hamlet_m": 17524,
+     "radius_p90_m": 6616,
+     "hamlet_count": 77
+    },
+    "10305": {
+     "names": [
+      "THUONG DUC"
+     ],
+     "lon": 107.917862,
+     "lat": 15.846097,
+     "radius_m": 18990,
+     "max_hamlet_m": 8990,
+     "radius_p90_m": 8990,
+     "hamlet_count": 31
+    },
+    "10306": {
+     "names": [
+      "DUC DUC"
+     ],
+     "lon": 108.033739,
+     "lat": 15.744745,
+     "radius_m": 80249,
+     "max_hamlet_m": 70249,
+     "radius_p90_m": 11191,
+     "hamlet_count": 56
+    },
+    "10307": {
+     "names": [
+      "QUE SON"
+     ],
+     "lon": 108.257634,
+     "lat": 15.718792,
+     "radius_m": 24637,
+     "max_hamlet_m": 14637,
+     "radius_p90_m": 11991,
+     "hamlet_count": 77
+    },
+    "10308": {
+     "names": [
+      "DUY XUYEN"
+     ],
+     "lon": 108.254574,
+     "lat": 15.835392,
+     "radius_m": 25939,
+     "max_hamlet_m": 15939,
+     "radius_p90_m": 14148,
+     "hamlet_count": 65
+    },
+    "10309": {
+     "names": [
+      "HIEU NHON"
+     ],
+     "lon": 108.338719,
+     "lat": 15.883973,
+     "radius_m": 29911,
+     "max_hamlet_m": 19911,
+     "radius_p90_m": 5645,
+     "hamlet_count": 44
+    }
+   }
+  }
+ }
+}
