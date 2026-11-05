@@ -38,10 +38,10 @@ On a Mac you also need macOS 15 or newer.
 
    On Windows it's `python start.py`.
 
-The first run tells you what it's about to download and waits for a yes. Expect about 120 MB of
-public records and 20 to 40 minutes, most of which you can spend elsewhere. If it stops partway,
-run it again and it picks up where it left off. When it's done the map opens in your browser.
-Keep the terminal window open while you use it. Control-C stops it.
+The first start takes a minute or two while it installs what it needs, then the map opens in
+your browser. Everything after that is done in the map: there is nothing more to type. Keep the
+terminal window open while you use it. To stop, click **Quit Map Vietnam** at the bottom of the
+side panel.
 
 The first time, macOS may refuse to open the `.command` file because it came from the internet.
 Right-click it, choose **Open**, then **Open** again.
@@ -50,9 +50,14 @@ If something goes wrong, see [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ## Usage
 
-Setup doesn't download any old maps. There are more than 500 of them and you probably want six.
+Nothing is downloaded until you ask for it. The first time, a card in the side panel offers the
+standard records: place names, hamlets, bases, battles and casualty records, about 70 MB from
+public archives. Click **Add the standard records** and carry on using the map while they arrive,
+which takes about 15 minutes. **Records** in the side panel lists every source, with Add and
+Remove on each.
 
-Go to the place you care about and click **Add old maps** at the bottom of the screen. You get
+Old maps work the same way. There are more than 500 of them and you probably want six. Go to the
+place you care about and click **Add old maps** at the bottom of the screen. You get
 every map that covers what's on screen, with its size, and outlines showing where each one sits.
 Click **Add** on the ones you want. A map takes about a minute and about 20 MB.
 
@@ -64,13 +69,14 @@ Cao Lãnh in 1873 and in 1965:
 
 ![The screen split down the middle: an 1873 French chart of Cao Lãnh on the left, the 1965 US Army sheet on the right](docs/images/swipe-compare-1873-1965.jpg)
 
-The [user guide](docs/guide.md) has the rest: removing maps, doing it all from a terminal, grid
-references, cases and exports, and the optional air-strike records, which need a free Kaggle key.
+The [user guide](docs/guide.md) has the rest: air strikes for an area you choose, helicopter
+losses, removing things, grid references, cases and exports, and doing it all from a terminal if
+you prefer.
 
 ## Data sources
 
-None of the data is in this repository. Records are downloaded from their publishers during
-setup, and each old map when you add it.
+None of the data is in this repository. Each record source and each old map is downloaded from
+its publisher when you add it.
 
 The maps are US Army 1:50,000 and 1:250,000 sheets from the USGS store, which are public domain,
 and older French and US scans from five map libraries. The records come from the US National
