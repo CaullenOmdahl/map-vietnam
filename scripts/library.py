@@ -68,7 +68,7 @@ import numpy as np
 import paths
 import tiling
 from datums import INDIAN_1960
-from files import delete, lock_file, path_bytes, unlock_file, write_json
+from files import StillInUse, delete, lock_file, path_bytes, unlock_file, write_json
 from PIL import Image
 from pyproj import Transformer
 
@@ -216,7 +216,11 @@ class Library:
         except FileNotFoundError:
             return {"series": {}, "maps": []}
         if self._catalogue[0] != mtime:
-            self._catalogue = (mtime, json.loads(self.catalogue_path.read_text(encoding="utf-8")))
+            try:
+                parsed = json.loads(self.catalogue_path.read_text(encoding="utf-8"))
+            except ValueError:  # includes JSONDecodeError and UnicodeDecodeError
+                raise LibraryError(catalog.damaged_file_message(self.catalogue_path)) from None
+            self._catalogue = (mtime, parsed)
         return self._catalogue[1]
 
     def entries(self):
@@ -265,15 +269,41 @@ class Library:
         """Delete a map's tiles (finished or partial), its build log unless keep_log, and, if
         its entry is known, its download; then any download folder left empty."""
         tiles = self.tiles_path(map_id)
-        delete(tiles)
-        delete(tiles.with_name(tiles.name + tiling.PARTIAL_SUFFIX))
+        stuck = []  # what a program still holds open: everything else is deleted regardless
+
+        def attempt(path):
+            try:
+                delete(path)
+            except OSError as e:
+                stuck.append(e)
+
+        attempt(tiles)
+        attempt(tiles.with_name(tiles.name + tiling.PARTIAL_SUFFIX))
         if not keep_log:
-            delete(self.log_path(map_id))
+            attempt(self.log_path(map_id))
         if entry:
             for p in download_maps.raw_paths(entry, self.raw)[1]:
-                delete(p)
-                delete(p.with_name(p.name + ".part"))
+                attempt(p)
+                attempt(p.with_name(p.name + ".part"))
                 prune_empty(p.parent, self.raw)
+        if stuck:
+            raise StillInUse() from stuck[0]
+
+    def delete_files_or_fail(self, map_id, entry):
+        """delete_files for a removal. When something is still in use, leave the map in a state
+        the viewer shows and the user can retry (Remove again): a failed job carrying the plain
+        message if the map is in the catalogue (a map whose tiles are still there stays listed
+        as installed). Returns that message, or None when everything was deleted."""
+        try:
+            self.delete_files(map_id, entry)
+        except StillInUse as e:
+            if entry:
+                job = Job(entry)
+                job.state, job.error = "failed", str(e)
+                with self._lock:
+                    self._jobs.setdefault(map_id, job)  # unless the map was added again meanwhile
+            return str(e)
+        return None
 
     def write_catalog(self):
         """Rewrite web/catalog.json from what is installed now.
@@ -437,7 +467,7 @@ class Library:
         if unknown:
             raise LibraryError(f"not in the map list: {', '.join(map(str, unknown))}")
         elsewhere = self.other_worker()
-        removed = []
+        removed, problem = [], None
         with self._lock:
             for map_id in dict.fromkeys(ids):
                 entry = entries.get(map_id)
@@ -455,10 +485,12 @@ class Library:
                     if proc:
                         proc.terminate()
                 elif not busy_elsewhere:
-                    self.delete_files(map_id, entry)
+                    problem = self.delete_files_or_fail(map_id, entry) or problem
                 if job or busy_elsewhere or map_id in installed or (entry and self.disk_bytes(map_id, entry)):
                     removed.append(map_id)
         self.write_catalog()
+        if problem:  # the rest were removed; this one can be tried again
+            raise LibraryError(problem)
         return removed
 
     # ---- coordination with another process adding maps ------------------------------------
@@ -528,10 +560,13 @@ class Library:
             try:
                 self._run(job, report or (lambda job: None))
             finally:
+                if job.remove:
+                    # A map removed while it was built: its files go now that the worker let go.
+                    # Still marked as current (so a new add waits) but outside the lock, because
+                    # a locked file is retried for seconds and listings must not wait for that.
+                    self.delete_files_or_fail(map_id, job.entry)
                 with self._lock:
                     self._current = None
-                    if job.remove:
-                        self.delete_files(map_id, job.entry)
                     self._wake.notify_all()
                 self.write_catalog()
 
@@ -599,7 +634,8 @@ class Library:
                     except Exception:
                         if not job.cancel.is_set():
                             # Keep nothing but the log: trying again starts from a fresh download.
-                            self.delete_files(map_id, entry, keep_log=True)
+                            with contextlib.suppress(StillInUse):  # the build's own error is the news
+                                self.delete_files(map_id, entry, keep_log=True)
                         raise
                     finally:
                         finished.set()

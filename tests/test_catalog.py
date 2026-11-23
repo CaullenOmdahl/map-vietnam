@@ -3,6 +3,7 @@
 import json
 
 import catalog
+import pytest
 import tiling
 
 
@@ -69,3 +70,26 @@ def test_every_scan_in_the_library_has_a_credit():
         m["id"] for m in json.loads(catalog.CATALOGUE.read_text(encoding="utf-8"))["maps"] if m["series"] == "scans"
     }
     assert scans == set(catalog.SCAN_CREDITS)
+
+
+def test_a_failed_write_leaves_no_part_file_and_the_old_catalogue(tmp_path, monkeypatch):
+    out = tmp_path / "catalog.json"
+    out.write_text('{"layers": []}', encoding="utf-8")
+
+    def refuse(self, target):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(type(out), "replace", refuse)
+    with pytest.raises(OSError):
+        catalog.write_catalog(out, tiles_dir=tmp_path / "none", catalogue={}, scans_dir=tmp_path)
+    assert [p.name for p in tmp_path.iterdir()] == ["catalog.json"]
+    assert json.loads(out.read_text(encoding="utf-8")) == {"layers": []}
+
+
+def test_a_damaged_data_file_is_named_in_plain_words(tmp_path):
+    bad = tmp_path / "maps.json"
+    bad.write_text("{not json", encoding="utf-8")
+    with pytest.raises(catalog.DataFileError) as e:
+        catalog.read_json(bad, {})
+    assert "maps.json" in str(e.value) and "download" in str(e.value) and "Expecting" not in str(e.value)
+    assert catalog.read_json(tmp_path / "missing.json", {"x": 1}) == {"x": 1}

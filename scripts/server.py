@@ -162,8 +162,11 @@ def query_evidence(db, q):
         args += kinds
     if q.get("ids"):
         ids = [int(i) for i in q["ids"].split(",")]
-        sql += f" and id in ({','.join('?' * len(ids))})"
-        args += ids
+        if any(abs(i) >= 2**63 for i in ids):  # SQLite integers are 64 bits (json_each would not say so)
+            raise OverflowError
+        # One JSON parameter, not one placeholder per id: SQLite caps placeholders (999 to 32,766).
+        sql += " and id in (select value from json_each(?))"
+        args.append(json.dumps(ids))
     else:
         sql += " and withdrawn_at is null"  # withdrawn records live on only in the cases that hold them
     limit = bounded_int(q.get("limit"), 20000, 1, 50000)

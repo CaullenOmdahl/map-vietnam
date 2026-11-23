@@ -2,10 +2,12 @@
 
 import json
 import os
+import sqlite3
 import stat
 import threading
 import urllib.error
 import urllib.request
+from contextlib import closing
 
 import library
 import pytest
@@ -767,3 +769,15 @@ def test_a_dropped_connection_is_not_reported_as_a_server_error(base, capsys):
     except RuntimeError:
         srv.handle_error(None, ("127.0.0.1", 1))
     assert "a real fault" in capsys.readouterr().err
+
+
+def test_evidence_by_thousands_of_ids_does_not_overflow_sqlites_variable_limit(base, tmp_path):
+    first = call(f"{base}/api/evidence?kinds=air_strike")["features"][0]["properties"]["id"]
+    ids = ",".join(str(i) for i in [first, *range(1_000, 9_000)])  # about what fits in a URL
+    assert [f["properties"]["id"] for f in call(f"{base}/api/evidence?ids={ids}")["features"]] == [first]
+    # SQLite builds cap placeholders at 999 or 32,766; with the old cap in force, many ids must still work.
+    with closing(store.connect(tmp_path / "e.sqlite")) as db:
+        db.row_factory = sqlite3.Row
+        db.setlimit(sqlite3.SQLITE_LIMIT_VARIABLE_NUMBER, 999)
+        found = server.query_evidence(db, {"ids": ",".join(str(i) for i in range(1, 5_000))})
+    assert len(found["features"]) >= 1

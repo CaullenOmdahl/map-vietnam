@@ -638,3 +638,114 @@ def test_a_legacy_folder_deleted_while_listing_is_skipped(lib, monkeypatch):
     monkeypatch.setattr(Path, "iterdir", deleted_meanwhile)
     assert lib.legacy_folders() == []
     assert lib.legacy_status()["count"] == 0
+
+
+def test_a_folder_that_stays_locked_is_reported_not_silently_left(tmp_path, monkeypatch):
+    folder = tmp_path / "raw"
+    folder.mkdir()
+    (folder / "big.pdf").write_bytes(b"x")
+
+    def refuse(path, onexc=None):  # every file refused: nothing is deleted
+        onexc(None, str(path), PermissionError("in use"))
+
+    monkeypatch.setattr(files.shutil, "rmtree", refuse)
+    monkeypatch.setattr(files.time, "sleep", lambda s: None)
+    with pytest.raises(files.StillInUse, match="still in use"):
+        files.delete(folder)
+    assert (folder / "big.pdf").exists()
+
+
+def test_a_folder_delete_is_retried_until_the_lock_lets_go(tmp_path, monkeypatch):
+    folder = tmp_path / "raw"
+    folder.mkdir()
+    (folder / "f").write_bytes(b"x")
+    real_rmtree, tries = files.shutil.rmtree, []
+
+    def rmtree(path, onexc=None):
+        tries.append(path)
+        if len(tries) < 3:
+            onexc(None, str(path), PermissionError("in use"))  # refused, nothing deleted
+        else:
+            real_rmtree(path, onexc=onexc)
+
+    monkeypatch.setattr(files.shutil, "rmtree", rmtree)
+    monkeypatch.setattr(files.time, "sleep", lambda s: None)
+    files.delete(folder)
+    assert len(tries) == 3 and not folder.exists()
+
+
+def lock_file_path(monkeypatch, locked):
+    """Make deleting the file `locked` fail the way Windows does when another program has it open."""
+    real_unlink = Path.unlink
+
+    def unlink(self, missing_ok=False):
+        if self == locked:
+            raise PermissionError("in use")
+        real_unlink(self, missing_ok=missing_ok)
+
+    monkeypatch.setattr(Path, "unlink", unlink)
+    monkeypatch.setattr(files.time, "sleep", lambda s: None)
+
+
+def test_a_removal_blocked_by_a_locked_tile_file_leaves_a_retryable_map(lib, monkeypatch):
+    lib.add(["L7014A", "L7014B"])
+    lib.run_pending()
+    locked = lib.tiles_path("L7014A")
+    with monkeypatch.context() as m:
+        lock_file_path(m, locked)
+        with pytest.raises(library.LibraryError, match="still in use; close other programs and try Remove again"):
+            lib.remove(["L7014A", "L7014B"])
+    assert not lib.tiles_path("L7014B").exists()  # the others were removed
+    mine = {m["id"]: m for m in lib.listing()["maps"]}["L7014A"]
+    assert mine["state"] == "failed" and "still in use" in mine["error"] and locked.exists()
+
+    # The program lets go: removing again finishes the job.
+    assert lib.remove(["L7014A"]) == ["L7014A"]
+    assert states(lib)["L7014A"] == "available" and layers(lib) == []
+
+
+def test_a_removal_blocked_after_the_tiles_went_never_looks_available(lib, monkeypatch):
+    lib.add(["L7014A"])
+    lib.run_pending()
+    pdf = lib.root / "data" / "raw" / "l7014" / "L7014A_geo.pdf"
+    lock_file_path(monkeypatch, pdf)
+    with pytest.raises(library.LibraryError, match="try Remove again"):
+        lib.remove(["L7014A"])
+    assert not lib.tiles_path("L7014A").exists() and pdf.exists()
+    assert states(lib)["L7014A"] == "failed"  # not "available" with the download still on disk
+
+
+def test_a_damaged_catalogue_is_named_in_plain_words(lib):
+    lib.catalogue_path.write_text('{"series": ', encoding="utf-8")
+    with pytest.raises(library.LibraryError) as e:
+        lib.catalogue()
+    assert "map_library.json" in str(e.value) and "download Map Vietnam again" in str(e.value)
+
+
+def test_a_map_removed_while_building_with_a_locked_tile_file_ends_retryable(lib, monkeypatch):
+    lib.add(["L7014A"])
+    locked = lib.tiles_path("L7014A")
+    locked.parent.mkdir(parents=True, exist_ok=True)
+    locked.write_bytes(b"tiles")
+
+    def removed_meanwhile(job, report):  # remove() asked the worker to stop and delete
+        job.remove = True
+        lib._jobs.pop("L7014A")  # a stopped build forgets its job
+
+    monkeypatch.setattr(lib, "_run", removed_meanwhile)
+    lock_file_path(monkeypatch, locked)
+    lib.run_pending()
+    mine = {m["id"]: m for m in lib.listing()["maps"]}["L7014A"]
+    assert mine["state"] == "failed" and "try Remove again" in mine["error"] and locked.exists()
+
+
+def test_a_refused_folder_delete_keeps_the_refusal_as_its_cause(tmp_path, monkeypatch):
+    folder = tmp_path / "raw"
+    folder.mkdir()
+    (folder / "f").write_bytes(b"x")
+    refusal = PermissionError("in use")
+    monkeypatch.setattr(files.shutil, "rmtree", lambda path, onexc=None: onexc(None, str(path), refusal))
+    monkeypatch.setattr(files.time, "sleep", lambda s: None)
+    with pytest.raises(files.StillInUse) as e:
+        files.delete(folder)
+    assert e.value.__cause__ is refusal

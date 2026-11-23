@@ -80,7 +80,7 @@ from pathlib import Path
 
 import paths
 import store
-from files import delete, lock_file, path_bytes, read_json, unlock_file, write_json
+from files import StillInUse, delete, lock_file, path_bytes, read_json, unlock_file, write_json
 
 ROOT = paths.APP_ROOT  # the program's own files; what is written goes under paths.DATA_ROOT
 STATES = ("available", "queued", "running", "added", "failed")
@@ -1202,7 +1202,10 @@ class Records:
                 try:
                     if job.action == "remove":
                         self._set(job, report, "running", text="Removing these records")
-                        self._remove_now(job.source)
+                        try:
+                            self._remove_now(job.source)
+                        except StillInUse as e:  # the marker is gone, so Remove again finishes the rest
+                            raise Failed(str(e), f"StillInUse: {e.__cause__ or e}"[:300]) from e
                     else:
                         self._set(job, report, "running", text="Starting")
                         self._ingest(job, report)
