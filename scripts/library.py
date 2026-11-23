@@ -65,14 +65,13 @@ import download_maps
 import l7014_meta
 import morecantile
 import numpy as np
+import paths
 import tiling
 from datums import INDIAN_1960
 from files import delete, lock_file, path_bytes, unlock_file, write_json
 from PIL import Image
 from pyproj import Transformer
 
-ROOT = Path(__file__).resolve().parent.parent
-SCRIPTS = Path(__file__).resolve().parent
 REGIONS = ("north", "centre", "south")
 STATES = ("available", "queued", "downloading", "building", "installed", "failed")
 # Render resolution for each GeoPDF series (see build_tiles.py); others use its default.
@@ -179,14 +178,22 @@ class Library:
     thread (start_worker) or the caller itself (run_pending) works through the queue.
     """
 
-    def __init__(self, root=ROOT, catalogue_path=None, python=sys.executable):
-        self.root = Path(root)
-        self.catalogue_path = Path(catalogue_path) if catalogue_path else self.root / "data/sources/map_library.json"
+    def __init__(self, root=None, catalogue_path=None, python=None):
+        """`root` is a folder holding both the program's files and the data (what the tests
+        use); by default they are apart: shipped files under paths.APP_ROOT, what is written
+        under paths.DATA_ROOT. `python` names an interpreter to run the child scripts with
+        (the tests pass a fake one); by default paths.script_command() decides."""
+        self.root = Path(root) if root else paths.DATA_ROOT  # where everything written goes
+        self.app_root = Path(root) if root else paths.APP_ROOT  # shipped, read only
+        self.catalogue_path = (
+            Path(catalogue_path) if catalogue_path else self.app_root / "data" / "sources" / "map_library.json"
+        )
         self.tiles = self.root / "web" / "tiles"
         self.raw = self.root / "data" / "raw"
         self.work = self.root / "data" / "work" / "maps"
-        self.scans = self.root / "data" / "scans"
-        self.python = python
+        self.scans = self.app_root / "data" / "scans"
+        self.python = python or sys.executable
+        self._python_given = python is not None
         self._lock = threading.RLock()
         self._wake = threading.Condition(self._lock)
         self._jobs = {}  # id -> Job, for maps queued, being added, or failed
@@ -284,7 +291,7 @@ class Library:
                     tiles_dir=self.tiles,
                     catalogue=self.catalogue(),
                     scans_dir=self.scans,
-                    corrections=catalog.read_json(self.root / "data" / "maps.json", {}),
+                    corrections=catalog.read_json(self.app_root / "data" / "maps.json", {}),
                 )
             finally:
                 unlock_file(f)
@@ -643,10 +650,17 @@ class Library:
         self._set(job, report, "building", 0.0)
         self._build(job, path, report)
 
+    def script_command(self, script, *args):
+        """The command line of one of the project's scripts: through paths.script_command, or
+        with the interpreter this library was given."""
+        if self._python_given:
+            return [self.python, str(paths.SCRIPTS / script), *args]
+        return paths.script_command(script, *args)
+
     def derive_in_child(self, src, dst, derive):
         """download_maps.derive_work_image in a child process: decoding a large JPEG 2000 takes
         gigabytes of memory, which a long-running server would not give back."""
-        cmd = [self.python, str(SCRIPTS / "download_maps.py"), "--derive", str(src), str(dst), json.dumps(derive)]
+        cmd = self.script_command("download_maps.py", "--derive", str(src), str(dst), json.dumps(derive))
         done = subprocess.run(cmd, cwd=self.root, capture_output=True, text=True, errors="replace", encoding="utf-8")
         if done.returncode != 0:
             message = (done.stderr.strip().splitlines() or ["no message"])[-1]
@@ -658,8 +672,8 @@ class Library:
             control = self.scans / f"{entry['id']}.json"
             if not control.exists():
                 raise BuildError(f"this scan has no control points (data/scans/{entry['id']}.json is missing)")
-            return [self.python, str(SCRIPTS / "georef_scan.py"), str(control), str(out), "--image", str(path)]
-        cmd = [self.python, str(SCRIPTS / "build_tiles.py"), str(path), str(out)]
+            return self.script_command("georef_scan.py", str(control), str(out), "--image", str(path))
+        cmd = self.script_command("build_tiles.py", str(path), str(out))
         if entry.get("bounds"):
             # For a PDF that records no corners of its own, the catalogue's cut off the margin its
             # neatline lets through (see build_tiles.py).

@@ -28,6 +28,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import paths
 from PIL import Image
 from rasterio.control import GroundControlPoint
 from rasterio.crs import CRS
@@ -35,8 +36,8 @@ from rasterio.features import geometry_mask
 from rasterio.transform import Affine
 from tiling import write_tiles
 
-ROOT = Path(__file__).resolve().parent.parent
-TILES = ROOT / "web" / "tiles"
+ROOT = paths.DATA_ROOT  # a control file's "image" path (data/raw/...) is relative to this
+TILES = paths.TILES
 # The scans are up to 10,000 x 10,000 px: far past Pillow's decompression-bomb guard, and trusted.
 Image.MAX_IMAGE_PIXELS = None
 # Share of a build's time spent reading the scan and masking it; the rest is tiling.
@@ -62,7 +63,7 @@ def affine_fit(gcps):
 
 def build(control_path, out, *, image=None, progress=None):
     """Warp and tile the scan a control file describes into the MBTiles file `out`. `image`
-    overrides the control file's image path (which is relative to the repository root).
+    overrides the control file's image path (which is relative to the data folder, paths.DATA_ROOT).
     Returns a report dict: {"id", "tiles", "bounds", "maxzoom", "misfit"}."""
     report = progress or (lambda fraction: None)
     layer_id = control_path.stem

@@ -34,10 +34,10 @@ import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import store  # noqa: E402
+import paths  # noqa: E402
 
-RAW = store.ROOT / "data" / "raw"
-ENV_FILE = store.ROOT / ".env"
+RAW = paths.RAW
+ENV_FILE = paths.ENV_FILE
 # The project page lets an archive see what is calling it (Wikimedia, for one, throttles clients that
 # give no way to find out); it says nothing about the person running the copy.
 BASE_USER_AGENT = "MapVietnam/0.1 (+https://github.com/CaullenOmdahl/map-vietnam; historical map research; low-volume)"

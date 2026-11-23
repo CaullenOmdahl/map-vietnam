@@ -54,9 +54,9 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "ingest"))
 import common  # noqa: E402
+import paths  # noqa: E402
 
-ROOT = Path(__file__).resolve().parent.parent
-RAW = ROOT / "data" / "raw"
+RAW = paths.RAW
 WORK_IMAGE = "work.jpg"
 ATTEMPTS = 3  # tries per URL on network errors and busy servers (HTTP 5xx, 429)
 RETRY_WAIT_S = 10

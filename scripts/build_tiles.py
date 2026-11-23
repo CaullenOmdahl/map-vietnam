@@ -39,6 +39,7 @@ from pathlib import Path
 
 import l7014_meta
 import numpy as np
+import paths
 import pypdfium2
 from datums import BY_DMA_CODE
 from pypdf import PdfReader
@@ -48,8 +49,7 @@ from rasterio.transform import Affine
 from rasterio.warp import transform as warp_points
 from tiling import write_tiles
 
-ROOT = Path(__file__).resolve().parent.parent
-TILES = ROOT / "web" / "tiles"
+TILES = paths.TILES
 # Default render resolution: right for 1:50,000 sheets (see the module docstring).
 DPI = 250
 PT_PER_INCH = 72.0  # PDF user-space units per inch

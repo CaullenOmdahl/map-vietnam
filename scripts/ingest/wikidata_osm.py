@@ -60,11 +60,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # scripts/ingest: common
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts: store
+import paths  # noqa: E402
 import store  # noqa: E402
 from common import AREA_OF_INTEREST, cached_get, in_bbox, progress  # noqa: E402
 
 VN_BBOX = (102.1, 8.4, 109.5, 23.4)  # lon/lat (west, south, east, north), WGS84
-WORK = store.ROOT / "data" / "work"
+WORK = paths.WORK
 GNS_INDEX = WORK / "gns_index.json"
 REPORT = WORK / "wikidata_osm_report.json"
 

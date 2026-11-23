@@ -52,8 +52,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "ingest"))
 import common  # noqa: E402
 import gns  # noqa: E402
 import l7014_meta  # noqa: E402
+import paths  # noqa: E402
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = paths.APP_ROOT  # maintainer tool: its outputs go to the checkout's data/sources and data/scans
 OUT = ROOT / "data" / "sources" / "map_library.json"
 LEGACY = ROOT / "data" / "sources" / "maps.json"
 SHEETS = ROOT / "data" / "sources" / "sheets.json"

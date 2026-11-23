@@ -60,6 +60,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import common  # noqa: E402
 import gridref  # noqa: E402
+import paths  # noqa: E402
 import store  # noqa: E402
 
 SOURCE = "hes_gazetteer"
@@ -82,8 +83,8 @@ AREA_BUFFER_M = 10_000.0  # added to the farthest hamlet: the province extends p
 OUTLIER_KM = 150.0
 GRID_RE = re.compile(r"^[A-HJ-NP-Z]{2}\d{6}$")
 BURIAL_RE = re.compile(r"\b(NGHIA[ -]?TRANG|NGHIA[ -]?DIA|CEMETER\w*|LIET[ -]?SI|GRAVES?|TOMBS?)\b")
-OUT_PROVINCES = store.ROOT / "data" / "work" / "hes_provinces.json"
-GNS_INDEX = store.ROOT / "data" / "work" / "gns_index.json"  # read-only, written by gns.py
+OUT_PROVINCES = paths.WORK / "hes_provinces.json"
+GNS_INDEX = paths.WORK / "gns_index.json"  # read-only, written by gns.py
 DOMINANT_ADM1_SHARE = 0.2
 EMPTY_KM = 15.0  # a GNS place farther than this from every hamlet lies in a hamlet-less area
 ISLAND_KM = 60.0  # ... and farther than this is an offshore island (Con Son, Phu Quy)

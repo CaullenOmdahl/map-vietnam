@@ -104,13 +104,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import common  # noqa: E402
 import gridref  # noqa: E402
+import paths  # noqa: E402
 import store  # noqa: E402
 
 # ---------------------------------------------------------------- configuration
 SOURCE = "vhpa"
 BASE = "https://www.vhpa.org/KIA/"
 MIN_INTERVAL = 3.0  # seconds between requests to the site
-WORK = store.ROOT / "data" / "work"
+WORK = paths.WORK
 GNS_INDEX = WORK / "gns_index.json"  # built by gns.py; required (scope checks)
 HES_PROVINCES = WORK / "hes_provinces.json"  # built by hes_gazetteer.py; optional (wider province disks)
 
