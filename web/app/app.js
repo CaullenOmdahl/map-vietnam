@@ -97,6 +97,13 @@ async function api(path, opts = {}) {
 }
 // A short status message; with an undo callback it shows an Undo button (or another label) and stays up for at least 6 s.
 let toastTimer;
+// Says something to screen readers only (a hidden polite region), for changes that have no toast. Progress is never
+// announced: it changes every few seconds and the lists patch it in place.
+function announce(msg) {
+  const r = $("#srLive");
+  r.textContent = "";
+  setTimeout(() => { r.textContent = msg; }, 50);
+}
 function toast(msg, ms = 3200, undo = null, label = "Undo") {
   const t = $("#toast"), u = $("#toastUndo");
   $("#toastText").textContent = msg; t.classList.add("on");
@@ -683,9 +690,13 @@ function renderMapbar() {
   }
   // Maps on their way, while the library card is closed: their progress, one tap from the card.
   if (!html && adding && S.view.name !== "library")
-    html = `<span class="mb-note-t muted">${esc(adding)}</span><button class="mb-chip" data-mb="lib">Show</button>`;
+    html = `<span class="mb-note-t muted" data-mb-prog>${esc(adding)}</span><button class="mb-chip" data-mb="lib">Show</button>`;
   note.hidden = !html;
-  if (note.innerHTML !== html) {
+  // Progress is not announced (it changes every few seconds): the region goes quiet and the text moves in place.
+  const prog = html.includes("data-mb-prog"), shown = note.querySelector("[data-mb-prog]");
+  note.setAttribute("aria-live", prog ? "off" : "polite");
+  if (prog && shown) shown.textContent = adding;
+  else if (note.innerHTML !== html) {
     note.innerHTML = html;
     note.querySelector('[data-mb="clearYears"]')?.addEventListener("click", () => setYears(null));
     note.querySelector('[data-mb="alt"]')?.addEventListener("click", e => setEra(e.currentTarget.dataset.id));
@@ -1922,9 +1933,11 @@ function scheduleLibraryPoll() {
   clearTimeout(libTimer);
   if ((libBusyMaps().length || S.lib.legacy?.state === "converting") && !stopped) libTimer = setTimeout(loadLibrary, S.view.name === "library" ? LIB_POLL_OPEN_MS : LIB_POLL_CLOSED_MS);
 }
+let libWasBusy = false;
+let libBatchToasted = false; // a several-map add started in this window: its toast already says so, so no second announcement
 const justInstalled = new Set(); // maps seen to finish, announced once their layer is on the map
 function applyLibrary(r) {
-  const before = S.lib.byId, first = !S.lib.loaded;
+  const before = S.lib.byId, first = !S.lib.loaded, wasConverting = S.lib.legacy?.state === "converting";
   const maps = r.maps || [];
   // A sheet's catalogue corners are on its own old datum, a few hundred metres off today's map; the server sends
   // each map's outline on WGS84 (its real extent once added), which is what is drawn and compared with the view.
@@ -1940,13 +1953,19 @@ function applyLibrary(r) {
   const installed = maps.filter(m => m.state === "installed").map(m => m.id), have = new Set(S.catalog.map(l => l.id));
   if (installed.length !== have.size || installed.some(id => !have.has(id))) refreshCatalog();
   else announceInstalled();
+  const nowBusy = libBusyMaps().length;
+  if (!first && nowBusy && !libWasBusy && !libBatchToasted) announce(`Adding ${nowBusy} map${nowBusy === 1 ? "" : "s"}. You can keep using the map.`);
+  if (!first && !wasConverting && S.lib.legacy?.state === "converting") announce("Converting maps from an older version. You can keep using the map.");
+  libWasBusy = nowBusy > 0;
   drawFootprints(); renderMapbar(); libRefreshView(); scheduleLibraryPoll();
   if (S.view.name === "home") render();
 }
 async function libAdd(ids) {
   if (S.view.name === "library") S.view.confirm = null;
+  libBatchToasted = ids.length > 1;
   try { applyLibrary(await api("/api/library/add", { method: "POST", body: { ids } })); }
   catch (e) { toast("Could not add: " + e.message, 5000); return; }
+  finally { libBatchToasted = false; }
   if (ids.length > 1) toast(`Adding ${ids.length} maps, one at a time. You can keep using the map.`, 5000);
 }
 // Removes maps (deleting their tiles and download) or, for maps still on their way, stops them.
@@ -2291,7 +2310,7 @@ function legacyHTML() {
   const l = S.lib.legacy;
   if (!l || !l.count) return "";
   const n = `${l.count} map${l.count === 1 ? "" : "s"}`;
-  if (l.state === "converting") return `<div class="lib-status" role="status"><span class="spin" aria-hidden="true"></span>
+  if (l.state === "converting") return `<div class="lib-status"><span class="spin" aria-hidden="true"></span>
     <span class="grow"><b>Converting ${n} from an older version</b><span class="small-t muted">${l.converted ? `${l.converted} done. ` : ""}They show here as each one finishes.</span></span></div>`;
   return `<div class="confirm-box calm" role="group" aria-label="Maps from an older version">
     <span><b>${n} from an older version</b> of Map Vietnam ${l.count === 1 ? "is" : "are"} on this computer${l.bytes ? ` (${fmtMB(l.bytes)})` : ""}. Convert ${l.count === 1 ? "it" : "them"} to use ${l.count === 1 ? "it" : "them"} here; nothing is downloaded.</span>
@@ -2342,7 +2361,7 @@ VIEWS.library = v => {
       ${n > 1 ? `<div class="lib-sort" role="group" aria-label="Order of the list"><span class="small-t muted">Order</span>
         ${LIB_SORTS.map(([k, label]) => `<button class="linkish small-t" data-act="libSort" data-s="${k}" aria-pressed="${md.sort === k}">${k === "here" && typed ? "Nearest" : label}</button>`).join("")}</div>` : ""}
     </div>
-    ${busy.length ? `<div class="lib-status" role="status"><span class="spin" aria-hidden="true"></span>
+    ${busy.length ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span>
       <span class="grow"><b>Adding ${busy.length} map${busy.length === 1 ? "" : "s"}</b><span class="small-t muted" data-lib-left>${esc(leftText())}</span></span>
       ${busy.length > 1 ? `<button class="linkish small-t" data-act="libStopAll">Stop all</button>` : ""}</div>${rows(busy)}` : ""}
     ${list("Could not be added", failed)}
@@ -2474,6 +2493,7 @@ function scheduleRecordsPoll() {
 }
 function applyRecords(r) {
   const before = S.rec, first = !before.loaded;
+  const wasRemoving = before.sources?.some(s => s.removing);
   const sources = r.sources || [];
   S.rec = { sources, byId: new Map(sources.map(s => [s.id, s])), key: r.key || {}, busy: !!r.busy, firstRun: !!r.first_run, revision: r.revision, loaded: true, err: null };
   if (!first) for (const s of sources) {
@@ -2481,8 +2501,12 @@ function applyRecords(r) {
     if (was && was.state !== "failed" && s.state === "failed")
       toast(`${s.title} could not be ${s.removing ? "removed" : "added"}.`, 7000, async () => openRecords(s.id), "See why");
   }
+  if (!first && !wasRemoving && sources.some(s => s.removing)) announce("Removing records. You can keep using the map.");
   // One note when the whole queue is done, not one per source.
-  if (sources.some(s => REC_BUSY.has(s.state) && !s.removing)) recWasAdding = true;
+  if (sources.some(s => REC_BUSY.has(s.state) && !s.removing)) {
+    if (!first && !recWasAdding) announce("Adding records. You can keep using the map.");
+    recWasAdding = true;
+  }
   else if (recWasAdding) {
     recWasAdding = false;
     if (!sources.some(s => s.state === "failed")) toast("The records are ready");
@@ -2689,10 +2713,10 @@ VIEWS.records = () => {
   const std = stdToAdd(), adding = busy.filter(s => !s.removing).length;
   const bulk = std.length >= 2 ? `<button class="btn lib-bulk" data-act="recAddStd">${icon.plus}<span>Add the standard records</span><span class="muted">${fmtInt(stdMB(std))} MB</span></button>` : "";
   return `${headHTML("Records", `<span>${esc(sub)}</span>`)}
-    ${busy.length ? `<div class="lib-status" role="status"><span class="spin" aria-hidden="true"></span>
+    ${busy.length ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span>
       <span class="grow"><b>${adding ? `Adding ${adding} source${adding === 1 ? "" : "s"}` : "Removing"}</b><span class="small-t muted">One at a time. You can keep using the map.</span></span>
       ${adding > 1 ? `<button class="linkish small-t" data-act="recStopAll">Stop all</button>` : ""}</div>${rows(busy)}` : ""}
-    ${!busy.length && S.rec.busy ? `<div class="lib-status" role="status"><span class="spin" aria-hidden="true"></span><span class="grow"><b>Busy in another window</b><span class="small-t muted">Records are being changed from a terminal or another Map Vietnam window.</span></span></div>` : ""}
+    ${!busy.length && S.rec.busy ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span><span class="grow"><b>Busy in another window</b><span class="small-t muted">Records are being changed from a terminal or another Map Vietnam window.</span></span></div>` : ""}
     ${list("Could not be added", failed)}
     ${list("On this computer", added)}
     ${available.length ? `<h3 class="sub-head">Available</h3>${bulk}${rows(available)}` : ""}
@@ -3144,12 +3168,15 @@ function openPopover(id, anchor) {
       pop.style.bottom = (innerHeight - r.top + 8) + "px";
       pop.style.maxHeight = (r.top - 20) + "px";
     } else {
-      pop.style.top = r.top + "px";
+      // On a phone the popover spans the screen, so it starts below the (i) attribution button at the top left.
+      pop.style.top = isDesk() ? r.top + "px" : `max(${r.top}px, calc(env(safe-area-inset-top) + ${ATTRIB_CLEAR}px))`;
       pop.style.right = (innerWidth - $("#controls").getBoundingClientRect().left + 8) + "px";
       pop.style.left = ""; pop.style.bottom = "";
       // Laptop: stop above the map bar, so its opacity slider and compare button stay usable.
       const floor = isDesk() ? $("#mapbar").getBoundingClientRect().top - 10 : innerHeight - 12;
-      pop.style.maxHeight = Math.max(200, floor - r.top) + "px";
+      // The phone's top edge may have been pushed down past the anchor, so measure where it really landed.
+      const top = isDesk() ? r.top : Math.max(r.top, pop.getBoundingClientRect().top);
+      pop.style.maxHeight = Math.max(200, floor - top) + "px";
     }
   } else {
     const r = $("#mapbar").getBoundingClientRect();
@@ -3158,6 +3185,7 @@ function openPopover(id, anchor) {
   const first = pop.querySelector('[aria-checked="true"], [aria-pressed="true"], button, input');
   first?.focus({ preventScroll: true });
 }
+const ATTRIB_CLEAR = 52; // px from the top of a phone screen left free for the (i) attribution button
 function closePopovers(except) {
   for (const id of ["popStyle", "popLayers", "popMaps"]) {
     if (id === except) continue;
@@ -3202,6 +3230,11 @@ ACTIONS.showAll = () => showAllKinds();
 document.addEventListener("pointerdown", e => {
   if (e.target.closest(".popover, #styleBtn, #layersBtn, #pickA, #pickB")) return;
   closePopovers();
+});
+// A popover is not modal: when keyboard focus Tabs out of it (and is not on the button that opened it, which
+// toggles it itself), it closes. Focus is already where the person sent it, so it is not moved back.
+document.addEventListener("focusin", e => {
+  if (!["popStyle", "popLayers", "popMaps"].some(id => { const p = $("#" + id); return !p.hidden && (p.contains(e.target) || p._anchor?.contains(e.target)); })) closePopovers();
 });
 
 // ================================================================ base map, theme
