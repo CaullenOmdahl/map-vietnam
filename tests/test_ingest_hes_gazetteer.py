@@ -135,3 +135,10 @@ def test_province_extent_uses_gns_places_of_the_modern_province(built, monkeypat
     assert all("Khâm Đức" not in (p.get("farthest_gns_place") or "") for p in out.values())
     # Without GNS the radius falls back to the farthest hamlet + buffer.
     assert h.provinces(located)["provinces"]["101"]["radius_m"] == qt["max_hamlet_m"] + h.AREA_BUFFER_M
+
+
+def test_clean_collapses_field_padding():
+    """Fixed-width fields pad inside the name: 'NGOAI O     (MOT)' reads as one tidy name."""
+    assert h.clean("NGOAI O     (MOT)") == "NGOAI O (MOT)"
+    assert h.clean("NGHIA KHUONG  RC") == "NGHIA KHUONG RC"
+    assert h.clean("  AN \x9fPHONG  ") == "AN PHONG"

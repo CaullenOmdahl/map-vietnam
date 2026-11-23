@@ -150,3 +150,49 @@ def test_a_big_download_reports_its_progress_by_bytes(tmp_path, monkeypatch, cap
     common.cached_get(f"{http_server[0]}/file", "src", name="small.txt", min_interval=0)  # one block: not worth a line
     common.cached_get(f"{base}/big", "src", name="big.bin", min_interval=0)  # cached: nothing fetched
     assert capsys.readouterr().out == ""
+
+
+def _flaky_server(failures, status):
+    """A server that answers `status` to the first `failures` requests, then 200."""
+    calls = []
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            calls.append(1)
+            code = status if len(calls) <= failures else 200
+            self.send_response(code)
+            self.send_header("Content-Length", "2")
+            self.end_headers()
+            self.wfile.write(b"ok")
+
+        def log_message(self, *args):
+            pass
+
+    srv = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv, calls
+
+
+def test_cached_get_retries_a_busy_server(tmp_path, monkeypatch):
+    """Overpass and WDQS answer 502/504 now and then; one bad reply must not fail a setup."""
+    monkeypatch.setattr(common, "RAW", tmp_path)
+    monkeypatch.setattr(common, "RETRY_WAIT", 0)
+    srv, calls = _flaky_server(2, 502)
+    try:
+        path = common.cached_get(f"http://127.0.0.1:{srv.server_port}/x", "src", name="x", min_interval=0)
+    finally:
+        srv.shutdown()
+    assert path.read_bytes() == b"ok" and len(calls) == 3
+
+
+def test_cached_get_gives_up_after_the_last_attempt_and_on_final_errors(tmp_path, monkeypatch):
+    monkeypatch.setattr(common, "RAW", tmp_path)
+    monkeypatch.setattr(common, "RETRY_WAIT", 0)
+    for status, attempts in ((502, common.RETRIES), (404, 1)):
+        srv, calls = _flaky_server(99, status)
+        try:
+            with pytest.raises(common.urllib.error.HTTPError):
+                common.cached_get(f"http://127.0.0.1:{srv.server_port}/x", "src", name="x", min_interval=0)
+        finally:
+            srv.shutdown()
+        assert len(calls) == attempts

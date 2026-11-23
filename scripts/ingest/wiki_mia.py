@@ -44,6 +44,7 @@ Run:  .venv/bin/python scripts/ingest/wiki_mia.py [--refresh]
 
 import argparse
 import hashlib
+import html
 import json
 import math
 import re
@@ -163,7 +164,28 @@ def clean(text):
     t = re.sub(r"<br\s*/?>", " ", t, flags=re.I)
     t = re.sub(r"<[^>]+>", "", t)
     t = re.sub(r"'''?", "", t)
-    return re.sub(r"\s+", " ", t).strip()
+    # Entities last, so a decoded '<' or '&' is not mistaken for markup. &nbsp; becomes a
+    # no-break space, which the whitespace pass turns into a plain one.
+    return re.sub(r"\s+", " ", html.unescape(t)).strip()
+
+
+def title_for(c):
+    """'Rank Name (Service) - Status'; the service is left out when the list gives none."""
+    service = f" ({c['service']})" if c["service"] else ""
+    return f"{c['rank']} {c['name']}{service} — {c['status'][:60]}".strip()
+
+
+def sentence(text):
+    """text with a closing full stop (kept when it already ends in . ! or ?); '' stays ''."""
+    text = text.strip()
+    return text if not text or text[-1] in ".!?" else text + "."
+
+
+def description_for(c, pl):
+    """Unit, circumstances, status and placement as sentences; empty parts are left out."""
+    parts = [sentence(c["unit"]), sentence(c["circumstances"]), f"Status: {c['status']}."]
+    parts.append(f"Placement ({pl['placement']}, matched '{pl['place']}'): {pl['how']}.")
+    return " ".join(p for p in parts if p)
 
 
 def ref_urls(text):
@@ -1045,11 +1067,10 @@ def records(pages, provinces, gns, stats=None):
                 uncertainty_m=float(pl["radius_m"]),
                 original_coord=c["location"],
                 original_datum=pl["datum"],
-                title=f"{c['rank']} {c['name']} ({c['service']}) — {c['status'][:60]}".strip(),
+                title=title_for(c),
                 date_start=date,
                 date_end=date,
-                description=f"{c['unit']}. {c['circumstances']} Status: {c['status']}. "
-                f"Placement ({pl['placement']}, matched '{pl['place']}'): {pl['how']}.",
+                description=description_for(c, pl),
                 url=page_url(period),
                 raw=raw,
             )

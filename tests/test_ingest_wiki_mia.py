@@ -188,3 +188,29 @@ def test_parse_date():
     assert w.parse_date("April 9", "1967") == "1967-04-09"
     assert w.parse_date("April", "1967") == "1967-04"
     assert w.parse_date("", "1967") == "1967"
+
+
+def test_clean_decodes_html_entities():
+    assert w.clean("shot down from 4–600&nbsp;ft; a 122&nbsp;mm round &amp; fire") == (
+        "shot down from 4–600 ft; a 122 mm round & fire"
+    )
+
+
+def test_title_and_description_read_as_sentences():
+    c = {
+        "rank": "Civilian",
+        "name": "Gerber, Daniel A",
+        "service": "",
+        "unit": "",
+        "circumstances": "Abducted by the Vietcong",
+        "status": "Unaccounted for",
+    }
+    pl = {"placement": "gns_place", "place": "ban me thuot", "how": "GNS Buôn Ma Thuột"}
+    assert w.title_for(c) == "Civilian Gerber, Daniel A — Unaccounted for"  # no empty "()"
+    assert w.description_for(c, pl) == (
+        "Abducted by the Vietcong. Status: Unaccounted for. "
+        "Placement (gns_place, matched 'ban me thuot'): GNS Buôn Ma Thuột."
+    )
+    c = {**c, "service": "USAF", "unit": "774th Squadron", "circumstances": "Shot down."}
+    assert w.title_for(c).startswith("Civilian Gerber, Daniel A (USAF) — ")
+    assert w.description_for(c, pl).startswith("774th Squadron. Shot down. Status:")

@@ -218,6 +218,7 @@ def build(rows):
         "burial_names": [],
         "skipped_fc": 0,
         "skipped_bad_coord": 0,
+        "skipped_same_name_variant": 0,
         "ingested": 0,
         "in_aoi": 0,
         "kinds": {},
@@ -247,10 +248,15 @@ def build(rows):
         except ValueError:
             stats["skipped_bad_coord"] += 1
             continue
+        main = approved.get(r["ufi"])
+        if r["nt"] not in ("N", "NS") and r["full_name"] == main:
+            # A variant row spelled exactly like the approved name adds nothing: same feature,
+            # same position, same title. The approved row already carries the name and index keys.
+            stats["skipped_same_name_variant"] += 1
+            continue
         kind = kind_for(r)
         unc = uncertainty_for(r)
         dsg = r["desig_cd"]
-        main = approved.get(r["ufi"])
         others = sorted({n for n in names_of[r["ufi"]] if n != r["full_name"]})
         parts = [f"GNS {NT_LABEL.get(r['nt'], r['nt'])} name, feature {dsg} (class {r['fc']})"]
         if r["nt"] not in ("N", "NS") and main:

@@ -125,3 +125,15 @@ def test_sync_twice_is_a_no_op_and_only_touches_gns(tmp_path):
     # Dropping a record from the source removes it from gns only.
     assert gns.write(db, records[1:]) == (len(records) - 1, 1, 0)
     assert db.execute("select count(*) from evidence where source='other'").fetchone()[0] == 1
+
+
+def test_variant_spelled_like_the_approved_name_is_not_a_second_record():
+    """GNS lists some features again as a variant under their approved spelling ('Phou Long' twice)."""
+    rows, *_ = _build()
+    approved = next(r for r in rows if r["ufi"] == "-3709962" and r["nt"] == "N")
+    twin = {**approved, "uni": "999", "nt": "V"}
+    respelled = {**approved, "uni": "998", "nt": "V", "full_name": "Cao Lanh"}
+    records, _, stats = gns.build([*rows, twin, respelled])
+    titles = [r.title for r in records if r.source_record_id.startswith("-3709962/")]
+    assert titles.count("Cao Lãnh") == 1 and "Cao Lanh" in titles  # a genuinely different spelling stays
+    assert stats["skipped_same_name_variant"] == 1
