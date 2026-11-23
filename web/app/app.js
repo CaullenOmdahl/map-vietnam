@@ -1934,9 +1934,10 @@ function scheduleLibraryPoll() {
   if ((libBusyMaps().length || S.lib.legacy?.state === "converting") && !stopped) libTimer = setTimeout(loadLibrary, S.view.name === "library" ? LIB_POLL_OPEN_MS : LIB_POLL_CLOSED_MS);
 }
 let libWasBusy = false;
+let libBatchToasted = false; // a several-map add started in this window: its toast already says so, so no second announcement
 const justInstalled = new Set(); // maps seen to finish, announced once their layer is on the map
 function applyLibrary(r) {
-  const before = S.lib.byId, first = !S.lib.loaded;
+  const before = S.lib.byId, first = !S.lib.loaded, wasConverting = S.lib.legacy?.state === "converting";
   const maps = r.maps || [];
   // A sheet's catalogue corners are on its own old datum, a few hundred metres off today's map; the server sends
   // each map's outline on WGS84 (its real extent once added), which is what is drawn and compared with the view.
@@ -1953,15 +1954,18 @@ function applyLibrary(r) {
   if (installed.length !== have.size || installed.some(id => !have.has(id))) refreshCatalog();
   else announceInstalled();
   const nowBusy = libBusyMaps().length;
-  if (!first && nowBusy && !libWasBusy) announce(`Adding ${nowBusy} map${nowBusy === 1 ? "" : "s"}. You can keep using the map.`);
+  if (!first && nowBusy && !libWasBusy && !libBatchToasted) announce(`Adding ${nowBusy} map${nowBusy === 1 ? "" : "s"}. You can keep using the map.`);
+  if (!first && !wasConverting && S.lib.legacy?.state === "converting") announce("Converting maps from an older version. You can keep using the map.");
   libWasBusy = nowBusy > 0;
   drawFootprints(); renderMapbar(); libRefreshView(); scheduleLibraryPoll();
   if (S.view.name === "home") render();
 }
 async function libAdd(ids) {
   if (S.view.name === "library") S.view.confirm = null;
+  libBatchToasted = ids.length > 1;
   try { applyLibrary(await api("/api/library/add", { method: "POST", body: { ids } })); }
   catch (e) { toast("Could not add: " + e.message, 5000); return; }
+  finally { libBatchToasted = false; }
   if (ids.length > 1) toast(`Adding ${ids.length} maps, one at a time. You can keep using the map.`, 5000);
 }
 // Removes maps (deleting their tiles and download) or, for maps still on their way, stops them.
@@ -2489,6 +2493,7 @@ function scheduleRecordsPoll() {
 }
 function applyRecords(r) {
   const before = S.rec, first = !before.loaded;
+  const wasRemoving = before.sources?.some(s => s.removing);
   const sources = r.sources || [];
   S.rec = { sources, byId: new Map(sources.map(s => [s.id, s])), key: r.key || {}, busy: !!r.busy, firstRun: !!r.first_run, revision: r.revision, loaded: true, err: null };
   if (!first) for (const s of sources) {
@@ -2496,6 +2501,7 @@ function applyRecords(r) {
     if (was && was.state !== "failed" && s.state === "failed")
       toast(`${s.title} could not be ${s.removing ? "removed" : "added"}.`, 7000, async () => openRecords(s.id), "See why");
   }
+  if (!first && !wasRemoving && sources.some(s => s.removing)) announce("Removing records. You can keep using the map.");
   // One note when the whole queue is done, not one per source.
   if (sources.some(s => REC_BUSY.has(s.state) && !s.removing)) {
     if (!first && !recWasAdding) announce("Adding records. You can keep using the map.");
@@ -3168,7 +3174,9 @@ function openPopover(id, anchor) {
       pop.style.left = ""; pop.style.bottom = "";
       // Laptop: stop above the map bar, so its opacity slider and compare button stay usable.
       const floor = isDesk() ? $("#mapbar").getBoundingClientRect().top - 10 : innerHeight - 12;
-      pop.style.maxHeight = Math.max(200, floor - r.top) + "px";
+      // The phone's top edge may have been pushed down past the anchor, so measure where it really landed.
+      const top = isDesk() ? r.top : Math.max(r.top, pop.getBoundingClientRect().top);
+      pop.style.maxHeight = Math.max(200, floor - top) + "px";
     }
   } else {
     const r = $("#mapbar").getBoundingClientRect();
