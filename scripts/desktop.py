@@ -31,6 +31,7 @@ cheap: the packaged app relaunches itself that way for every child job.
 """
 
 import argparse
+import importlib
 import re
 import signal
 import sys
@@ -242,6 +243,30 @@ def on_page_loaded(window, own_url, opener=None):
     window.run_js(SHIM)
 
 
+def window_toolkit(frozen=None, platform=None):
+    """Which window toolkit to ask pywebview for, or None to let it choose. The packaged Linux app
+    carries only the Qt one, so it asks for Qt by name; otherwise pywebview tries GTK first and prints
+    an import traceback before it settles on Qt."""
+    frozen = paths.is_frozen() if frozen is None else frozen
+    platform = sys.platform if platform is None else platform
+    return "qt" if frozen and platform.startswith("linux") else None
+
+
+def check_window():
+    """Load the window toolkit without opening a window. Returns the exit status: 0 if it loaded.
+    The release build runs this on the packaged app, so a toolkit missing from the bundle (a hidden
+    import PyInstaller did not find) fails the build instead of reaching a user."""
+    try:
+        guilib = importlib.import_module("webview.guilib")  # the package attribute of that name is a placeholder
+
+        guilib.initialize(window_toolkit())
+    except Exception as error:
+        print(f"The window toolkit could not be loaded: {error!r}", flush=True)
+        return 1
+    print("window toolkit ok", flush=True)
+    return 0
+
+
 def open_window(url, srv, thread):
     """Show the viewer in a native window until it is closed or the server stops. Returns True if
     a window was shown; raises if none could be (the caller falls back to the browser)."""
@@ -262,7 +287,7 @@ def open_window(url, srv, thread):
             pass
 
     threading.Thread(target=close_when_server_stops, name="close-window", daemon=True).start()
-    webview.start()  # returns when the window has closed
+    webview.start(gui=window_toolkit())  # returns when the window has closed
     return True
 
 
@@ -295,6 +320,7 @@ def run(args):
 def parse_args(argv=None):
     ap = argparse.ArgumentParser(description="Open Map Vietnam in its own window.")
     ap.add_argument("--no-window", action="store_true", help="only serve; print the address and wait")
+    ap.add_argument("--check-window", action="store_true", help="load the window toolkit, then exit (build checks)")
     ap.add_argument("--port", type=int, default=0, help="port on 127.0.0.1 (default: any free port)")
     args = ap.parse_args(argv)
     if not 0 <= args.port <= 65535:
@@ -311,7 +337,10 @@ def main(argv=None):
     for stream in (sys.stdout, sys.stderr):
         if stream is not None and hasattr(stream, "reconfigure"):
             stream.reconfigure(errors="replace")
-    return run(parse_args(argv))
+    args = parse_args(argv)
+    if args.check_window:
+        return check_window()
+    return run(args)
 
 
 if __name__ == "__main__":

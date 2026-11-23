@@ -7,6 +7,7 @@ It starts the executable with --no-window on a free port and a throw-away data f
 (MAPVIETNAM_HOME), then checks that
   * the viewer page (/app/) and the map library (/api/library) are served,
   * a child job runs the way the app starts them: `<exe> --run-script catalog.py --help`,
+  * the window toolkit loads (`<exe> --check-window`; no window is opened),
   * POST /api/quit stops the app, and the process exits.
 It exits 0 when all of that held, and 1 with a plain message otherwise. Standard library only, so
 the release workflow can run it on every platform without installing anything.
@@ -68,6 +69,20 @@ def main(argv):
         if child.returncode != 0 or "usage" not in child.stdout.lower():
             return fail(f"--run-script catalog.py --help exited {child.returncode}: {child.stdout} {child.stderr}")
         print("child script ok:", child.stdout.splitlines()[0])
+
+        # The window toolkit is the part --no-window never touches: load it, without opening a window.
+        toolkit = subprocess.run(
+            [exe, "--check-window"],
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=START_TIMEOUT_S,
+        )
+        if toolkit.returncode != 0:
+            return fail(f"--check-window exited {toolkit.returncode}: {toolkit.stdout} {toolkit.stderr}")
+        print("window toolkit ok")
 
         app = subprocess.Popen(
             [exe, "--no-window"],

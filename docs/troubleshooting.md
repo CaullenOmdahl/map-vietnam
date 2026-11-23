@@ -19,7 +19,8 @@ and confirm. You only do this once. If macOS says the app is damaged, run
 
 ## The Linux app does not open a window
 
-Unpack the `.tar.gz` and run `Map Vietnam/Map Vietnam`. It needs a desktop session and the usual
+Unpack the `.tar.gz` and run `Map Vietnam/Map Vietnam`. It is built on Ubuntu 22.04, so it needs
+glibc 2.35 or newer (Ubuntu 22.04, Debian 12 and later; older systems will not start it). It needs a desktop session and the usual
 graphics libraries (on Debian or Ubuntu: `sudo apt install libxcb-cursor0 libnss3 libxkbcommon-x11-0`).
 Without a window it opens the map in your browser instead.
 

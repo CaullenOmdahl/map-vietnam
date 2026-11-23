@@ -52,7 +52,7 @@ hiddenimports += ["webview", "certifi", "ssl", "sqlite3", "zipfile", "csv"]
 hiddenimports += collect_submodules("rasterio") + collect_submodules("pyproj") + collect_submodules("morecantile")
 if sys.platform == "win32":
     hiddenimports += ["msvcrt"]  # files.py's lock
-    hiddenimports += collect_submodules("webview.platforms.winforms") + ["clr_loader", "pythonnet"]
+    hiddenimports += collect_submodules("webview.platforms.winforms") + ["clr", "clr_loader", "pythonnet"]  # clr is the module pythonnet installs
 elif sys.platform == "darwin":
     hiddenimports += collect_submodules("webview.platforms.cocoa") + ["objc", "Foundation", "AppKit", "WebKit"]
 else:
@@ -82,7 +82,8 @@ datas += collect_data_files("webview", includes=["js/*"])
 binaries = collect_dynamic_libs("pypdfium2_raw") + collect_dynamic_libs("pypdfium2")
 
 # The one-folder copy is already large; leave out what the app never imports.
-excludes = ["tkinter", "matplotlib", "pytest", "IPython", "scipy", "pandas", "PyQt6.QtQml", "PyQt6.QtQuick"]
+excludes = ["webview.platforms.gtk"] if sys.platform.startswith("linux") else []  # desktop.py asks for Qt
+excludes += ["tkinter", "matplotlib", "pytest", "IPython", "scipy", "pandas", "PyQt6.QtQml", "PyQt6.QtQuick"]
 
 ICON = {
     "win32": ROOT / "packaging" / "icons" / "map-vietnam.ico",

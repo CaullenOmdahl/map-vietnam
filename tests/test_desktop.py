@@ -2,6 +2,7 @@
 saved file is called), the command-line dispatch, serving without a window, and the fallback to the
 browser when no window can be opened. None of it needs a GUI toolkit."""
 
+import importlib
 import json
 import sys
 import threading
@@ -392,3 +393,49 @@ def test_window_is_titled_and_sized_for_phones_and_desktops(monkeypatch):
     assert seen["title"] == "Map Vietnam" and seen["url"] == "http://127.0.0.1:4321/app/"
     assert (seen["width"], seen["height"]) == desktop.WINDOW_SIZE
     assert seen["min_size"][0] <= 400 and isinstance(seen["js_api"], desktop.WindowApi)
+
+
+# ---- the window toolkit --------------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    "frozen, platform, expected",
+    [(True, "linux", "qt"), (False, "linux", None), (True, "win32", None), (True, "darwin", None)],
+)
+def test_the_packaged_linux_app_asks_for_qt_by_name(frozen, platform, expected):
+    assert desktop.window_toolkit(frozen=frozen, platform=platform) == expected
+
+
+def test_the_window_is_started_with_the_chosen_toolkit(monkeypatch):
+    pytest.importorskip("webview")
+    import webview
+
+    srv, thread = patch_server(monkeypatch)
+
+    class Window:
+        events = type("E", (), {"loaded": type("L", (), {"__iadd__": lambda s, f: s})()})()
+
+        def destroy(self):
+            pass
+
+    seen = {}
+    monkeypatch.setattr(desktop, "window_toolkit", lambda: "qt")
+    monkeypatch.setattr(webview, "create_window", lambda *a, **k: Window())
+    monkeypatch.setattr(webview, "start", lambda *a, **k: (seen.update(k), srv.quit()))
+    desktop.open_window("http://127.0.0.1:4321/app/", srv, thread)
+    assert seen == {"gui": "qt"}
+
+
+def test_check_window_reports_a_toolkit_that_cannot_load(monkeypatch, capsys):
+    pytest.importorskip("webview")
+    guilib = importlib.import_module("webview.guilib")
+
+    def broken(gui=None):
+        raise ImportError("no toolkit")
+
+    monkeypatch.setattr(guilib, "initialize", broken)
+    assert desktop.check_window() == 1
+    assert "could not be loaded" in capsys.readouterr().out
+
+
+def test_check_window_is_a_command_line_flag(monkeypatch):
+    monkeypatch.setattr(desktop, "check_window", lambda: 7)
+    assert desktop.main(["--check-window"]) == 7

@@ -73,7 +73,9 @@ jobs:
           if-no-files-found: error
 
   linux:
-    runs-on: ubuntu-latest
+    # The oldest Ubuntu image on offer: the app links against this image's glibc (2.35), and a build
+    # on a newer one would not start on Ubuntu 22.04 or Debian 12.
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -106,8 +108,9 @@ jobs:
           if-no-files-found: error
 
   macos:
-    # macos-latest is Apple silicon on macOS 15, the oldest macOS the pinned rasterio wheels support.
-    runs-on: macos-latest
+    # Pinned, not macos-latest: macOS 15 is the oldest the pinned rasterio wheels support, and a
+    # moving label would change the build without a commit here.
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
