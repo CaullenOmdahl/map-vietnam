@@ -225,6 +225,23 @@ def wait_for(thread):
 
 
 # ---- the window ---------------------------------------------------------------------------------
+def on_page_loaded(window, own_url, opener=None):
+    """What to do each time the window finishes loading a page. Our own page gets the shim. Anything
+    else (a navigation that slipped past the shim: a script setting location, a form post) is never
+    left on screen, because the window has no address bar to get back from and the page would be
+    handed save_export and open_external: send the window home and show the address in the browser."""
+    try:
+        current = window.get_current_url()
+    except Exception:  # the window is closing; there is nothing to protect
+        return
+    if current and origin_of(current) != origin_of(own_url):
+        window.load_url(own_url)
+        if is_external(current, own_url):
+            (opener or webbrowser.open)(current)
+        return
+    window.run_js(SHIM)
+
+
 def open_window(url, srv, thread):
     """Show the viewer in a native window until it is closed or the server stops. Returns True if
     a window was shown; raises if none could be (the caller falls back to the browser)."""
@@ -235,7 +252,7 @@ def open_window(url, srv, thread):
         TITLE, url, js_api=api, width=WINDOW_SIZE[0], height=WINDOW_SIZE[1], min_size=MIN_SIZE
     )
     api._window = window
-    window.events.loaded += lambda: window.run_js(SHIM)
+    window.events.loaded += lambda: on_page_loaded(window, url)
 
     def close_when_server_stops():
         thread.join()

@@ -45,6 +45,8 @@ Style, in short:
 start.py                    makes .venv, opens the map's window; also setup, maps, records
 Start Map Vietnam.command   macOS double-click launcher for start.py
 requirements.txt            pinned Python dependencies
+requirements-qt.txt         optional Linux window toolkit (installed best-effort; pywebview itself pulls
+                            in proxy-tools, a pure-Python sdist, so a wheels-only install cannot work)
 scripts/
   records.py                the record sources: adds and removes them (the viewer's Records card,
                             python3 start.py setup / records ...)

@@ -295,6 +295,40 @@ def test_a_window_that_cannot_open_falls_back_to_the_browser(monkeypatch, capsys
     assert srv.stopped
 
 
+class PageWindow:
+    def __init__(self, current):
+        self.current, self.js, self.loaded = current, [], []
+
+    def get_current_url(self):
+        return self.current
+
+    def run_js(self, code):
+        self.js.append(code)
+
+    def load_url(self, url):
+        self.loaded.append(url)
+
+
+def test_our_own_page_gets_the_shim():
+    window = PageWindow("http://127.0.0.1:4321/app/#x")
+    desktop.on_page_loaded(window, "http://127.0.0.1:4321/app/", opener=lambda u: pytest.fail(u))
+    assert window.js == [desktop.SHIM] and window.loaded == []
+
+
+def test_a_foreign_page_is_sent_home_without_the_shim_and_shown_in_the_browser():
+    window = PageWindow("https://example.com/x")
+    opened = []
+    desktop.on_page_loaded(window, "http://127.0.0.1:4321/app/", opener=opened.append)
+    assert window.js == [] and window.loaded == ["http://127.0.0.1:4321/app/"]
+    assert opened == ["https://example.com/x"]
+
+
+def test_a_page_that_is_neither_ours_nor_a_website_is_sent_home_quietly():
+    window = PageWindow("data:text/html,hi")
+    desktop.on_page_loaded(window, "http://127.0.0.1:4321/app/", opener=lambda u: pytest.fail(u))
+    assert window.js == [] and window.loaded == ["http://127.0.0.1:4321/app/"]
+
+
 def test_a_missing_webview_module_falls_back_too(monkeypatch, capsys):
     srv, thread = patch_server(monkeypatch)
     monkeypatch.setitem(sys.modules, "webview", None)  # `import webview` raises ImportError

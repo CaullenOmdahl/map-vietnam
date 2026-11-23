@@ -1,0 +1,5 @@
+# The Linux window toolkit for scripts/desktop.py. Optional: start.py installs it separately and
+# carries on if it cannot (its wheels need glibc 2.34 or newer; without it the map opens in the browser).
+QtPy==2.4.3; sys_platform == "linux" and platform_machine == "x86_64"
+PyQt6==6.12.1; sys_platform == "linux" and platform_machine == "x86_64"
+PyQt6-WebEngine==6.140.1; sys_platform == "linux" and platform_machine == "x86_64"

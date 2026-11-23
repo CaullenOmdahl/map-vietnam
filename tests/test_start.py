@@ -60,7 +60,7 @@ def test_with_no_command_it_opens_the_map_and_asks_and_downloads_nothing(ran, mo
     # The window is scripts/desktop.py's business; start.py opens no browser of its own.
     assert [cmd for cmd, _ in ran] == [["/venv/python", "scripts/desktop.py", "--port", str(start.DEFAULT_PORT)]]
     out = capsys.readouterr().out
-    assert "open in its own window" in out and '"Quit Map Vietnam"' in out
+    assert "Map Vietnam is open." in out and '"Quit Map Vietnam"' in out
     # The server stopping by itself is how "Quit Map Vietnam" in the viewer ends this script: status 0.
     assert "Map Vietnam has stopped" in out
 
@@ -182,7 +182,8 @@ def test_requirements_are_not_reinstalled_when_unchanged(tmp_path, monkeypatch):
     monkeypatch.setattr(start, "REQUIREMENTS_STAMP", venv / "requirements.sha256")
     venv.mkdir()
     (venv / "requirements.sha256").write_text(
-        start.hashlib.sha256(start.REQUIREMENTS.read_bytes()).hexdigest(), encoding="utf-8"
+        start.hashlib.sha256(start.REQUIREMENTS.read_bytes() + start.REQUIREMENTS_QT.read_bytes()).hexdigest(),
+        encoding="utf-8",
     )
     monkeypatch.setattr(start, "runs", lambda cmd: True)
 
@@ -191,6 +192,24 @@ def test_requirements_are_not_reinstalled_when_unchanged(tmp_path, monkeypatch):
 
     monkeypatch.setattr(start.subprocess, "run", no_install)
     assert start.ensure_venv() == start.venv_python()
+
+
+def test_the_window_toolkit_is_optional_and_never_stops_setup(tmp_path, monkeypatch):
+    monkeypatch.setattr(start, "VENV", tmp_path / ".venv")
+    monkeypatch.setattr(start, "REQUIREMENTS_STAMP", tmp_path / ".venv" / "requirements.sha256")
+    start.VENV.mkdir()
+    monkeypatch.setattr(start, "runs", lambda cmd: True)
+    calls = []
+
+    def fake_run(cmd, **kw):
+        calls.append(cmd)
+        return start.subprocess.CompletedProcess(cmd, 1 if str(start.REQUIREMENTS_QT) in cmd else 0)
+
+    monkeypatch.setattr(start.subprocess, "run", fake_run)
+    assert start.ensure_venv() == start.venv_python()  # the toolkit failing to install is tolerated
+    assert str(start.REQUIREMENTS_QT) in calls[-1] and "--only-binary" in calls[-1]
+    assert "PyQt6" not in start.REQUIREMENTS.read_text(encoding="utf-8")
+    assert (start.VENV / "requirements.sha256").exists()
 
 
 def test_a_port_whose_last_connections_are_still_closing_is_reused():

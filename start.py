@@ -66,6 +66,7 @@ import records  # noqa: E402  (standard library only at import time; see the mod
 
 VENV = ROOT / ".venv"
 REQUIREMENTS = ROOT / "requirements.txt"
+REQUIREMENTS_QT = ROOT / "requirements-qt.txt"
 REQUIREMENTS_STAMP = VENV / "requirements.sha256"
 TILES = ROOT / "web" / "tiles"
 DEFAULT_PORT = 8765
@@ -137,7 +138,7 @@ def ensure_venv():
             "The Python environment in .venv was not finished (an earlier start was probably interrupted). "
             f"It has been removed; run {start_command()} again to make it afresh."
         )
-    wanted = hashlib.sha256(REQUIREMENTS.read_bytes()).hexdigest()
+    wanted = hashlib.sha256(REQUIREMENTS.read_bytes() + REQUIREMENTS_QT.read_bytes()).hexdigest()
     have = REQUIREMENTS_STAMP.read_text(encoding="utf-8").strip() if REQUIREMENTS_STAMP.exists() else ""
     if have == wanted:
         return py
@@ -151,6 +152,22 @@ def ensure_venv():
             "(behind a proxy, set the HTTPS_PROXY environment variable first) and run this again; "
             "what was already downloaded is kept."
         )
+    # The Linux window toolkit is best-effort: older distributions have no prebuilt wheel for it, and
+    # then the map simply opens in the web browser (desktop.py) instead of stopping the whole setup.
+    subprocess.run(
+        [
+            str(py),
+            "-m",
+            "pip",
+            "install",
+            "--disable-pip-version-check",
+            "--only-binary",
+            ":all:",
+            "-r",
+            str(REQUIREMENTS_QT),
+        ],
+        cwd=ROOT,
+    )
     REQUIREMENTS_STAMP.write_text(wanted + "\n", encoding="utf-8")
     return py
 
@@ -268,7 +285,7 @@ def serve(args):
         if args.no_browser:
             say(f"The map is ready at  {url}  (no window opened: open that address in a web browser).")
         else:
-            say("Map Vietnam is open in its own window. Records and old maps are added from the map itself.")
+            say("Map Vietnam is open. Records and old maps are added from the map itself.")
         say('To stop, choose "Quit Map Vietnam" in the map, close its window, or press Control-C here.')
         # Poll rather than wait(): on Windows a bare wait() blocks Control-C until the server exits.
         while proc.poll() is None:
