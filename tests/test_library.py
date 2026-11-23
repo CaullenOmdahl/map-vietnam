@@ -720,3 +720,32 @@ def test_a_damaged_catalogue_is_named_in_plain_words(lib):
     with pytest.raises(library.LibraryError) as e:
         lib.catalogue()
     assert "map_library.json" in str(e.value) and "download Map Vietnam again" in str(e.value)
+
+
+def test_a_map_removed_while_building_with_a_locked_tile_file_ends_retryable(lib, monkeypatch):
+    lib.add(["L7014A"])
+    locked = lib.tiles_path("L7014A")
+    locked.parent.mkdir(parents=True, exist_ok=True)
+    locked.write_bytes(b"tiles")
+
+    def removed_meanwhile(job, report):  # remove() asked the worker to stop and delete
+        job.remove = True
+        lib._jobs.pop("L7014A")  # a stopped build forgets its job
+
+    monkeypatch.setattr(lib, "_run", removed_meanwhile)
+    lock_file_path(monkeypatch, locked)
+    lib.run_pending()
+    mine = {m["id"]: m for m in lib.listing()["maps"]}["L7014A"]
+    assert mine["state"] == "failed" and "try Remove again" in mine["error"] and locked.exists()
+
+
+def test_a_refused_folder_delete_keeps_the_refusal_as_its_cause(tmp_path, monkeypatch):
+    folder = tmp_path / "raw"
+    folder.mkdir()
+    (folder / "f").write_bytes(b"x")
+    refusal = PermissionError("in use")
+    monkeypatch.setattr(files.shutil, "rmtree", lambda path, onexc=None: onexc(None, str(path), refusal))
+    monkeypatch.setattr(files.time, "sleep", lambda s: None)
+    with pytest.raises(files.StillInUse) as e:
+        files.delete(folder)
+    assert e.value.__cause__ is refusal

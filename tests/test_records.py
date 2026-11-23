@@ -967,3 +967,29 @@ def test_counts_are_read_from_a_database_in_an_oddly_named_folder(tmp_path, home
     db.close()
     rec = Records(home, sources=fake_sources(), db_path=path)
     assert rec.store_facts()["thor"]["records"] == 1
+
+
+def test_a_removal_blocked_by_a_locked_download_is_a_plain_retryable_failure(rec, home, monkeypatch):
+    rec.add(["optional"], accept=["optional"])
+    rec.start_worker()
+    assert rec.wait_idle(20) and states(rec)["optional"] == "added"
+    raw = home / "data" / "raw" / "optional"
+    raw.mkdir(parents=True, exist_ok=True)
+    (raw / "big.zip").write_bytes(b"x")
+    real_rmtree = files.shutil.rmtree
+
+    def refuse(path, onexc=None):  # a program holds the download open
+        onexc(None, str(path), PermissionError("in use"))
+
+    monkeypatch.setattr(files.shutil, "rmtree", refuse)
+    monkeypatch.setattr(files.time, "sleep", lambda s: None)
+    assert rec.remove(["optional"]) == ["optional"]
+    assert rec.wait_idle(20)
+    e = entry(rec, "optional")
+    assert e["state"] == "failed" and e["error"] == str(files.StillInUse())
+    assert "try Remove again" in e["error"] and (raw / "big.zip").exists()
+
+    monkeypatch.setattr(files.shutil, "rmtree", real_rmtree)  # the program lets go
+    assert rec.remove(["optional"]) == ["optional"]
+    assert rec.wait_removed(["optional"], 20) and rec.wait_idle(20)
+    assert states(rec)["optional"] == "available" and not raw.exists()

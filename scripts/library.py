@@ -560,10 +560,13 @@ class Library:
             try:
                 self._run(job, report or (lambda job: None))
             finally:
+                if job.remove:
+                    # A map removed while it was built: its files go now that the worker let go.
+                    # Still marked as current (so a new add waits) but outside the lock, because
+                    # a locked file is retried for seconds and listings must not wait for that.
+                    self.delete_files_or_fail(map_id, job.entry)
                 with self._lock:
                     self._current = None
-                    if job.remove:
-                        self.delete_files_or_fail(map_id, job.entry)
                     self._wake.notify_all()
                 self.write_catalog()
 

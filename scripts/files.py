@@ -67,7 +67,9 @@ def delete(path, attempts=10):
             return
         except PermissionError as e:  # includes StillInUse from the folder branch
             if attempt == attempts - 1:
-                raise e if isinstance(e, StillInUse) else StillInUse() from e
+                if isinstance(e, StillInUse):
+                    raise
+                raise StillInUse() from e
             time.sleep(0.2)
 
 
