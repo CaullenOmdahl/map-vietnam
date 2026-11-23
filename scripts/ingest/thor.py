@@ -2,9 +2,11 @@
 
 Source: Kaggle dataset usaf/vietnam-war-bombing-operations (CC0; the only complete copy
 still online). The 1.6 GB CSV is downloaded once (as a ~320 MB zip) into data/raw/thor/ and
-streamed; only rows inside --bbox are stored. Kaggle needs a free account and API key, read
-from KAGGLE_USERNAME / KAGGLE_KEY (environment or .env, see .env.example) or from Kaggle's own
-kaggle.json (~/.kaggle/, or $KAGGLE_CONFIG_DIR). Once the zip is cached no key is needed.
+streamed; only rows inside --bbox are stored. Kaggle gives the file without a key at the time of
+writing. A key is sent when one is saved: KAGGLE_USERNAME / KAGGLE_KEY (environment or .env, see
+.env.example) or Kaggle's own kaggle.json (~/.kaggle/, or $KAGGLE_CONFIG_DIR). If Kaggle asks for
+a key and none it accepts is saved, this exits with status 3 (KEY_EXIT) and one plain sentence,
+so whoever ran it can ask the person for one. Once the zip is cached Kaggle is not contacted.
 
 Positions: THOR's own *_WGS84 columns are off by up to ~300 m in longitude against the
 original grids (checked on several Cao Lanh records), so when the original coordinate is an
@@ -21,7 +23,13 @@ Each run makes the store hold exactly the strikes inside the chosen area for sou
 holds them in a case, in which case they are marked withdrawn. Other sources are never touched.
 The default area is common.AREA_OF_INTEREST (around Cao Lanh); running with a wider --bbox or --all-vietnam widens it.
 
-Usage: .venv/bin/python scripts/ingest/thor.py [--bbox w,s,e,n] [--all-vietnam]
+Size: the whole of Vietnam is about 3 million strikes. Every strike kept is held in memory until
+it is written (about 2.2 KB each, so some 7 GB for the whole country) and takes about 1.8 KB in the
+store, and the viewer draws every strike in view, so a wide area makes everything slow.
+--max-strikes N stops the run, before anything is written, as soon as the area turns out to hold
+more than N strikes; scripts/records.py always passes it (records.MAX_STRIKES).
+
+Usage: .venv/bin/python scripts/ingest/thor.py [--bbox w,s,e,n] [--all-vietnam] [--max-strikes N]
 """
 
 import argparse
@@ -46,12 +54,25 @@ URL = "https://www.kaggle.com/api/v1/datasets/download/usaf/vietnam-war-bombing-
 ZIP_NAME = "THOR_Vietnam_Bombing_Operations.csv.zip"
 VIETNAM_BBOX = (102.1, 8.4, 109.5, 23.4)
 MGRS_RE = re.compile(r"^\s*(\d{1,2})([C-HJ-NP-X])([A-HJ-NP-Z]{2})(\d+)\s*$")
+# The exit status that tells scripts/records.py (records.KEY_EXIT) that Kaggle wants a key, so the
+# viewer can ask the person for one. Any other failure exits with status 1, as Python does.
+KEY_EXIT = 3
+# How to get a key, in the words both the viewer and the terminal show. No message here may ever
+# include the username or the key.
 KEY_HELP = (
-    "THOR needs a free Kaggle API key: sign in at kaggle.com, open Settings, and under 'API' "
-    "click 'Create Legacy API Key' (older pages: 'Create New Token'). Put the username and key from "
-    "the kaggle.json it gives you in .env as KAGGLE_USERNAME / KAGGLE_KEY (or run "
-    "python3 start.py setup --only thor to be asked)."
+    "To get a free Kaggle key: sign in at kaggle.com, open Settings, and under 'API' click "
+    "'Create Legacy API Key' (older pages: 'Create New Token'), then choose the kaggle.json it downloads "
+    "where Map Vietnam asks for the key (or put its username and key in .env as KAGGLE_USERNAME / KAGGLE_KEY)."
 )
+KEY_WANTED = (
+    "Kaggle asked for a key before it would hand over the air strike records, and none is saved yet. " + KEY_HELP
+)
+KEY_REFUSED = "Kaggle did not accept this key (it answered {code}). Make a new key and enter it again. " + KEY_HELP
+TOO_MANY = (
+    "This area holds more than {limit:,} air strikes, too many for the map to stay quick. "
+    "Nothing was changed. Choose a smaller area."
+)
+ROWS_PER_REPORT = 50_000  # rows read between two progress lines (about one a second)
 csv.field_size_limit(1 << 24)
 
 
@@ -76,32 +97,60 @@ def kaggle_credentials():
     return None
 
 
+def stop_for_key(message):
+    """Stop with one plain sentence and the exit status that says Kaggle wants a key (KEY_EXIT)."""
+    print(message, file=sys.stderr, flush=True)
+    raise SystemExit(KEY_EXIT)
+
+
 def download():
-    """Path of the cached THOR zip, downloading it first (with the Kaggle key) if it is missing."""
+    """Path of the cached THOR zip, downloading it first if it is missing.
+
+    Kaggle gives this file without a key at the time of writing, so a key is used when one is
+    saved and otherwise none is sent. If Kaggle refuses the saved key (401 or 403), the download
+    is tried once more without it: a stale key must not stand in the way of a file anyone may
+    have. Only when Kaggle still refuses, or sends a web page instead of the file, does this
+    stop asking for a key (stop_for_key)."""
     cached = common.RAW / SOURCE / ZIP_NAME
     if cached.exists():
         return cached
     creds = kaggle_credentials()
-    if creds is None:
-        raise SystemExit(KEY_HELP)
-    auth = base64.b64encode(f"{creds[0]}:{creds[1]}".encode()).decode()
-    try:
-        return common.cached_get(URL, SOURCE, name=ZIP_NAME, headers={"Authorization": f"Basic {auth}"}, timeout=3600)
-    except urllib.error.HTTPError as e:
-        if e.code in (401, 403):
-            raise SystemExit(f"Kaggle refused the key (HTTP {e.code}). {KEY_HELP}") from None
-        raise
+    refusal = None
+    for attempt in (creds, None) if creds else (None,):
+        headers = None
+        if attempt:
+            auth = base64.b64encode(f"{attempt[0]}:{attempt[1]}".encode()).decode()
+            headers = {"Authorization": f"Basic {auth}"}
+        try:
+            path = common.cached_get(URL, SOURCE, name=ZIP_NAME, headers=headers, timeout=3600)
+        except urllib.error.HTTPError as e:
+            if e.code not in (401, 403):
+                raise
+            refusal = refusal or e.code  # the answer to the key, if one was sent
+            continue
+        with open(path, "rb") as f:
+            if not f.read(64).lstrip().startswith(b"<"):
+                return path
+        # A sign-in page saved under the file's name: never keep it as if it were the records.
+        path.unlink()
+    stop_for_key(KEY_REFUSED.format(code=refusal or "with a sign-in page") if creds else KEY_WANTED)
 
 
 def open_rows(path):
-    """Yield CSV rows from the downloaded file, zipped or not."""
+    """Yield CSV rows from the downloaded file, zipped or not, reporting progress (common.progress)
+    every ROWS_PER_REPORT rows: the share of the file's bytes read so far, and the row count."""
     if zipfile.is_zipfile(path):
         z = zipfile.ZipFile(path)
         name = next(n for n in z.namelist() if n.lower().endswith(".csv"))
-        f = io.TextIOWrapper(z.open(name), encoding="utf-8", errors="replace", newline="")
+        raw, total = z.open(name), z.getinfo(name).file_size
     else:
-        f = open(path, encoding="utf-8", errors="replace", newline="")
-    yield from csv.DictReader(f)
+        raw, total = open(path, "rb"), Path(path).stat().st_size
+    f = io.TextIOWrapper(raw, encoding="utf-8", errors="replace", newline="")
+    for n, row in enumerate(csv.DictReader(f), 1):
+        if n % ROWS_PER_REPORT == 0:
+            # raw.tell() runs a little ahead of the row (the text layer reads in blocks): near enough.
+            common.progress(raw.tell() / total if total else None, f"Reading the air strike file: {n:,} rows so far")
+        yield row
 
 
 def num(v):
@@ -223,6 +272,12 @@ def parse_args(argv=None):
         "--bbox", default=",".join(map(str, common.AREA_OF_INTEREST)), help="area to keep: west,south,east,north"
     )
     ap.add_argument("--all-vietnam", action="store_true", help="keep every strike in Vietnam's bounding box")
+    ap.add_argument(
+        "--max-strikes",
+        type=int,
+        metavar="N",
+        help="stop, changing nothing, if the area holds more than N strikes (default: no limit)",
+    )
     return ap.parse_args(argv)
 
 
@@ -234,8 +289,13 @@ def main(argv=None):
     db = store.connect()
     counts = {}
     # Read everything first: streaming into sync_source would hold the SQLite write lock for the
-    # whole multi-minute CSV scan and block other ingesters.
-    records = list(select(open_rows(path), bbox, counts))
+    # whole multi-minute CSV scan and block other ingesters (and the viewer's own queries).
+    records = []
+    for e in select(open_rows(path), bbox, counts):
+        records.append(e)
+        if a.max_strikes is not None and len(records) > a.max_strikes:
+            raise SystemExit(TOO_MANY.format(limit=a.max_strikes))
+    common.progress(None, f"Saving {len(records):,} air strikes")
     kept, deleted, withdrawn = write(db, records)
     print(
         f"thor: read {counts['seen']} rows, kept {kept} kinetic strikes in {bbox} "

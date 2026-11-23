@@ -2082,7 +2082,12 @@ def crawl(refresh_index=False, retry_failed=False):
     """Fetch (or read from cache) the index, panels, linked incident and person pages, then add
     every incident/person page already in the cache that nothing links (e.g. K12228), so the
     result depends only on the cache contents. Returns (panel names, linked incident ids,
-    {incident id: html}, {K id: html})."""
+    {incident id: html}, {K id: html}).
+
+    Progress is reported by pages (common.progress), counting cached pages too, so a run that
+    was stopped races through what it already has and carries on from there. How many pages
+    there are is only known once the panels have been read, and the incident pages still add a
+    few crew pages, hence "of about"."""
     if retry_failed:
         _failures().clear()
         _save_failures()
@@ -2091,21 +2096,26 @@ def crawl(refresh_index=False, retry_failed=False):
     if not panels:
         panels = [f"PANEL{n:02d}{s}" for n in range(1, 71) for s in "EW"]
     incidents, people = {}, {}
-    for p in panels:
+    for n, p in enumerate(panels, 1):
         raw = _get(f"{BASE}panel/{p}.HTM", f"{p}.HTM")
+        common.progress(None, f"Reading the list of losses: page {n} of {len(panels)}")
         if raw:
             i, k = parse_panel(raw)
             incidents.update(dict.fromkeys(i))
             people.update(dict.fromkeys(k))
     inc_pages = {}
-    for i in incidents:
+    for n, i in enumerate(incidents, len(panels) + 1):
         raw = _get(f"{BASE}incident/{i}.HTM", f"incident_{i}.HTM")
+        total = len(panels) + len(incidents) + len(people)
+        common.progress(n / total, f"Reading page {n:,} of about {total:,}")
         if raw:
             inc_pages[i] = raw
             people.update(dict.fromkeys(k.upper() for k in re.findall(r"\.\./(K\d+)\.HTM", raw, re.I)))
     person_pages = {}
-    for k in people:
+    total = len(panels) + len(incidents) + len(people)
+    for n, k in enumerate(people, len(panels) + len(incidents) + 1):
         raw = _get(f"{BASE}{k}.HTM", f"{k}.HTM")
+        common.progress(n / total, f"Reading page {n:,} of {total:,}")
         if raw:
             person_pages[k] = raw
     # Cached but unlinked pages (a page linked once and since dropped from the panels, or one
@@ -2291,7 +2301,9 @@ def main(argv=None):
     ap.add_argument("--retry-failed", action="store_true", help="forget remembered 404s and request them again")
     args = ap.parse_args(argv)
     panels, incidents, inc_pages, person_pages = crawl(refresh_index=args.refresh_index, retry_failed=args.retry_failed)
+    common.progress(None, "Working out where each loss happened")
     records, skips, infos = build_all(inc_pages, person_pages)
+    common.progress(None, f"Saving {len(records):,} helicopter losses")
     db = store.connect()
     store.upsert_source(
         db,
