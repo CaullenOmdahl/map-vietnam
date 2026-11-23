@@ -51,9 +51,24 @@ SCAN_CREDITS = {
 }
 
 
+class DataFileError(ValueError):
+    """A file shipped with the app cannot be read; str() is plain English for the user."""
+
+
+def damaged_file_message(path):
+    """What to tell the user when one of the app's own data files is not valid JSON."""
+    return f"The file {path.name} ({path}) is damaged. Please download Map Vietnam again and reinstall it."
+
+
 def read_json(path, default):
-    """Parsed JSON from path, or `default` when the file does not exist."""
-    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else default
+    """Parsed JSON from path, or `default` when the file does not exist. A file that is there but
+    not valid JSON raises DataFileError naming it, not a raw parser error."""
+    if not path.exists():
+        return default
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as e:  # includes JSONDecodeError and UnicodeDecodeError
+        raise DataFileError(damaged_file_message(path)) from e
 
 
 def installed_ids(tiles_dir):
@@ -119,8 +134,12 @@ def write_catalog(out=None, **sources):
     data = build_catalog(**sources)
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.with_name(out.name + ".part")
-    tmp.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
-    tmp.replace(out)
+    try:
+        tmp.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(out)
+    except BaseException:  # a full disk or a locked file: leave no half-written .part behind
+        tmp.unlink(missing_ok=True)
+        raise
     return len(data["layers"])
 
 

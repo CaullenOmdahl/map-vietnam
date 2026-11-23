@@ -39,21 +39,35 @@ def path_bytes(path):
     return total
 
 
+class StillInUse(PermissionError):
+    """Something could not be deleted because another program holds it open (on Windows, a
+    file in use cannot be removed). str() is plain English, ready to show the user."""
+
+    def __init__(self, message=None):
+        super().__init__(message or "Some files are still in use; close other programs and try Remove again")
+
+
 def delete(path, attempts=10):
     """Remove a file or folder if it is there. Windows refuses to delete a file that is open, and
     the server opens a map's .mbtiles for each tile it serves, so a refused delete is retried
-    for a couple of seconds before giving up."""
+    for a couple of seconds before giving up. A folder is emptied as far as possible each time
+    round; if anything is still there after the last try, StillInUse is raised, so a removal
+    never looks done while gigabytes remain."""
     path = Path(path)
-    if path.is_dir():
-        shutil.rmtree(path, ignore_errors=True)
-        return
+    refused = []
     for attempt in range(attempts):
         try:
-            path.unlink(missing_ok=True)
+            if path.is_dir() and not path.is_symlink():
+                refused.clear()
+                shutil.rmtree(path, onexc=lambda func, p, exc: refused.append(exc))
+                if path.exists():
+                    raise StillInUse from (refused[0] if refused else None)
+            else:
+                path.unlink(missing_ok=True)
             return
-        except PermissionError:
+        except PermissionError as e:  # includes StillInUse from the folder branch
             if attempt == attempts - 1:
-                raise
+                raise e if isinstance(e, StillInUse) else StillInUse() from e
             time.sleep(0.2)
 
 

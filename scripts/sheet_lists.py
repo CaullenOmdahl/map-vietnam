@@ -10,7 +10,7 @@ Sources:
     l'Indochine; also the Carte provisoire du Tonkin) in the NAKALA collection "Fonds de cartes de
     l'Indochine française du Centre IST REGARDS (CNRS)", read through NAKALA's public API (one page
     of 25 items per request). Each item gives its title, date, licence and an approximate extent;
-    NAKALA's IIIF service serves the scan as a JPEG (about 6 MB, where the TIFF is about 150 MB).
+    NAKALA's IIIF service serves the scan as a JPEG (about 10 MB on average, 4 to 26 MB, where the TIFF is about 150 MB).
     Graticule every 0.2 grad (0.18 degrees) from the Paris meridian.
   - l509: the US Army Map Service series L509, Indochina and Thailand 1:250,000 (1950s-1960s), as
     scanned by the University of Texas Libraries (one JPEG per sheet, 4-7 MB), for the sheets that
