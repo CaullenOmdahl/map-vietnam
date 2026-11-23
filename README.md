@@ -5,7 +5,7 @@
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 
 Old maps of Vietnam on top of today's map, with war-era records you can search and pin. It runs
-on your own computer and you use it in your browser.
+on your own computer and opens in its own window.
 
 ![A 1965 US Army map of the area south of Cao Lãnh laid over today's street map, with orange air-strike points and labelled hamlets](docs/images/hero-cao-lanh-1965-map.jpg)
 
@@ -43,9 +43,10 @@ On a Mac you also need macOS 15 or newer.
    need `sudo apt install python3-venv`.
 
 The first start takes a minute or two while it installs what it needs, then the map opens in
-your browser. Everything after that is done in the map: there is nothing more to type. Keep the
+its own window. Everything after that is done in the map: there is nothing more to type. Keep the
 terminal window open while you use it. To stop, click **Quit Map Vietnam** at the bottom of the
-side panel.
+side panel, or close the map's window. Links to record sources open in your web browser. (On a
+Linux computer that has no Qt or GTK web view, the map opens in your browser instead.)
 
 The first time, macOS may refuse to open the `.command` file because it came from the internet
 ("Apple could not verify..."). Click **Done**, open **System Settings > Privacy & Security**,

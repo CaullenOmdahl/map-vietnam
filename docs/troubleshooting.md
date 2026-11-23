@@ -47,9 +47,12 @@ installer adds (`py start.py` in a terminal). If Windows says "Windows protected
 **More info**, then **Run anyway**. The window stays open when something goes wrong, so you can
 read the message.
 
-## The browser doesn't open
+## The map opens in my browser instead of its own window
 
-Open the address `start.py` prints (normally `http://127.0.0.1:8765/app/`) yourself.
+The map shows in its own window when the computer has a web view for it (built into Windows and
+macOS; on Linux the Qt one that `start.py` installs on x86-64, or GTK's). If it can't open a window it says so and
+opens your browser instead; everything works the same there. If neither opens, open the address
+`start.py` prints (normally `http://127.0.0.1:8765/app/`) yourself.
 
 ## Some records could not be added
 
@@ -73,12 +76,12 @@ one the same way and choose the new file.
 
 The program behind the page isn't running any more, because you quit it or closed its terminal
 window. Start it again (double-click **Start Map Vietnam.command**, or run `python3 start.py`)
-and reload the page.
+and, if it opened in a browser, reload the page.
 
 ## The map is blank
 
-Open the address `start.py` prints (normally `http://127.0.0.1:8765/app/`), not the HTML file
-itself.
+If you are using the map in a browser, open the address `start.py` prints (normally
+`http://127.0.0.1:8765/app/`), not the HTML file itself.
 
 ## An old map I added doesn't show
 

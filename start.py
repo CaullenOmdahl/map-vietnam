@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Map Vietnam in one command: make its private Python environment if needed, then open the map in a web browser.
+"""Map Vietnam in one command: make its private Python environment if needed, then open the map in its own window.
 
-    python3 start.py              open the map (on Windows: double-click "Start Map Vietnam.bat";
+    python3 start.py              open the map in its own window (on Windows: double-click "Start Map Vietnam.bat";
                                   on macOS: double-click "Start Map Vietnam.command")
     python3 start.py setup        add the records from the terminal instead (python3 start.py setup --help)
     python3 start.py serve        the same as no command at all
@@ -12,11 +12,13 @@
 With no command it does two things and asks nothing:
   1. makes a private Python environment in .venv/ and installs requirements.txt into it
      (again only when requirements.txt changes: its SHA-256 is kept in .venv/requirements.sha256);
-  2. starts the local server (scripts/server.py) and opens the map in the browser.
+  2. runs scripts/desktop.py: it starts the local server and shows the map in its own window.
+     If this computer cannot open a window (no Qt or GTK web view on Linux), the map opens in the
+     default browser instead, with a line saying so.
 Everything else is done from the map itself: the first visit explains what the records are and
 adds the ones the person picks, with the air-strike area, the optional helicopter losses, and a
 Kaggle key if Kaggle ever asks for one; old maps are added the same way; and "Quit Map Vietnam"
-there stops the server, which makes this script exit with status 0.
+there (or closing the window) stops the server, which makes this script exit with status 0.
 
 "setup" is for people who would rather script it. It runs scripts/records.py in .venv's Python:
 the very module the server uses for the viewer, so a source added here shows as added there and
@@ -56,7 +58,6 @@ import subprocess  # noqa: E402
 import time  # noqa: E402
 import urllib.request  # noqa: E402
 import venv  # noqa: E402
-import webbrowser  # noqa: E402
 from pathlib import Path  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent
@@ -233,9 +234,16 @@ def _stop_on_signal(signum, frame):
     raise KeyboardInterrupt
 
 
+def desktop_command(py, port, no_window):
+    """The command that runs the map: scripts/desktop.py in .venv's Python. It serves on `port`
+    and shows the window, or with no_window only serves (the address is then printed)."""
+    return [str(py), "scripts/desktop.py", "--port", str(port), *(["--no-window"] if no_window else [])]
+
+
 def serve(args):
-    """Run scripts/server.py on 127.0.0.1 until it is quit from the viewer, Control-C, or the
-    window closes. True when the server started and stopped without trouble."""
+    """Run scripts/desktop.py (the server and its window) on 127.0.0.1 until the map is quit from
+    the viewer, its window is closed, or Control-C. True when it started and stopped without
+    trouble."""
     py = ensure_venv()
     port = free_port(args.port)
     if port != args.port:
@@ -244,7 +252,7 @@ def serve(args):
     # Own process group: Control-C reaches only this script, which then stops the server
     # quietly instead of both printing tracebacks.
     group = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
-    proc = subprocess.Popen([str(py), "scripts/server.py", "--port", str(port)], cwd=ROOT, env=script_env(), **group)
+    proc = subprocess.Popen(desktop_command(py, port, args.no_browser), cwd=ROOT, env=script_env(), **group)
     # Closing the Terminal window sends SIGHUP; treat it (and SIGTERM) like Control-C, so the
     # server, which is in its own session and would not get the signal, is not left running.
     # SIGINT is reset too: a shell that starts this in the background has it ignored.
@@ -257,12 +265,11 @@ def serve(args):
             say("The map server did not start (see the messages above).")
             return False
         say()
-        say(f"The map is ready at  {url}")
-        say("Leave this window open while you use it. Records and old maps are added from the map itself.")
-        say('To stop, choose "Quit Map Vietnam" in the map, or press Control-C here (or close the window).')
-        if not args.no_browser:
-            if not webbrowser.open(url):
-                say(f"Could not open a browser by itself. Open {url} in your web browser.")
+        if args.no_browser:
+            say(f"The map is ready at  {url}  (no window opened: open that address in a web browser).")
+        else:
+            say("Map Vietnam is open in its own window. Records and old maps are added from the map itself.")
+        say('To stop, choose "Quit Map Vietnam" in the map, close its window, or press Control-C here.')
         # Poll rather than wait(): on Windows a bare wait() blocks Control-C until the server exits.
         while proc.poll() is None:
             time.sleep(0.5)
@@ -322,15 +329,20 @@ def records_command(argv):
 # ---- command line -------------------------------------------------------------------------------
 HELP = """\
 Opens Map Vietnam (old maps of Vietnam over today's map, plus war-era records you
-can search, filter, pin and export) in your web browser, setting up its private
-Python environment first if that is missing.
+can search, filter, pin and export) in its own window, setting up its private
+Python environment first if that is missing. (Where a window cannot be opened it
+uses your web browser instead.)
 
 Nothing else is downloaded until you ask for it in the map: the first visit lists
 the records you can add and what each download is, and "Add old maps" lists the
-maps. "Quit Map Vietnam" in the map stops it; so does Control-C here.
+maps. "Quit Map Vietnam" in the map stops it; so does closing its window or Control-C here.
 
 "python3 start.py setup" adds the records from this terminal instead, for people
 who script it. Both ways share their state.
+
+Options such as --yes, --only, --skip, --refresh and --area belong to "setup": given with no
+command at all they run it ("python3 start.py --yes" is "python3 start.py setup --yes"). With
+"serve" they change nothing: the map opens and a note says so.
 """
 
 EPILOG = """\
@@ -345,7 +357,7 @@ old maps:
 
 examples:
   python3 start.py                           open the map
-  python3 start.py --no-browser --port 9000  the same, on port 9000, without opening a browser
+  python3 start.py --no-browser --port 9000  the same, on port 9000, without a window (prints the address)
   python3 start.py setup                     add the standard record sources (asks first)
   python3 start.py setup --yes --skip caccf  the same without questions, leaving one out
   python3 start.py setup --only thor --area 106,10.9,106.6,11.4   the air strikes, for another area
@@ -370,7 +382,13 @@ def parse_args(argv=None):
         help="none or serve = open the map; setup = add records from the terminal; "
         "maps, records = their own command lines (see --help after either)",
     )
-    ap.add_argument("--no-browser", action="store_true", help="do not open a browser window")
+    ap.add_argument(
+        "--no-browser",
+        "--no-window",
+        dest="no_browser",
+        action="store_true",
+        help="do not open a window: only serve the map and print its address",
+    )
     ap.add_argument("--port", type=int, default=DEFAULT_PORT, help="port for the map (default %(default)s)")
     # --yes, --only, --skip, --refresh, --area: defined once, beside the code that acts on them.
     records.add_setup_options(ap.add_argument_group("with setup"))
@@ -394,9 +412,12 @@ def main(argv=None):
     if not 1 <= args.port <= 65535:
         sys.exit(f"--port must be a number from 1 to 65535, not {args.port}.")
     try:
-        if args.command == "setup":
+        wants_setup = bool(args.only or args.skip or args.yes or args.refresh or args.area)
+        if args.command == "setup" or (args.command is None and wants_setup):
+            if args.command is None:
+                say("Those options belong to 'setup', so running 'python3 start.py setup' for you.")
             return setup(args)
-        if args.only or args.skip or args.yes or args.refresh or args.area:
+        if wants_setup:
             say("Note: --yes, --only, --skip, --refresh and --area go with 'python3 start.py setup'.")
             say("Opening the map: records are added there now.")
         return 0 if serve(args) else 1

@@ -13,6 +13,12 @@ Everything is done from the map
 - Records and old maps added from a terminal (`start.py setup`, `maps`, `records`) and from the
   map share their state; the terminal route stays for people who script it
 
+Its own window
+- Map Vietnam now opens in its own window instead of a browser tab (`scripts/desktop.py`, using
+  pywebview). Links to record sources open in your browser, exports show a Save dialog, and closing
+  the window stops the app like **Quit Map Vietnam**. Where no window can open, the browser is used
+- `python3 start.py --yes` (and the other setup options) with no command now runs `setup`
+
 A bigger map library
 - The library grows from 537 to 895 maps: 498 US Army L7014 sheets at 1:50,000, 298 French
   Indochina 1:100,000 sheets and editions (1895–1952, CNRS/NAKALA), 34 Joint Operations Graphics

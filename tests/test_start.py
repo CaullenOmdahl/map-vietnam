@@ -52,40 +52,48 @@ def test_start_py_needs_nothing_outside_the_standard_library():
 
 
 def test_with_no_command_it_opens_the_map_and_asks_and_downloads_nothing(ran, monkeypatch, capsys):
-    opened = []
     monkeypatch.setattr(start, "free_port", lambda port: port)
     monkeypatch.setattr(start, "wait_until_up", lambda url, proc: True)
-    monkeypatch.setattr(start.webbrowser, "open", opened.append)
     monkeypatch.setattr("builtins.input", lambda *a: pytest.fail("start.py must not ask questions"))
 
     assert start.main([]) == 0
-    assert [cmd for cmd, _ in ran] == [["/venv/python", "scripts/server.py", "--port", str(start.DEFAULT_PORT)]]
-    assert opened == [f"http://127.0.0.1:{start.DEFAULT_PORT}/app/"]
+    # The window is scripts/desktop.py's business; start.py opens no browser of its own.
+    assert [cmd for cmd, _ in ran] == [["/venv/python", "scripts/desktop.py", "--port", str(start.DEFAULT_PORT)]]
     out = capsys.readouterr().out
-    assert "The map is ready at" in out and '"Quit Map Vietnam"' in out
+    assert "open in its own window" in out and '"Quit Map Vietnam"' in out
     # The server stopping by itself is how "Quit Map Vietnam" in the viewer ends this script: status 0.
     assert "Map Vietnam has stopped" in out
 
     ran.clear()
     assert start.main(["serve", "--no-browser", "--port", "9000"]) == 0
-    assert ran[0][0][-1] == "9000" and len(opened) == 1
+    assert ran[0][0] == ["/venv/python", "scripts/desktop.py", "--port", "9000", "--no-window"]
+    assert "no window opened" in capsys.readouterr().out
+    ran.clear()
+    assert start.main(["--no-window", "--port", "9001"]) == 0  # the new name for --no-browser
+    assert ran[0][0][-1] == "--no-window"
 
 
 def test_a_server_that_fails_makes_the_exit_status_1(ran, monkeypatch, capsys):
     monkeypatch.setattr(start, "free_port", lambda port: port)
     monkeypatch.setattr(start, "wait_until_up", lambda url, proc: True)
-    monkeypatch.setattr(start.webbrowser, "open", lambda url: None)
     monkeypatch.setattr(start.subprocess.Popen, "returncode", 1)
     assert start.main([]) == 1
     assert "stopped unexpectedly" in capsys.readouterr().out
 
 
-def test_setup_options_without_setup_are_explained_not_obeyed(ran, monkeypatch, capsys):
+def test_setup_options_with_no_command_run_setup(ran, capsys):
+    """`start.py --yes` used to open the map and ignore --yes; it now means `start.py setup --yes`."""
+    assert start.main(["--yes"]) == 0
+    assert "belong to 'setup'" in capsys.readouterr().out
+    assert [cmd[1:] for cmd, _ in ran] == [["scripts/records.py", "setup", "--yes"]]
+
+
+def test_setup_options_with_serve_are_explained_not_obeyed(ran, monkeypatch, capsys):
     monkeypatch.setattr(start, "free_port", lambda port: port)
     monkeypatch.setattr(start, "wait_until_up", lambda url, proc: True)
-    assert start.main(["--yes", "--no-browser"]) == 0
+    assert start.main(["serve", "--yes", "--no-browser"]) == 0
     assert "go with 'python3 start.py setup'" in capsys.readouterr().out
-    assert [cmd[1] for cmd, _ in ran] == ["scripts/server.py"]  # the map opens; nothing is set up
+    assert [cmd[1] for cmd, _ in ran] == ["scripts/desktop.py"]  # the map opens; nothing is set up
 
 
 def test_setup_goes_through_the_records_module_the_viewer_uses(ran):
@@ -251,14 +259,6 @@ def test_a_pip_failure_says_what_to_check(tmp_path, monkeypatch):
     with pytest.raises(SystemExit) as exc:
         start.ensure_venv()
     assert "HTTPS_PROXY" in str(exc.value) and not (start.VENV / "requirements.sha256").exists()
-
-
-def test_a_browser_that_will_not_open_gets_the_address_printed(ran, monkeypatch, capsys):
-    monkeypatch.setattr(start, "free_port", lambda port: port)
-    monkeypatch.setattr(start, "wait_until_up", lambda url, proc: True)
-    monkeypatch.setattr(start.webbrowser, "open", lambda url: False)
-    assert start.main([]) == 0
-    assert f"Open http://127.0.0.1:{start.DEFAULT_PORT}/app/ in your web browser" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize("port", ["0", "70000", "-1"])

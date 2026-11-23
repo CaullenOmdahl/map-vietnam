@@ -37,10 +37,10 @@ Four rules follow from that:
         ▼
  scripts/records.py ──► scripts/ingest/<source>.py ──► data/raw/ ──► data/evidence.sqlite
                                                                           │
-                                   scripts/server.py (127.0.0.1) ──► web/app/ in your browser
+                                   scripts/server.py (127.0.0.1) ──► web/app/ in its window
 ```
 
-- **`start.py`** makes a Python environment in `.venv/`, starts the server and opens the browser.
+- **`start.py`** makes a Python environment in `.venv/`, runs `scripts/desktop.py`, which starts the server and shows the map in its own window (pywebview; the default browser if no window can open).
   It asks nothing and downloads nothing else: records and old maps are added from the viewer.
   `python3 start.py setup` adds the records from a terminal instead, through the same module.
 - **The record sources** (`scripts/records.py`) add and remove record sources, only when a

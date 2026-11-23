@@ -42,7 +42,7 @@ Style, in short:
 ## Where things are
 
 ```text
-start.py                    makes .venv, runs the server, opens the browser; also setup, maps, records
+start.py                    makes .venv, opens the map's window; also setup, maps, records
 Start Map Vietnam.command   macOS double-click launcher for start.py
 requirements.txt            pinned Python dependencies
 scripts/
@@ -63,6 +63,7 @@ scripts/
   gridref.py                wartime MGRS grid references on Indian 1960 or WGS84
   store.py                  the SQLite evidence store, data/evidence.sqlite
   server.py                 local web server and JSON API
+  desktop.py                the server plus the map's own window (pywebview); start.py runs it
   compare_overlay.py        side-by-side image to check how well a map lines up
   ingest/<source>.py        one ingester per record source; common.py holds shared helpers
 web/app/                    the viewer: index.html, app.js, app.css (MapLibre GL, no build step)
