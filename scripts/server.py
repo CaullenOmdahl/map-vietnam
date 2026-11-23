@@ -145,7 +145,7 @@ def query_evidence(db, q):
     columns = ", ".join(["lon", "lat", *props]) if q.get("slim") else "*"
     sql, args = f"select {columns} from evidence where 1=1", []
     if q.get("bbox"):
-        w, s, e, n = map(float, q["bbox"].split(","))
+        w, s, e, n = number_list(q["bbox"], 4, "bbox", "west,south,east,north")
         sql += " and lon between ? and ? and lat between ? and ?"
         args += [w, e, s, n]
     # Date filter on the year prefix; undated records always pass so nothing silently vanishes.
@@ -181,13 +181,36 @@ def bounded_int(value, default, low, high):
     return max(low, min(int(value if value is not None else default), high))
 
 
+def number_list(text, count, name, shape):
+    """`count` finite numbers from the comma-separated query value `text`; ValueError in plain
+    words (naming `shape`, e.g. "west,south,east,north") if it is anything else."""
+    try:
+        numbers = [float(v) for v in text.split(",")]
+    except ValueError:
+        numbers = []
+    if len(numbers) != count or not all(math.isfinite(v) for v in numbers):
+        raise ValueError(f"{name} must be {count} numbers: {shape}")
+    return numbers
+
+
 def text_field(body, key, required=True):
-    """String field `key` of a JSON body; a missing optional field gives None."""
+    """String field `key` of a JSON body; a missing optional field gives None. A required one
+    must not be blank."""
     value = body[key] if required else body.get(key)
     if value is None and not required:
         return None
     if not isinstance(value, str):
         raise ValueError(f"{key} must be a string")
+    if required and not value.strip():
+        raise ValueError(f"{key} must not be empty")
+    return value
+
+
+def whole_number(body, key):
+    """Whole-number field `key` of a JSON body (a bool, a fraction or a string is refused)."""
+    value = body[key]
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"{key} must be a whole number")
     return value
 
 
@@ -601,17 +624,25 @@ class Handler(SimpleHTTPRequestHandler):
                     self.dispatch(method, p, q, db)
         except records.RecordsError as e:  # plain words, sometimes with facts the viewer acts on
             self.send_json({"error": str(e), **e.extra}, e.status)
-        except (ValueError, KeyError, TypeError) as e:  # LibraryError is a ValueError
+        except KeyError as e:  # a field or query value the request left out
+            self.send_json({"error": f"{e.args[0]} is missing"}, HTTPStatus.BAD_REQUEST)
+        except (ValueError, TypeError) as e:  # LibraryError is a ValueError
             self.send_json({"error": str(e)}, HTTPStatus.BAD_REQUEST)
-        except sqlite3.IntegrityError as e:  # e.g. pinning a record id that does not exist
-            self.send_json({"error": f"refused by the database: {e}"}, HTTPStatus.BAD_REQUEST)
+        except OverflowError:  # a number too big for SQLite, e.g. an id of 30 digits
+            self.send_json({"error": "a number in the request is too large"}, HTTPStatus.BAD_REQUEST)
+        except sqlite3.IntegrityError as e:  # a duplicate name, or a record id that does not exist
+            unique = "UNIQUE" in str(e)
+            reason = "A case with that name already exists." if unique else "That record or case does not exist."
+            self.send_json({"error": reason}, HTTPStatus.BAD_REQUEST)
+        except ConnectionError:  # the browser went away mid-answer: nobody is left to tell
+            raise
         except Exception as e:  # never drop the connection without an answer
             self.send_failure(e)
         return True
 
     def dispatch(self, method, p, q, db):
         """Answer API path `p` (without the /api/ prefix) with query parameters `q`."""
-        m = re.fullmatch(r"cases/(\d+)(?:/(items|sites|notes)(?:/(\d+))?|/export\.(geojson|kml|gpx))?", p)
+        m = re.fullmatch(r"cases/(\d{1,18})(?:/(items|sites|notes)(?:/(\d{1,18}))?|/export\.(geojson|kml|gpx))?", p)
         if method == "GET" and p == "sources":
             return self.send_json(
                 [
@@ -639,7 +670,7 @@ class Handler(SimpleHTTPRequestHandler):
                 }
             )
         if method == "GET" and p == "search":
-            near = tuple(map(float, q["near"].split(","))) if q.get("near") else None
+            near = number_list(q["near"], 2, "near", "lon,lat") if q.get("near") else None
             return self.send_json(search(db, q.get("q", ""), bounded_int(q.get("limit"), 20, 1, 200), near))
         if method == "GET" and p == "lonlat":
             lon, lat = float(q["lon"]), float(q["lat"])
@@ -679,7 +710,7 @@ class Handler(SimpleHTTPRequestHandler):
             b = self.body()
             db.execute(
                 "insert or replace into case_items (case_id, evidence_id, note) values (?,?,?)",
-                (cid, int(b["evidence_id"]), text_field(b, "note", False)),
+                (cid, whole_number(b, "evidence_id"), text_field(b, "note", False)),
             )
         elif method == "DELETE" and sub == "items" and sub_id:
             db.execute("delete from case_items where case_id = ? and evidence_id = ?", (cid, int(sub_id)))
@@ -846,6 +877,12 @@ class MapServer(ThreadingHTTPServer):
         # shutdown() waits for serve_forever, so it must not run on the thread that serves
         # (a signal handler does); a thread of its own is right from anywhere.
         threading.Thread(target=self._stop, name="quit", daemon=True).start()
+
+    def handle_error(self, request, client_address):
+        """A browser that gives up on a request (the viewer cancels tile fetches as the map
+        pans) resets the connection; that is not worth a traceback on the console."""
+        if not isinstance(sys.exception(), ConnectionError):
+            super().handle_error(request, client_address)
 
     def _stop(self):
         try:

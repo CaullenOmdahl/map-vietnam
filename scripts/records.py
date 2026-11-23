@@ -376,8 +376,8 @@ def read_env(path):
     and one pair of quotes are dropped."""
     values = {}
     try:
-        lines = Path(path).read_text(encoding="utf-8").splitlines()
-    except OSError:
+        lines = Path(path).read_text(encoding="utf-8-sig").splitlines()  # Notepad adds a BOM
+    except (OSError, UnicodeDecodeError):  # unreadable, or saved in another encoding: no settings
         return values
     for line in lines:
         name, value = env_line(line)
@@ -403,7 +403,10 @@ def write_env(path, updates):
     """Set (value) or delete (None) names in a .env file, leaving every other line as it is, and
     make the file readable by its owner only."""
     path = Path(path)
-    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    try:
+        lines = path.read_text(encoding="utf-8-sig").splitlines() if path.exists() else []
+    except UnicodeDecodeError:
+        raise RecordsError("The .env file is not saved as UTF-8 text, so the key cannot be added to it.") from None
     kept = [ln for ln in lines if env_line(ln)[0] not in updates]
     kept += [f"{name}={value}" for name, value in updates.items() if value is not None]
     # Created private from the start, so the key is never readable by others, even briefly.
@@ -575,7 +578,10 @@ class Records:
             return self._facts[1]
         facts = {}
         try:
-            with contextlib.closing(sqlite3.connect(f"file:{self.db_path}?mode=ro", uri=True, timeout=2)) as db:
+            # as_uri() escapes what a bare "file:" + path would not (a space, "#" or "?" in the folder
+            # name, a Windows drive letter), which would make every count read as none.
+            read_only = f"{self.db_path.resolve().as_uri()}?mode=ro"
+            with contextlib.closing(sqlite3.connect(read_only, uri=True, timeout=2)) as db:
                 rows = db.execute(
                     "select source, count(*), count(withdrawn_at), min(lon), min(lat), max(lon), max(lat) "
                     "from evidence group by source"

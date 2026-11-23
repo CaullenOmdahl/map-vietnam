@@ -598,3 +598,43 @@ def test_a_delete_refused_while_the_file_is_open_is_retried(tmp_path, monkeypatc
     monkeypatch.setattr(files.time, "sleep", lambda s: None)
     files.delete(path)
     assert len(refusals) == 2 and not path.exists()
+
+
+def test_sizes_ignore_files_that_vanish_while_counting(tmp_path, monkeypatch):
+    folder = tmp_path / "old"
+    (folder / "1").mkdir(parents=True)
+    (folder / "1" / "a.png").write_bytes(b"x" * 10)
+    (folder / "1" / "b.png").write_bytes(b"x" * 5)
+    assert files.path_bytes(folder) == 15 and files.path_bytes(tmp_path / "none") == 0
+    real_stat = Path.stat
+
+    def vanishing(self, *args, **kwargs):  # a file deleted between being listed and measured
+        if self.name == "b.png":
+            raise FileNotFoundError(self)
+        return real_stat(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", vanishing)
+    assert files.path_bytes(folder) == 10
+
+
+def test_a_json_file_that_cannot_be_written_leaves_nothing_behind(tmp_path):
+    with pytest.raises(TypeError):
+        files.write_json(tmp_path / "state.json", {"x": object()})
+    assert list(tmp_path.iterdir()) == []
+    files.write_json(tmp_path / "state.json", {"x": 1})
+    assert files.read_json(tmp_path / "state.json") == {"x": 1}
+
+
+def test_a_legacy_folder_deleted_while_listing_is_skipped(lib, monkeypatch):
+    gone = lib.tiles / "L7014A"
+    (gone / "9").mkdir(parents=True)
+    real_iterdir = Path.iterdir
+
+    def deleted_meanwhile(self):
+        if self == gone:
+            raise FileNotFoundError(self)
+        return real_iterdir(self)
+
+    monkeypatch.setattr(Path, "iterdir", deleted_meanwhile)
+    assert lib.legacy_folders() == []
+    assert lib.legacy_status()["count"] == 0

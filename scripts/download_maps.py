@@ -132,7 +132,8 @@ class HttpsOnlyRedirects(urllib.request.HTTPRedirectHandler):
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         if not newurl.startswith(ALLOWED_URL_PREFIXES):
-            raise MapFetchError(f"the archive redirected to {newurl.split('?')[0]}, which is not an https address")
+            # Damaged, not a plain MapFetchError: asking again gets the same redirect, so no retries.
+            raise Damaged(f"the archive redirected to {newurl.split('?')[0]}, which is not an https address")
         _wait_turn(host_of(newurl))
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
@@ -261,13 +262,12 @@ def derive_work_image(src, dst, derive):
              "width": w (Lanczos resize to w px wide, height rounded to keep the aspect; optional),
              "jpeg_quality": q}. Saved without chroma subsampling (4:4:4), as the originals were.
     """
-    with trusted_large_images():
-        img = Image.open(src)
+    with trusted_large_images(), Image.open(src) as opened:  # closed at once: fetch_map deletes src next
         # Decoding at a lower resolution level is how the original was made (and needs a quarter
         # of the memory); Pillow's JPEG 2000 reader takes it as the `reduce` attribute, set before load.
-        img.reduce = derive.get("jp2_reduce", 0)
-        img.load()
-    img = img.convert("RGB")
+        opened.reduce = derive.get("jp2_reduce", 0)
+        opened.load()
+        img = opened.convert("RGB")
     if derive.get("width") and img.width != derive["width"]:
         height = round(img.height * derive["width"] / img.width)
         img = img.resize((derive["width"], height), Image.Resampling.LANCZOS)
@@ -346,7 +346,10 @@ def main(argv=None):
     ap.add_argument("ids", nargs="+", metavar="ID", help="map ids from data/sources/map_library.json")
     args = ap.parse_args(argv)
     lib = library.Library()
-    entries = lib.entries_for(args.ids)
+    try:
+        entries = lib.entries_for(args.ids)
+    except library.LibraryError as e:
+        sys.exit(str(e))  # a plain sentence, not a traceback
     failures = 0
 
     def waiting():

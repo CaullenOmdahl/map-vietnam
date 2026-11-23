@@ -267,3 +267,33 @@ def test_importing_the_downloader_leaves_pillows_guard_alone():
         [sys.executable, "-c", code], capture_output=True, text=True, check=True, cwd=SCRIPTS, encoding="utf-8"
     )
     assert out.stdout.strip() not in ("", "None")
+
+
+def test_asking_for_an_unknown_map_by_hand_gives_a_sentence_not_a_traceback():
+    with pytest.raises(SystemExit) as e:
+        dm.main(["no_such_map"])
+    assert "not in the map list: no_such_map" in str(e.value)
+
+
+def test_a_refused_redirect_is_not_retried(tmp_path, monkeypatch):
+    waits = []
+    monkeypatch.setattr(dm, "wait_or_cancel", lambda seconds, cancelled: waits.append(seconds))
+
+    class Redirect(BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass
+
+        def do_GET(self):
+            self.send_response(302)
+            self.send_header("Location", "http://plain.example/L1.pdf")
+            self.end_headers()
+
+    srv, base = serve(Redirect)
+    monkeypatch.setattr(dm, "ALLOWED_URL_PREFIXES", (base,))
+    entry = {"id": "L1", "series": "l7014", "kind": "geopdf", "urls": [f"{base}/L1.pdf"]}
+    try:
+        with pytest.raises(dm.MapFetchError, match="not an https address"):
+            dm.fetch_map(entry, tmp_path)
+    finally:
+        srv.shutdown()
+    assert waits == []  # asking again would only get the same redirect
