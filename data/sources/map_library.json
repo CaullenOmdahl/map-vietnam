@@ -84,7 +84,8 @@
    "bytes": 7764396,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Giàng Mưng Pho",
    "sheet_key": "L701454531"
@@ -107,7 +108,8 @@
    "bytes": 8485733,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bản Mé Rắng",
    "sheet_key": "L701454542"
@@ -130,7 +132,8 @@
    "bytes": 8492546,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Muong Cha",
    "sheet_key": "L701455521"
@@ -153,7 +156,8 @@
    "bytes": 12255373,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Mường Boum",
    "sheet_key": "L701455531"
@@ -176,7 +180,8 @@
    "bytes": 10917891,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Muong No",
    "sheet_key": "L701455532"
@@ -199,7 +204,8 @@
    "bytes": 10054461,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Mường Tong",
    "sheet_key": "L701455533"
@@ -222,7 +228,8 @@
    "bytes": 10204741,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Mường Tè",
    "sheet_key": "L701455534"
@@ -245,7 +252,8 @@
    "bytes": 11651221,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bản Là Sin",
    "sheet_key": "L701455543"
@@ -268,6 +276,7 @@
    "bytes": 28214829,
    "sha256": null,
    "kind": "geopdf",
+   "date": "",
    "year": null,
    "scale_n": 50000,
    "place": "Bản Mạt",
@@ -291,7 +300,8 @@
    "bytes": 10215751,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bản Muong Lan",
    "sheet_key": "L701456511"
@@ -314,7 +324,8 @@
    "bytes": 9279675,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Bản Khá",
    "sheet_key": "L701456512"
@@ -337,7 +348,8 @@
    "bytes": 7069807,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Ban Na Phai",
    "sheet_key": "L701456513"
@@ -360,7 +372,8 @@
    "bytes": 10955628,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Điện Biên Phủ",
    "sheet_key": "L701456514"
@@ -383,7 +396,8 @@
    "bytes": 12719537,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bản Nam Nen",
    "sheet_key": "L701456521"
@@ -406,7 +420,8 @@
    "bytes": 10669816,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Tuần Giáo",
    "sheet_key": "L701456522"
@@ -429,7 +444,8 @@
    "bytes": 11211949,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Mường Ảng",
    "sheet_key": "L701456523"
@@ -452,7 +468,8 @@
    "bytes": 9838161,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Mương Tong",
    "sheet_key": "L701456524"
@@ -475,7 +492,8 @@
    "bytes": 8020216,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Phu Nung Nong",
    "sheet_key": "L701456531"
@@ -498,7 +516,8 @@
    "bytes": 12392791,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Nậm Mạ",
    "sheet_key": "L701456532"
@@ -521,7 +540,8 @@
    "bytes": 10756119,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Lai Châu",
    "sheet_key": "L701456533"
@@ -544,7 +564,8 @@
    "bytes": 12290190,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Ta Phing",
    "sheet_key": "L701456534"
@@ -567,7 +588,8 @@
    "bytes": 11922927,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Phong Thổ, Mường So",
    "sheet_key": "L701456542"
@@ -590,7 +612,8 @@
    "bytes": 10470334,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Xom Ong Thay",
    "sheet_key": "L701457291_001"
@@ -613,7 +636,8 @@
    "bytes": 10912649,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Sốp Cộp",
    "sheet_key": "L701457504"
@@ -636,7 +660,8 @@
    "bytes": 9110275,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Sơn La",
    "sheet_key": "L701457511"
@@ -659,7 +684,8 @@
    "bytes": 10773655,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Mai Sơn",
    "sheet_key": "L701457512"
@@ -682,7 +708,8 @@
    "bytes": 8346343,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Mường Lầm",
    "sheet_key": "L701457513"
@@ -705,7 +732,8 @@
    "bytes": 10140347,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Thuan Chau Ban Pan",
    "sheet_key": "L701457514"
@@ -728,7 +756,8 @@
    "bytes": 10710136,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Than Uyên",
    "sheet_key": "L701457521"
@@ -751,7 +780,8 @@
    "bytes": 8272109,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Mường Trai",
    "sheet_key": "L701457522"
@@ -774,7 +804,8 @@
    "bytes": 9974119,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "King Khoai",
    "sheet_key": "L701457523"
@@ -797,7 +828,8 @@
    "bytes": 9511818,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Quỳnh Nhai",
    "sheet_key": "L701457524"
@@ -820,7 +852,8 @@
    "bytes": 10571743,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Lao Kay",
    "sheet_key": "L701457531"
@@ -843,7 +876,8 @@
    "bytes": 7633164,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Chom Chang",
    "sheet_key": "L701457532"
@@ -866,7 +900,8 @@
    "bytes": 10688554,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Mường Khoa",
    "sheet_key": "L701457533"
@@ -889,7 +924,8 @@
    "bytes": 9615946,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1967",
+   "year": 1967,
    "scale_n": 50000,
    "place": "Ban Ko La",
    "sheet_key": "L701457534"
@@ -912,7 +948,8 @@
    "bytes": 8630186,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Mường Hum",
    "sheet_key": "L701457543"
@@ -935,7 +972,8 @@
    "bytes": 8647179,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Cua Rao",
    "sheet_key": "L701458471"
@@ -958,7 +996,8 @@
    "bytes": 9063221,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Muong Sen",
    "sheet_key": "L701458474"
@@ -981,7 +1020,8 @@
    "bytes": 8749708,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1972",
+   "year": 1972,
    "scale_n": 50000,
    "place": "Bản Tha Lang",
    "sheet_key": "L701458482"
@@ -1004,7 +1044,8 @@
    "bytes": 14216779,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bản Huôi Heo",
    "sheet_key": "L701458483"
@@ -1027,7 +1068,8 @@
    "bytes": 10891623,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Song Con",
    "sheet_key": "L701458501"
@@ -1050,7 +1092,8 @@
    "bytes": 9760996,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bản Lưu",
    "sheet_key": "L701458511"
@@ -1073,7 +1116,8 @@
    "bytes": 11630048,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Yên Châu",
    "sheet_key": "L701458512"
@@ -1096,7 +1140,8 @@
    "bytes": 9724124,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bản Ang",
    "sheet_key": "L701458514"
@@ -1119,7 +1164,8 @@
    "bytes": 10003580,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Tú Lệ",
    "sheet_key": "L701458521"
@@ -1142,7 +1188,8 @@
    "bytes": 11426272,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Muong Chen",
    "sheet_key": "L701458522"
@@ -1165,7 +1212,8 @@
    "bytes": 10784875,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bản Nà Tòng",
    "sheet_key": "L701458523"
@@ -1188,7 +1236,8 @@
    "bytes": 8942741,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Kim Nội",
    "sheet_key": "L701458524"
@@ -1211,7 +1260,8 @@
    "bytes": 11394778,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Bảo Hà",
    "sheet_key": "L701458532"
@@ -1234,7 +1284,8 @@
    "bytes": 9400434,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Văn Bàn",
    "sheet_key": "L701458533"
@@ -1257,7 +1308,8 @@
    "bytes": 10281191,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Phố Lu",
    "sheet_key": "L701458534"
@@ -1280,7 +1332,8 @@
    "bytes": 8987454,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Pa Kha",
    "sheet_key": "L701458542"
@@ -1303,7 +1356,8 @@
    "bytes": 10957517,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ngai Fong Tion",
    "sheet_key": "L701458543"
@@ -1326,7 +1380,8 @@
    "bytes": 10176869,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Năm Căn",
    "sheet_key": "L701459261"
@@ -1349,7 +1404,8 @@
    "bytes": 10275960,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Xom Ong Trang",
    "sheet_key": "L701459262"
@@ -1372,7 +1428,8 @@
    "bytes": 12430096,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Xóm Giữa",
    "sheet_key": "L701459271"
@@ -1395,7 +1452,8 @@
    "bytes": 10000351,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Sông Ông Đốc",
    "sheet_key": "L701459272"
@@ -1418,7 +1476,8 @@
    "bytes": 11049769,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Đông Thài",
    "sheet_key": "L701459281"
@@ -1441,7 +1500,8 @@
    "bytes": 9519612,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Đông Hưng",
    "sheet_key": "L701459282"
@@ -1464,7 +1524,8 @@
    "bytes": 9614269,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ba Chúc",
    "sheet_key": "L701459291"
@@ -1487,7 +1548,8 @@
    "bytes": 10953208,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Xóm Tri Tôn",
    "sheet_key": "L701459292"
@@ -1510,7 +1572,8 @@
    "bytes": 10080242,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Hòn Chông",
    "sheet_key": "L701459293"
@@ -1533,7 +1596,8 @@
    "bytes": 11858866,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Ban Na Ca",
    "sheet_key": "L701459471"
@@ -1556,7 +1620,8 @@
    "bytes": 11809374,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Con Cuông",
    "sheet_key": "L701459472"
@@ -1579,7 +1644,8 @@
    "bytes": 9439371,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Khê Bố",
    "sheet_key": "L701459473"
@@ -1602,7 +1668,8 @@
    "bytes": 8944477,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Bản Xieng Lip",
    "sheet_key": "L701459474"
@@ -1625,7 +1692,8 @@
    "bytes": 9538794,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ban Xen Con",
    "sheet_key": "L701459481"
@@ -1648,7 +1716,8 @@
    "bytes": 10211945,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Tinche",
    "sheet_key": "L701459482"
@@ -1671,7 +1740,8 @@
    "bytes": 10218448,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Muong Lam",
    "sheet_key": "L701459483"
@@ -1694,7 +1764,8 @@
    "bytes": 10691094,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Làng Chum",
    "sheet_key": "L701459501"
@@ -1717,7 +1788,8 @@
    "bytes": 5842786,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ban Na Sun",
    "sheet_key": "L701459502"
@@ -1740,7 +1812,8 @@
    "bytes": 8026515,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Moc Chau Na Bo",
    "sheet_key": "L701459504"
@@ -1763,7 +1836,8 @@
    "bytes": 10020029,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Bản Chùa",
    "sheet_key": "L701459511"
@@ -1786,7 +1860,8 @@
    "bytes": 10993090,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Nuoc Moc",
    "sheet_key": "L701459512"
@@ -1809,7 +1884,8 @@
    "bytes": 7571399,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Vạn Yên",
    "sheet_key": "L701459513"
@@ -1832,7 +1908,8 @@
    "bytes": 9429823,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ban Buc",
    "sheet_key": "L701459514"
@@ -1855,7 +1932,8 @@
    "bytes": 9922017,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Phu Ye Binh",
    "sheet_key": "L701459521"
@@ -1878,7 +1956,8 @@
    "bytes": 9423850,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Yen Bay",
    "sheet_key": "L701459522"
@@ -1901,7 +1980,8 @@
    "bytes": 8975944,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Nghĩa Lộ",
    "sheet_key": "L701459523"
@@ -1924,7 +2004,8 @@
    "bytes": 9481055,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Trái Hút",
    "sheet_key": "L701459524"
@@ -1947,7 +2028,8 @@
    "bytes": 8015274,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Bắc Quang",
    "sheet_key": "L701459531"
@@ -1970,7 +2052,8 @@
    "bytes": 11588919,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Bao Ha",
    "sheet_key": "L701459532"
@@ -1993,7 +2076,8 @@
    "bytes": 9725634,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Luc An Châu",
    "sheet_key": "L701459533"
@@ -2016,7 +2100,8 @@
    "bytes": 9969330,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Yen Binh Xa",
    "sheet_key": "L701459534"
@@ -2039,7 +2124,8 @@
    "bytes": 9873696,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Hà Giang",
    "sheet_key": "L701459541"
@@ -2062,7 +2148,8 @@
    "bytes": 9238543,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Làng Zoi",
    "sheet_key": "L701459542"
@@ -2085,7 +2172,8 @@
    "bytes": 9131706,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Hoàng Su Phì",
    "sheet_key": "L701459543"
@@ -2108,7 +2196,8 @@
    "bytes": 11597508,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Thuận Hòa",
    "sheet_key": "L701460261"
@@ -2131,7 +2220,8 @@
    "bytes": 11503282,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Đường Keo",
    "sheet_key": "L701460263"
@@ -2154,7 +2244,8 @@
    "bytes": 9721662,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Cái Nước",
    "sheet_key": "L701460264"
@@ -2177,7 +2268,8 @@
    "bytes": 8374296,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Puoc Long",
    "sheet_key": "L701460271"
@@ -2200,7 +2292,8 @@
    "bytes": 9164153,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Giá Rai",
    "sheet_key": "L701460272"
@@ -2223,7 +2316,8 @@
    "bytes": 8343091,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Quan Long Ca Mau",
    "sheet_key": "L701460273"
@@ -2246,7 +2340,8 @@
    "bytes": 9223405,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Thới Bình",
    "sheet_key": "L701460274"
@@ -2269,7 +2364,8 @@
    "bytes": 7958729,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Duc Long Vi Thanh",
    "sheet_key": "L701460281"
@@ -2292,7 +2388,8 @@
    "bytes": 7141221,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Kien Hung Go Quao",
    "sheet_key": "L701460282"
@@ -2315,7 +2412,8 @@
    "bytes": 7632957,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Đông Hòa",
    "sheet_key": "L701460283"
@@ -2338,7 +2436,8 @@
    "bytes": 8023113,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Châu Thành",
    "sheet_key": "L701460284"
@@ -2361,7 +2460,8 @@
    "bytes": 5807355,
    "sha256": "18aa2b0c98b35fbf7f5a446c53ec01dac6317b30140c36f0779fec941f62ca98",
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Long Xuyên",
    "sheet_key": "L701460291"
@@ -2384,7 +2484,8 @@
    "bytes": 6488480,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Cờ Đỏ",
    "sheet_key": "L701460292"
@@ -2407,7 +2508,8 @@
    "bytes": 7962872,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Rạch Giá",
    "sheet_key": "L701460293"
@@ -2430,7 +2532,8 @@
    "bytes": 9206304,
    "sha256": "7e4ff076046b9c165d28491f1162e18960032a5d11c5ed87a6f1a38199d2d6ba",
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Tri Tôn",
    "sheet_key": "L701460294"
@@ -2453,7 +2556,8 @@
    "bytes": 6584761,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "An Long",
    "sheet_key": "L701460302"
@@ -2476,7 +2580,8 @@
    "bytes": 7308179,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Rào Qua",
    "sheet_key": "L701460451"
@@ -2499,7 +2604,8 @@
    "bytes": 8371360,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Cam Ngoc",
    "sheet_key": "L701460461"
@@ -2522,7 +2628,8 @@
    "bytes": 9021563,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Phố Châu",
    "sheet_key": "L701460462"
@@ -2545,7 +2652,8 @@
    "bytes": 9002078,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ban Ka Long",
    "sheet_key": "L701460463"
@@ -2568,7 +2676,8 @@
    "bytes": 10609596,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Tri Lễ",
    "sheet_key": "L701460464"
@@ -2591,7 +2700,8 @@
    "bytes": 9148048,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Nghĩa Hưng",
    "sheet_key": "L701460471"
@@ -2614,7 +2724,8 @@
    "bytes": 10275425,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Xóm Bàu",
    "sheet_key": "L701460472"
@@ -2637,7 +2748,8 @@
    "bytes": 11826472,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Làng Rào",
    "sheet_key": "L701460473"
@@ -2660,7 +2772,8 @@
    "bytes": 10510414,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ban Dan",
    "sheet_key": "L701460474"
@@ -2683,7 +2796,8 @@
    "bytes": 9857687,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bái Thượng",
    "sheet_key": "L701460481"
@@ -2706,7 +2820,8 @@
    "bytes": 7194039,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Đông Tau",
    "sheet_key": "L701460482"
@@ -2729,7 +2844,8 @@
    "bytes": 9066887,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ke Bon",
    "sheet_key": "L701460483"
@@ -2752,7 +2868,8 @@
    "bytes": 8413975,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bản Pang",
    "sheet_key": "L701460484"
@@ -2775,7 +2892,8 @@
    "bytes": 8201204,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Lang Be",
    "sheet_key": "L701460491"
@@ -2798,7 +2916,8 @@
    "bytes": 10312213,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Lang Tung",
    "sheet_key": "L701460492"
@@ -2821,7 +2940,8 @@
    "bytes": 8146478,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Lang Chanh Lang Chieng Trai",
    "sheet_key": "L701460493"
@@ -2844,7 +2964,8 @@
    "bytes": 9851038,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Hồi Xuân",
    "sheet_key": "L701460494"
@@ -2867,7 +2988,8 @@
    "bytes": 7866219,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Hòa Bình",
    "sheet_key": "L701460501"
@@ -2890,7 +3012,8 @@
    "bytes": 10604728,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Lang Tam",
    "sheet_key": "L701460502"
@@ -2913,7 +3036,8 @@
    "bytes": 9216058,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Bản Bang",
    "sheet_key": "L701460503"
@@ -2936,7 +3060,8 @@
    "bytes": 9337721,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Chộ Bờ",
    "sheet_key": "L701460504"
@@ -2959,7 +3084,8 @@
    "bytes": 9664463,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Việt Trì",
    "sheet_key": "L701460511"
@@ -2982,7 +3108,8 @@
    "bytes": 9260571,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Hoàng Xá",
    "sheet_key": "L701460512"
@@ -3005,7 +3132,8 @@
    "bytes": 11170739,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Xóm Chai",
    "sheet_key": "L701460513"
@@ -3028,7 +3156,8 @@
    "bytes": 9766038,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Phú Thọ",
    "sheet_key": "L701460514"
@@ -3051,7 +3180,8 @@
    "bytes": 11104131,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Thục Thủy",
    "sheet_key": "L701460521"
@@ -3074,7 +3204,8 @@
    "bytes": 10674669,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Lệ Mỹ",
    "sheet_key": "L701460522"
@@ -3097,7 +3228,8 @@
    "bytes": 8056451,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Đoan Hùng",
    "sheet_key": "L701460523"
@@ -3120,7 +3252,8 @@
    "bytes": 8767036,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Tuyên Quang",
    "sheet_key": "L701460524"
@@ -3143,7 +3276,8 @@
    "bytes": 8150646,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Pa Ka",
    "sheet_key": "L701460531"
@@ -3166,7 +3300,8 @@
    "bytes": 5648693,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Chiêm Hóa",
    "sheet_key": "L701460532"
@@ -3189,7 +3324,8 @@
    "bytes": 9853679,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Hàm Yên",
    "sheet_key": "L701460533"
@@ -3212,7 +3348,8 @@
    "bytes": 8895665,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Lang Dat",
    "sheet_key": "L701460534"
@@ -3235,7 +3372,8 @@
    "bytes": 6474702,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Ban Le",
    "sheet_key": "L701460541"
@@ -3258,7 +3396,8 @@
    "bytes": 10059544,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Bắc Mê",
    "sheet_key": "L701460542"
@@ -3281,7 +3420,8 @@
    "bytes": 8190180,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Na Mong",
    "sheet_key": "L701460543"
@@ -3304,7 +3444,8 @@
    "bytes": 9817305,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1967",
+   "year": 1967,
    "scale_n": 50000,
    "place": "Muong Cha",
    "sheet_key": "L701460544"
@@ -3327,7 +3468,8 @@
    "bytes": 9245743,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Na Kung",
    "sheet_key": "L701460552"
@@ -3350,7 +3492,8 @@
    "bytes": 7870871,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Na Lay",
    "sheet_key": "L701460553"
@@ -3373,7 +3516,8 @@
    "bytes": 7776080,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Vĩnh Châu",
    "sheet_key": "L701461271"
@@ -3396,7 +3540,8 @@
    "bytes": 11510874,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Giồng Giữa",
    "sheet_key": "L701461272"
@@ -3419,7 +3564,8 @@
    "bytes": 8856173,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Vĩnh Mỹ",
    "sheet_key": "L701461273"
@@ -3442,7 +3588,8 @@
    "bytes": 7494385,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Vinh Lợi, Bạc Liêu",
    "sheet_key": "L701461274"
@@ -3465,7 +3612,8 @@
    "bytes": 8728475,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Phụng Hiệp",
    "sheet_key": "L701461281"
@@ -3488,7 +3636,8 @@
    "bytes": 7427770,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Khanh Hung Soc Trang",
    "sheet_key": "L701461282"
@@ -3511,7 +3660,8 @@
    "bytes": 8181946,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Long Mỹ",
    "sheet_key": "L701461283"
@@ -3534,7 +3684,8 @@
    "bytes": 8470072,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Rạch Gòi",
    "sheet_key": "L701461284"
@@ -3557,7 +3708,8 @@
    "bytes": 8809503,
    "sha256": "d7e7c9864b44b4bcdc53573074bba4e70e89ebcc17556fc5a6042282b5c2fe65",
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Sa Đéc",
    "sheet_key": "L701461291"
@@ -3580,7 +3732,8 @@
    "bytes": 6522618,
    "sha256": "e901bb863aa176454f2df9b96046474157c2b6e1228eae6216ff3c5cafff4e97",
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Cần Thơ",
    "sheet_key": "L701461292"
@@ -3603,7 +3756,8 @@
    "bytes": 6534713,
    "sha256": "6223e83ed9c73ccaef2aab7c592ca45a1d91db445e674842db5b7c3efeb88bf2",
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Phong Phu, Ô Môn",
    "sheet_key": "L701461293"
@@ -3626,7 +3780,8 @@
    "bytes": 8613490,
    "sha256": "eab1adbce813020243b1bce362402fbbeb302b38b7d34411ccf13dfc404911c2",
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Cao Lãnh",
    "sheet_key": "L701461294"
@@ -3649,6 +3804,7 @@
    "bytes": 17364348,
    "sha256": null,
    "kind": "geopdf",
+   "date": "",
    "year": null,
    "scale_n": 50000,
    "place": "Vĩnh Hưng",
@@ -3672,7 +3828,8 @@
    "bytes": 8335363,
    "sha256": "d596e0a3c45b1f65bcf74aab5aa0cc1da2fb4165ca5942461298e8234802edb3",
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Mỹ An",
    "sheet_key": "L701461302"
@@ -3695,7 +3852,8 @@
    "bytes": 6773669,
    "sha256": "162b40019d3fc3be9340428cbe2ec1fc95f49b6f86dca27a93f60184e8ce3b84",
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Phong Mỹ",
    "sheet_key": "L701461303"
@@ -3718,7 +3876,8 @@
    "bytes": 11025512,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1967",
+   "year": 1967,
    "scale_n": 50000,
    "place": "Kim Lũ Xã",
    "sheet_key": "L701461441"
@@ -3741,7 +3900,8 @@
    "bytes": 6895103,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Hà Tĩnh",
    "sheet_key": "L701461451"
@@ -3764,7 +3924,8 @@
    "bytes": 11293157,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "La Khê Thôn",
    "sheet_key": "L701461452"
@@ -3787,7 +3948,8 @@
    "bytes": 8973910,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Hương Khê",
    "sheet_key": "L701461453"
@@ -3810,7 +3972,8 @@
    "bytes": 7922969,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Quang Tệ",
    "sheet_key": "L701461454"
@@ -3833,7 +3996,8 @@
    "bytes": 7985041,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Nghi Xuân",
    "sheet_key": "L701461462"
@@ -3856,7 +4020,8 @@
    "bytes": 9414625,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Vinh",
    "sheet_key": "L701461463"
@@ -3879,7 +4044,8 @@
    "bytes": 10230183,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Phu Dien Chau",
    "sheet_key": "L701461464"
@@ -3902,7 +4068,8 @@
    "bytes": 9823133,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Tinh Xuyen",
    "sheet_key": "L701461471"
@@ -3925,7 +4092,8 @@
    "bytes": 7177319,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Cho Giat",
    "sheet_key": "L701461473"
@@ -3948,7 +4116,8 @@
    "bytes": 9478536,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Phong Bái",
    "sheet_key": "L701461474"
@@ -3971,7 +4140,8 @@
    "bytes": 9504612,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Thanh Hóa",
    "sheet_key": "L701461481"
@@ -3994,7 +4164,8 @@
    "bytes": 10067085,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Sầm Sơn",
    "sheet_key": "L701461482"
@@ -4017,7 +4188,8 @@
    "bytes": 8750553,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Tong Cong",
    "sheet_key": "L701461483"
@@ -4040,7 +4212,8 @@
    "bytes": 8329463,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ninh Bình",
    "sheet_key": "L701461491"
@@ -4063,7 +4236,8 @@
    "bytes": 7154427,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Mai Xa",
    "sheet_key": "L701461492"
@@ -4086,7 +4260,8 @@
    "bytes": 7289757,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Yên Định",
    "sheet_key": "L701461493"
@@ -4109,7 +4284,8 @@
    "bytes": 9623265,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Xom Go",
    "sheet_key": "L701461494"
@@ -4132,7 +4308,8 @@
    "bytes": 7989538,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Hà Đông",
    "sheet_key": "L701461501"
@@ -4155,7 +4332,8 @@
    "bytes": 9226312,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Phủ Lý",
    "sheet_key": "L701461502"
@@ -4178,7 +4356,8 @@
    "bytes": 9097439,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Thuy Hien",
    "sheet_key": "L701461503"
@@ -4201,7 +4380,8 @@
    "bytes": 8610592,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Lương Sơn",
    "sheet_key": "L701461504"
@@ -4224,7 +4404,8 @@
    "bytes": 9062820,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Phổ Yên",
    "sheet_key": "L701461511"
@@ -4247,7 +4428,8 @@
    "bytes": 7866531,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Hà Nội",
    "sheet_key": "L701461512"
@@ -4270,7 +4452,8 @@
    "bytes": 7258036,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Sơn Tây",
    "sheet_key": "L701461513"
@@ -4293,7 +4476,8 @@
    "bytes": 7111509,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Vĩnh Yên",
    "sheet_key": "L701461514"
@@ -4316,7 +4500,8 @@
    "bytes": 9891645,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Chợ Mới",
    "sheet_key": "L701461521"
@@ -4339,7 +4524,8 @@
    "bytes": 9236246,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Thi Ngu Yen",
    "sheet_key": "L701461522"
@@ -4362,7 +4548,8 @@
    "bytes": 10769756,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Đại Từ",
    "sheet_key": "L701461523"
@@ -4385,7 +4572,8 @@
    "bytes": 11430218,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Chợ Chu",
    "sheet_key": "L701461524"
@@ -4408,7 +4596,8 @@
    "bytes": 8000419,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Na Fac",
    "sheet_key": "L701461531"
@@ -4431,7 +4620,8 @@
    "bytes": 11111792,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1963",
+   "year": 1963,
    "scale_n": 50000,
    "place": "Bắc Kạn",
    "sheet_key": "L701461532"
@@ -4454,7 +4644,8 @@
    "bytes": 8787030,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Chợ Đồn",
    "sheet_key": "L701461533"
@@ -4477,7 +4668,8 @@
    "bytes": 7050272,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Chợ Rã",
    "sheet_key": "L701461534"
@@ -4500,7 +4692,8 @@
    "bytes": 8988857,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Nam Quét",
    "sheet_key": "L701461541"
@@ -4523,7 +4716,8 @@
    "bytes": 8890101,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Nguyên Bình",
    "sheet_key": "L701461542"
@@ -4546,7 +4740,8 @@
    "bytes": 8519006,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Thom Tchay",
    "sheet_key": "L701461543"
@@ -4569,7 +4764,8 @@
    "bytes": 8991547,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Bảo Lạc",
    "sheet_key": "L701461544"
@@ -4592,7 +4788,8 @@
    "bytes": 8275309,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Lạc Hòa",
    "sheet_key": "L701462274"
@@ -4615,7 +4812,8 @@
    "bytes": 6602299,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Phu Vinh Tra Vinh",
    "sheet_key": "L701462281"
@@ -4638,7 +4836,8 @@
    "bytes": 6928371,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Trà Cú",
    "sheet_key": "L701462282"
@@ -4661,7 +4860,8 @@
    "bytes": 8132181,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Long Phu Bang Long",
    "sheet_key": "L701462283"
@@ -4684,7 +4884,8 @@
    "bytes": 8120143,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Cầu Kè",
    "sheet_key": "L701462284"
@@ -4707,7 +4908,8 @@
    "bytes": 7594785,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Mỹ Tho",
    "sheet_key": "L701462291"
@@ -4730,7 +4932,8 @@
    "bytes": 6897053,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Truc Giang Ben Tre",
    "sheet_key": "L701462292"
@@ -4753,7 +4956,8 @@
    "bytes": 7108142,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Vũng Liêm",
    "sheet_key": "L701462293"
@@ -4776,7 +4980,8 @@
    "bytes": 7388786,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Khiem Ich Cailay",
    "sheet_key": "L701462294"
@@ -4799,7 +5004,8 @@
    "bytes": 9571711,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Đức Hòa",
    "sheet_key": "L701462301"
@@ -4822,7 +5028,8 @@
    "bytes": 8573239,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Tân An",
    "sheet_key": "L701462302"
@@ -4845,7 +5052,8 @@
    "bytes": 7597407,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Tuyên Nhơn",
    "sheet_key": "L701462303"
@@ -4868,7 +5076,8 @@
    "bytes": 6782463,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Tri Tam Quan Dau Tieng",
    "sheet_key": "L701462311"
@@ -4891,7 +5100,8 @@
    "bytes": 8056158,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Hieu Thien GoDau Ha",
    "sheet_key": "L701462312"
@@ -4914,7 +5124,8 @@
    "bytes": 8781818,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Tây Ninh",
    "sheet_key": "L701462314"
@@ -4937,7 +5148,8 @@
    "bytes": 9316412,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Co Trang",
    "sheet_key": "L701462431"
@@ -4960,7 +5172,8 @@
    "bytes": 7164577,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Làng Mộ",
    "sheet_key": "L701462432"
@@ -4983,7 +5196,8 @@
    "bytes": 7423158,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Bản Karai",
    "sheet_key": "L701462434"
@@ -5006,7 +5220,8 @@
    "bytes": 10691450,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Ròn",
    "sheet_key": "L701462441"
@@ -5029,7 +5244,8 @@
    "bytes": 8656433,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Quảng Khê",
    "sheet_key": "L701462442"
@@ -5052,7 +5268,8 @@
    "bytes": 9615560,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1967",
+   "year": 1967,
    "scale_n": 50000,
    "place": "Cah Noi",
    "sheet_key": "L701462443"
@@ -5075,7 +5292,8 @@
    "bytes": 8987995,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Thiết Sơn",
    "sheet_key": "L701462444"
@@ -5098,7 +5316,8 @@
    "bytes": 7923656,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Kỳ Anh",
    "sheet_key": "L701462452"
@@ -5121,7 +5340,8 @@
    "bytes": 9497823,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Tuan Tuong",
    "sheet_key": "L701462453"
@@ -5144,7 +5364,8 @@
    "bytes": 11352567,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Nhượng Bạn",
    "sheet_key": "L701462454"
@@ -5167,7 +5388,8 @@
    "bytes": 10816707,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Cửa Đáy",
    "sheet_key": "L701462484"
@@ -5190,7 +5412,8 @@
    "bytes": 6665793,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Thái Bình",
    "sheet_key": "L701462491"
@@ -5213,7 +5436,8 @@
    "bytes": 10448524,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Văn Lý",
    "sheet_key": "L701462492"
@@ -5236,7 +5460,8 @@
    "bytes": 8593744,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Phát Diệm",
    "sheet_key": "L701462493"
@@ -5259,7 +5484,8 @@
    "bytes": 8219251,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Nam Định",
    "sheet_key": "L701462494"
@@ -5282,7 +5508,8 @@
    "bytes": 8166333,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Hải Dương",
    "sheet_key": "L701462501"
@@ -5305,7 +5532,8 @@
    "bytes": 8910376,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Vinh Ninh Ninh Giang",
    "sheet_key": "L701462502"
@@ -5328,7 +5556,8 @@
    "bytes": 6575086,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Hưng Yên",
    "sheet_key": "L701462503"
@@ -5351,7 +5580,8 @@
    "bytes": 6931799,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Kẻ Sặt",
    "sheet_key": "L701462504"
@@ -5374,7 +5604,8 @@
    "bytes": 8558645,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Luc Nam",
    "sheet_key": "L701462511"
@@ -5397,7 +5628,8 @@
    "bytes": 8766982,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Phả Lại",
    "sheet_key": "L701462512"
@@ -5420,7 +5652,8 @@
    "bytes": 8189854,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Bắc Ninh",
    "sheet_key": "L701462513"
@@ -5443,7 +5676,8 @@
    "bytes": 8109767,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Phu Lang Thuong",
    "sheet_key": "L701462514"
@@ -5466,7 +5700,8 @@
    "bytes": 10317001,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Pho Binh Gia",
    "sheet_key": "L701462521"
@@ -5489,7 +5724,8 @@
    "bytes": 10179338,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Lang Met",
    "sheet_key": "L701462522"
@@ -5512,7 +5748,8 @@
    "bytes": 11461408,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Mỏ Trạng",
    "sheet_key": "L701462523"
@@ -5535,7 +5772,8 @@
    "bytes": 11999782,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "La GIieo",
    "sheet_key": "L701462524"
@@ -5558,7 +5796,8 @@
    "bytes": 8945746,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Thất Khê",
    "sheet_key": "L701462531"
@@ -5581,7 +5820,8 @@
    "bytes": 11192976,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Fac Ta",
    "sheet_key": "L701462532"
@@ -5604,7 +5844,8 @@
    "bytes": 11111971,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Yến Lạc",
    "sheet_key": "L701462533"
@@ -5627,7 +5868,8 @@
    "bytes": 10121313,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Bản Cao",
    "sheet_key": "L701462534"
@@ -5650,7 +5892,8 @@
    "bytes": 10618745,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1963",
+   "year": 1963,
    "scale_n": 50000,
    "place": "Trà Linh",
    "sheet_key": "L701462541"
@@ -5673,7 +5916,8 @@
    "bytes": 10521949,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1963",
+   "year": 1963,
    "scale_n": 50000,
    "place": "Cao Bằng",
    "sheet_key": "L701462542"
@@ -5696,7 +5940,8 @@
    "bytes": 9242063,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Nước Hai",
    "sheet_key": "L701462543"
@@ -5719,7 +5964,8 @@
    "bytes": 10829730,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Sốc Giang",
    "sheet_key": "L701462544"
@@ -5742,7 +5988,8 @@
    "bytes": 7425409,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ba Động",
    "sheet_key": "L701463283"
@@ -5765,7 +6012,8 @@
    "bytes": 6970723,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Thạnh Phú",
    "sheet_key": "L701463284"
@@ -5788,7 +6036,8 @@
    "bytes": 8564713,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Cần Giờ",
    "sheet_key": "L701463291"
@@ -5811,7 +6060,8 @@
    "bytes": 4186827,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Thừa Đức",
    "sheet_key": "L701463292"
@@ -5834,7 +6084,8 @@
    "bytes": 9154177,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bình Đại",
    "sheet_key": "L701463293"
@@ -5857,7 +6108,8 @@
    "bytes": 7319360,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1967",
+   "year": 1967,
    "scale_n": 50000,
    "place": "Gò Công",
    "sheet_key": "L701463294"
@@ -5880,7 +6132,8 @@
    "bytes": 7293160,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Biên Hòa",
    "sheet_key": "L701463301"
@@ -5903,7 +6156,8 @@
    "bytes": 7745495,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Nhon Trach Pu Thanh",
    "sheet_key": "L701463302"
@@ -5926,7 +6180,8 @@
    "bytes": 8387296,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Cần Giuộc",
    "sheet_key": "L701463303"
@@ -5949,7 +6204,8 @@
    "bytes": 6929773,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Thành phố Hồ Chí Minh",
    "sheet_key": "L701463304"
@@ -5972,7 +6228,8 @@
    "bytes": 7688282,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Phước Vĩnh",
    "sheet_key": "L701463311"
@@ -5995,7 +6252,8 @@
    "bytes": 9145966,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Tan Uyen Xa Uyen-Hung",
    "sheet_key": "L701463312"
@@ -6018,7 +6276,8 @@
    "bytes": 8620813,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Bến Cát",
    "sheet_key": "L701463313"
@@ -6041,7 +6300,8 @@
    "bytes": 6621982,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Xóm Ruồng",
    "sheet_key": "L701463314"
@@ -6064,7 +6324,8 @@
    "bytes": 7687323,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Phước Bình, Ấp Sơn Thủy",
    "sheet_key": "L701463321"
@@ -6087,7 +6348,8 @@
    "bytes": 10462576,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Don Xoai",
    "sheet_key": "L701463322"
@@ -6110,7 +6372,8 @@
    "bytes": 8058523,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1967",
+   "year": 1967,
    "scale_n": 50000,
    "place": "An Lộc, Hớn Quản",
    "sheet_key": "L701463323"
@@ -6133,7 +6396,8 @@
    "bytes": 9376799,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Cam Lộ",
    "sheet_key": "L701463421"
@@ -6156,7 +6420,8 @@
    "bytes": 8281779,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Thon Doc Kinh",
    "sheet_key": "L701463422"
@@ -6179,7 +6444,8 @@
    "bytes": 10488973,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Hương Hóa",
    "sheet_key": "L701463423"
@@ -6202,7 +6468,8 @@
    "bytes": 9785556,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Nguồn Rào",
    "sheet_key": "L701463424"
@@ -6225,7 +6492,8 @@
    "bytes": 11206590,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "An Định",
    "sheet_key": "L701463431"
@@ -6248,7 +6516,8 @@
    "bytes": 9859073,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Qui Hau",
    "sheet_key": "L701463432"
@@ -6271,7 +6540,8 @@
    "bytes": 6991983,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Mỹ Đức",
    "sheet_key": "L701463433"
@@ -6294,7 +6564,8 @@
    "bytes": 7530034,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Đồng Hới",
    "sheet_key": "L701463434"
@@ -6317,7 +6588,8 @@
    "bytes": 7918194,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Lý Hòa",
    "sheet_key": "L701463443"
@@ -6340,7 +6612,8 @@
    "bytes": 11164302,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Vĩnh Sơn",
    "sheet_key": "L701463444"
@@ -6363,7 +6636,8 @@
    "bytes": 9994198,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Cửa Trà Lý",
    "sheet_key": "L701463494"
@@ -6386,7 +6660,8 @@
    "bytes": 9475044,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Quảng Yên",
    "sheet_key": "L701463501"
@@ -6409,7 +6684,8 @@
    "bytes": 8647115,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Đố Sơn",
    "sheet_key": "L701463502"
@@ -6432,7 +6708,8 @@
    "bytes": 8382464,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Thái Thụy",
    "sheet_key": "L701463503"
@@ -6455,7 +6732,8 @@
    "bytes": 7329425,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Hải Phòng",
    "sheet_key": "L701463504"
@@ -6478,7 +6756,8 @@
    "bytes": 8938930,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Thanh Am",
    "sheet_key": "L701463511"
@@ -6501,7 +6780,8 @@
    "bytes": 11148247,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Uông Bí",
    "sheet_key": "L701463512"
@@ -6524,7 +6804,8 @@
    "bytes": 8191603,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Đông Triều",
    "sheet_key": "L701463513"
@@ -6547,7 +6828,8 @@
    "bytes": 9648046,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Chũ",
    "sheet_key": "L701463514"
@@ -6570,7 +6852,8 @@
    "bytes": 10269137,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Lạng Sơn",
    "sheet_key": "L701463521"
@@ -6593,7 +6876,8 @@
    "bytes": 8413973,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Đông Quan",
    "sheet_key": "L701463522"
@@ -6616,7 +6900,8 @@
    "bytes": 10479794,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ôn",
    "sheet_key": "L701463523"
@@ -6639,7 +6924,8 @@
    "bytes": 10254720,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Đồng Đăng",
    "sheet_key": "L701463524"
@@ -6662,7 +6948,8 @@
    "bytes": 8391208,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Na Cham",
    "sheet_key": "L701463533"
@@ -6685,7 +6972,8 @@
    "bytes": 10954636,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Phục Hòa",
    "sheet_key": "L701463543"
@@ -6708,7 +6996,8 @@
    "bytes": 10390507,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Trung Khanh Phu",
    "sheet_key": "L701463544"
@@ -6731,7 +7020,8 @@
    "bytes": 7768077,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Chợ Phước Hải",
    "sheet_key": "L701464291"
@@ -6754,7 +7044,8 @@
    "bytes": 10822461,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Xa Vung Tau Cap Saint Jacques",
    "sheet_key": "L701464294"
@@ -6777,7 +7068,8 @@
    "bytes": 8136520,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Xã Cam Mỹ",
    "sheet_key": "L701464301"
@@ -6800,7 +7092,8 @@
    "bytes": 6560210,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Xuyên Mộc",
    "sheet_key": "L701464302"
@@ -6823,7 +7116,8 @@
    "bytes": 9417618,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Xã Bình Ba",
    "sheet_key": "L701464303"
@@ -6846,7 +7140,8 @@
    "bytes": 6532550,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Xa Xuan Loc",
    "sheet_key": "L701464304"
@@ -6869,7 +7164,8 @@
    "bytes": 5356643,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Loi Tan",
    "sheet_key": "L701464311"
@@ -6892,7 +7188,8 @@
    "bytes": 6999621,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Định Quán",
    "sheet_key": "L701464312"
@@ -6915,7 +7212,8 @@
    "bytes": 5069291,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Xã Gia Kiêm",
    "sheet_key": "L701464313"
@@ -6938,7 +7236,8 @@
    "bytes": 9262396,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ap Cau Cay",
    "sheet_key": "L701464314"
@@ -6961,7 +7260,8 @@
    "bytes": 10425428,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Đức Phong, Bu Đăng",
    "sheet_key": "L701464321"
@@ -6984,7 +7284,8 @@
    "bytes": 8622228,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "B R'du",
    "sheet_key": "L701464322"
@@ -7007,7 +7308,8 @@
    "bytes": 10318482,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Địa Điểm Bunard",
    "sheet_key": "L701464323"
@@ -7030,7 +7332,8 @@
    "bytes": 10666329,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Dong Sré Viẽt",
    "sheet_key": "L701464324"
@@ -7053,7 +7356,8 @@
    "bytes": 9105964,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ấp Doãn Văn",
    "sheet_key": "L701464332"
@@ -7076,6 +7380,7 @@
    "bytes": 19106398,
    "sha256": null,
    "kind": "geopdf",
+   "date": "",
    "year": null,
    "scale_n": 50000,
    "place": "Phước Hòa",
@@ -7099,7 +7404,8 @@
    "bytes": 6285895,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Phum Hay",
    "sheet_key": "L701464372"
@@ -7122,7 +7428,8 @@
    "bytes": 7852663,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ta Ko",
    "sheet_key": "L701464401"
@@ -7145,7 +7452,8 @@
    "bytes": 9811618,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "A Lưới",
    "sheet_key": "L701464414"
@@ -7168,7 +7476,8 @@
    "bytes": 9814806,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Thon Ngo Xa Dong",
    "sheet_key": "L701464421"
@@ -7191,7 +7500,8 @@
    "bytes": 9860935,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Hai Lang Thon Dien Sanh",
    "sheet_key": "L701464422"
@@ -7214,7 +7524,8 @@
    "bytes": 7979980,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Ba Long Thon Ha Vung",
    "sheet_key": "L701464423"
@@ -7237,7 +7548,8 @@
    "bytes": 9165093,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Quảng Trị",
    "sheet_key": "L701464424"
@@ -7260,7 +7572,8 @@
    "bytes": 8676592,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Vinh Linh Ho Xa",
    "sheet_key": "L701464433"
@@ -7283,7 +7596,8 @@
    "bytes": 10822555,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Île Longue",
    "sheet_key": "L701464501"
@@ -7306,7 +7620,8 @@
    "bytes": 8544679,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Cát Bà",
    "sheet_key": "L701464503_002"
@@ -7329,7 +7644,8 @@
    "bytes": 8562481,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Hong Gai",
    "sheet_key": "L701464504"
@@ -7352,7 +7668,8 @@
    "bytes": 11981915,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Tiên Yên",
    "sheet_key": "L701464511"
@@ -7375,7 +7692,8 @@
    "bytes": 8564212,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Cẩm Phả",
    "sheet_key": "L701464512"
@@ -7398,7 +7716,8 @@
    "bytes": 12067430,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Lang Troi",
    "sheet_key": "L701464513"
@@ -7421,7 +7740,8 @@
    "bytes": 11481370,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Châu Sơn",
    "sheet_key": "L701464514"
@@ -7444,7 +7764,8 @@
    "bytes": 8284338,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bình Liêu",
    "sheet_key": "L701464522"
@@ -7467,7 +7788,8 @@
    "bytes": 10851466,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Đình Lập",
    "sheet_key": "L701464523"
@@ -7490,7 +7812,8 @@
    "bytes": 8207691,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Ấp Dinh Ba",
    "sheet_key": "L701465301"
@@ -7513,7 +7836,8 @@
    "bytes": 8422983,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Hàm Tân",
    "sheet_key": "L701465302"
@@ -7536,7 +7860,8 @@
    "bytes": 6932182,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Tân Tạo",
    "sheet_key": "L701465303"
@@ -7559,7 +7884,8 @@
    "bytes": 10202232,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Sông Dinh",
    "sheet_key": "L701465304"
@@ -7582,7 +7908,8 @@
    "bytes": 11166339,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Cirlao Da S’răng",
    "sheet_key": "L701465311"
@@ -7605,7 +7932,8 @@
    "bytes": 10965768,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Xã Tram Da Mi",
    "sheet_key": "L701465312"
@@ -7628,7 +7956,8 @@
    "bytes": 9327391,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Tanh Linh Xa Lac Tanh",
    "sheet_key": "L701465313"
@@ -7651,7 +7980,8 @@
    "bytes": 9352033,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Ma Đa Gui",
    "sheet_key": "L701465314"
@@ -7674,7 +8004,8 @@
    "bytes": 11790375,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Kro Layu",
    "sheet_key": "L701465321"
@@ -7697,7 +8028,8 @@
    "bytes": 8568193,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Bảo Lộc, B’Lao",
    "sheet_key": "L701465322"
@@ -7720,7 +8052,8 @@
    "bytes": 9883620,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bdan Deung",
    "sheet_key": "L701465323"
@@ -7743,7 +8076,8 @@
    "bytes": 8159268,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Gia Nghĩa, Nghĩa Đức",
    "sheet_key": "L701465324"
@@ -7766,7 +8100,8 @@
    "bytes": 9991495,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Đức Xuyên",
    "sheet_key": "L701465331"
@@ -7789,7 +8124,8 @@
    "bytes": 9530819,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ban N’doh",
    "sheet_key": "L701465332"
@@ -7812,7 +8148,8 @@
    "bytes": 7147907,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Nghĩa Tín",
    "sheet_key": "L701465333"
@@ -7835,7 +8172,8 @@
    "bytes": 11626990,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bản Đôn",
    "sheet_key": "L701465341"
@@ -7858,7 +8196,8 @@
    "bytes": 8568339,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Xã Thọ Thành",
    "sheet_key": "L701465342"
@@ -7881,6 +8220,7 @@
    "bytes": 17661978,
    "sha256": null,
    "kind": "geopdf",
+   "date": "",
    "year": null,
    "scale_n": 50000,
    "place": "Đôn Đăk Nam La",
@@ -7904,7 +8244,8 @@
    "bytes": 7155696,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Tiều Teo",
    "sheet_key": "L701465351"
@@ -7927,7 +8268,8 @@
    "bytes": 10142650,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Buôn Ya Soup",
    "sheet_key": "L701465352"
@@ -7950,7 +8292,8 @@
    "bytes": 7580228,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Bảo Đức",
    "sheet_key": "L701465361"
@@ -7973,7 +8316,8 @@
    "bytes": 10285682,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Xuong Kunag",
    "sheet_key": "L701465362"
@@ -7996,7 +8340,8 @@
    "bytes": 7684545,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Pl.Ya Bo",
    "sheet_key": "L701465363"
@@ -8019,7 +8364,8 @@
    "bytes": 9693983,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Thanh An Le Thanh",
    "sheet_key": "L701465364"
@@ -8042,7 +8388,8 @@
    "bytes": 8259688,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Pơlei Breng",
    "sheet_key": "L701465371"
@@ -8065,7 +8412,8 @@
    "bytes": 10104997,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Plei Mrong",
    "sheet_key": "L701465372"
@@ -8088,7 +8436,8 @@
    "bytes": 8831303,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Pơlei Yôme",
    "sheet_key": "L701465373"
@@ -8111,7 +8460,8 @@
    "bytes": 9672177,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Kon Honong Kon Henong",
    "sheet_key": "L701465381"
@@ -8134,7 +8484,8 @@
    "bytes": 8114270,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Đắk Tô",
    "sheet_key": "L701465382"
@@ -8157,7 +8508,8 @@
    "bytes": 10816875,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Dak Mot Lop",
    "sheet_key": "L701465383"
@@ -8180,6 +8532,7 @@
    "bytes": 30023439,
    "sha256": null,
    "kind": "geopdf",
+   "date": "",
    "year": null,
    "scale_n": 50000,
    "place": "Đắc Sút",
@@ -8203,7 +8556,8 @@
    "bytes": 11080709,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Kason Mai",
    "sheet_key": "L701465391"
@@ -8226,7 +8580,8 @@
    "bytes": 9112105,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "G. Rieng",
    "sheet_key": "L701465392"
@@ -8249,7 +8604,8 @@
    "bytes": 7766326,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Thuong Duc Ha Tan",
    "sheet_key": "L701465401"
@@ -8272,7 +8628,8 @@
    "bytes": 12344464,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bến Giang",
    "sheet_key": "L701465402"
@@ -8295,7 +8652,8 @@
    "bytes": 11174407,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Muang Bac",
    "sheet_key": "L701465403"
@@ -8318,7 +8676,8 @@
    "bytes": 8461987,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Atiun",
    "sheet_key": "L701465404"
@@ -8341,7 +8700,8 @@
    "bytes": 9625354,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Q. Phu Loc",
    "sheet_key": "L701465411"
@@ -8364,7 +8724,8 @@
    "bytes": 10089795,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Bạch Mã",
    "sheet_key": "L701465412"
@@ -8387,7 +8748,8 @@
    "bytes": 9852732,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Nong Troung Nam Dong",
    "sheet_key": "L701465413"
@@ -8410,7 +8772,8 @@
    "bytes": 10113504,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Huế",
    "sheet_key": "L701465414"
@@ -8433,7 +8796,8 @@
    "bytes": 10398445,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Phú Vang",
    "sheet_key": "L701465423"
@@ -8456,7 +8820,8 @@
    "bytes": 10571961,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Hà Cối",
    "sheet_key": "L701465511"
@@ -8479,7 +8844,8 @@
    "bytes": 9329760,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Vạn Hoa",
    "sheet_key": "L701465513_002"
@@ -8502,7 +8868,8 @@
    "bytes": 10801286,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Đầm Hà",
    "sheet_key": "L701465514"
@@ -8525,7 +8892,8 @@
    "bytes": 10983752,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Hai Long Ap Long Linh",
    "sheet_key": "L701466301"
@@ -8548,7 +8916,8 @@
    "bytes": 8072415,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Xa Phan Thiet",
    "sheet_key": "L701466304"
@@ -8571,7 +8940,8 @@
    "bytes": 10736774,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Soprai",
    "sheet_key": "L701466311"
@@ -8594,7 +8964,8 @@
    "bytes": 7126836,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Ấp Lương Tây",
    "sheet_key": "L701466312"
@@ -8617,7 +8988,8 @@
    "bytes": 8270866,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Ham Tuan Bac",
    "sheet_key": "L701466313"
@@ -8640,7 +9012,8 @@
    "bytes": 8896648,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ap Gia-Bac",
    "sheet_key": "L701466314"
@@ -8663,7 +9036,8 @@
    "bytes": 10551515,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Đà Lạt",
    "sheet_key": "L701466321"
@@ -8686,7 +9060,8 @@
    "bytes": 8372930,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Đại Ninh",
    "sheet_key": "L701466322"
@@ -8709,7 +9084,8 @@
    "bytes": 10928919,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Di Linh",
    "sheet_key": "L701466323"
@@ -8732,7 +9108,8 @@
    "bytes": 9148236,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Đinh Văn",
    "sheet_key": "L701466324"
@@ -8755,7 +9132,8 @@
    "bytes": 10333340,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Buôn Ja Ea Kuăt",
    "sheet_key": "L701466331"
@@ -8778,7 +9156,8 @@
    "bytes": 9307477,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Dan Kia",
    "sheet_key": "L701466332"
@@ -8801,7 +9180,8 @@
    "bytes": 11034587,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Phi Sroïn",
    "sheet_key": "L701466333"
@@ -8824,7 +9204,8 @@
    "bytes": 9262986,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Buon Dong Bak",
    "sheet_key": "L701466334"
@@ -8847,7 +9228,8 @@
    "bytes": 6702290,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Buôn Hồ",
    "sheet_key": "L701466341"
@@ -8870,7 +9252,8 @@
    "bytes": 6709137,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Ban Ti Srễnh",
    "sheet_key": "L701466342"
@@ -8893,7 +9276,8 @@
    "bytes": 6853533,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Ban Me Thuot",
    "sheet_key": "L701466343"
@@ -8916,7 +9300,8 @@
    "bytes": 8848091,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Buon Trap",
    "sheet_key": "L701466344"
@@ -8939,7 +9324,8 @@
    "bytes": 10308017,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Cheo Reo Hau Bon",
    "sheet_key": "L701466351"
@@ -8962,7 +9348,8 @@
    "bytes": 8207912,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ban Suk Hdrah",
    "sheet_key": "L701466352"
@@ -8985,7 +9372,8 @@
    "bytes": 8926381,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Ban Drăng",
    "sheet_key": "L701466353"
@@ -9008,7 +9396,8 @@
    "bytes": 8845693,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ban Tsham",
    "sheet_key": "L701466354"
@@ -9031,7 +9420,8 @@
    "bytes": 10216938,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Chư Rpan",
    "sheet_key": "L701466361"
@@ -9054,7 +9444,8 @@
    "bytes": 11028673,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Phú Thiện",
    "sheet_key": "L701466362"
@@ -9077,7 +9468,8 @@
    "bytes": 8510762,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Phú Nhơn",
    "sheet_key": "L701466363"
@@ -9100,6 +9492,7 @@
    "bytes": 20734598,
    "sha256": null,
    "kind": "geopdf",
+   "date": "",
    "year": null,
    "scale_n": 50000,
    "place": "Đăk Đoa",
@@ -9123,7 +9516,8 @@
    "bytes": 11382218,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Kon Mahar",
    "sheet_key": "L701466371"
@@ -9146,7 +9540,8 @@
    "bytes": 7812459,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Plei Troêh",
    "sheet_key": "L701466372"
@@ -9169,7 +9564,8 @@
    "bytes": 8056269,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Plei Neh",
    "sheet_key": "L701466373"
@@ -9192,7 +9588,8 @@
    "bytes": 9215681,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Kon Tum",
    "sheet_key": "L701466374"
@@ -9215,7 +9612,8 @@
    "bytes": 10627391,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Dak Ninh Kola",
    "sheet_key": "L701466381"
@@ -9238,7 +9636,8 @@
    "bytes": 6782986,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Chương Nghĩa",
    "sheet_key": "L701466382"
@@ -9261,7 +9660,8 @@
    "bytes": 7815467,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Kong Rơman",
    "sheet_key": "L701466383"
@@ -9284,7 +9684,8 @@
    "bytes": 8478797,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Mang Buk",
    "sheet_key": "L701466384"
@@ -9307,7 +9708,8 @@
    "bytes": 9772910,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Tien Phuoc Phuon An",
    "sheet_key": "L701466391"
@@ -9330,7 +9732,8 @@
    "bytes": 7877837,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Gi Làng",
    "sheet_key": "L701466392"
@@ -9353,7 +9756,8 @@
    "bytes": 7762919,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Lac Trom Dong",
    "sheet_key": "L701466393"
@@ -9376,7 +9780,8 @@
    "bytes": 10393560,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Hau Duc Tien Tre",
    "sheet_key": "L701466394"
@@ -9399,7 +9804,8 @@
    "bytes": 9184082,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Hội An",
    "sheet_key": "L701466401"
@@ -9422,7 +9828,8 @@
    "bytes": 7559204,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Tam Ky West",
    "sheet_key": "L701466402"
@@ -9445,7 +9852,8 @@
    "bytes": 8882906,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Hiệp Đức",
    "sheet_key": "L701466403"
@@ -9468,7 +9876,8 @@
    "bytes": 9902646,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Đại Lộc",
    "sheet_key": "L701466404"
@@ -9491,7 +9900,8 @@
    "bytes": 10014286,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Khu Phố Nam Thọ",
    "sheet_key": "L701466412"
@@ -9514,7 +9924,8 @@
    "bytes": 8685252,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Đà Nẵng",
    "sheet_key": "L701466413"
@@ -9537,7 +9948,8 @@
    "bytes": 10704255,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Thon Trung Kien",
    "sheet_key": "L701466414"
@@ -9560,6 +9972,7 @@
    "bytes": 8357925,
    "sha256": null,
    "kind": "geopdf",
+   "date": "",
    "year": null,
    "scale_n": 50000,
    "place": "Liên Hương",
@@ -9583,7 +9996,8 @@
    "bytes": 10726948,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Hải Ninh",
    "sheet_key": "L701467314_002"
@@ -9606,6 +10020,7 @@
    "bytes": 22211946,
    "sha256": null,
    "kind": "geopdf",
+   "date": "",
    "year": null,
    "scale_n": 50000,
    "place": "Bác Ái",
@@ -9629,7 +10044,8 @@
    "bytes": 9565544,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Phan Rang",
    "sheet_key": "L701467322_003"
@@ -9652,7 +10068,8 @@
    "bytes": 6971782,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ma Nôi",
    "sheet_key": "L701467323_001"
@@ -9675,6 +10092,7 @@
    "bytes": 22419306,
    "sha256": null,
    "kind": "geopdf",
+   "date": "",
    "year": null,
    "scale_n": 50000,
    "place": "Đ’Ran",
@@ -9698,7 +10116,8 @@
    "bytes": 8440285,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Buôn Thạch Trại",
    "sheet_key": "L701467331_001"
@@ -9721,7 +10140,8 @@
    "bytes": 12371569,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "E Lam Thoung",
    "sheet_key": "L701467332"
@@ -9744,7 +10164,8 @@
    "bytes": 10756281,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "B. Du Damour",
    "sheet_key": "L701467333"
@@ -9767,7 +10188,8 @@
    "bytes": 10283181,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Lak Ea Gam",
    "sheet_key": "L701467334"
@@ -9790,7 +10212,8 @@
    "bytes": 11065285,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Phú Đức",
    "sheet_key": "L701467341"
@@ -9813,7 +10236,8 @@
    "bytes": 11740978,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Buon Ea Thi",
    "sheet_key": "L701467342"
@@ -9836,7 +10260,8 @@
    "bytes": 8571935,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1964",
+   "year": 1964,
    "scale_n": 50000,
    "place": "Ban M’trơng",
    "sheet_key": "L701467343"
@@ -9859,7 +10284,8 @@
    "bytes": 10274410,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Ban M’gâm",
    "sheet_key": "L701467344"
@@ -9882,7 +10308,8 @@
    "bytes": 8497539,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Triêm Đức",
    "sheet_key": "L701467351"
@@ -9905,7 +10332,8 @@
    "bytes": 6341638,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Sơn Hòa, Củng Sơn",
    "sheet_key": "L701467352"
@@ -9928,7 +10356,8 @@
    "bytes": 10287491,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Phú Túc",
    "sheet_key": "L701467353"
@@ -9951,7 +10380,8 @@
    "bytes": 8281613,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Buon Thoat",
    "sheet_key": "L701467354"
@@ -9974,7 +10404,8 @@
    "bytes": 10434637,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Canh Tiên",
    "sheet_key": "L701467362"
@@ -9997,7 +10428,8 @@
    "bytes": 10639513,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Plei Djama",
    "sheet_key": "L701467363"
@@ -10020,7 +10452,8 @@
    "bytes": 7816443,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "An Túc, An Khê",
    "sheet_key": "L701467364"
@@ -10043,7 +10476,8 @@
    "bytes": 8822846,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Hoài Ân",
    "sheet_key": "L701467371"
@@ -10066,7 +10500,8 @@
    "bytes": 9594532,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Tiên Thuận",
    "sheet_key": "L701467372"
@@ -10089,7 +10524,8 @@
    "bytes": 10730921,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Kan Nak",
    "sheet_key": "L701467373"
@@ -10112,7 +10548,8 @@
    "bytes": 6214579,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Kon Giong",
    "sheet_key": "L701467374"
@@ -10135,7 +10572,8 @@
    "bytes": 10156166,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Mộ Đức",
    "sheet_key": "L701467381"
@@ -10158,7 +10596,8 @@
    "bytes": 9696694,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "An Lão",
    "sheet_key": "L701467382"
@@ -10181,7 +10620,8 @@
    "bytes": 10495125,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Gia Vực",
    "sheet_key": "L701467383"
@@ -10204,7 +10644,8 @@
    "bytes": 10638349,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ba Tơ",
    "sheet_key": "L701467384"
@@ -10227,7 +10668,8 @@
    "bytes": 9527168,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Bình Sơn",
    "sheet_key": "L701467391"
@@ -10250,7 +10692,8 @@
    "bytes": 9035850,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Quảng Ngãi",
    "sheet_key": "L701467392"
@@ -10273,7 +10716,8 @@
    "bytes": 8190113,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Sơn Hà",
    "sheet_key": "L701467393"
@@ -10296,7 +10740,8 @@
    "bytes": 9644853,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Lý Tín",
    "sheet_key": "L701467394"
@@ -10319,7 +10764,8 @@
    "bytes": 6794202,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Tam Ky East",
    "sheet_key": "L701467403"
@@ -10342,7 +10788,8 @@
    "bytes": 19447897,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Tân Hiệp",
    "sheet_key": "L701467404"
@@ -10365,7 +10812,8 @@
    "bytes": 8267116,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Thon Son Hai",
    "sheet_key": "L701468314"
@@ -10388,7 +10836,8 @@
    "bytes": 10161629,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Nui Can Linh",
    "sheet_key": "L701468321"
@@ -10411,6 +10860,7 @@
    "bytes": 11549443,
    "sha256": null,
    "kind": "geopdf",
+   "date": "",
    "year": null,
    "scale_n": 50000,
    "place": "Thanh Hải",
@@ -10434,7 +10884,8 @@
    "bytes": 10952760,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Cam Ranh",
    "sheet_key": "L701468324"
@@ -10457,7 +10908,8 @@
    "bytes": 9231601,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Ninh Phouc",
    "sheet_key": "L701468331"
@@ -10480,6 +10932,7 @@
    "bytes": 5016221,
    "sha256": null,
    "kind": "geopdf",
+   "date": "",
    "year": null,
    "scale_n": 50000,
    "place": "Thôn Bích Đầm",
@@ -10503,7 +10956,8 @@
    "bytes": 9162313,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Nha Trang",
    "sheet_key": "L701468333"
@@ -10526,7 +10980,8 @@
    "bytes": 8408653,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Ninh Hòa",
    "sheet_key": "L701468334"
@@ -10549,7 +11004,8 @@
    "bytes": 7424418,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Bàn Nham",
    "sheet_key": "L701468341"
@@ -10572,7 +11028,8 @@
    "bytes": 11566786,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Ninh Lâm",
    "sheet_key": "L701468342"
@@ -10595,7 +11052,8 @@
    "bytes": 10304232,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Vạn Giã",
    "sheet_key": "L701468343"
@@ -10618,7 +11076,8 @@
    "bytes": 9574905,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Lien Thach",
    "sheet_key": "L701468344"
@@ -10641,7 +11100,8 @@
    "bytes": 8895281,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Tuy An Phu Tan",
    "sheet_key": "L701468351"
@@ -10664,7 +11124,8 @@
    "bytes": 9608816,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Tuy Hoa Chau Thanh",
    "sheet_key": "L701468352"
@@ -10687,7 +11148,8 @@
    "bytes": 9852287,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Đồng Cam",
    "sheet_key": "L701468353"
@@ -10710,7 +11172,8 @@
    "bytes": 7914817,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1971",
+   "year": 1971,
    "scale_n": 50000,
    "place": "Đồng Xuân",
    "sheet_key": "L701468354"
@@ -10733,7 +11196,8 @@
    "bytes": 5359335,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1989",
+   "year": 1989,
    "scale_n": 50000,
    "place": "Phú Hội",
    "sheet_key": "L701468362"
@@ -10756,7 +11220,8 @@
    "bytes": 8122023,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Thạch Khê",
    "sheet_key": "L701468363"
@@ -10779,7 +11244,8 @@
    "bytes": 9133592,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Quinhon",
    "sheet_key": "L701468364"
@@ -10802,7 +11268,8 @@
    "bytes": 7689005,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Phù Mỹ",
    "sheet_key": "L701468373"
@@ -10825,7 +11292,8 @@
    "bytes": 8580329,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1984",
+   "year": 1984,
    "scale_n": 50000,
    "place": "Bồng Sơn",
    "sheet_key": "L701468374"
@@ -10848,7 +11316,8 @@
    "bytes": 9013445,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Tam Quan",
    "sheet_key": "L701468383"
@@ -10871,7 +11340,8 @@
    "bytes": 6041408,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1983",
+   "year": 1983,
    "scale_n": 50000,
    "place": "Phước Điền",
    "sheet_key": "L701468384"
@@ -10894,7 +11364,8 @@
    "bytes": 8943827,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Fu Chai",
    "sheet_key": "L701554521"
@@ -10917,7 +11388,8 @@
    "bytes": 9622005,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Muang Hat Hin",
    "sheet_key": "L701554532"
@@ -10940,7 +11412,8 @@
    "bytes": 10378149,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Mou Chang",
    "sheet_key": "L701554533"
@@ -10963,7 +11436,8 @@
    "bytes": 8450397,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Tao Phya",
    "sheet_key": "L701554534"
@@ -10986,7 +11460,8 @@
    "bytes": 9584321,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Ban Thin Toc",
    "sheet_key": "L701555511"
@@ -11009,7 +11484,8 @@
    "bytes": 6862315,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Ban Namluang",
    "sheet_key": "L701555512"
@@ -11032,7 +11508,8 @@
    "bytes": 10221157,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Na Lam",
    "sheet_key": "L701555522"
@@ -11055,7 +11532,8 @@
    "bytes": 8303529,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Phou Tatèson",
    "sheet_key": "L701555523"
@@ -11078,7 +11556,8 @@
    "bytes": 8737062,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Nam Mat",
    "sheet_key": "L701556504"
@@ -11101,7 +11580,8 @@
    "bytes": 10173428,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Ban Zaosi",
    "sheet_key": "L701557503"
@@ -11124,7 +11604,8 @@
    "bytes": 15453447,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Ban Muang-Ngat",
    "sheet_key": "L701558473"
@@ -11147,7 +11628,8 @@
    "bytes": 12585784,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Muong Het",
    "sheet_key": "L701558504"
@@ -11170,7 +11652,8 @@
    "bytes": 10843710,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ban Sang",
    "sheet_key": "L701559462"
@@ -11193,7 +11676,8 @@
    "bytes": 8715498,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Xamtai",
    "sheet_key": "L701559484"
@@ -11216,6 +11700,7 @@
    "bytes": 29465865,
    "sha256": null,
    "kind": "geopdf",
+   "date": "",
    "year": null,
    "scale_n": 50000,
    "place": "Near Bản Bo",
@@ -11239,7 +11724,8 @@
    "bytes": 9417574,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Nape",
    "sheet_key": "L701560454"
@@ -11262,7 +11748,8 @@
    "bytes": 8372577,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Ban Nathon",
    "sheet_key": "L701562421"
@@ -11285,7 +11772,8 @@
    "bytes": 6658833,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Ban Vang-Als",
    "sheet_key": "L701562433"
@@ -11308,7 +11796,8 @@
    "bytes": 10004084,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Ha Shin Pe Nu",
    "sheet_key": "L701563414"
@@ -11331,7 +11820,8 @@
    "bytes": 8079079,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 50000,
    "place": "Ban Vangtat",
    "sheet_key": "L701564392"
@@ -11354,7 +11844,8 @@
    "bytes": 8429123,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1965",
+   "year": 1965,
    "scale_n": 50000,
    "place": "Ban Tangyoun",
    "sheet_key": "L701564403"
@@ -11377,7 +11868,8 @@
    "bytes": 10034753,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Ph Kampong Trach",
    "sheet_key": "L701661311"
@@ -11400,7 +11892,8 @@
    "bytes": 7466590,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1993",
+   "year": 1993,
    "scale_n": 50000,
    "place": "Svay Rieng",
    "sheet_key": "L701661312"
@@ -11423,7 +11916,8 @@
    "bytes": 8173138,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1969",
+   "year": 1969,
    "scale_n": 50000,
    "place": "Choam Kravien",
    "sheet_key": "L701662321"
@@ -11446,7 +11940,8 @@
    "bytes": 12285938,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1970",
+   "year": 1970,
    "scale_n": 50000,
    "place": "Memut Memot",
    "sheet_key": "L701662324"
@@ -11469,7 +11964,8 @@
    "bytes": 5504649,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1967",
+   "year": 1967,
    "scale_n": 50000,
    "place": "Meak Say",
    "sheet_key": "L701663333_001"
@@ -11492,7 +11988,8 @@
    "bytes": 5361819,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "O Tea",
    "sheet_key": "L701664341_001"
@@ -11515,7 +12012,8 @@
    "bytes": 5073309,
    "sha256": null,
    "kind": "geopdf",
-   "year": null,
+   "date": "1966",
+   "year": 1966,
    "scale_n": 50000,
    "place": "Mereuch",
    "sheet_key": "L701664352_001"
@@ -12553,8 +13051,8 @@
    "bytes": 5515210,
    "sha256": "0291bae3f4f121fec9aa6e737eae1a1b612b1414c8514f601c5ff1e84e3218ad",
    "kind": "geopdf",
-   "date": "",
-   "year": null,
+   "date": "1968",
+   "year": 1968,
    "scale_n": 12500,
    "place": "Hòn Gai",
    "sheet_key": "L909XHONGAY__001"
@@ -13026,1062 +13524,6 @@
    "scale_n": 400000,
    "place": "Phnom Penh",
    "sheet_key": "routiere_1951_f20_phnompenh"
-  },
-  {
-   "id": "l509_nc48-3_ed3",
-   "series": "l509",
-   "title": "Prey Veng (NC 48-3)",
-   "bounds": [
-    105.0,
-    11.0,
-    106.5,
-    12.0
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-3-3rd-ed.jpg"
-   ],
-   "bytes": 5590368,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3809
-   ],
-   "sheet": "NC 48-3",
-   "place": "Prey Veng",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NC 48-3"
-  },
-  {
-   "id": "l509_nc48-4_ed2",
-   "series": "l509",
-   "title": "An Loc (NC 48-4)",
-   "bounds": [
-    106.5,
-    11.0,
-    108.0,
-    11.9974
-   ],
-   "region": "south",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-4-2nd-ed.jpg"
-   ],
-   "bytes": 6280595,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3794
-   ],
-   "sheet": "NC 48-4",
-   "place": "An Loc",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NC 48-4"
-  },
-  {
-   "id": "l509_nc48-5_ed2",
-   "series": "l509",
-   "title": "Kampot (NC 48-5)",
-   "bounds": [
-    102.75,
-    9.85,
-    104.2833,
-    11.0333
-   ],
-   "region": "south",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-5-2nd-ed.jpg"
-   ],
-   "bytes": 4390993,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3792
-   ],
-   "sheet": "NC 48-5",
-   "place": "Kampot",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NC 48-5"
-  },
-  {
-   "id": "l509_nc48-7_ed3",
-   "series": "l509",
-   "title": "Saigon (NC 48-7)",
-   "bounds": [
-    105.7505,
-    10.0,
-    107.25,
-    10.9995
-   ],
-   "region": "south",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-7-3rd-ed.jpg"
-   ],
-   "bytes": 6246726,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3794
-   ],
-   "sheet": "NC 48-7",
-   "place": "Saigon",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NC 48-7"
-  },
-  {
-   "id": "l509_nc48-8_ed3",
-   "series": "l509",
-   "title": "Phan Thiet (NC 48-8)",
-   "bounds": [
-    107.25,
-    10.0,
-    108.75,
-    10.9985
-   ],
-   "region": "south",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-8-3rd-ed.jpg"
-   ],
-   "bytes": 4980000,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3794
-   ],
-   "sheet": "NC 48-8",
-   "place": "Phan Thiet",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NC 48-8"
-  },
-  {
-   "id": "l509_nc48-10_ed4",
-   "series": "l509",
-   "title": "Quan Long (NC 48-10)",
-   "bounds": [
-    104.3333,
-    9.0,
-    105.8333,
-    9.9985
-   ],
-   "region": "south",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-10-4th-ed.jpg"
-   ],
-   "bytes": 5203496,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3775
-   ],
-   "sheet": "NC 48-10",
-   "place": "Quan Long",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NC 48-10"
-  },
-  {
-   "id": "l509_nc48-15_ed3",
-   "series": "l509",
-   "title": "Tan Hung Dong (NC 48-15)",
-   "bounds": [
-    104.5,
-    8.0,
-    106.0,
-    8.9979
-   ],
-   "region": "south",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-15-3rd-ed.jpg"
-   ],
-   "bytes": 4150332,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3791
-   ],
-   "sheet": "NC 48-15",
-   "place": "Tan Hung Dong",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NC 48-15"
-  },
-  {
-   "id": "l509_nc49-1",
-   "series": "l509",
-   "title": "Dalat (NC 49-1)",
-   "bounds": [
-    108.0,
-    10.9995,
-    109.5011,
-    11.9985
-   ],
-   "region": "south",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc49-1.jpg"
-   ],
-   "bytes": 6498276,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3790
-   ],
-   "sheet": "NC 49-1",
-   "place": "Dalat",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NC 49-1"
-  },
-  {
-   "id": "l509_nd48-4_ed2",
-   "series": "l509",
-   "title": "Ben Giang (ND 48-4)",
-   "bounds": [
-    106.5,
-    15.0,
-    108.0,
-    15.999
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-4-2nd-ed.jpg"
-   ],
-   "bytes": 6530833,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3800
-   ],
-   "sheet": "ND 48-4",
-   "place": "Ben Giang",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:ND 48-4"
-  },
-  {
-   "id": "l509_nd48-8_ed2",
-   "series": "l509",
-   "title": "Muong May (ND 48-8)",
-   "bounds": [
-    106.5,
-    14.0005,
-    108.0,
-    14.9985
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-8-2nd-ed.jpg"
-   ],
-   "bytes": 5660791,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3786
-   ],
-   "sheet": "ND 48-8",
-   "place": "Muong May",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:ND 48-8"
-  },
-  {
-   "id": "l509_nd48-12_ed2",
-   "series": "l509",
-   "title": "Voeune Sai (ND 48-12)",
-   "bounds": [
-    106.5,
-    13.0,
-    108.0,
-    13.9989
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-12-2nd-ed.jpg"
-   ],
-   "bytes": 4982768,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3665
-   ],
-   "sheet": "ND 48-12",
-   "place": "Voeune Sai",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:ND 48-12"
-  },
-  {
-   "id": "l509_nd48-16_ed2",
-   "series": "l509",
-   "title": "Sre Khtum (ND 48-16)",
-   "bounds": [
-    106.4989,
-    12.0,
-    108.0,
-    12.9989
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-16-2nd-ed.jpg"
-   ],
-   "bytes": 5474683,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3660
-   ],
-   "sheet": "ND 48-16",
-   "place": "Sre Khtum",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:ND 48-16"
-  },
-  {
-   "id": "l509_nd49-1_ed2",
-   "series": "l509",
-   "title": "Quang Ngai (ND 49-1)",
-   "bounds": [
-    108.0,
-    15.0,
-    109.1667,
-    16.4175
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-1-2nd-ed.jpg"
-   ],
-   "bytes": 5385878,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3662
-   ],
-   "sheet": "ND 49-1",
-   "place": "Quang Ngai",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:ND 49-1"
-  },
-  {
-   "id": "l509_nd49-5",
-   "series": "l509",
-   "title": "Bong Son (ND 49-5)",
-   "bounds": [
-    108.0,
-    14.0,
-    109.5,
-    14.9979
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-5.jpg"
-   ],
-   "bytes": 6092003,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3728
-   ],
-   "sheet": "ND 49-5",
-   "place": "Bong Son",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:ND 49-5"
-  },
-  {
-   "id": "l509_nd49-9_ed2",
-   "series": "l509",
-   "title": "Qui Nhon (ND 49-9)",
-   "bounds": [
-    108.0,
-    13.0,
-    109.5,
-    13.9984
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-9-2nd-ed.jpg"
-   ],
-   "bytes": 6397139,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3795
-   ],
-   "sheet": "ND 49-9",
-   "place": "Qui Nhon",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:ND 49-9"
-  },
-  {
-   "id": "l509_nd49-13_ed3",
-   "series": "l509",
-   "title": "Nha Trang (ND 49-13)",
-   "bounds": [
-    108.0,
-    12.0005,
-    109.5,
-    12.9984
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-13-3rd-ed.jpg"
-   ],
-   "bytes": 6604307,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3787
-   ],
-   "sheet": "ND 49-13",
-   "place": "Nha Trang",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:ND 49-13"
-  },
-  {
-   "id": "l509_ne48-2_ed2",
-   "series": "l509",
-   "title": "Cua Rao (NE 48-2)",
-   "bounds": [
-    103.5,
-    19.0,
-    105.0,
-    19.9979
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-2-2nd-ed.jpg"
-   ],
-   "bytes": 6486401,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3793
-   ],
-   "sheet": "NE 48-2",
-   "place": "Cua Rao",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NE 48-2"
-  },
-  {
-   "id": "l509_ne48-3_ed2",
-   "series": "l509",
-   "title": "Thanh Hoa (NE 48-3)",
-   "bounds": [
-    105.0,
-    19.0,
-    106.5,
-    19.999
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-3-2nd-ed.jpg"
-   ],
-   "bytes": 5700748,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3798
-   ],
-   "sheet": "NE 48-3",
-   "place": "Thanh Hoa",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NE 48-3"
-  },
-  {
-   "id": "l509_ne48-7_ed2",
-   "series": "l509",
-   "title": "Vinh (NE 48-7)",
-   "bounds": [
-    105.0,
-    17.9995,
-    106.5,
-    18.9985
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-7-2nd-ed.jpg"
-   ],
-   "bytes": 5670904,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3792
-   ],
-   "sheet": "NE 48-7",
-   "place": "Vinh",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NE 48-7"
-  },
-  {
-   "id": "l509_ne48-11_ed4",
-   "series": "l509",
-   "title": "Badon (NE 48-11)",
-   "bounds": [
-    105.0,
-    17.0,
-    106.5,
-    17.999
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-11-4th-ed.jpg"
-   ],
-   "bytes": 6668592,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3777
-   ],
-   "sheet": "NE 48-11",
-   "place": "Badon",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NE 48-11"
-  },
-  {
-   "id": "l509_ne48-12_ed3",
-   "series": "l509",
-   "title": "Dong Hoi (NE 48-12)",
-   "bounds": [
-    106.5,
-    17.0005,
-    108.0,
-    17.9974
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-12-3rd-ed.jpg"
-   ],
-   "bytes": 4707543,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3791
-   ],
-   "sheet": "NE 48-12",
-   "place": "Dong Hoi",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NE 48-12"
-  },
-  {
-   "id": "l509_ne48-16_ed2",
-   "series": "l509",
-   "title": "Hue (NE 48-16)",
-   "bounds": [
-    106.5,
-    16.0,
-    108.0,
-    16.998
-   ],
-   "region": "centre",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-16-2nd-ed.jpg"
-   ],
-   "bytes": 6427534,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3804
-   ],
-   "sheet": "NE 48-16",
-   "place": "Hue",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NE 48-16"
-  },
-  {
-   "id": "l509_nf48-5",
-   "series": "l509",
-   "title": "Lai Chau (NF 48-5)",
-   "bounds": [
-    102.0,
-    22.0,
-    103.5,
-    23.0
-   ],
-   "region": "north",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-5.jpg"
-   ],
-   "bytes": 6805144,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3790
-   ],
-   "sheet": "NF 48-5",
-   "place": "Lai Chau",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NF 48-5"
-  },
-  {
-   "id": "l509_nf48-7",
-   "series": "l509",
-   "title": "Cao Bang (NF 48-7)",
-   "bounds": [
-    105.0,
-    22.0,
-    106.5,
-    22.9963
-   ],
-   "region": "north",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-7.jpg"
-   ],
-   "bytes": 6194074,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3842
-   ],
-   "sheet": "NF 48-7",
-   "place": "Cao Bang",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NF 48-7"
-  },
-  {
-   "id": "l509_nf48-9",
-   "series": "l509",
-   "title": "Dien Bien Phu (NF 48-9)",
-   "bounds": [
-    102.0,
-    21.0,
-    103.5,
-    22.0
-   ],
-   "region": "north",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-9.jpg"
-   ],
-   "bytes": 6745032,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3800
-   ],
-   "sheet": "NF 48-9",
-   "place": "Dien Bien Phu",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NF 48-9"
-  },
-  {
-   "id": "l509_nf48-10",
-   "series": "l509",
-   "title": "Yen Bay (NF 48-10)",
-   "bounds": [
-    103.5,
-    21.001,
-    105.0,
-    21.9974
-   ],
-   "region": "north",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-10.jpg"
-   ],
-   "bytes": 6796651,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3786
-   ],
-   "sheet": "NF 48-10",
-   "place": "Yen Bay",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NF 48-10"
-  },
-  {
-   "id": "l509_nf48-11",
-   "series": "l509",
-   "title": "Hanoi (NF 48-11)",
-   "bounds": [
-    105.0,
-    21.0,
-    106.5,
-    22.0
-   ],
-   "region": "north",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-11.jpg"
-   ],
-   "bytes": 6623915,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3770
-   ],
-   "sheet": "NF 48-11",
-   "place": "Hanoi",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NF 48-11"
-  },
-  {
-   "id": "l509_nf48-12",
-   "series": "l509",
-   "title": "Mon Cay (NF 48-12)",
-   "bounds": [
-    106.5,
-    20.999,
-    108.0,
-    22.0
-   ],
-   "region": "north",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-12.jpg"
-   ],
-   "bytes": 6455179,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3778
-   ],
-   "sheet": "NF 48-12",
-   "place": "Mon Cay",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NF 48-12"
-  },
-  {
-   "id": "l509_nf48-13",
-   "series": "l509",
-   "title": "Muong Ngoi (NF 48-13)",
-   "bounds": [
-    102.0,
-    20.0005,
-    103.5,
-    20.9979
-   ],
-   "region": "north",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-13.jpg"
-   ],
-   "bytes": 6086658,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3742
-   ],
-   "sheet": "NF 48-13",
-   "place": "Muong Ngoi",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NF 48-13"
-  },
-  {
-   "id": "l509_nf48-14",
-   "series": "l509",
-   "title": "Sam Neua (NF 48-14)",
-   "bounds": [
-    103.5,
-    20.0,
-    105.0,
-    20.9979
-   ],
-   "region": "north",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-14.jpg"
-   ],
-   "bytes": 5847896,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3782
-   ],
-   "sheet": "NF 48-14",
-   "place": "Sam Neua",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NF 48-14"
-  },
-  {
-   "id": "l509_nf48-15",
-   "series": "l509",
-   "title": "Hai Duong (NF 48-15)",
-   "bounds": [
-    105.0,
-    20.0,
-    106.5,
-    20.9979
-   ],
-   "region": "north",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-15.jpg"
-   ],
-   "bytes": 6180124,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3672
-   ],
-   "sheet": "NF 48-15",
-   "place": "Hai Duong",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NF 48-15"
-  },
-  {
-   "id": "l509_nf48-16",
-   "series": "l509",
-   "title": "Haiphong (NF 48-16)",
-   "bounds": [
-    106.5,
-    20.0,
-    108.0,
-    20.9979
-   ],
-   "region": "north",
-   "urls": [
-    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-16.jpg"
-   ],
-   "bytes": 5912860,
-   "sha256": null,
-   "kind": "scan",
-   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-   "work_size": [
-    5000,
-    3792
-   ],
-   "sheet": "NF 48-16",
-   "place": "Haiphong",
-   "date": "",
-   "scale": "1:250,000",
-   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "year": null,
-   "scale_n": 250000,
-   "sheet_key": "l509:NF 48-16"
   },
   {
    "id": "warper_4317",
@@ -24470,6 +23912,1062 @@
    "year": 1952,
    "scale_n": 100000,
    "sheet_key": "sgi100k:244W"
+  },
+  {
+   "id": "l509_nc48-3_ed3",
+   "series": "l509",
+   "title": "Prey Veng (NC 48-3)",
+   "bounds": [
+    105.0,
+    11.0,
+    106.5,
+    12.0
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-3-3rd-ed.jpg"
+   ],
+   "bytes": 5590368,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3809
+   ],
+   "sheet": "NC 48-3",
+   "place": "Prey Veng",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NC 48-3"
+  },
+  {
+   "id": "l509_nc48-4_ed2",
+   "series": "l509",
+   "title": "An Loc (NC 48-4)",
+   "bounds": [
+    106.5,
+    11.0,
+    108.0,
+    11.9974
+   ],
+   "region": "south",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-4-2nd-ed.jpg"
+   ],
+   "bytes": 6280595,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3794
+   ],
+   "sheet": "NC 48-4",
+   "place": "An Loc",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NC 48-4"
+  },
+  {
+   "id": "l509_nc48-5_ed2",
+   "series": "l509",
+   "title": "Kampot (NC 48-5)",
+   "bounds": [
+    102.75,
+    9.85,
+    104.2833,
+    11.0333
+   ],
+   "region": "south",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-5-2nd-ed.jpg"
+   ],
+   "bytes": 4390993,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3792
+   ],
+   "sheet": "NC 48-5",
+   "place": "Kampot",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NC 48-5"
+  },
+  {
+   "id": "l509_nc48-7_ed3",
+   "series": "l509",
+   "title": "Saigon (NC 48-7)",
+   "bounds": [
+    105.7505,
+    10.0,
+    107.25,
+    10.9995
+   ],
+   "region": "south",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-7-3rd-ed.jpg"
+   ],
+   "bytes": 6246726,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3794
+   ],
+   "sheet": "NC 48-7",
+   "place": "Saigon",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NC 48-7"
+  },
+  {
+   "id": "l509_nc48-8_ed3",
+   "series": "l509",
+   "title": "Phan Thiet (NC 48-8)",
+   "bounds": [
+    107.25,
+    10.0,
+    108.75,
+    10.9985
+   ],
+   "region": "south",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-8-3rd-ed.jpg"
+   ],
+   "bytes": 4980000,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3794
+   ],
+   "sheet": "NC 48-8",
+   "place": "Phan Thiet",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NC 48-8"
+  },
+  {
+   "id": "l509_nc48-10_ed4",
+   "series": "l509",
+   "title": "Quan Long (NC 48-10)",
+   "bounds": [
+    104.3333,
+    9.0,
+    105.8333,
+    9.9985
+   ],
+   "region": "south",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-10-4th-ed.jpg"
+   ],
+   "bytes": 5203496,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3775
+   ],
+   "sheet": "NC 48-10",
+   "place": "Quan Long",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NC 48-10"
+  },
+  {
+   "id": "l509_nc48-15_ed3",
+   "series": "l509",
+   "title": "Tan Hung Dong (NC 48-15)",
+   "bounds": [
+    104.5,
+    8.0,
+    106.0,
+    8.9979
+   ],
+   "region": "south",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-15-3rd-ed.jpg"
+   ],
+   "bytes": 4150332,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3791
+   ],
+   "sheet": "NC 48-15",
+   "place": "Tan Hung Dong",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NC 48-15"
+  },
+  {
+   "id": "l509_nc49-1",
+   "series": "l509",
+   "title": "Dalat (NC 49-1)",
+   "bounds": [
+    108.0,
+    10.9995,
+    109.5011,
+    11.9985
+   ],
+   "region": "south",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc49-1.jpg"
+   ],
+   "bytes": 6498276,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3790
+   ],
+   "sheet": "NC 49-1",
+   "place": "Dalat",
+   "date": "1957",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1957,
+   "scale_n": 250000,
+   "sheet_key": "l509:NC 49-1"
+  },
+  {
+   "id": "l509_nd48-4_ed2",
+   "series": "l509",
+   "title": "Ben Giang (ND 48-4)",
+   "bounds": [
+    106.5,
+    15.0,
+    108.0,
+    15.999
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-4-2nd-ed.jpg"
+   ],
+   "bytes": 6530833,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3800
+   ],
+   "sheet": "ND 48-4",
+   "place": "Ben Giang",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:ND 48-4"
+  },
+  {
+   "id": "l509_nd48-8_ed2",
+   "series": "l509",
+   "title": "Muong May (ND 48-8)",
+   "bounds": [
+    106.5,
+    14.0005,
+    108.0,
+    14.9985
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-8-2nd-ed.jpg"
+   ],
+   "bytes": 5660791,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3786
+   ],
+   "sheet": "ND 48-8",
+   "place": "Muong May",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:ND 48-8"
+  },
+  {
+   "id": "l509_nd48-12_ed2",
+   "series": "l509",
+   "title": "Voeune Sai (ND 48-12)",
+   "bounds": [
+    106.5,
+    13.0,
+    108.0,
+    13.9989
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-12-2nd-ed.jpg"
+   ],
+   "bytes": 4982768,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3665
+   ],
+   "sheet": "ND 48-12",
+   "place": "Voeune Sai",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:ND 48-12"
+  },
+  {
+   "id": "l509_nd48-16_ed2",
+   "series": "l509",
+   "title": "Sre Khtum (ND 48-16)",
+   "bounds": [
+    106.4989,
+    12.0,
+    108.0,
+    12.9989
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-16-2nd-ed.jpg"
+   ],
+   "bytes": 5474683,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3660
+   ],
+   "sheet": "ND 48-16",
+   "place": "Sre Khtum",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:ND 48-16"
+  },
+  {
+   "id": "l509_nd49-1_ed2",
+   "series": "l509",
+   "title": "Quang Ngai (ND 49-1)",
+   "bounds": [
+    108.0,
+    15.0,
+    109.1667,
+    16.4175
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-1-2nd-ed.jpg"
+   ],
+   "bytes": 5385878,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3662
+   ],
+   "sheet": "ND 49-1",
+   "place": "Quang Ngai",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:ND 49-1"
+  },
+  {
+   "id": "l509_nd49-5",
+   "series": "l509",
+   "title": "Bong Son (ND 49-5)",
+   "bounds": [
+    108.0,
+    14.0,
+    109.5,
+    14.9979
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-5.jpg"
+   ],
+   "bytes": 6092003,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3728
+   ],
+   "sheet": "ND 49-5",
+   "place": "Bong Son",
+   "date": "1957",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1957,
+   "scale_n": 250000,
+   "sheet_key": "l509:ND 49-5"
+  },
+  {
+   "id": "l509_nd49-9_ed2",
+   "series": "l509",
+   "title": "Qui Nhon (ND 49-9)",
+   "bounds": [
+    108.0,
+    13.0,
+    109.5,
+    13.9984
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-9-2nd-ed.jpg"
+   ],
+   "bytes": 6397139,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3795
+   ],
+   "sheet": "ND 49-9",
+   "place": "Qui Nhon",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:ND 49-9"
+  },
+  {
+   "id": "l509_nd49-13_ed3",
+   "series": "l509",
+   "title": "Nha Trang (ND 49-13)",
+   "bounds": [
+    108.0,
+    12.0005,
+    109.5,
+    12.9984
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-13-3rd-ed.jpg"
+   ],
+   "bytes": 6604307,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3787
+   ],
+   "sheet": "ND 49-13",
+   "place": "Nha Trang",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:ND 49-13"
+  },
+  {
+   "id": "l509_ne48-2_ed2",
+   "series": "l509",
+   "title": "Cua Rao (NE 48-2)",
+   "bounds": [
+    103.5,
+    19.0,
+    105.0,
+    19.9979
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-2-2nd-ed.jpg"
+   ],
+   "bytes": 6486401,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3793
+   ],
+   "sheet": "NE 48-2",
+   "place": "Cua Rao",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NE 48-2"
+  },
+  {
+   "id": "l509_ne48-3_ed2",
+   "series": "l509",
+   "title": "Thanh Hoa (NE 48-3)",
+   "bounds": [
+    105.0,
+    19.0,
+    106.5,
+    19.999
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-3-2nd-ed.jpg"
+   ],
+   "bytes": 5700748,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3798
+   ],
+   "sheet": "NE 48-3",
+   "place": "Thanh Hoa",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NE 48-3"
+  },
+  {
+   "id": "l509_ne48-7_ed2",
+   "series": "l509",
+   "title": "Vinh (NE 48-7)",
+   "bounds": [
+    105.0,
+    17.9995,
+    106.5,
+    18.9985
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-7-2nd-ed.jpg"
+   ],
+   "bytes": 5670904,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3792
+   ],
+   "sheet": "NE 48-7",
+   "place": "Vinh",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NE 48-7"
+  },
+  {
+   "id": "l509_ne48-11_ed4",
+   "series": "l509",
+   "title": "Badon (NE 48-11)",
+   "bounds": [
+    105.0,
+    17.0,
+    106.5,
+    17.999
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-11-4th-ed.jpg"
+   ],
+   "bytes": 6668592,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3777
+   ],
+   "sheet": "NE 48-11",
+   "place": "Badon",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NE 48-11"
+  },
+  {
+   "id": "l509_ne48-12_ed3",
+   "series": "l509",
+   "title": "Dong Hoi (NE 48-12)",
+   "bounds": [
+    106.5,
+    17.0005,
+    108.0,
+    17.9974
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-12-3rd-ed.jpg"
+   ],
+   "bytes": 4707543,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3791
+   ],
+   "sheet": "NE 48-12",
+   "place": "Dong Hoi",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NE 48-12"
+  },
+  {
+   "id": "l509_ne48-16_ed2",
+   "series": "l509",
+   "title": "Hue (NE 48-16)",
+   "bounds": [
+    106.5,
+    16.0,
+    108.0,
+    16.998
+   ],
+   "region": "centre",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-16-2nd-ed.jpg"
+   ],
+   "bytes": 6427534,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3804
+   ],
+   "sheet": "NE 48-16",
+   "place": "Hue",
+   "date": "1962",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1962,
+   "scale_n": 250000,
+   "sheet_key": "l509:NE 48-16"
+  },
+  {
+   "id": "l509_nf48-5",
+   "series": "l509",
+   "title": "Lai Chau (NF 48-5)",
+   "bounds": [
+    102.0,
+    22.0,
+    103.5,
+    23.0
+   ],
+   "region": "north",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-5.jpg"
+   ],
+   "bytes": 6805144,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3790
+   ],
+   "sheet": "NF 48-5",
+   "place": "Lai Chau",
+   "date": "1957",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1957,
+   "scale_n": 250000,
+   "sheet_key": "l509:NF 48-5"
+  },
+  {
+   "id": "l509_nf48-7",
+   "series": "l509",
+   "title": "Cao Bang (NF 48-7)",
+   "bounds": [
+    105.0,
+    22.0,
+    106.5,
+    22.9963
+   ],
+   "region": "north",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-7.jpg"
+   ],
+   "bytes": 6194074,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3842
+   ],
+   "sheet": "NF 48-7",
+   "place": "Cao Bang",
+   "date": "1954",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1954,
+   "scale_n": 250000,
+   "sheet_key": "l509:NF 48-7"
+  },
+  {
+   "id": "l509_nf48-9",
+   "series": "l509",
+   "title": "Dien Bien Phu (NF 48-9)",
+   "bounds": [
+    102.0,
+    21.0,
+    103.5,
+    22.0
+   ],
+   "region": "north",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-9.jpg"
+   ],
+   "bytes": 6745032,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3800
+   ],
+   "sheet": "NF 48-9",
+   "place": "Dien Bien Phu",
+   "date": "1957",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1957,
+   "scale_n": 250000,
+   "sheet_key": "l509:NF 48-9"
+  },
+  {
+   "id": "l509_nf48-10",
+   "series": "l509",
+   "title": "Yen Bay (NF 48-10)",
+   "bounds": [
+    103.5,
+    21.001,
+    105.0,
+    21.9974
+   ],
+   "region": "north",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-10.jpg"
+   ],
+   "bytes": 6796651,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3786
+   ],
+   "sheet": "NF 48-10",
+   "place": "Yen Bay",
+   "date": "1954",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1954,
+   "scale_n": 250000,
+   "sheet_key": "l509:NF 48-10"
+  },
+  {
+   "id": "l509_nf48-11",
+   "series": "l509",
+   "title": "Hanoi (NF 48-11)",
+   "bounds": [
+    105.0,
+    21.0,
+    106.5,
+    22.0
+   ],
+   "region": "north",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-11.jpg"
+   ],
+   "bytes": 6623915,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3770
+   ],
+   "sheet": "NF 48-11",
+   "place": "Hanoi",
+   "date": "1957",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1957,
+   "scale_n": 250000,
+   "sheet_key": "l509:NF 48-11"
+  },
+  {
+   "id": "l509_nf48-12",
+   "series": "l509",
+   "title": "Mon Cay (NF 48-12)",
+   "bounds": [
+    106.5,
+    20.999,
+    108.0,
+    22.0
+   ],
+   "region": "north",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-12.jpg"
+   ],
+   "bytes": 6455179,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3778
+   ],
+   "sheet": "NF 48-12",
+   "place": "Mon Cay",
+   "date": "1957",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1957,
+   "scale_n": 250000,
+   "sheet_key": "l509:NF 48-12"
+  },
+  {
+   "id": "l509_nf48-13",
+   "series": "l509",
+   "title": "Muong Ngoi (NF 48-13)",
+   "bounds": [
+    102.0,
+    20.0005,
+    103.5,
+    20.9979
+   ],
+   "region": "north",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-13.jpg"
+   ],
+   "bytes": 6086658,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3742
+   ],
+   "sheet": "NF 48-13",
+   "place": "Muong Ngoi",
+   "date": "1957",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1957,
+   "scale_n": 250000,
+   "sheet_key": "l509:NF 48-13"
+  },
+  {
+   "id": "l509_nf48-14",
+   "series": "l509",
+   "title": "Sam Neua (NF 48-14)",
+   "bounds": [
+    103.5,
+    20.0,
+    105.0,
+    20.9979
+   ],
+   "region": "north",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-14.jpg"
+   ],
+   "bytes": 5847896,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3782
+   ],
+   "sheet": "NF 48-14",
+   "place": "Sam Neua",
+   "date": "1954",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1954,
+   "scale_n": 250000,
+   "sheet_key": "l509:NF 48-14"
+  },
+  {
+   "id": "l509_nf48-15",
+   "series": "l509",
+   "title": "Hai Duong (NF 48-15)",
+   "bounds": [
+    105.0,
+    20.0,
+    106.5,
+    20.9979
+   ],
+   "region": "north",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-15.jpg"
+   ],
+   "bytes": 6180124,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3672
+   ],
+   "sheet": "NF 48-15",
+   "place": "Hai Duong",
+   "date": "1957",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1957,
+   "scale_n": 250000,
+   "sheet_key": "l509:NF 48-15"
+  },
+  {
+   "id": "l509_nf48-16",
+   "series": "l509",
+   "title": "Haiphong (NF 48-16)",
+   "bounds": [
+    106.5,
+    20.0,
+    108.0,
+    20.9979
+   ],
+   "region": "north",
+   "urls": [
+    "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-16.jpg"
+   ],
+   "bytes": 5912860,
+   "sha256": null,
+   "kind": "scan",
+   "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+   "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+   "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+   "work_size": [
+    5000,
+    3792
+   ],
+   "sheet": "NF 48-16",
+   "place": "Haiphong",
+   "date": "1957",
+   "scale": "1:250,000",
+   "series_name": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "year": 1957,
+   "scale_n": 250000,
+   "sheet_key": "l509:NF 48-16"
   }
  ]
 }

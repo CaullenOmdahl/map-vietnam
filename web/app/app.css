@@ -451,6 +451,7 @@ body.no-old-maps.lib-open #mapbar { display: none; }
 .lib-sort button[aria-pressed="true"] { color: var(--ink); font-weight: 600; text-decoration: none; }
 .lib-editions { flex-basis: 100%; margin: 4px 0 8px 12px; border-left: 2px solid var(--line); }
 .lib-row.edition .t { font-weight: 500; }
+.lib-list .m .yr { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
 .lib-group > .main .m { white-space: normal; } /* "French 1:100,000 · 3 editions, 1926–1952" may take two lines */
 .confirm-box.calm { border-color: var(--accent); margin-top: 8px; }
 .lib-detail .confirm-box { background: var(--surface); }

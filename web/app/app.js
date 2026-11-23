@@ -1828,6 +1828,7 @@ const LIB_KINDS = [
 ];
 const LIB_SORTS = [["here", "Best here"], ["old", "Oldest"], ["new", "Newest"]];
 const LIB_LIST_MAX = 120; // rows listed at once; past this the card asks to zoom in or filter
+const LIB_OUTLINES_MAX = 40; // available maps outlined at once; past this only added, pointed-at and chosen maps are
 const scaleNumber = t => { const m = /1\s*:\s*([\d\s.,]+)/.exec(t || ""); return m ? +m[1].replace(/\D/g, "") || null : null; };
 // The footprint layers (see addFootprintLayers), shown only while the library card is open.
 const FP_LAYERS = ["libfp-fill", "libfp-halo", "libfp-line-av", "libfp-line-in", "libfp-sel", "libfp-label"];
@@ -1866,7 +1867,14 @@ function libMeta(m) {
   if (m.state === "downloading") return m.progress == null ? `Downloading · ${fmtMB(m.bytes)}` : `Downloading · ${pct(m.progress)} of ${fmtMB(m.bytes)}`;
   if (m.state === "building") return `Preparing the map · ${pct(m.progress)}`;
   if (m.state === "failed") return "Could not be added";
-  return [libWhat(m), libYear(m), fmtMB(m.state === "installed" ? m.disk_bytes : m.bytes)].filter(Boolean).join(" · ");
+  return [libYear(m) || "Undated", libWhat(m), fmtMB(m.state === "installed" ? m.disk_bytes : m.bytes)].filter(Boolean).join(" · ");
+}
+// The same line as HTML, its year in bold: the year is what tells two maps of one place apart. An edition's row is
+// already named by its year, so it is left out there.
+function libMetaHTML(m, edition = false) {
+  if (!["installed", "available"].includes(m.state)) return esc(libMeta(m));
+  const rest = [libWhat(m), fmtMB(m.state === "installed" ? m.disk_bytes : m.bytes)].filter(Boolean).join(" · ");
+  return edition ? esc(rest) : `<b class="yr">${esc(libYear(m) || "Undated")}</b> · ${esc(rest)}`;
 }
 const leftText = () => S.lib.queueBytes ? `${fmtMB(S.lib.queueBytes)} left to download` : "Preparing the last map";
 // One line for the map bar while maps are on their way: "Adding Cao Lãnh · 42%", "Adding 3 maps · 12 MB left".
@@ -1990,10 +1998,10 @@ function addFootprintLayers(m) {
     "fill-color": ["match", ["get", "st"], "installed", c.installed, "busy", c.busy, c.available],
     // Fills stay faint so the map under them reads; available sheets get just enough to be tappable-looking.
     "fill-opacity": ["case", isOn("sel"), 0.22, isOn("hover"), 0.14, ["match", ["get", "st"], "installed", 0.1, "busy", 0.12, 0.03]] } });
-  m.addLayer({ id: "libfp-halo", type: "line", source: "libfp", layout: none, paint: { "line-color": c.halo, "line-width": 3.5, "line-opacity": 0.55 } });
+  m.addLayer({ id: "libfp-halo", type: "line", source: "libfp", layout: none, paint: { "line-color": c.halo, "line-width": 3, "line-opacity": 0.4 } });
   // Overview (1:250,000) sheets get a heavier dash than the 1:50,000 ones, so the two series read apart.
   m.addLayer({ id: "libfp-line-av", type: "line", source: "libfp", layout: none, filter: ["in", ["get", "st"], ["literal", ["available", "failed"]]],
-    paint: { "line-color": c.available, "line-width": ["match", ["get", "kind"], "250k", 2.4, "other", 2, 1.4], "line-dasharray": [3, 2] } });
+    paint: { "line-color": c.available, "line-opacity": 0.8, "line-width": ["match", ["get", "kind"], "250k", 1.8, "other", 1.6, 1.2], "line-dasharray": [3, 2] } });
   m.addLayer({ id: "libfp-line-in", type: "line", source: "libfp", layout: none, filter: ["in", ["get", "st"], ["literal", ["installed", "busy"]]],
     paint: { "line-color": ["match", ["get", "st"], "installed", c.installed, c.busy], "line-width": 2.2 } });
   m.addLayer({ id: "libfp-sel", type: "line", source: "libfp", layout: none,
@@ -2041,9 +2049,13 @@ function showFootprints(on, force = false) {
   if (!on) { setFpState("sel", null); setFpState("hover", null); }
   applyFootprintFilter();
 }
+// Whether the available maps' outlines are drawn: only while few enough are listed to read them apart. Hundreds of
+// overlapping sheets at once tell nothing; the one pointed at or chosen is always outlined (libfp-sel).
+const libOutlinesShown = (md = libModel()) => md.shown.filter(m => m.state !== "installed").length <= LIB_OUTLINES_MAX;
 // The scale chips and the filter field filter the footprints as well as the list.
 function applyFootprintFilter() {
   const lib = S.view.name === "library";
+  const few = lib && libOutlinesShown();
   const kind = lib && S.view.kind && S.view.kind !== "all" ? S.view.kind : null;
   const words = lib ? fold(S.view.q || "").split(/\s+/).filter(Boolean) : [];
   const parts = [];
@@ -2052,8 +2064,11 @@ function applyFootprintFilter() {
   const sf = parts.length ? ["all", ...parts] : ["to-boolean", 1];
   eachMap(m => {
     if (!m.getLayer("libfp-fill")) return;
-    for (const id of ["libfp-fill", "libfp-halo", "libfp-sel", "libfp-label"]) m.setFilter(id, sf);
-    m.setFilter("libfp-line-av", ["all", ["in", ["get", "st"], ["literal", ["available", "failed"]]], sf]);
+    const mine = ["in", ["get", "st"], ["literal", ["installed", "busy"]]];
+    const shown = few ? sf : ["all", sf, mine];
+    for (const id of ["libfp-fill", "libfp-halo", "libfp-label"]) m.setFilter(id, shown);
+    m.setFilter("libfp-sel", sf);
+    m.setFilter("libfp-line-av", few ? ["all", ["in", ["get", "st"], ["literal", ["available", "failed"]]], sf] : ["==", ["get", "st"], "none"]);
     m.setFilter("libfp-line-in", ["all", ["in", ["get", "st"], ["literal", ["installed", "busy"]]], sf]);
   });
 }
@@ -2230,7 +2245,7 @@ function libRow(m, edition = false) {
   const title = edition ? (year ? `${year} edition` : "Undated edition") : m.title;
   return `<li class="lib-row${sel ? " sel" : ""}${edition ? " edition" : ""}" data-lib-row="${id}">
     <button class="main" data-act="libSel" data-id="${id}" aria-expanded="${sel}"${sel ? ` aria-controls="libd-${id}"` : ""}>
-      <span class="t">${esc(title)}</span><span class="m${m.state === "failed" ? " bad" : ""}" data-prog-t="${id}">${esc(libMeta(m))}</span></button>
+      <span class="t">${esc(title)}</span><span class="m${m.state === "failed" ? " bad" : ""}" data-prog-t="${id}">${libMetaHTML(m, edition)}</span></button>
     ${libControl(m)}${sel ? libDetail(m) : ""}</li>`;
 }
 // A sheet with several editions: one row naming the sheet and its years; its control acts on the newest edition
@@ -2241,11 +2256,11 @@ function libGroupRow(g) {
   const lead = on || g.maps.find(m => m.state === "available") || g.first;
   // "2 editions, 1949–1952" (the row is short; opening it lists each edition by its year).
   const ys = g.maps.map(m => +libYear(m).slice(0, 4)).filter(Boolean), lo = Math.min(...ys), hi = Math.max(...ys);
-  const years = !ys.length ? "" : lo === hi ? `, ${lo}` : `, ${lo}\u2060–\u2060${hi}`; // word joiners keep the range on one line
+  const years = !ys.length ? "Undated" : lo === hi ? String(lo) : `${lo}\u2060–\u2060${hi}`; // word joiners keep the range on one line
   const title = String(g.first.title).replace(/,\s*\d{4}$/, "");
   return `<li class="lib-row lib-group${open ? " sel" : ""}" data-lib-row="${esc(g.first.id)}">
     <button class="main" data-act="libOpen" data-id="${id}" aria-expanded="${open}">
-      <span class="t">${esc(title)}</span><span class="m">${esc(libWhat(g.first))} · ${g.maps.length} editions${esc(years)}</span></button>
+      <span class="t">${esc(title)}</span><span class="m"><b class="yr">${esc(years)}</b> · ${esc(libWhat(g.first))} · ${g.maps.length} editions</span></button>
     ${libControl(lead)}
     ${open ? `<ul class="list lib-list lib-editions">${g.maps.map(m => libRow(m, true)).join("")}</ul>` : ""}</li>`;
 }
@@ -2295,6 +2310,7 @@ VIEWS.library = v => {
     ${list("Could not be added", failed)}
     ${list("On this computer", installed)}
     ${available.length ? `<h3 class="sub-head">${typed ? "Can be added" : "Available here"}</h3>${bulk}${rows(available)}` : ""}
+    ${n && !libOutlinesShown(md) ? `<p class="small-t muted lib-bulk-note">Too many maps here to outline them all: point at one to see where it lies, or zoom in or pick a scale.</p>` : ""}
     ${hidden > 0 ? `<p class="small-t muted lib-bulk-note">${fmtInt(hidden)} more ${typed ? "match" : "cover this view"}. Zoom in, pick a scale or type a place to narrow the list.</p>` : ""}
     ${S.lib.loaded && !n && !S.lib.err && typed ? `<p class="muted">Check the spelling, or <button class="linkish" data-act="libClear">clear the filter</button> to see the maps on screen.</p>` : ""}
     ${S.lib.loaded && !n && !S.lib.err && !typed ? `<p class="muted">Move the map over Vietnam, or type a place above, to find old maps.</p>` : ""}

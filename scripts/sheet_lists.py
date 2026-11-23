@@ -184,6 +184,19 @@ UT_LICENCE = (
 UT_LINK_RE = re.compile(
     r'href="[^"]*/(txu-oclc-6535632-(n[c-f])(\d\d)-(\d+)(?:-(\d)(?:st|nd|rd|th)-ed)?\.jpg)"[^>]*>([^<]*)', re.IGNORECASE
 )
+# When each sheet was printed, as "PRINTED BY ARMY MAP SERVICE ... 9-62" in its lower margin (read
+# off the scans by eye, 2026-11-24; the University of Texas records no date). Month-year.
+L509_PRINTED = {
+    "l509_nc48-3_ed3": "9-62", "l509_nc48-4_ed2": "8-62", "l509_nc48-5_ed2": "9-62", "l509_nc48-7_ed3": "9-62",
+    "l509_nc48-8_ed3": "8-62", "l509_nc48-10_ed4": "8-62", "l509_nc48-11_ed3": "9-62", "l509_nc48-15_ed3": "8-62",
+    "l509_nc49-1": "3-57", "l509_nd48-4_ed2": "8-62", "l509_nd48-8_ed2": "8-62", "l509_nd48-12_ed2": "9-62",
+    "l509_nd48-16_ed2": "9-62", "l509_nd49-1_ed2": "9-62", "l509_nd49-5": "6-57", "l509_nd49-9_ed2": "9-62",
+    "l509_nd49-13_ed3": "8-62", "l509_ne48-2_ed2": "10-62", "l509_ne48-3_ed2": "10-62", "l509_ne48-7_ed2": "10-62",
+    "l509_ne48-11_ed4": "9-62", "l509_ne48-12_ed3": "9-62", "l509_ne48-16_ed2": "8-62", "l509_nf48-5": "1-57",
+    "l509_nf48-7": "7-54", "l509_nf48-9": "6-57", "l509_nf48-10": "7-54", "l509_nf48-11": "5-57",
+    "l509_nf48-12": "5-57", "l509_nf48-13": "6-57", "l509_nf48-14": "6-54", "l509_nf48-15": "10-57",
+    "l509_nf48-16": "6-57",
+}  # fmt: skip
 # The hand-placed L509 scans already in the library (data/sources/maps.json), not listed again.
 HAND_PLACED = {"txu-oclc-6535632-nc48-6-2nd-ed.jpg"}
 
@@ -214,13 +227,16 @@ def l509_specs(touching, known_bounds):
         place = re.sub(r"\s*\[[^\]]*\]", "", place).strip() or label  # "[with inset maps of ...]"
         bounds = known_bounds.get(code) or l509_cell(band, int(zone), int(number))
         ed = f"edition {edition}" if edition else "edition 1"
+        spec_id = f"l509_{band.lower()}{zone}-{int(number)}" + (f"_ed{edition}" if edition else "")
+        month, year = (int(v) for v in L509_PRINTED[spec_id].split("-")) if spec_id in L509_PRINTED else (0, 0)
+        date = f"19{year:02d}-{month:02d}" if year else ""
         specs.append(
             {
-                "id": f"l509_{band.lower()}{zone}-{int(number)}" + (f"_ed{edition}" if edition else ""),
+                "id": spec_id,
                 "series": "l509",
                 "sheet": label,
                 "place": place,
-                "date": "",
+                "date": date,
                 "bounds": bounds,
                 "image": {"url": UT_L509 + file},
                 "download": UT_L509 + file,
@@ -235,9 +251,9 @@ def l509_specs(touching, known_bounds):
                     "title": f"{place} ({label})",
                     "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
                     "scale": "1:250,000",
-                    "date": "",
-                    "dateNote": f"{ed} (the series ran 1954-1967; the year is printed in the sheet's margin); "
-                    "placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+                    "date": date[:4],
+                    "dateNote": (f"{ed}, printed by the Army Map Service {month}/{date[:4]}" if date else ed)
+                    + "; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
                     "source": UT_L509 + file,
                 },
             }

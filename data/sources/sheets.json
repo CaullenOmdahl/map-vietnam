@@ -1,1259 +1,5 @@
 [
  {
-  "id": "l509_nc48-3_ed3",
-  "series": "l509",
-  "sheet": "NC 48-3",
-  "place": "Prey Veng",
-  "date": "",
-  "bounds": [
-   105.0,
-   11.0,
-   106.5,
-   12.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-3-3rd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-3-3rd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Prey Veng (NC 48-3)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 3 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-3-3rd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nc48-4_ed2",
-  "series": "l509",
-  "sheet": "NC 48-4",
-  "place": "An Loc",
-  "date": "",
-  "bounds": [
-   106.5,
-   11.0,
-   108.0,
-   12.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-4-2nd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-4-2nd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "An Loc (NC 48-4)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-4-2nd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nc48-5_ed2",
-  "series": "l509",
-  "sheet": "NC 48-5",
-  "place": "Kampot",
-  "date": "",
-  "bounds": [
-   102.75,
-   9.85,
-   104.283333,
-   11.033333
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-5-2nd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-5-2nd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Kampot (NC 48-5)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-5-2nd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nc48-7_ed3",
-  "series": "l509",
-  "sheet": "NC 48-7",
-  "place": "Saigon",
-  "date": "",
-  "bounds": [
-   105.75,
-   10.0,
-   107.25,
-   11.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-7-3rd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-7-3rd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Saigon (NC 48-7)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 3 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-7-3rd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nc48-8_ed3",
-  "series": "l509",
-  "sheet": "NC 48-8",
-  "place": "Phan Thiet",
-  "date": "",
-  "bounds": [
-   107.25,
-   10.0,
-   108.75,
-   11.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-8-3rd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-8-3rd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Phan Thiet (NC 48-8)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 3 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-8-3rd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nc48-10_ed4",
-  "series": "l509",
-  "sheet": "NC 48-10",
-  "place": "Quan Long",
-  "date": "",
-  "bounds": [
-   104.333333,
-   9.0,
-   105.833333,
-   10.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-10-4th-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-10-4th-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Quan Long (NC 48-10)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 4 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-10-4th-ed.jpg"
-  }
- },
- {
-  "id": "l509_nc48-11_ed3",
-  "series": "l509",
-  "sheet": "NC 48-11",
-  "place": "Vinh Loi",
-  "date": "",
-  "bounds": [
-   105.833333,
-   8.5,
-   106.833333,
-   10.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-11-3rd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-11-3rd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Vinh Loi (NC 48-11)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 3 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-11-3rd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nc48-15_ed3",
-  "series": "l509",
-  "sheet": "NC 48-15",
-  "place": "Tan Hung Dong",
-  "date": "",
-  "bounds": [
-   104.5,
-   8.0,
-   106.0,
-   9.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-15-3rd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-15-3rd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Tan Hung Dong (NC 48-15)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 3 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-15-3rd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nc49-1",
-  "series": "l509",
-  "sheet": "NC 49-1",
-  "place": "Dalat",
-  "date": "",
-  "bounds": [
-   108.0,
-   11.0,
-   109.5,
-   12.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc49-1.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc49-1.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Dalat (NC 49-1)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc49-1.jpg"
-  }
- },
- {
-  "id": "l509_nd48-4_ed2",
-  "series": "l509",
-  "sheet": "ND 48-4",
-  "place": "Ben Giang",
-  "date": "",
-  "bounds": [
-   106.5,
-   15.0,
-   108.0,
-   16.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-4-2nd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-4-2nd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Ben Giang (ND 48-4)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-4-2nd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nd48-8_ed2",
-  "series": "l509",
-  "sheet": "ND 48-8",
-  "place": "Muong May",
-  "date": "",
-  "bounds": [
-   106.5,
-   14.0,
-   108.0,
-   15.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-8-2nd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-8-2nd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Muong May (ND 48-8)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-8-2nd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nd48-12_ed2",
-  "series": "l509",
-  "sheet": "ND 48-12",
-  "place": "Voeune Sai",
-  "date": "",
-  "bounds": [
-   106.5,
-   13.0,
-   108.0,
-   14.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-12-2nd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-12-2nd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Voeune Sai (ND 48-12)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-12-2nd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nd48-16_ed2",
-  "series": "l509",
-  "sheet": "ND 48-16",
-  "place": "Sre Khtum",
-  "date": "",
-  "bounds": [
-   106.5,
-   12.0,
-   108.0,
-   13.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-16-2nd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-16-2nd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Sre Khtum (ND 48-16)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-16-2nd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nd49-1_ed2",
-  "series": "l509",
-  "sheet": "ND 49-1",
-  "place": "Quang Ngai",
-  "date": "",
-  "bounds": [
-   108.0,
-   15.0,
-   109.166667,
-   16.416667
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-1-2nd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-1-2nd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Quang Ngai (ND 49-1)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-1-2nd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nd49-5",
-  "series": "l509",
-  "sheet": "ND 49-5",
-  "place": "Bong Son",
-  "date": "",
-  "bounds": [
-   108.0,
-   14.0,
-   109.5,
-   15.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-5.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-5.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Bong Son (ND 49-5)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-5.jpg"
-  }
- },
- {
-  "id": "l509_nd49-9_ed2",
-  "series": "l509",
-  "sheet": "ND 49-9",
-  "place": "Qui Nhon",
-  "date": "",
-  "bounds": [
-   108.0,
-   13.0,
-   109.5,
-   14.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-9-2nd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-9-2nd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Qui Nhon (ND 49-9)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-9-2nd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nd49-13_ed3",
-  "series": "l509",
-  "sheet": "ND 49-13",
-  "place": "Nha Trang",
-  "date": "",
-  "bounds": [
-   108.0,
-   12.0,
-   109.5,
-   13.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-13-3rd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-13-3rd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Nha Trang (ND 49-13)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 3 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-13-3rd-ed.jpg"
-  }
- },
- {
-  "id": "l509_ne48-2_ed2",
-  "series": "l509",
-  "sheet": "NE 48-2",
-  "place": "Cua Rao",
-  "date": "",
-  "bounds": [
-   103.5,
-   19.0,
-   105.0,
-   20.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-2-2nd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-2-2nd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Cua Rao (NE 48-2)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-2-2nd-ed.jpg"
-  }
- },
- {
-  "id": "l509_ne48-3_ed2",
-  "series": "l509",
-  "sheet": "NE 48-3",
-  "place": "Thanh Hoa",
-  "date": "",
-  "bounds": [
-   105.0,
-   19.0,
-   106.5,
-   20.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-3-2nd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-3-2nd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Thanh Hoa (NE 48-3)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-3-2nd-ed.jpg"
-  }
- },
- {
-  "id": "l509_ne48-7_ed2",
-  "series": "l509",
-  "sheet": "NE 48-7",
-  "place": "Vinh",
-  "date": "",
-  "bounds": [
-   105.0,
-   18.0,
-   106.5,
-   19.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-7-2nd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-7-2nd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Vinh (NE 48-7)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-7-2nd-ed.jpg"
-  }
- },
- {
-  "id": "l509_ne48-11_ed4",
-  "series": "l509",
-  "sheet": "NE 48-11",
-  "place": "Badon",
-  "date": "",
-  "bounds": [
-   105.0,
-   17.0,
-   106.5,
-   18.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-11-4th-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-11-4th-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Badon (NE 48-11)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 4 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-11-4th-ed.jpg"
-  }
- },
- {
-  "id": "l509_ne48-12_ed3",
-  "series": "l509",
-  "sheet": "NE 48-12",
-  "place": "Dong Hoi",
-  "date": "",
-  "bounds": [
-   106.5,
-   17.0,
-   108.0,
-   18.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-12-3rd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-12-3rd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Dong Hoi (NE 48-12)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 3 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-12-3rd-ed.jpg"
-  }
- },
- {
-  "id": "l509_ne48-16_ed2",
-  "series": "l509",
-  "sheet": "NE 48-16",
-  "place": "Hue",
-  "date": "",
-  "bounds": [
-   106.5,
-   16.0,
-   108.0,
-   17.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-16-2nd-ed.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-16-2nd-ed.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Hue (NE 48-16)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-16-2nd-ed.jpg"
-  }
- },
- {
-  "id": "l509_nf48-5",
-  "series": "l509",
-  "sheet": "NF 48-5",
-  "place": "Lai Chau",
-  "date": "",
-  "bounds": [
-   102.0,
-   22.0,
-   103.5,
-   23.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-5.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-5.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Lai Chau (NF 48-5)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-5.jpg"
-  }
- },
- {
-  "id": "l509_nf48-7",
-  "series": "l509",
-  "sheet": "NF 48-7",
-  "place": "Cao Bang",
-  "date": "",
-  "bounds": [
-   105.0,
-   22.0,
-   106.5,
-   23.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-7.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-7.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Cao Bang (NF 48-7)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-7.jpg"
-  }
- },
- {
-  "id": "l509_nf48-9",
-  "series": "l509",
-  "sheet": "NF 48-9",
-  "place": "Dien Bien Phu",
-  "date": "",
-  "bounds": [
-   102.0,
-   21.0,
-   103.5,
-   22.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-9.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-9.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Dien Bien Phu (NF 48-9)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-9.jpg"
-  }
- },
- {
-  "id": "l509_nf48-10",
-  "series": "l509",
-  "sheet": "NF 48-10",
-  "place": "Yen Bay",
-  "date": "",
-  "bounds": [
-   103.5,
-   21.0,
-   105.0,
-   22.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-10.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-10.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Yen Bay (NF 48-10)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-10.jpg"
-  }
- },
- {
-  "id": "l509_nf48-11",
-  "series": "l509",
-  "sheet": "NF 48-11",
-  "place": "Hanoi",
-  "date": "",
-  "bounds": [
-   105.0,
-   21.0,
-   106.5,
-   22.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-11.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-11.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Hanoi (NF 48-11)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-11.jpg"
-  }
- },
- {
-  "id": "l509_nf48-12",
-  "series": "l509",
-  "sheet": "NF 48-12",
-  "place": "Mon Cay",
-  "date": "",
-  "bounds": [
-   106.5,
-   21.0,
-   108.0,
-   22.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-12.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-12.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Mon Cay (NF 48-12)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-12.jpg"
-  }
- },
- {
-  "id": "l509_nf48-13",
-  "series": "l509",
-  "sheet": "NF 48-13",
-  "place": "Muong Ngoi",
-  "date": "",
-  "bounds": [
-   102.0,
-   20.0,
-   103.5,
-   21.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-13.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-13.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Muong Ngoi (NF 48-13)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-13.jpg"
-  }
- },
- {
-  "id": "l509_nf48-14",
-  "series": "l509",
-  "sheet": "NF 48-14",
-  "place": "Sam Neua",
-  "date": "",
-  "bounds": [
-   103.5,
-   20.0,
-   105.0,
-   21.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-14.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-14.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Sam Neua (NF 48-14)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-14.jpg"
-  }
- },
- {
-  "id": "l509_nf48-15",
-  "series": "l509",
-  "sheet": "NF 48-15",
-  "place": "Hai Duong",
-  "date": "",
-  "bounds": [
-   105.0,
-   20.0,
-   106.5,
-   21.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-15.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-15.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Hai Duong (NF 48-15)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-15.jpg"
-  }
- },
- {
-  "id": "l509_nf48-16",
-  "series": "l509",
-  "sheet": "NF 48-16",
-  "place": "Haiphong",
-  "date": "",
-  "bounds": [
-   106.5,
-   20.0,
-   108.0,
-   21.0
-  ],
-  "image": {
-   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-16.jpg"
-  },
-  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-16.jpg",
-  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
-  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
-  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
-  "graticule": {
-   "step_deg": 0.25,
-   "origin_lon": 0.0
-  },
-  "max_extent_deg": [
-   1.6,
-   1.5
-  ],
-  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
-  "dark_ink_only": true,
-  "meta": {
-   "title": "Haiphong (NF 48-16)",
-   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
-   "scale": "1:250,000",
-   "date": "",
-   "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
-   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-16.jpg"
-  }
- },
- {
   "id": "warper_4317",
   "series": "warper",
   "sheet": "",
@@ -14875,6 +13621,1260 @@
    "date": "1952",
    "dateNote": "edition dated 1952-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
    "source": "https://nakala.fr/10.34847/nkl.a6b2306f"
+  }
+ },
+ {
+  "id": "l509_nc48-3_ed3",
+  "series": "l509",
+  "sheet": "NC 48-3",
+  "place": "Prey Veng",
+  "date": "1962-09",
+  "bounds": [
+   105.0,
+   11.0,
+   106.5,
+   12.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-3-3rd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-3-3rd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Prey Veng (NC 48-3)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 3, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-3-3rd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nc48-4_ed2",
+  "series": "l509",
+  "sheet": "NC 48-4",
+  "place": "An Loc",
+  "date": "1962-08",
+  "bounds": [
+   106.5,
+   11.0,
+   108.0,
+   12.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-4-2nd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-4-2nd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "An Loc (NC 48-4)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 2, printed by the Army Map Service 8/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-4-2nd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nc48-5_ed2",
+  "series": "l509",
+  "sheet": "NC 48-5",
+  "place": "Kampot",
+  "date": "1962-09",
+  "bounds": [
+   102.75,
+   9.85,
+   104.283333,
+   11.033333
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-5-2nd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-5-2nd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Kampot (NC 48-5)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 2, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-5-2nd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nc48-7_ed3",
+  "series": "l509",
+  "sheet": "NC 48-7",
+  "place": "Saigon",
+  "date": "1962-09",
+  "bounds": [
+   105.75,
+   10.0,
+   107.25,
+   11.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-7-3rd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-7-3rd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Saigon (NC 48-7)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 3, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-7-3rd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nc48-8_ed3",
+  "series": "l509",
+  "sheet": "NC 48-8",
+  "place": "Phan Thiet",
+  "date": "1962-08",
+  "bounds": [
+   107.25,
+   10.0,
+   108.75,
+   11.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-8-3rd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-8-3rd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Phan Thiet (NC 48-8)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 3, printed by the Army Map Service 8/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-8-3rd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nc48-10_ed4",
+  "series": "l509",
+  "sheet": "NC 48-10",
+  "place": "Quan Long",
+  "date": "1962-08",
+  "bounds": [
+   104.333333,
+   9.0,
+   105.833333,
+   10.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-10-4th-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-10-4th-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Quan Long (NC 48-10)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 4, printed by the Army Map Service 8/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-10-4th-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nc48-11_ed3",
+  "series": "l509",
+  "sheet": "NC 48-11",
+  "place": "Vinh Loi",
+  "date": "1962-09",
+  "bounds": [
+   105.833333,
+   8.5,
+   106.833333,
+   10.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-11-3rd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-11-3rd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Vinh Loi (NC 48-11)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 3, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-11-3rd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nc48-15_ed3",
+  "series": "l509",
+  "sheet": "NC 48-15",
+  "place": "Tan Hung Dong",
+  "date": "1962-08",
+  "bounds": [
+   104.5,
+   8.0,
+   106.0,
+   9.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-15-3rd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-15-3rd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Tan Hung Dong (NC 48-15)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 3, printed by the Army Map Service 8/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-15-3rd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nc49-1",
+  "series": "l509",
+  "sheet": "NC 49-1",
+  "place": "Dalat",
+  "date": "1957-03",
+  "bounds": [
+   108.0,
+   11.0,
+   109.5,
+   12.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc49-1.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc49-1.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Dalat (NC 49-1)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1957",
+   "dateNote": "edition 1, printed by the Army Map Service 3/1957; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc49-1.jpg"
+  }
+ },
+ {
+  "id": "l509_nd48-4_ed2",
+  "series": "l509",
+  "sheet": "ND 48-4",
+  "place": "Ben Giang",
+  "date": "1962-08",
+  "bounds": [
+   106.5,
+   15.0,
+   108.0,
+   16.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-4-2nd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-4-2nd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Ben Giang (ND 48-4)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 2, printed by the Army Map Service 8/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-4-2nd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nd48-8_ed2",
+  "series": "l509",
+  "sheet": "ND 48-8",
+  "place": "Muong May",
+  "date": "1962-08",
+  "bounds": [
+   106.5,
+   14.0,
+   108.0,
+   15.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-8-2nd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-8-2nd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Muong May (ND 48-8)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 2, printed by the Army Map Service 8/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-8-2nd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nd48-12_ed2",
+  "series": "l509",
+  "sheet": "ND 48-12",
+  "place": "Voeune Sai",
+  "date": "1962-09",
+  "bounds": [
+   106.5,
+   13.0,
+   108.0,
+   14.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-12-2nd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-12-2nd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Voeune Sai (ND 48-12)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 2, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-12-2nd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nd48-16_ed2",
+  "series": "l509",
+  "sheet": "ND 48-16",
+  "place": "Sre Khtum",
+  "date": "1962-09",
+  "bounds": [
+   106.5,
+   12.0,
+   108.0,
+   13.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-16-2nd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-16-2nd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Sre Khtum (ND 48-16)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 2, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-16-2nd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nd49-1_ed2",
+  "series": "l509",
+  "sheet": "ND 49-1",
+  "place": "Quang Ngai",
+  "date": "1962-09",
+  "bounds": [
+   108.0,
+   15.0,
+   109.166667,
+   16.416667
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-1-2nd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-1-2nd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Quang Ngai (ND 49-1)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 2, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-1-2nd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nd49-5",
+  "series": "l509",
+  "sheet": "ND 49-5",
+  "place": "Bong Son",
+  "date": "1957-06",
+  "bounds": [
+   108.0,
+   14.0,
+   109.5,
+   15.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-5.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-5.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Bong Son (ND 49-5)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1957",
+   "dateNote": "edition 1, printed by the Army Map Service 6/1957; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-5.jpg"
+  }
+ },
+ {
+  "id": "l509_nd49-9_ed2",
+  "series": "l509",
+  "sheet": "ND 49-9",
+  "place": "Qui Nhon",
+  "date": "1962-09",
+  "bounds": [
+   108.0,
+   13.0,
+   109.5,
+   14.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-9-2nd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-9-2nd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Qui Nhon (ND 49-9)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 2, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-9-2nd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nd49-13_ed3",
+  "series": "l509",
+  "sheet": "ND 49-13",
+  "place": "Nha Trang",
+  "date": "1962-08",
+  "bounds": [
+   108.0,
+   12.0,
+   109.5,
+   13.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-13-3rd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-13-3rd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Nha Trang (ND 49-13)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 3, printed by the Army Map Service 8/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-13-3rd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_ne48-2_ed2",
+  "series": "l509",
+  "sheet": "NE 48-2",
+  "place": "Cua Rao",
+  "date": "1962-10",
+  "bounds": [
+   103.5,
+   19.0,
+   105.0,
+   20.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-2-2nd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-2-2nd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Cua Rao (NE 48-2)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 2, printed by the Army Map Service 10/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-2-2nd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_ne48-3_ed2",
+  "series": "l509",
+  "sheet": "NE 48-3",
+  "place": "Thanh Hoa",
+  "date": "1962-10",
+  "bounds": [
+   105.0,
+   19.0,
+   106.5,
+   20.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-3-2nd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-3-2nd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Thanh Hoa (NE 48-3)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 2, printed by the Army Map Service 10/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-3-2nd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_ne48-7_ed2",
+  "series": "l509",
+  "sheet": "NE 48-7",
+  "place": "Vinh",
+  "date": "1962-10",
+  "bounds": [
+   105.0,
+   18.0,
+   106.5,
+   19.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-7-2nd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-7-2nd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Vinh (NE 48-7)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 2, printed by the Army Map Service 10/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-7-2nd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_ne48-11_ed4",
+  "series": "l509",
+  "sheet": "NE 48-11",
+  "place": "Badon",
+  "date": "1962-09",
+  "bounds": [
+   105.0,
+   17.0,
+   106.5,
+   18.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-11-4th-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-11-4th-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Badon (NE 48-11)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 4, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-11-4th-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_ne48-12_ed3",
+  "series": "l509",
+  "sheet": "NE 48-12",
+  "place": "Dong Hoi",
+  "date": "1962-09",
+  "bounds": [
+   106.5,
+   17.0,
+   108.0,
+   18.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-12-3rd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-12-3rd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Dong Hoi (NE 48-12)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 3, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-12-3rd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_ne48-16_ed2",
+  "series": "l509",
+  "sheet": "NE 48-16",
+  "place": "Hue",
+  "date": "1962-08",
+  "bounds": [
+   106.5,
+   16.0,
+   108.0,
+   17.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-16-2nd-ed.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-16-2nd-ed.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Hue (NE 48-16)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1962",
+   "dateNote": "edition 2, printed by the Army Map Service 8/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-16-2nd-ed.jpg"
+  }
+ },
+ {
+  "id": "l509_nf48-5",
+  "series": "l509",
+  "sheet": "NF 48-5",
+  "place": "Lai Chau",
+  "date": "1957-01",
+  "bounds": [
+   102.0,
+   22.0,
+   103.5,
+   23.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-5.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-5.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Lai Chau (NF 48-5)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1957",
+   "dateNote": "edition 1, printed by the Army Map Service 1/1957; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-5.jpg"
+  }
+ },
+ {
+  "id": "l509_nf48-7",
+  "series": "l509",
+  "sheet": "NF 48-7",
+  "place": "Cao Bang",
+  "date": "1954-07",
+  "bounds": [
+   105.0,
+   22.0,
+   106.5,
+   23.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-7.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-7.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Cao Bang (NF 48-7)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1954",
+   "dateNote": "edition 1, printed by the Army Map Service 7/1954; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-7.jpg"
+  }
+ },
+ {
+  "id": "l509_nf48-9",
+  "series": "l509",
+  "sheet": "NF 48-9",
+  "place": "Dien Bien Phu",
+  "date": "1957-06",
+  "bounds": [
+   102.0,
+   21.0,
+   103.5,
+   22.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-9.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-9.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Dien Bien Phu (NF 48-9)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1957",
+   "dateNote": "edition 1, printed by the Army Map Service 6/1957; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-9.jpg"
+  }
+ },
+ {
+  "id": "l509_nf48-10",
+  "series": "l509",
+  "sheet": "NF 48-10",
+  "place": "Yen Bay",
+  "date": "1954-07",
+  "bounds": [
+   103.5,
+   21.0,
+   105.0,
+   22.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-10.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-10.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Yen Bay (NF 48-10)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1954",
+   "dateNote": "edition 1, printed by the Army Map Service 7/1954; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-10.jpg"
+  }
+ },
+ {
+  "id": "l509_nf48-11",
+  "series": "l509",
+  "sheet": "NF 48-11",
+  "place": "Hanoi",
+  "date": "1957-05",
+  "bounds": [
+   105.0,
+   21.0,
+   106.5,
+   22.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-11.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-11.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Hanoi (NF 48-11)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1957",
+   "dateNote": "edition 1, printed by the Army Map Service 5/1957; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-11.jpg"
+  }
+ },
+ {
+  "id": "l509_nf48-12",
+  "series": "l509",
+  "sheet": "NF 48-12",
+  "place": "Mon Cay",
+  "date": "1957-05",
+  "bounds": [
+   106.5,
+   21.0,
+   108.0,
+   22.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-12.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-12.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Mon Cay (NF 48-12)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1957",
+   "dateNote": "edition 1, printed by the Army Map Service 5/1957; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-12.jpg"
+  }
+ },
+ {
+  "id": "l509_nf48-13",
+  "series": "l509",
+  "sheet": "NF 48-13",
+  "place": "Muong Ngoi",
+  "date": "1957-06",
+  "bounds": [
+   102.0,
+   20.0,
+   103.5,
+   21.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-13.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-13.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Muong Ngoi (NF 48-13)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1957",
+   "dateNote": "edition 1, printed by the Army Map Service 6/1957; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-13.jpg"
+  }
+ },
+ {
+  "id": "l509_nf48-14",
+  "series": "l509",
+  "sheet": "NF 48-14",
+  "place": "Sam Neua",
+  "date": "1954-06",
+  "bounds": [
+   103.5,
+   20.0,
+   105.0,
+   21.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-14.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-14.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Sam Neua (NF 48-14)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1954",
+   "dateNote": "edition 1, printed by the Army Map Service 6/1954; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-14.jpg"
+  }
+ },
+ {
+  "id": "l509_nf48-15",
+  "series": "l509",
+  "sheet": "NF 48-15",
+  "place": "Hai Duong",
+  "date": "1957-10",
+  "bounds": [
+   105.0,
+   20.0,
+   106.5,
+   21.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-15.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-15.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Hai Duong (NF 48-15)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1957",
+   "dateNote": "edition 1, printed by the Army Map Service 10/1957; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-15.jpg"
+  }
+ },
+ {
+  "id": "l509_nf48-16",
+  "series": "l509",
+  "sheet": "NF 48-16",
+  "place": "Haiphong",
+  "date": "1957-06",
+  "bounds": [
+   106.5,
+   20.0,
+   108.0,
+   21.0
+  ],
+  "image": {
+   "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-16.jpg"
+  },
+  "download": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-16.jpg",
+  "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
+  "licence": "University of Texas Libraries, Perry-Castañeda Library Map Collection. A work of the US Government; the library describes such maps as public domain.",
+  "credit": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, The University of Texas at Austin",
+  "graticule": {
+   "step_deg": 0.25,
+   "origin_lon": 0.0
+  },
+  "max_extent_deg": [
+   1.6,
+   1.5
+  ],
+  "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+  "dark_ink_only": true,
+  "meta": {
+   "title": "Haiphong (NF 48-16)",
+   "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+   "scale": "1:250,000",
+   "date": "1957",
+   "dateNote": "edition 1, printed by the Army Map Service 6/1957; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+   "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-16.jpg"
   }
  }
 ]

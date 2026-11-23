@@ -51,6 +51,7 @@ from pypdf import PdfReader
 sys.path.insert(0, str(Path(__file__).resolve().parent / "ingest"))
 import common  # noqa: E402
 import gns  # noqa: E402
+import l7014_meta  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "sources" / "map_library.json"
@@ -483,6 +484,19 @@ def fetch_tail(map_id, url):
     return path.read_bytes()
 
 
+def tail_year(data):
+    """The edition year (pri_date) in a PDF's last bytes: the Info dictionary's of its final update,
+    else the XMP packet's; "" if neither is there. The same field l7014_meta reads once a sheet is
+    added, so the year shown before and after agree."""
+    info = re.findall(rb"/pri_date\s*\(([^)]*)\)", data)
+    xmp = re.findall(rb"<pdfx:pri_date>([^<]*)</pdfx:pri_date>", data)
+    for found in (info, xmp):
+        year = l7014_meta.year_of(found[-1].decode("latin-1")) if found else ""
+        if year:
+            return year
+    return ""
+
+
 def xmp_title(data):
     """The last <pdfx:title> in a PDF's bytes (the final incremental update wins), or None."""
     found = re.findall(rb"<pdfx:title>([^<]*)</pdfx:title>", data)
@@ -538,18 +552,20 @@ def l7014_entries(probe, legacy, gazetteer, tail_for=fetch_tail):
             urls.reverse()
         label = f"{sheet['sheet']} {QUADRANTS[sheet['quadrant']]}"
         old = legacy_by_id.get(sheet["id"])
+        tail = tail_for(sheet["id"], urls[0])
         entries.append(
             {
                 "id": sheet["id"],
                 "series": "l7014",
                 "title": TITLE_OVERRIDES.get(sheet["id"])
-                or sheet_title(printed_name(xmp_title(tail_for(sheet["id"], urls[0]))), label, bounds, gazetteer),
+                or sheet_title(printed_name(xmp_title(tail)), label, bounds, gazetteer),
                 "bounds": bounds,
                 "region": region_for(bounds),
                 "urls": urls,
                 "bytes": int(cell["bytes"]),
                 "sha256": old["sha256"] if old else None,
                 "kind": "geopdf",
+                "date": tail_year(tail),
             }
         )
     missing = set(legacy_by_id) - {e["id"] for e in entries}
@@ -559,9 +575,9 @@ def l7014_entries(probe, legacy, gazetteer, tail_for=fetch_tail):
 
 
 def pdf_year(info):
-    """The edition year NGA recorded in a GeoPDF's metadata (pri_date "1968-01-01"), or ""."""
-    m = re.match(r"\s*(1[89]\d\d|20\d\d)", str(info.get("/pri_date", "")))
-    return m.group(1) if m else ""
+    """The edition year NGA recorded in a GeoPDF's metadata (pri_date "1968-01-01" or
+    "Jan  1 1967 12:00AM"), or ""."""
+    return l7014_meta.year_of(str(info.get("/pri_date", "")))
 
 
 def jog_entry(sheet, pdf, gazetteer):
