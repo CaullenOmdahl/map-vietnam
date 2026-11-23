@@ -18,6 +18,7 @@ SCRIPTS = [
     "scripts/build_tiles.py",
     "scripts/catalog.py",
     "scripts/compare_overlay.py",
+    "scripts/desktop.py",
     "scripts/download_maps.py",
     "scripts/georef_scan.py",
     "scripts/l7014_meta.py",

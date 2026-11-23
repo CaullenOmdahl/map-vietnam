@@ -1,5 +1,5 @@
 @echo off
-rem Double-click this file in Windows to start Map Vietnam and open it in your browser.
+rem Double-click this file in Windows to start Map Vietnam and open it in its own window.
 rem It finds a Python 3.12 or newer and runs start.py from this folder. The window that opens
 rem must stay open while the map is in use; "Quit Map Vietnam" in the map (or closing the
 rem window, or Control-C) stops it.

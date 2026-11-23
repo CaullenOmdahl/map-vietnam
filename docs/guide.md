@@ -195,9 +195,9 @@ the folder (and `~/.kaggle/kaggle.json` if you put a Kaggle key there and no lon
 
 ## Other options
 
-`python3 start.py` never asks a question. `--no-browser` doesn't open a browser window and `--port`
+`python3 start.py` never asks a question. `--no-window` (or `--no-browser`) doesn't open the map's window: it only serves the map and prints its address, for a browser or a script. `--port`
 picks another port. `python3 start.py serve` does the same as no command. `python3 start.py --help`
-lists everything.
+lists everything. Options for adding records (`--yes`, `--only`, `--skip`, `--area`, `--refresh`) given without a command run `setup`.
 
 ## What goes over the internet
 
