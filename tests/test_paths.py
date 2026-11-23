@@ -278,3 +278,28 @@ def test_an_injected_interpreter_still_wins(tmp_path):
     lib = library.Library(tmp_path, python="fake-python")
     cmd = lib.build_command({"kind": "geopdf", "series": "none", "id": "X"}, Path("a.pdf"), Path("o"))
     assert cmd[0] == "fake-python" and cmd[1] == str(paths.SCRIPTS / "build_tiles.py")
+
+
+# ---- a windowed app's output ------------------------------------------------------------------
+def test_missing_streams_are_attached_on_windows_only(monkeypatch):
+    opened = []
+    monkeypatch.setattr(paths, "_open_std_handle", lambda which: opened.append(which) or f"stream{which}")
+    monkeypatch.setattr(sys, "stdout", None)
+    monkeypatch.setattr(sys, "stderr", None)
+
+    monkeypatch.setattr(sys, "platform", "linux")
+    paths.attach_standard_streams()
+    assert opened == [] and sys.stdout is None
+
+    monkeypatch.setattr(sys, "platform", "win32")
+    paths.attach_standard_streams()
+    assert opened == [-11, -12]
+    assert (sys.stdout, sys.stderr) == ("stream-11", "stream-12")
+
+
+def test_streams_that_exist_are_left_alone(monkeypatch):
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(paths, "_open_std_handle", lambda which: pytest.fail("must not replace a stream"))
+    before = (sys.stdout, sys.stderr)
+    paths.attach_standard_streams()
+    assert (sys.stdout, sys.stderr) == before

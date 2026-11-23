@@ -1,0 +1,157 @@
+# Builds the desktop app for Windows, Linux and macOS and, for a version tag, publishes it.
+#
+#   git tag v0.1.0 && git push origin v0.1.0     builds, tests and attaches everything to a GitHub Release
+#   Actions tab > Release > Run workflow          builds and tests only; the files are kept as run artifacts
+#
+# Each build job makes the one-folder app with PyInstaller (packaging/map-vietnam.spec), then runs
+# packaging/smoke_test.py on the built program: it starts it without a window, loads the viewer and
+# the map library, runs a child script the way the app does, and quits it. Only if all three pass
+# does the release job attach the files. The tag must match [project].version in pyproject.toml,
+# the one place the version is written.
+#
+# What comes out:
+#   Map-Vietnam-<version>-Setup.exe             Windows installer (Inno Setup, per user, no admin rights)
+#   Map-Vietnam-<version>-linux-x86_64.tar.gz   Linux, unpack and run "Map Vietnam/Map Vietnam"
+#   Map-Vietnam-<version>-macos-arm64.zip       macOS (Apple silicon, macOS 15+), NOT signed or notarized
+#
+# Nothing is code-signed: Windows shows SmartScreen's "Windows protected your PC" and macOS needs a
+# right-click > Open the first time (docs/troubleshooting.md explains both to users).
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+  PYINSTALLER_VERSION: "6.22.3"
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Read the version, and check it against the tag
+        id: version
+        shell: bash
+        run: |
+          version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "v$version" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match pyproject.toml version $version" >&2
+            exit 1
+          fi
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt pyinstaller==${{ env.PYINSTALLER_VERSION }}
+      - name: Build the app
+        run: pyinstaller packaging/map-vietnam.spec --noconfirm
+      - name: Smoke test the app
+        run: python packaging/smoke_test.py "dist/Map Vietnam/Map Vietnam.exe"
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+      - name: Build the installer
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=${{ steps.version.outputs.version }}" packaging\windows\map-vietnam.iss'
+      - name: Smoke test the installed app
+        shell: bash
+        run: |
+          "dist/installer/Map-Vietnam-${{ steps.version.outputs.version }}-Setup.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /DIR="$RUNNER_TEMP/mv-installed"
+          python packaging/smoke_test.py "$RUNNER_TEMP/mv-installed/Map Vietnam.exe"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/installer/*.exe
+          if-no-files-found: error
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Read the version, and check it against the tag
+        id: version
+        run: |
+          version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "v$version" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match pyproject.toml version $version" >&2
+            exit 1
+          fi
+      - name: Install dependencies
+        # requirements-qt.txt is the window toolkit; without it the Linux app would open in a browser.
+        run: python -m pip install -r requirements.txt -r requirements-qt.txt pyinstaller==${{ env.PYINSTALLER_VERSION }}
+      - name: Build the app
+        run: pyinstaller packaging/map-vietnam.spec --noconfirm
+      - name: Smoke test the app
+        run: python packaging/smoke_test.py "dist/Map Vietnam/Map Vietnam"
+      - name: Pack it
+        run: tar -czf "Map-Vietnam-${{ steps.version.outputs.version }}-linux-x86_64.tar.gz" -C dist "Map Vietnam"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: Map-Vietnam-*.tar.gz
+          if-no-files-found: error
+
+  macos:
+    # macos-latest is Apple silicon on macOS 15, the oldest macOS the pinned rasterio wheels support.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Read the version, and check it against the tag
+        id: version
+        run: |
+          version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "v$version" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match pyproject.toml version $version" >&2
+            exit 1
+          fi
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt pyinstaller==${{ env.PYINSTALLER_VERSION }}
+      - name: Build the app
+        run: pyinstaller packaging/map-vietnam.spec --noconfirm
+      - name: Smoke test the app
+        run: python packaging/smoke_test.py "dist/Map Vietnam.app/Contents/MacOS/Map Vietnam"
+      - name: Zip it
+        # ditto keeps the .app's symlinks and permissions, which a plain zip would lose.
+        run: ditto -c -k --keepParent "dist/Map Vietnam.app" "Map-Vietnam-${{ steps.version.outputs.version }}-macos-arm64.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: Map-Vietnam-*.zip
+          if-no-files-found: error
+
+  release:
+    # Only for a version tag, and only when all three builds and their smoke tests passed.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-files
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release-files/*
+          generate_release_notes: true

@@ -305,6 +305,7 @@ def parse_args(argv=None):
 def main(argv=None):
     """Open the window, or serve only. Returns the exit status."""
     argv = sys.argv[1:] if argv is None else list(argv)
+    paths.attach_standard_streams()  # a windowed Windows app has no console unless it is given handles
     if argv[:1] == [paths.RUN_SCRIPT_FLAG]:
         return paths.run_script_from_argv(argv)  # before anything heavy is imported
     for stream in (sys.stdout, sys.stderr):

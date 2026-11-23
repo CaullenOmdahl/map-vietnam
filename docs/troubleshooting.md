@@ -1,5 +1,28 @@
 # Troubleshooting
 
+## Windows says "Windows protected your PC" when I run the installer
+
+Map Vietnam's installer is not code-signed (a certificate costs money every year), so Windows
+SmartScreen does not know it. Click **More info**, then **Run anyway**. You only see this for the
+installer. If your browser says the file "isn't commonly downloaded", choose **Keep** first. The
+installer, the program and its source are all in the open at
+[github.com/CaullenOmdahl/map-vietnam](https://github.com/CaullenOmdahl/map-vietnam).
+
+## macOS won't open the downloaded Map Vietnam app
+
+The app is not signed with an Apple developer account, so macOS blocks it the first time.
+Unzip it, drag **Map Vietnam** to Applications, then right-click (or Control-click) it and choose
+**Open**, then **Open** again. If the dialog only offers to move it to the Bin, close it, open
+**System Settings > Privacy & Security**, scroll down, click **Open Anyway** next to Map Vietnam
+and confirm. You only do this once. If macOS says the app is damaged, run
+`xattr -dr com.apple.quarantine "/Applications/Map Vietnam.app"` in Terminal and open it again.
+
+## The Linux app does not open a window
+
+Unpack the `.tar.gz` and run `Map Vietnam/Map Vietnam`. It needs a desktop session and the usual
+graphics libraries (on Debian or Ubuntu: `sudo apt install libxcb-cursor0 libnss3 libxkbcommon-x11-0`).
+Without a window it opens the map in your browser instead.
+
 ## "Port 8765 is in use"
 
 Map Vietnam takes the next free port and prints the address to open. To choose one yourself, run

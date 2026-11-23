@@ -101,6 +101,33 @@ def script_command(script, *args):
     return [sys.executable, str(SCRIPTS / script), *args]
 
 
+def _open_std_handle(which):
+    """A text stream on one of the process's standard handles (Windows), or None if it has none.
+    which is the Win32 id: -11 for standard output, -12 for standard error."""
+    import ctypes
+    import msvcrt
+
+    kernel = ctypes.windll.kernel32
+    kernel.GetStdHandle.restype = ctypes.c_void_p
+    handle = kernel.GetStdHandle(which)
+    if not handle or handle == ctypes.c_void_p(-1).value:
+        return None
+    fd = msvcrt.open_osfhandle(handle, os.O_WRONLY)
+    return open(fd, "w", encoding="utf-8", errors="replace", buffering=1, closefd=False)
+
+
+def attach_standard_streams():
+    """Give a windowed Windows app its output back. Such an executable has no console, so Python
+    leaves sys.stdout and sys.stderr as None even when the parent connected them to a pipe or a
+    file: the child jobs' progress and a `--no-window` address would vanish. Where the process was
+    handed real handles, use them. Elsewhere, and where they are already set, nothing changes."""
+    if sys.platform != "win32":
+        return
+    for name, which in (("stdout", -11), ("stderr", -12)):
+        if getattr(sys, name) is None:
+            setattr(sys, name, _open_std_handle(which))
+
+
 def run_script_from_argv(argv):
     """Run the script a `--run-script SCRIPT [ARGS...]` command line names, as `python SCRIPT`
     would (same __main__, argv and import path as start.py's script_env()), and return its exit

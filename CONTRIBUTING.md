@@ -68,6 +68,7 @@ scripts/
   desktop.py                the server plus the map's own window (pywebview); start.py runs it
   compare_overlay.py        side-by-side image to check how well a map lines up
   ingest/<source>.py        one ingester per record source; common.py holds shared helpers
+packaging/                  PyInstaller spec, icons and generator, smoke test, Windows installer script
 web/app/                    the viewer: index.html, app.js, app.css (MapLibre GL, no build step)
 tests/                      pytest suite; tests/fixtures/ holds small source excerpts
 docs/                       user guide, troubleshooting, how it works, data sources, known limits
@@ -76,6 +77,36 @@ docs/                       user guide, troubleshooting, how it works, data sour
 Downloads go to `data/raw/`, intermediate files to `data/work/`, records to
 `data/evidence.sqlite` and the maps a person added to `web/tiles/`. All of these are kept out of
 git: records and maps are downloaded again when someone adds them again.
+
+## Building the desktop app
+
+The installers are built from `packaging/` (PyInstaller spec, icons, Windows installer script).
+Locally, on the platform you want to build for, from the repository root:
+
+```sh
+.venv/bin/python -m pip install pyinstaller==6.22.3     # Linux: also -r requirements-qt.txt
+.venv/bin/pyinstaller packaging/map-vietnam.spec --noconfirm
+.venv/bin/python packaging/smoke_test.py "dist/Map Vietnam/Map Vietnam"
+```
+
+That makes `dist/Map Vietnam/` (`dist/Map Vietnam.app` on a Mac) and checks it starts, serves the
+viewer and the library, runs a child script and quits. On Windows the program is
+`dist\Map Vietnam\Map Vietnam.exe` and the installer is then
+`iscc /DAppVersion=<version> packaging\windows\map-vietnam.iss` (Inno Setup 6), written to
+`dist\installer\`. `build/` and `dist/` are ignored by git. The icon is drawn by
+`packaging/make_icons.py`; run it and commit `packaging/icons/` when the design changes.
+
+To release: change `version` in `pyproject.toml` (the one place it is written), merge, then
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+`.github/workflows/release.yml` builds Windows, Linux and macOS, smoke-tests each and attaches the
+Windows installer, a Linux `.tar.gz` and an unsigned macOS `.zip` to the GitHub Release. The tag
+must equal `v` plus the version in `pyproject.toml`. Run the workflow by hand (Actions > Release >
+Run workflow) to build without releasing. Nothing is code-signed; users get the steps in
+[docs/troubleshooting.md](docs/troubleshooting.md).
 
 ## Adding a record source
 

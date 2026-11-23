@@ -26,8 +26,31 @@ on your own computer and opens in its own window.
 
 ## Install
 
-You need Python 3.12 or newer, free from [python.org/downloads](https://www.python.org/downloads/).
-On a Mac you also need macOS 15 or newer.
+### Download Map Vietnam for Windows
+
+1. Go to the [Releases page](https://github.com/CaullenOmdahl/map-vietnam/releases/latest) and
+   download **Map-Vietnam-...-Setup.exe**.
+2. Double-click it and click **Next** a couple of times. It does not need an administrator, and
+   it puts **Map Vietnam** in your Start menu (and on your desktop if you leave that box ticked).
+3. Open **Map Vietnam**. It opens in its own window. Everything after that is done in the map:
+   there is nothing to type.
+
+Because the app is not code-signed, Windows may first say "Windows protected your PC". Click
+**More info**, then **Run anyway**. See [docs/troubleshooting.md](docs/troubleshooting.md).
+
+The maps and records you add are kept in `%LOCALAPPDATA%\Map Vietnam`, apart from the program, so
+updating is just running a newer installer. Uninstalling (Settings > Apps) asks whether to delete
+them too.
+
+**Mac and Linux.** The same Releases page has a macOS download (Apple silicon, macOS 15 or newer;
+unzip it and drag **Map Vietnam** to Applications; the first time, right-click it and choose
+**Open**) and a Linux download (unpack the `.tar.gz` and run `Map Vietnam/Map Vietnam`).
+
+### Or run it from source
+
+For developers, or if you would rather not install the packaged app. You need Python 3.12 or
+newer, free from [python.org/downloads](https://www.python.org/downloads/). On a Mac you also need
+macOS 15 or newer.
 
 1. Download this project. On GitHub that's the green **Code** button, then **Download ZIP**, then
    unzip it. Or `git clone` it if you use git.
@@ -43,10 +66,10 @@ On a Mac you also need macOS 15 or newer.
    need `sudo apt install python3-venv`.
 
 The first start takes a minute or two while it installs what it needs, then the map opens in
-its own window. Everything after that is done in the map: there is nothing more to type. Keep the
-terminal window open while you use it. To stop, click **Quit Map Vietnam** at the bottom of the
-side panel, or close the map's window. Links to record sources open in your web browser. (On a
-Linux computer that has no Qt or GTK web view, the map opens in your browser instead.)
+its own window. Keep the terminal window open while you use it. To stop, click **Quit Map
+Vietnam** at the bottom of the side panel, or close the map's window. Links to record sources
+open in your web browser. (On a Linux computer that has no Qt or GTK web view, the map opens in
+your browser instead.)
 
 The first time, macOS may refuse to open the `.command` file because it came from the internet
 ("Apple could not verify..."). Click **Done**, open **System Settings > Privacy & Security**,
