@@ -7,17 +7,18 @@ and placed is in [data-sources.md](data-sources.md).
 
 ## Coverage
 
-- No old map is on the computer until you add it. The ones you can add cover almost all of the
-  country at 1:50,000 (498 sheets) and nearly all of it at 1:250,000 (32 sheets). The seven older
-  scans cover the Mekong Delta.
+- No old map is on the computer until you add it. The 895 you can add cover almost all of the
+  country at 1:50,000 (498 sheets) and nearly all of it at 1:250,000 (34 Joint Operations Graphics
+  and 32 older L509 sheets). Add to that 298 French 1:100,000 sheets and editions, 18 town plans,
+  8 Admiralty charts of the coast and seven older scans of the Mekong Delta.
 - About 110 land cells have no 1:50,000 sheet on the USGS Store, mostly along the China, Laos and
   Cambodia borders and on islands (Phú Quốc's south, Thổ Chu, Côn Đảo, Phú Quý, the Quảng Ninh
   islands). The 1:250,000 sheets fill most of them, but neither series covers the far north
   along the China border (Lào Cai, Hà Giang, northern Cao Bằng and Lạng Sơn), the area around
   Sơn La, western Nghệ An on the Laos border, southern Phú Quốc and Phú Quý. The full list is in
   [data-sources.md](data-sources.md#coverage).
-- THOR air strikes are loaded for the Cao Lãnh area (105.35–105.95 E, 10.15–10.75 N) unless the
-  THOR ingester is run with a wider `--bbox` or `--all-vietnam`.
+- THOR air strikes are loaded for one area at a time, up to 150,000 strikes. The default is the
+  Cao Lãnh area (105.35–105.95 E, 10.15–10.75 N); you choose another when you add them.
 - The other record sources cover all of Vietnam, and some reach across the borders.
 
 ## Old maps

@@ -64,8 +64,9 @@ which takes about 15 minutes. **Records** in the side panel lists every source, 
 Remove on each.
 
 Old maps work the same way. There are about 900 of them and you probably want six. Go to the
-place you care about and click **Add old maps** at the bottom of the screen. You get
-every map that covers what's on screen, with its size, and outlines showing where each one sits.
+place you care about and click **Add old maps** at the bottom of the screen (once you have some,
+the list is under **Old maps** in the side panel). You get every map that covers what's on
+screen, with its size, and outlines showing where each one sits.
 Click **Add** on the ones you want. A typical sheet takes about a minute, a 10 MB download and
 about 20 MB of disk. To find a map somewhere else, type a town, sheet number or year in the box
 at the top of the list.
