@@ -23,6 +23,7 @@ SCRIPTS = [
     "scripts/l7014_meta.py",
     "scripts/library.py",
     "scripts/map_library_catalogue.py",
+    "scripts/records.py",
     "scripts/server.py",
     "scripts/ingest/caccf.py",
     "scripts/ingest/datum_check.py",

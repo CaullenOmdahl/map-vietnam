@@ -5,10 +5,22 @@ Every ingester is a module scripts/ingest/<source>.py with a main() that:
      unless --refresh), respecting the source's terms and a minimum delay between requests;
   2. turns it into store.Evidence records (original coordinate + datum kept, uncertainty set);
   3. calls store.upsert_source once and store.sync_source / store.upsert_many with the records.
-Run one with:  .venv/bin/python scripts/ingest/<source>.py   (start.py runs them all in order).
+Run one with:  .venv/bin/python scripts/ingest/<source>.py   (scripts/records.py runs one when a
+person adds its source, in the viewer or with python3 start.py setup).
 
 Local settings come from the environment, or from a .env file at the repository root
 (see .env.example); a variable already set in the environment wins over the file.
+
+Progress: when the environment variable MAPVIETNAM_PROGRESS is set (scripts/records.py sets it for
+the ingesters it runs), progress() prints lines of the form
+
+    progress 0.42 Downloading 134 MB of 320 MB
+    progress - Saving 26,551 air strikes
+
+that is, the word "progress", how far along the current piece of work is (0 to 1, or "-" when
+that cannot be known), then a short note in plain words for the person waiting. cached_get
+reports every download bigger than one block this way; an ingester adds its own lines where it
+knows how much work there is. Run by hand, without the variable, nothing extra is printed.
 """
 
 import hashlib
@@ -29,6 +41,8 @@ BASE_USER_AGENT = "MapVietnam/0.1 (historical map research; low-volume)"
 # Area the project started with (around Cao Lanh, Dong Thap); ingesters for national sources
 # still load everything they can, so the map can widen later without re-ingesting.
 AREA_OF_INTEREST = (105.35, 10.15, 105.95, 10.75)
+PROGRESS_ENV = "MAPVIETNAM_PROGRESS"  # set by whoever wants progress lines on stdout (see the docstring)
+DOWNLOAD_BLOCK = 1 << 20  # bytes read at a time; a download is reported once it is past its first block
 _ENV_LINE = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")
 _last_request = {}
 
@@ -71,6 +85,22 @@ def _tls_context():
     return ctx
 
 
+def progress(fraction=None, text=""):
+    """Tell whoever started this ingester how far along it is (see the module docstring).
+
+    fraction: 0..1 of the current piece of work, or None when the total is not known.
+    text: a few plain words, e.g. "Reading page 812 of 4,012". Silent unless MAPVIETNAM_PROGRESS is set."""
+    if not os.environ.get(PROGRESS_ENV):
+        return
+    amount = "-" if fraction is None else f"{min(max(fraction, 0.0), 1.0):.4f}"
+    print(f"progress {amount} {text}".rstrip(), flush=True)
+
+
+def megabytes(n):
+    """'7.6 MB', '134 MB': a byte count as the person waiting reads it (decimal megabytes)."""
+    return f"{n / 1e6:.0f} MB" if n >= 1e7 else f"{n / 1e6:.1f} MB"
+
+
 load_env()
 USER_AGENT = user_agent()
 _TLS = _tls_context()
@@ -84,7 +114,8 @@ def cached_get(url, source, *, name=None, min_interval=2.0, refresh=False, heade
     same endpoint get distinct files). min_interval: seconds to leave between requests to the
     same host. timeout: seconds to wait on any single network read, not the whole download.
     The body is streamed to <name>.part and renamed only when complete, so an interrupted
-    download is never mistaken for a finished one.
+    download is never mistaken for a finished one. A body bigger than one block is reported
+    with progress() as it arrives, by bytes when the server says how long it is.
     """
     folder = RAW / source
     folder.mkdir(parents=True, exist_ok=True)
@@ -104,9 +135,16 @@ def cached_get(url, source, *, name=None, min_interval=2.0, refresh=False, heade
     try:
         with urllib.request.urlopen(req, timeout=timeout, context=_TLS) as r:
             tmp = path.with_suffix(path.suffix + ".part")
+            total = int(r.headers.get("Content-Length") or 0)
+            done = 0
             with open(tmp, "wb") as f:
-                while chunk := r.read(1 << 20):
+                while chunk := r.read(DOWNLOAD_BLOCK):
                     f.write(chunk)
+                    done += len(chunk)
+                    if total > DOWNLOAD_BLOCK:
+                        progress(done / total, f"Downloading {megabytes(done)} of {megabytes(total)}")
+                    elif done > DOWNLOAD_BLOCK:
+                        progress(None, f"Downloading {megabytes(done)}")
             tmp.replace(path)
     finally:
         # Count failed requests too: a retry straight after an error is still a request.

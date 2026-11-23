@@ -3,10 +3,12 @@ removed again, files and all. Runs against a fake archive (tests/fakeweb.py); no
 
 import json
 import threading
+import time
 from pathlib import Path
 
 import catalog
 import download_maps
+import files
 import library
 import pytest
 import tiling
@@ -462,6 +464,40 @@ def test_old_folders_that_cannot_be_converted_are_left_and_the_rest_go_on(lib):
     assert any("could not convert L7014B" in line for line in said)
 
 
+def test_old_folders_are_counted_until_they_are_converted_in_the_background(lib):
+    assert lib.legacy_status() == {"count": 0, "bytes": 0, "state": "idle", "error": None, "converted": 0}
+    tiles = lib.root / "web" / "tiles"
+    (tiles / "notes").mkdir(parents=True)  # not a tile folder: not counted
+    good = tiles / "L7014A" / "9" / "406"
+    good.mkdir(parents=True)
+    Image.new("RGBA", (256, 256), (10, 20, 30, 255)).save(good / "241.png")
+    status = lib.legacy_status()
+    assert status["count"] == 1 and status["bytes"] == (good / "241.png").stat().st_size
+    assert lib.listing()["legacy"] == status
+
+    lib.start_migration()
+    lib.start_migration()  # asking twice while it runs starts nothing more
+    deadline = time.monotonic() + 20
+    while lib.legacy_status()["state"] == "converting" and time.monotonic() < deadline:
+        time.sleep(0.02)
+    assert lib.legacy_status() == {"count": 0, "bytes": 0, "state": "idle", "error": None, "converted": 1}
+    assert states(lib)["L7014A"] == "installed" and [layer["id"] for layer in layers(lib)] == ["L7014A"]
+
+
+def test_stop_ends_the_map_being_added_and_forgets_the_queue(lib, monkeypatch):
+    slow = [lib.python, "-c", "import time; print('progress 0.1', flush=True); time.sleep(60)"]
+    monkeypatch.setattr(lib, "build_command", lambda entry, path, out: slow)
+    lib.add(["L7014A", "L7014B"])
+    lib.start_worker()
+    deadline = time.monotonic() + 20
+    while not (states(lib)["L7014A"] == "building" and lib._jobs["L7014A"].proc) and time.monotonic() < deadline:
+        time.sleep(0.02)
+    builder = lib._jobs["L7014A"].proc
+    assert lib.stop(timeout=20) is True
+    assert builder.poll() is not None  # no builder is left running when Map Vietnam quits
+    assert states(lib)["L7014B"] == "available" and not lib.tiles_path("L7014A").exists()
+
+
 class OtherProcess:
     """Another process adding `map_id`: a child that holds the worker lock and has written
     current.json, as `start.py maps add` does, until stopped."""
@@ -489,7 +525,7 @@ class OtherProcess:
         self.proc.wait()
 
 
-@pytest.mark.skipif(library.fcntl is None, reason="the stand-in for another process uses fcntl")
+@pytest.mark.skipif(files.fcntl is None, reason="the stand-in for another process uses fcntl")
 def test_a_map_another_process_is_adding_shows_its_state_and_can_be_removed(lib):
     other = OtherProcess(lib, "L7014A")
     try:
@@ -559,6 +595,6 @@ def test_a_delete_refused_while_the_file_is_open_is_retried(tmp_path, monkeypatc
         real_unlink(self, missing_ok=missing_ok)
 
     monkeypatch.setattr(type(path), "unlink", unlink)
-    monkeypatch.setattr(library.time, "sleep", lambda s: None)
-    library.delete(path)
+    monkeypatch.setattr(files.time, "sleep", lambda s: None)
+    files.delete(path)
     assert len(refusals) == 2 and not path.exists()

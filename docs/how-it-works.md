@@ -33,22 +33,27 @@ Four rules follow from that:
  scripts/library.py ──► download_maps.py ──► data/raw/ ──► build_tiles.py / georef_scan.py ──► web/tiles/<id>.mbtiles
                                                                                                   │
                                                                                 catalog.py ──► web/catalog.json
- public archives ──► scripts/ingest/<source>.py ──► data/evidence.sqlite
-                                                          │
+ a person adds a record source: the viewer's list of records, or python3 start.py setup
+        ▼
+ scripts/records.py ──► scripts/ingest/<source>.py ──► data/raw/ ──► data/evidence.sqlite
+                                                                          │
                                    scripts/server.py (127.0.0.1) ──► web/app/ in your browser
 ```
 
-- **`start.py`** runs everything in order: it makes a Python environment in `.venv/`, runs each
-  ingester, then starts the server. Each finished step leaves a marker in `data/work/setup/`, so
-  a second run only does what is missing. It never downloads an old map.
+- **`start.py`** makes a Python environment in `.venv/`, starts the server and opens the browser.
+  It asks nothing and downloads nothing else: records and old maps are added from the viewer.
+  `python3 start.py setup` adds the records from a terminal instead, through the same module.
+- **The record sources** (`scripts/records.py`) add and remove record sources, only when a
+  person asks for one (below).
 - **The map library** (`scripts/library.py`) adds and removes old maps, only when a person asks
   for one by name (below).
 - **The map pipeline** turns each old map into one file of map tiles (below).
 - **The ingesters** (`scripts/ingest/<source>.py`) turn each record source into records in one
   SQLite file, `data/evidence.sqlite`.
-- **The server** (`scripts/server.py`) serves the viewer and a small JSON API over the records:
-  search, records in a map area, grid-reference lookup, and cases with their exports. It uses only
-  the Python standard library and listens on `127.0.0.1` only, because it has no log-in.
+- **The server** (`scripts/server.py`) serves the viewer and a small JSON API: search, records in
+  a map area, grid-reference lookup, cases with their exports, the record sources, the map
+  library, and stopping the app. It uses only the Python standard library and listens on
+  `127.0.0.1` only, because it has no log-in.
 - **The viewer** (`web/app/`) is one HTML page, one script and one style sheet, with no build
   step. It uses MapLibre GL for the map.
 
@@ -97,8 +102,57 @@ An ingester is a module with a `main()` that:
 
 Some ingesters need another's output: `gns.py` writes a place-name index
 (`data/work/gns_index.json`) that the others use to place records that give only a name, and
-`hes_gazetteer.py` writes province outlines (`data/work/hes_provinces.json`). `start.py` knows
-the order. Add tests with small excerpts of the source under `tests/fixtures/<source>/`.
+`hes_gazetteer.py` writes province outlines (`data/work/hes_provinces.json`). The list of sources
+in `scripts/records.py` (`SOURCES`) says what each one needs, and that is the order they run in.
+Add tests with small excerpts of the source under `tests/fixtures/<source>/`.
+
+An ingester can say how far along it is with `common.progress(fraction, "a few plain words")`.
+When `records.py` runs it (it sets `MAPVIETNAM_PROGRESS`), that prints a line such as
+`progress 0.42 Downloading 134 MB of 320 MB`, or `progress - Saving 26,551 air strikes` when the
+total is not known, and the viewer shows the bar and the words. `cached_get` reports every large
+download by bytes; the helicopter-loss ingester reports pages, the air-strike ingester rows. An
+ingester that has to give up on purpose exits with one plain sentence (`raise SystemExit("...")`),
+which is shown to the person as it is; a crash is put in plain words by `records.py`, with the
+full output in `data/work/setup/logs/<source>.log`.
+
+## The record sources
+
+No records are downloaded unless a person adds a source: from the viewer (the server's
+`/api/records` routes) or with `python3 start.py setup`. Both go through `scripts/records.py`,
+which lists the sources (`SOURCES`: title, description, size, time, licence, what each needs),
+knows which are added, and runs the queue. Adding a source runs its ingester as a child process,
+one at a time, after the sources it needs; the command is always the fixed one for a listed
+source, never anything taken from a request. A source is added when its marker
+(`data/work/setup/<source>.done`), the database and the files it makes all exist, so the viewer
+and the command line always agree.
+
+- **Stopping** ends the ingester. Nothing is lost: downloads already finished are kept, a
+  half-written one is ignored, and SQLite undoes a half-written save. The helicopter losses
+  (hours of slow page reading, every page cached) carry on from where they stopped, and step
+  aside by themselves whenever something else is waiting.
+- **Removing** a source is a job in the same queue. It deletes the source's records (one that is
+  in a case is kept and marked withdrawn, as in a sync), its marker, its downloads under
+  `data/raw/` unless another added source reads them, and the files it made. Removing a source
+  that other added sources were made with is refused unless they are removed too.
+- **The air strikes** are loaded for one area. The default is around Cao Lãnh; the viewer (or
+  `setup --only thor --area W,S,E,N`) can choose another, and a new area replaces the old strikes.
+  An area may hold at most 150,000 strikes. The whole country is 3 million: measured, that is a
+  database of 5.6 GB, 12 seconds for every search and three minutes to draw one screen, so it is
+  not offered. The ingester stops, changing nothing, if an area turns out to hold too many.
+- **The Kaggle key** is optional. The air-strike download is tried without one, which Kaggle
+  allows at the time of writing. If Kaggle refuses, the ingester ends with exit status 3, the
+  source is listed with `wants_key`, and the viewer shows where to choose the `kaggle.json` file.
+  The key is saved in `.env` (readable by its owner only) and can be forgotten again. The server
+  never returns, prints or logs it, and scrubs it from anything an ingester prints.
+- **Two processes.** The viewer's server and `start.py setup` may run at once. A lock file
+  (`data/work/setup/worker.lock`) makes them take turns, `current.json` beside it lets each show
+  what the other is doing, and a stop asked for in one is honoured by the other within a second.
+  Records and old maps have separate locks, so a map can be built while records are added: no
+  ingester needs more than 0.4 GB of memory, next to about 2 GB for a map build.
+
+**Quitting.** `POST /api/quit` (the viewer's "Quit Map Vietnam"), Control-C and closing the
+terminal window all end the same way: the server stops the ingester and the map build under way,
+so nothing is left running, then exits, and `start.py` exits with it.
 
 ## Cases
 
@@ -128,7 +182,10 @@ measures which datum they agree with. The answer was Indian 1960.
 ## The map library
 
 No old map is downloaded unless a person adds it: from the viewer's "Add old maps" card (the
-server's `/api/library` routes) or with `python3 start.py maps add`. Only maps listed in
+server's `/api/library` routes) or with `python3 start.py maps add`. Maps made by versions before
+the library (folders of PNG tiles) are reported by the same listing and converted, without
+downloading anything, when the person asks (`POST /api/library/migrate`, or
+`python3 start.py maps migrate`). Only maps listed in
 `data/sources/map_library.json` can be added, and only from the https addresses listed there.
 Adding a map downloads its file (checked: whole, the right kind, a PDF that ends like one), then
 builds its tiles in a child process, one map at a time; removing it deletes its tiles, its
@@ -191,14 +248,20 @@ records one grid cell at a time as you move, draws each record's accuracy ring a
 size, and filters by kind and by year. Your view, chosen map, opacity and filters are remembered in
 the browser's local storage; cases are stored by the server.
 
+Everything a person can do is done here. The Records card lists the sources from `/api/records`
+with Add, Stop, Update and Remove, the first-run card adds the standard set, and the air strikes
+are added for the area on screen. The Old maps card does the same for maps. The viewer polls
+only while something is being added, and fetches the evidence on screen again when the server's
+`revision` number changes. "Quit Map Vietnam" stops the server.
+
 ## Area covered
 
 Work started around Cao Lãnh (Đồng Tháp province) in the Mekong Delta, and the older scanned maps
 and the default THOR area are there. The map library now reaches the whole country: 498 sheets at
 1:50,000 and 32 at 1:250,000, with gaps listed in [data-sources.md](data-sources.md#coverage).
-Most record sources cover all of Vietnam; THOR air strikes are loaded for the Cao Lãnh area
-unless asked for more. Nothing in the design depends on the area: adding maps and widening the
-THOR area is all it takes to cover more.
+Most record sources cover all of Vietnam; THOR air strikes are loaded for one chosen area at a
+time. Nothing in the design depends on the area: adding maps and choosing
+the air-strike area is all it takes to look somewhere else.
 
 ## Not a replacement for
 

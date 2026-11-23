@@ -107,3 +107,32 @@ def test_connect_migrates_an_old_store_without_withdrawn_columns(tmp_path):
     old.close()
     cols = {r[1] for r in store.connect(path).execute("pragma table_info(evidence)")}
     assert {"withdrawn_at", "withdrawn_reason"} <= cols
+
+
+def test_remove_source_takes_everything_out_but_what_is_in_a_case(tmp_path):
+    db = store.connect(tmp_path / "e.sqlite")
+    for source in ("s", "other"):
+        store.upsert_source(db, source, name=source.upper())
+    store.sync_source(db, "s", [_ev("a"), _ev("b")])
+    db.execute(
+        "insert into evidence (source, source_record_id, kind, lon, lat, uncertainty_m, original_coord, "
+        "original_datum, title) values ('other', 'a', 'other', 1, 1, 1, '1,1', 'wgs84', 'x')"
+    )
+    b_id = db.execute("select id from evidence where source = 's' and source_record_id = 'b'").fetchone()[0]
+    cid = db.execute("insert into cases (name, created_at) values ('k', 'now')").lastrowid
+    db.execute("insert into case_items (case_id, evidence_id) values (?, ?)", (cid, b_id))
+    db.commit()
+
+    assert store.remove_source(db, "s", reason="removed by its owner") == (1, 1)
+    rows = db.execute("select source, source_record_id, withdrawn_reason from evidence order by source").fetchall()
+    assert rows == [("other", "a", None), ("s", "b", "removed by its owner")]  # other sources are never touched
+    assert db.execute("select count(*) from case_items").fetchone()[0] == 1  # the analyst's case is whole
+    # The source's entry stays while a withdrawn record still refers to it ...
+    assert [r[0] for r in db.execute("select id from sources order by id")] == ["other", "s"]
+    # ... and goes once nothing does: removing again after the case let go of the record.
+    db.execute("delete from case_items")
+    db.execute("delete from evidence where id = ?", (b_id,))
+    db.commit()
+    assert store.remove_source(db, "s") == (0, 0)
+    assert [r[0] for r in db.execute("select id from sources")] == ["other"]
+    assert store.remove_source(db, "never-there") == (0, 0)

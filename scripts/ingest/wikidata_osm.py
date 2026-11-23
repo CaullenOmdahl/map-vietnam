@@ -61,7 +61,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # scripts/ingest: common
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts: store
 import store  # noqa: E402
-from common import AREA_OF_INTEREST, cached_get, in_bbox  # noqa: E402
+from common import AREA_OF_INTEREST, cached_get, in_bbox, progress  # noqa: E402
 
 VN_BBOX = (102.1, 8.4, 109.5, 23.4)  # lon/lat (west, south, east, north), WGS84
 WORK = store.ROOT / "data" / "work"
@@ -2111,6 +2111,7 @@ SOURCES = {
         licence="CC0 1.0",
         notes="Article-level coordinates; events dated 1858-1989 only; civil air accidents and "
         "cemeteries/memorials/graves/tombs/ossuaries excluded.",
+        doing="Asking Wikidata for battles, bases and crash sites",  # shown while it runs (common.progress)
         fn=ingest_wikidata,
     ),
     "osm": dict(
@@ -2119,6 +2120,7 @@ SOURCES = {
         licence="ODbL 1.0 (© OpenStreetMap contributors)",
         notes="Wartime/historic military features and war memorials; present-day installations and "
         "burials (cemeteries, graves, ossuaries, martyrs' memorials and memorials beside them) excluded.",
+        doing="Asking OpenStreetMap for wartime places and memorials",
         fn=ingest_osm,
     ),
 }
@@ -2140,7 +2142,9 @@ def main(argv=None):
     for sid, cfg in SOURCES.items():
         if args.only and sid != args.only:
             continue
+        progress(None, cfg["doing"])
         records, stats = cfg["fn"](refresh=args.refresh)
+        progress(None, f"Saving {len(records):,} records")
         store.upsert_source(db, sid, name=cfg["name"], url=cfg["url"], licence=cfg["licence"], notes=cfg["notes"])
         kept, deleted, withdrawn = sync(db, sid, records)
         stats.update(synced_kept=kept, synced_deleted=deleted, synced_withdrawn=withdrawn)
