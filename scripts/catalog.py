@@ -15,16 +15,15 @@ Usage: .venv/bin/python scripts/catalog.py
 
 import argparse
 import json
-from pathlib import Path
 
+import paths
 from tiling import read_metadata
 
-ROOT = Path(__file__).resolve().parent.parent
-TILES = ROOT / "web" / "tiles"
-OUT = ROOT / "web" / "catalog.json"
-CATALOGUE = ROOT / "data" / "sources" / "map_library.json"
-SCANS = ROOT / "data" / "scans"
-CORRECTIONS = ROOT / "data" / "maps.json"
+TILES = paths.TILES  # written: the installed maps
+OUT = paths.CATALOG_JSON  # written
+CATALOGUE = paths.SOURCES / "map_library.json"  # shipped with the app, read only
+SCANS = paths.SCANS
+CORRECTIONS = paths.MAPS_JSON
 MBTILES = ".mbtiles"
 DEFAULT_MAXZOOM = 15
 
@@ -128,7 +127,7 @@ def write_catalog(out=None, **sources):
 def main():
     """Write web/catalog.json and print how many layers it lists."""
     n = write_catalog()
-    print(f"catalog: {n} layers -> {OUT.relative_to(ROOT)}")
+    print(f"catalog: {n} layers -> {OUT}")
 
 
 if __name__ == "__main__":

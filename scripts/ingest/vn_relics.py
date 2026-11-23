@@ -69,11 +69,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # scripts/ingest: common
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts: store
+import paths  # noqa: E402
 import store  # noqa: E402
 from common import AREA_OF_INTEREST, cached_get, in_bbox, progress  # noqa: E402
 
 SOURCE = "vn_relics"
-WORK = store.ROOT / "data" / "work"
+WORK = paths.WORK
 GNS_INDEX = WORK / "gns_index.json"
 MAIN_TITLE = "Danh sách Di tích quốc gia Việt Nam"
 SPECIAL_TITLE = "Di tích quốc gia đặc biệt (Việt Nam)"
@@ -1626,7 +1627,7 @@ def fetch_coords(titles, refresh=False):
         if "error" in data or "query" not in data:
             # e.g. maxlag: drop the cache file so a re-run retries, and stop - writing the store
             # without these coordinates would silently move records to coarser centroids
-            (store.ROOT / "data" / "raw" / SOURCE / name).unlink(missing_ok=True)
+            (paths.RAW / SOURCE / name).unlink(missing_ok=True)
             raise RuntimeError(
                 f"vi.wikipedia coordinates API failed for batch {name}: "
                 f"{data.get('error', data)!r:.300}; nothing written, re-run later"

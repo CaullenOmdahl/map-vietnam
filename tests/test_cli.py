@@ -43,7 +43,7 @@ def test_every_script_is_listed():
     found = {
         str(p.relative_to(ROOT))
         for p in (ROOT / "scripts").rglob("*.py")
-        if "__main__" in p.read_text(encoding="utf-8")
+        if 'if __name__ == "__main__"' in p.read_text(encoding="utf-8")
     }
     assert found == set(SCRIPTS)
 

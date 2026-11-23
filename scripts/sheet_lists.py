@@ -38,8 +38,9 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "ingest"))
 import common  # noqa: E402
+import paths  # noqa: E402
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = paths.APP_ROOT  # maintainer tool: its outputs go to the checkout's data/sources and data/scans
 OUT = ROOT / "data" / "sources" / "sheets.json"
 REQUEST_INTERVAL_S = 1.2
 

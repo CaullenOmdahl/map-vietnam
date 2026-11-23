@@ -36,9 +36,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import common  # noqa: E402
 import gridref  # noqa: E402
+import paths  # noqa: E402
 import store  # noqa: E402
 
-OUT = store.ROOT / "data" / "work" / "datum_calibration.json"
+OUT = paths.WORK / "datum_calibration.json"
 MATCH_KM = 3.0  # search radius round the midpoint of the two readings
 CELL_DEG = 0.05  # GnsIndex bucket size in degrees (~5.5 km); near() scans enough rings to cover the window
 # Generic settlement words that one source writes and the other drops.

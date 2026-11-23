@@ -78,10 +78,11 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
+import paths
 import store
 from files import delete, lock_file, path_bytes, read_json, unlock_file, write_json
 
-ROOT = store.ROOT
+ROOT = paths.APP_ROOT  # the program's own files; what is written goes under paths.DATA_ROOT
 STATES = ("available", "queued", "running", "added", "failed")
 # How often a process running a job looks for a cancel request from another process.
 CANCEL_POLL_S = 0.5
@@ -485,11 +486,17 @@ class Records:
     `on_change()` is called after the stored records changed (the server drops its caches).
     """
 
-    def __init__(self, root=ROOT, sources=SOURCES, python=sys.executable, db_path=None, on_change=None):
-        self.root = Path(root)
+    def __init__(self, root=None, sources=SOURCES, python=None, db_path=None, on_change=None):
+        """`root` is a folder holding both the program's files and the data (what the tests
+        use); by default they are apart: scripts under paths.APP_ROOT, everything written under
+        paths.DATA_ROOT. `python` names an interpreter to run the ingesters with; without
+        either, paths.script_command() decides how."""
+        self.root = Path(root) if root else paths.DATA_ROOT  # where everything written goes
+        self.app_root = Path(root) if root else paths.APP_ROOT  # shipped, read only
         self.sources = tuple(sources)
         self.by_id = {s.id: s for s in self.sources}
-        self.python = python
+        self.python = python or sys.executable
+        self._own_command = root is None and python is None  # else: run <root>/<command> with `python`
         self.db_path = Path(db_path) if db_path else self.root / "data" / "evidence.sqlite"
         self.raw = self.root / "data" / "raw"
         self.state_dir = self.root / "data" / "work" / "setup"
@@ -1240,7 +1247,11 @@ class Records:
         """The child process that adds a job's source: its fixed ingester, plus the arguments
         for a fresh download and, for the air strikes, the checked area and the strike limit."""
         source = job.source
-        cmd = [self.python, str(self.root / source.command[0]), *source.command[1:]]
+        if self._own_command:
+            # source.command[0] is "scripts/ingest/<id>.py"; script_command wants it relative to scripts/.
+            cmd = paths.script_command(source.command[0].removeprefix("scripts/"), *source.command[1:])
+        else:
+            cmd = [self.python, str(self.app_root / source.command[0]), *source.command[1:]]
         if job.refresh:
             cmd += source.refresh_args
         if source.id == "thor":
@@ -1251,11 +1262,12 @@ class Records:
     def child_env(self):
         """Environment for an ingester: the import path the tests use (pytest.ini), unbuffered
         output, and the switch that makes it print progress lines."""
-        paths = [str(self.root / "scripts"), str(self.root / "scripts" / "ingest"), os.environ.get("PYTHONPATH", "")]
+        scripts = self.app_root / "scripts"
+        found = [str(scripts), str(scripts / "ingest"), os.environ.get("PYTHONPATH", "")]
         return {
             **os.environ,
             "PYTHONUNBUFFERED": "1",
-            "PYTHONPATH": os.pathsep.join(p for p in paths if p),
+            "PYTHONPATH": os.pathsep.join(p for p in found if p),
             "MAPVIETNAM_PROGRESS": "1",
         }
 
@@ -1344,7 +1356,7 @@ class Records:
 
 
 # ---- command line ----------------------------------------------------------------------------
-MAP_LIBRARY = ROOT / "data" / "sources" / "map_library.json"
+MAP_LIBRARY = paths.SOURCES / "map_library.json"
 DISK_GB = 1  # the downloads kept and the record database, before any old maps
 KEY_STEPS = """\
 Kaggle usually gives the air strike file without a key, but this time it asked for one.

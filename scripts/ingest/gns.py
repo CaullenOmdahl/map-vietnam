@@ -32,6 +32,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
+import paths  # noqa: E402
 import store  # noqa: E402
 
 SOURCE = "gns"
@@ -39,7 +40,7 @@ WAYBACK_TS = "20260903061555"  # the only capture in the CDX index (checked 2026
 ORIGINAL_URL = "https://geonames.nga.mil/geonames/GNSData/Vietnam.zip"
 URL = f"http://web.archive.org/web/{WAYBACK_TS}id_/{ORIGINAL_URL}"
 ZIP_NAME = f"Vietnam_{WAYBACK_TS}.zip"
-INDEX_PATH = store.ROOT / "data" / "work" / "gns_index.json"
+INDEX_PATH = paths.WORK / "gns_index.json"
 
 # Formal burials: never stored (rule 4 in docs/how-it-works.md).
 BURIAL_DESIGS = {"CMTY", "TMB", "GRVE", "BUR", "MSLM"}

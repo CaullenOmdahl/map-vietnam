@@ -79,11 +79,12 @@ from urllib.parse import parse_qs, urlparse
 
 import gridref
 import library
+import paths
 import records
 import store
 import tiling
 
-WEB = store.ROOT / "web"
+WEB = paths.APP_ROOT / "web"  # the viewer, shipped with the app; the data under web/ is elsewhere (see Handler)
 EMPTY_TILE = tiling.empty_tile()
 TILE_PATH = re.compile(r"/tiles/([A-Za-z0-9_.-]+)/(\d{1,2})/(\d{1,10})/(\d{1,10})\.webp")
 # Deeper than any map is tiled (z16), and far inside what SQLite's integers and the TMS row flip hold.
@@ -521,6 +522,7 @@ class Handler(SimpleHTTPRequestHandler):
     connection per request."""
 
     db_path = store.DB_PATH
+    data_web = paths.DATA_ROOT / "web"  # where /catalog.json and /tiles/ live (set by make_server)
     library = None  # the map library (set by make_server)
     records = None  # the record sources (set by make_server)
     # Fixed types for what the viewer loads: on Windows the defaults come from the registry, where
@@ -535,6 +537,16 @@ class Handler(SimpleHTTPRequestHandler):
         ".png": "image/png",
         ".svg": "image/svg+xml",
     }
+
+    def translate_path(self, path):
+        """The file for a URL path. The viewer comes from the program's own folder (self.directory);
+        what the app writes, /catalog.json and /tiles/, comes from the data folder. The parent
+        class has already refused any climb out of the folder (.. and the like)."""
+        found = super().translate_path(path)
+        parts = Path(found).relative_to(self.directory).parts
+        if parts and parts[0] in ("catalog.json", "tiles"):
+            return str(Path(self.data_web, *parts))
+        return found
 
     def log_message(self, *args):
         pass  # keep the console quiet: the viewer fetches hundreds of tiles per pan
@@ -894,12 +906,16 @@ class MapServer(ThreadingHTTPServer):
 
 def make_server(port=8765, db_path=store.DB_PATH, map_library=None, web=WEB, record_sources=None):
     """A threaded server on 127.0.0.1:`port` (0 picks a free port) over the store at `db_path`,
-    serving the files in `web`, the maps of `map_library` and the record sources of
-    `record_sources` (default: this repository's)."""
+    serving the viewer's files in `web`, the maps of `map_library` (whose folder also holds
+    catalog.json and tiles/) and the record sources of `record_sources` (default: the app's)."""
     lib = map_library or library.Library()
     rec = record_sources or records.Records(db_path=db_path)
     rec.on_change = forget_caches
-    handler = type("BoundHandler", (Handler,), {"db_path": Path(db_path), "library": lib, "records": rec})
+    handler = type(
+        "BoundHandler",
+        (Handler,),
+        {"db_path": Path(db_path), "data_web": lib.root / "web", "library": lib, "records": rec},
+    )
     srv = MapServer(("127.0.0.1", port), partial(handler, directory=str(web)))
     srv.library, srv.records = lib, rec
     return srv
@@ -921,7 +937,7 @@ def main():
     for name in ("SIGTERM", "SIGINT", "SIGHUP"):
         if hasattr(signal, name):
             signal.signal(getattr(signal, name), lambda signum, frame: srv.quit())
-    print(f"http://127.0.0.1:{args.port}", flush=True)
+    print(f"http://127.0.0.1:{srv.server_address[1]}", flush=True)  # the real port when --port is 0
     srv.serve_forever()
     srv.server_close()
 

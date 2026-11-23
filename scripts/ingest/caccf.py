@@ -50,6 +50,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import common  # noqa: E402
+import paths  # noqa: E402
 import store  # noqa: E402
 
 SOURCE = "caccf"
@@ -57,8 +58,8 @@ BASE = "https://catalog.archives.gov/medialz/electronic-records/rg-330/cacdb/"
 DATA_URL = BASE + "CAC.DEC98.CURRENT"
 DOC_URL = BASE + "153.1DP.pdf"
 CATALOG_URL = "https://catalog.archives.gov/id/1965870"
-HES_PROVINCES = store.ROOT / "data" / "work" / "hes_provinces.json"
-SUMMARY = store.ROOT / "data" / "work" / "caccf_summary.json"
+HES_PROVINCES = paths.WORK / "hes_provinces.json"
+SUMMARY = paths.WORK / "caccf_summary.json"
 RECORD_LEN = 164
 
 # DoD 7730.22 Encl 8 Table 6 (153.1DP.pdf, NARA reference pages 39-40), read from the page

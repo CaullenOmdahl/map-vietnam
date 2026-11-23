@@ -20,11 +20,11 @@ from contextlib import closing
 from pathlib import Path
 
 import morecantile
+import paths
 from PIL import Image, ImageDraw
 from tiling import connect_read_only, read_tile
 
-ROOT = Path(__file__).resolve().parent.parent
-TILES = ROOT / "web" / "tiles"
+TILES = paths.TILES
 TMS = morecantile.tms.get("WebMercatorQuad")
 TILE_PX = 256
 GRID = 3  # tiles per side of each panel, centred on the tile holding the point
@@ -103,7 +103,7 @@ def main():
     d.line([(10, PANEL_PX + 15), (10 + bar_px, PANEL_PX + 15)], fill="black", width=3)
     caption = f"{SCALE_BAR_M} m   z{args.zoom}   panels: {args.layer} | reference | blend over OSM"
     d.text((14 + bar_px, PANEL_PX + 8), caption, fill="black")
-    out = Path(args.out or ROOT / "data" / "work" / f"compare_{args.layer}_{args.lon:.3f}_{args.lat:.3f}.png")
+    out = Path(args.out or paths.WORK / f"compare_{args.layer}_{args.lon:.3f}_{args.lat:.3f}.png")
     out.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(out)
     print(out)

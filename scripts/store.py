@@ -19,10 +19,10 @@ import re
 import sqlite3
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-DB_PATH = ROOT / "data" / "evidence.sqlite"
+import paths
+
+DB_PATH = paths.DB_PATH
 
 KINDS = (
     "loss_incident",  # person killed or missing at a place

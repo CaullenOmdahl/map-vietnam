@@ -57,12 +57,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import common  # noqa: E402
+import paths  # noqa: E402
 import store  # noqa: E402
 
 SOURCE = "wiki_mia"
 TITLE = "List of United States servicemembers and civilians missing in action during the Vietnam War ({})"
 PERIODS = ("1961–1965", "1966–67", "1968–69", "1970–71", "1972–1975")
-WORK = store.ROOT / "data" / "work"
+WORK = paths.WORK
 HES_PROVINCES = WORK / "hes_provinces.json"
 GNS_INDEX = WORK / "gns_index.json"
 COLUMNS = ("date", "name", "rank", "service", "unit", "operation", "location", "circumstances", "status")

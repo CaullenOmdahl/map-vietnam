@@ -10,6 +10,7 @@ from pathlib import Path
 
 import download_maps as dm
 import numpy as np
+import paths
 import pytest
 from fakeweb import FakeArchive
 from PIL import Image, JpegImagePlugin
@@ -41,11 +42,10 @@ def test_raw_paths_keep_the_layout_older_versions_used():
 
 
 def test_scan_control_files_read_the_image_the_library_downloads():
-    root = dm.ROOT
-    for control in (root / "data" / "scans").glob("*.json"):
+    for control in paths.SCANS.glob("*.json"):
         image = json.loads(control.read_text(encoding="utf-8"))["image"]
         entry = {"id": control.stem, "series": "scans", "kind": "scan"}
-        assert root / image == dm.raw_paths(entry)[0]
+        assert paths.DATA_ROOT / image == dm.raw_paths(entry)[0]
 
 
 def test_jp2_scan_is_reduced_resized_and_saved_444(tmp_path):
