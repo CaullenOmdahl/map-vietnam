@@ -63,7 +63,9 @@ def find_data_root(app_root, frozen=None, platform=None, env=None, home=None):
     env = os.environ if env is None else env
     frozen = is_frozen() if frozen is None else frozen
     if env.get(HOME_ENV):
-        return Path(env[HOME_ENV]).expanduser()
+        # Absolute, because children are started with another working folder and would
+        # otherwise read a relative value against that one (rel/home/rel/home).
+        return Path(os.path.abspath(Path(env[HOME_ENV]).expanduser()))
     if frozen:
         return user_data_dir(platform, env, home)
     return Path(app_root)

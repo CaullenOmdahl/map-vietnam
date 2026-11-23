@@ -15,6 +15,14 @@ REPO = Path(__file__).resolve().parent.parent
 
 
 # ---- where things are ------------------------------------------------------------------------
+def test_a_relative_home_is_made_absolute(tmp_path, monkeypatch):
+    # Children run in another folder, so a relative value must not stay relative.
+    monkeypatch.chdir(tmp_path)
+    root = paths.find_data_root(REPO, frozen=False, env={"MAPVIETNAM_HOME": "rel/home"})
+    assert root == tmp_path / "rel" / "home"
+    assert root.is_absolute()
+
+
 def test_from_source_the_program_and_its_data_share_the_repository():
     assert paths.find_app_root(frozen=False) == REPO
     assert paths.find_data_root(REPO, frozen=False, env={}) == REPO
@@ -222,6 +230,34 @@ def test_the_server_keeps_everything_it_writes_in_the_home_folder(tmp_path):
     assert (home / "web" / "catalog.json").is_file()
     assert (home / "web" / "tiles" / "M.mbtiles").is_file()
     assert snapshot(REPO) == before  # not a byte written under the repository
+
+
+def test_a_child_script_works_in_a_relative_home_and_writes_nothing_under_the_repository(tmp_path):
+    from PIL import Image
+
+    home = tmp_path / "rel" / "home"
+    (home / "data" / "raw").mkdir(parents=True)
+    Image.new("RGB", (4, 4), "red").save(home / "data" / "raw" / "in.png")
+    code = (
+        "import library, paths\n"
+        "lib = library.Library()\n"
+        "assert paths.DATA_ROOT.is_absolute() and lib.root == paths.DATA_ROOT\n"
+        "lib.derive_in_child(lib.raw / 'in.png', lib.raw / 'out.jpg', {'jpeg_quality': 80})\n"
+    )
+    env = {
+        **os.environ,
+        "MAPVIETNAM_HOME": "rel/home",  # relative on purpose: the child runs with cwd=home
+        "PYTHONPATH": str(REPO / "scripts"),
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONUTF8": "1",
+    }
+    before = snapshot(REPO)
+    done = subprocess.run(
+        [sys.executable, "-c", code], env=env, cwd=tmp_path, capture_output=True, text=True, encoding="utf-8"
+    )
+    assert done.returncode == 0, done.stderr
+    assert (home / "data" / "raw" / "out.jpg").is_file()
+    assert snapshot(REPO) == before
 
 
 def test_children_of_a_packaged_app_are_started_through_the_executable(monkeypatch):
