@@ -1,0 +1,85 @@
+{
+ "image": "data/raw/scans/sgi100k_178_93d3x14t/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2764.1,
+   6543.0,
+   105.297229,
+   12.6
+  ],
+  [
+   2773.1,
+   4192.0,
+   105.297229,
+   12.78
+  ],
+  [
+   5067.8,
+   6549.8,
+   105.477229,
+   12.6
+  ],
+  [
+   5077.1,
+   4205.2,
+   105.477229,
+   12.78
+  ],
+  [
+   7365.1,
+   6562.0,
+   105.657229,
+   12.6
+  ],
+  [
+   7371.3,
+   4217.9,
+   105.657229,
+   12.78
+  ],
+  [
+   7381.9,
+   1871.5,
+   105.657229,
+   12.96
+  ]
+ ],
+ "neatline": [
+  [
+   855.2,
+   890.7
+  ],
+  [
+   9691.6,
+   934.4
+  ],
+  [
+   9670.9,
+   6831.6
+  ],
+  [
+   834.6,
+   6787.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 7 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10524,
+  7714
+ ],
+ "source_bytes": 13251047,
+ "meta": {
+  "title": "Porong (feuille 178)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1925",
+  "dateNote": "edition dated 1925-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.93d3x14t"
+ }
+}

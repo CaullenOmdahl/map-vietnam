@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_16_05f65k35/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1077.4,
+   5855.9,
+   104.397229,
+   22.14
+  ],
+  [
+   3297.9,
+   1144.5,
+   104.577229,
+   22.5
+  ],
+  [
+   7664.4,
+   3527.6,
+   104.937229,
+   22.32
+  ]
+ ],
+ "neatline": [
+  [
+   943.0,
+   882.3
+  ],
+  [
+   9717.6,
+   926.2
+  ],
+  [
+   9679.9,
+   6900.7
+  ],
+  [
+   905.3,
+   6856.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10698,
+  7753
+ ],
+ "source_bytes": 25377316,
+ "meta": {
+  "title": "Lục-An-Châu (feuille 16)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1925",
+  "dateNote": "edition dated 1925-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.05f65k35"
+ }
+}

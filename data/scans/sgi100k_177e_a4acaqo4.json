@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_177e_a4acaqo4/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2251.4,
+   6416.8,
+   104.937229,
+   12.6
+  ],
+  [
+   2286.7,
+   1728.3,
+   104.937229,
+   12.96
+  ],
+  [
+   4558.1,
+   6439.4,
+   105.117229,
+   12.6
+  ],
+  [
+   4576.2,
+   4088.7,
+   105.117229,
+   12.78
+  ],
+  [
+   4587.4,
+   1742.2,
+   105.117229,
+   12.96
+  ]
+ ],
+ "neatline": [
+  [
+   550.3,
+   781.3
+  ],
+  [
+   4976.6,
+   815.0
+  ],
+  [
+   4936.2,
+   6698.9
+  ],
+  [
+   509.9,
+   6665.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5379,
+  7395
+ ],
+ "source_bytes": 8586841,
+ "meta": {
+  "title": "Kompong Thom est (feuille 177E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.a4acaqo4"
+ }
+}

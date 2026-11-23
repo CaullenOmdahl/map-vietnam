@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_167w_eaf56775/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1464.5,
+   2780.3,
+   103.137229,
+   13.32
+  ],
+  [
+   3757.2,
+   5127.0,
+   103.317229,
+   13.14
+  ],
+  [
+   3755.5,
+   2787.5,
+   103.317229,
+   13.32
+  ]
+ ],
+ "neatline": [
+  [
+   620.3,
+   828.0
+  ],
+  [
+   5036.0,
+   842.0
+  ],
+  [
+   5040.3,
+   6714.4
+  ],
+  [
+   624.6,
+   6700.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5598,
+  7440
+ ],
+ "source_bytes": 7678698,
+ "meta": {
+  "title": "Battambang ouest (feuille 167W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-01; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.eaf56775"
+ }
+}

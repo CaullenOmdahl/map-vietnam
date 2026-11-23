@@ -1,0 +1,85 @@
+{
+ "image": "data/raw/scans/sgi100k_227_c8bbdj7n/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2023.1,
+   5110.7,
+   104.577229,
+   10.44
+  ],
+  [
+   4359.2,
+   5111.2,
+   104.757229,
+   10.44
+  ],
+  [
+   4353.8,
+   2751.1,
+   104.757229,
+   10.62
+  ],
+  [
+   6686.7,
+   5113.1,
+   104.937229,
+   10.44
+  ],
+  [
+   6678.9,
+   2755.1,
+   104.937229,
+   10.62
+  ],
+  [
+   9021.4,
+   5117.5,
+   105.117229,
+   10.44
+  ],
+  [
+   9014.1,
+   2759.7,
+   105.117229,
+   10.62
+  ]
+ ],
+ "neatline": [
+  [
+   600.8,
+   827.3
+  ],
+  [
+   9456.4,
+   838.1
+  ],
+  [
+   9471.8,
+   6745.8
+  ],
+  [
+   616.3,
+   6735.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 7 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10044,
+  7652
+ ],
+ "source_bytes": 15436063,
+ "meta": {
+  "title": "Hà-Tiên (feuille 227)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.c8bbdj7n"
+ }
+}

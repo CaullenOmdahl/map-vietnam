@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_104e_3d749j87/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   648.3,
+   4442.0,
+   106.197229,
+   18.18
+  ],
+  [
+   653.0,
+   2098.0,
+   106.197229,
+   18.36
+  ],
+  [
+   2891.2,
+   4445.0,
+   106.377229,
+   18.18
+  ],
+  [
+   2888.7,
+   2089.9,
+   106.377229,
+   18.36
+  ]
+ ],
+ "neatline": [
+  [
+   580.7,
+   897.1
+  ],
+  [
+   4976.4,
+   892.0
+  ],
+  [
+   4973.6,
+   6742.4
+  ],
+  [
+   577.9,
+   6747.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5460,
+  7539
+ ],
+ "source_bytes": 6398172,
+ "meta": {
+  "title": "Hâ-Tĩnh est (feuille 104E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-11; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.3d749j87"
+ }
+}

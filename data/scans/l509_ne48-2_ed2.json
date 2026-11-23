@@ -1,0 +1,135 @@
+{
+ "image": "data/raw/scans/l509_ne48-2_ed2/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1046.7,
+   2479.1,
+   103.75,
+   19.25
+  ],
+  [
+   1040.9,
+   969.6,
+   103.75,
+   19.75
+  ],
+  [
+   1762.5,
+   2478.9,
+   104.0,
+   19.25
+  ],
+  [
+   1759.9,
+   1722.6,
+   104.0,
+   19.5
+  ],
+  [
+   1757.8,
+   971.4,
+   104.0,
+   19.75
+  ],
+  [
+   2480.3,
+   2482.8,
+   104.25,
+   19.25
+  ],
+  [
+   2476.0,
+   1727.6,
+   104.25,
+   19.5
+  ],
+  [
+   2472.3,
+   970.6,
+   104.25,
+   19.75
+  ],
+  [
+   3204.5,
+   3238.4,
+   104.5,
+   19.0
+  ],
+  [
+   3196.7,
+   2484.6,
+   104.5,
+   19.25
+  ],
+  [
+   3195.2,
+   1726.1,
+   104.5,
+   19.5
+  ],
+  [
+   3188.0,
+   969.9,
+   104.5,
+   19.75
+  ],
+  [
+   3916.7,
+   2485.4,
+   104.75,
+   19.25
+  ],
+  [
+   3910.8,
+   1726.3,
+   104.75,
+   19.5
+  ],
+  [
+   3907.1,
+   969.8,
+   104.75,
+   19.75
+  ],
+  [
+   4629.2,
+   1723.7,
+   105.0,
+   19.5
+  ]
+ ],
+ "neatline": [
+  [
+   317.7,
+   218.7
+  ],
+  [
+   4620.1,
+   221.4
+  ],
+  [
+   4636.6,
+   3239.1
+  ],
+  [
+   334.1,
+   3236.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 16 graticule nodes",
+ "work_size": [
+  5000,
+  3793
+ ],
+ "source_bytes": 6486401,
+ "meta": {
+  "title": "Cua Rao (NE 48-2)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "",
+  "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-2-2nd-ed.jpg"
+ }
+}

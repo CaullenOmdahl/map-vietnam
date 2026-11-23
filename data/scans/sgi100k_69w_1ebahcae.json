@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_69w_1ebahcae/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2596.6,
+   4609.5,
+   103.857229,
+   19.98
+  ],
+  [
+   2596.2,
+   2022.2,
+   103.857229,
+   20.16
+  ],
+  [
+   5002.3,
+   4613.9,
+   104.037229,
+   19.98
+  ],
+  [
+   5002.1,
+   2022.7,
+   104.037229,
+   20.16
+  ]
+ ],
+ "neatline": [
+  [
+   357.6,
+   676.2
+  ],
+  [
+   5144.3,
+   681.0
+  ],
+  [
+   5145.0,
+   7163.1
+  ],
+  [
+   358.2,
+   7158.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5499,
+  7983
+ ],
+ "source_bytes": 12452132,
+ "meta": {
+  "title": "Muong-Vène ouest (feuille 69W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1948",
+  "dateNote": "edition dated 1948-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.1ebahcae"
+ }
+}

@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_162e_85a23whn/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   584.7,
+   6520.3,
+   106.197229,
+   13.5
+  ],
+  [
+   590.6,
+   4171.7,
+   106.197229,
+   13.68
+  ],
+  [
+   588.9,
+   1829.2,
+   106.197229,
+   13.86
+  ],
+  [
+   2876.3,
+   6523.1,
+   106.377229,
+   13.5
+  ],
+  [
+   2882.2,
+   4176.6,
+   106.377229,
+   13.68
+  ],
+  [
+   2883.2,
+   1831.1,
+   106.377229,
+   13.86
+  ]
+ ],
+ "neatline": [
+  [
+   418.0,
+   856.2
+  ],
+  [
+   4822.4,
+   862.3
+  ],
+  [
+   4815.5,
+   6744.6
+  ],
+  [
+   411.1,
+   6738.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5322,
+  7413
+ ],
+ "source_bytes": 8715917,
+ "meta": {
+  "title": "Stung Treng est (feuille 162E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.85a23whn"
+ }
+}

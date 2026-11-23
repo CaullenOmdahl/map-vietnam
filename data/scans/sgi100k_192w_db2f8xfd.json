@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_192w_db2f8xfd/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1356.1,
+   2875.1,
+   107.277229,
+   12.42
+  ],
+  [
+   3677.9,
+   5188.3,
+   107.457229,
+   12.24
+  ],
+  [
+   3659.8,
+   2852.6,
+   107.457229,
+   12.42
+  ]
+ ],
+ "neatline": [
+  [
+   548.6,
+   830.3
+  ],
+  [
+   4955.3,
+   787.2
+  ],
+  [
+   5000.7,
+   6650.0
+  ],
+  [
+   594.0,
+   6693.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5451,
+  7443
+ ],
+ "source_bytes": 9923866,
+ "meta": {
+  "title": "Poste maître ouest (feuille 192W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-01; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.db2f8xfd"
+ }
+}

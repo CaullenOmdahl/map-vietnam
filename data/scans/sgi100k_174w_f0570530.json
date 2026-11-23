@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_174w_f0570530/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2045.2,
+   5016.8,
+   108.717229,
+   13.14
+  ],
+  [
+   2036.8,
+   2673.9,
+   108.717229,
+   13.32
+  ],
+  [
+   4344.0,
+   4996.1,
+   108.897229,
+   13.14
+  ],
+  [
+   4326.9,
+   2652.7,
+   108.897229,
+   13.32
+  ]
+ ],
+ "neatline": [
+  [
+   569.9,
+   852.8
+  ],
+  [
+   4969.5,
+   812.6
+  ],
+  [
+   5001.6,
+   6705.9
+  ],
+  [
+   601.9,
+   6746.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5439,
+  7350
+ ],
+ "source_bytes": 9088017,
+ "meta": {
+  "title": "Sông Cầu ouest (feuille 174W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.f0570530"
+ }
+}

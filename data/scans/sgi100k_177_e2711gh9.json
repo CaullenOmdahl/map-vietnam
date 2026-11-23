@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_177_e2711gh9/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2424.7,
+   832.3,
+   104.577229,
+   12.96
+  ],
+  [
+   7039.2,
+   5727.0,
+   104.937229,
+   12.6
+  ],
+  [
+   9345.4,
+   5716.1,
+   105.117229,
+   12.6
+  ],
+  [
+   9339.2,
+   818.9,
+   105.117229,
+   12.96
+  ]
+ ],
+ "neatline": [
+  [
+   579.5,
+   -128.0
+  ],
+  [
+   9704.7,
+   -148.3
+  ],
+  [
+   9711.5,
+   5978.1
+  ],
+  [
+   586.3,
+   5998.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10641,
+  7690
+ ],
+ "source_bytes": 13306386,
+ "meta": {
+  "title": "Kompong-Thom (feuille 177)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1926",
+  "dateNote": "edition dated 1926-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.e2711gh9"
+ }
+}

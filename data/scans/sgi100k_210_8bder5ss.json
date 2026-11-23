@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_210_8bder5ss/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2884.6,
+   4610.9,
+   106.017229,
+   11.34
+  ],
+  [
+   2889.6,
+   2822.3,
+   106.017229,
+   11.52
+  ],
+  [
+   8193.2,
+   2844.1,
+   106.557229,
+   11.52
+  ]
+ ],
+ "neatline": [
+  [
+   1143.9,
+   1261.4
+  ],
+  [
+   9588.2,
+   1296.1
+  ],
+  [
+   9575.6,
+   5780.0
+  ],
+  [
+   1131.4,
+   5745.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10011,
+  7645
+ ],
+ "source_bytes": 18175320,
+ "meta": {
+  "title": "Tây-Ninh (feuille 210)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1930",
+  "dateNote": "edition dated 1930-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.8bder5ss"
+ }
+}

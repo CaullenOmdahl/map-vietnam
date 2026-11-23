@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_35w_961357q1/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   600.7,
+   5685.4,
+   103.677229,
+   21.24
+  ],
+  [
+   620.7,
+   3329.2,
+   103.677229,
+   21.42
+  ],
+  [
+   638.4,
+   975.5,
+   103.677229,
+   21.6
+  ],
+  [
+   2856.2,
+   3344.3,
+   103.857229,
+   21.42
+  ],
+  [
+   2868.9,
+   987.6,
+   103.857229,
+   21.6
+  ]
+ ],
+ "neatline": [
+  [
+   560.1,
+   855.6
+  ],
+  [
+   5039.8,
+   882.9
+  ],
+  [
+   4995.7,
+   6791.8
+  ],
+  [
+   516.0,
+   6764.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5565,
+  7770
+ ],
+ "source_bytes": 11414821,
+ "meta": {
+  "title": "Sơn-La ouest (feuille 35W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-03; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.961357q1"
+ }
+}

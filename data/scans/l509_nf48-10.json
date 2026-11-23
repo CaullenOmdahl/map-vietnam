@@ -1,0 +1,99 @@
+{
+ "image": "data/raw/scans/l509_nf48-10/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1092.1,
+   1717.2,
+   103.75,
+   21.5
+  ],
+  [
+   1090.4,
+   960.3,
+   103.75,
+   21.75
+  ],
+  [
+   1802.3,
+   2478.0,
+   104.0,
+   21.25
+  ],
+  [
+   1795.1,
+   1717.4,
+   104.0,
+   21.5
+  ],
+  [
+   1794.9,
+   964.6,
+   104.0,
+   21.75
+  ],
+  [
+   2502.9,
+   1723.3,
+   104.25,
+   21.5
+  ],
+  [
+   2499.4,
+   963.2,
+   104.25,
+   21.75
+  ],
+  [
+   3207.8,
+   1724.3,
+   104.5,
+   21.5
+  ],
+  [
+   3204.3,
+   964.9,
+   104.5,
+   21.75
+  ],
+  [
+   3917.3,
+   1722.6,
+   104.75,
+   21.5
+  ]
+ ],
+ "neatline": [
+  [
+   379.3,
+   209.6
+  ],
+  [
+   4613.2,
+   218.8
+  ],
+  [
+   4627.5,
+   3237.6
+  ],
+  [
+   393.6,
+   3228.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 10 graticule nodes",
+ "work_size": [
+  5000,
+  3786
+ ],
+ "source_bytes": 6796651,
+ "meta": {
+  "title": "Yen Bay (NF 48-10)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "",
+  "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-10.jpg"
+ }
+}

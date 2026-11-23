@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_176e_3aaa609e/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2321.1,
+   6317.5,
+   104.217229,
+   12.6
+  ],
+  [
+   2335.2,
+   1610.5,
+   104.217229,
+   12.96
+  ],
+  [
+   4619.0,
+   6314.0,
+   104.397229,
+   12.6
+  ],
+  [
+   4618.9,
+   3959.8,
+   104.397229,
+   12.78
+  ],
+  [
+   4623.2,
+   1605.9,
+   104.397229,
+   12.96
+  ]
+ ],
+ "neatline": [
+  [
+   980.5,
+   751.6
+  ],
+  [
+   5386.8,
+   743.6
+  ],
+  [
+   5375.2,
+   6669.0
+  ],
+  [
+   968.9,
+   6676.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5934,
+  8058
+ ],
+ "source_bytes": 6773984,
+ "meta": {
+  "title": "Trapéang Chong est (feuille 176E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.3aaa609e"
+ }
+}

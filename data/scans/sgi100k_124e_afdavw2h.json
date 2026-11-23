@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_124e_afdavw2h/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   955.7,
+   6780.4,
+   106.917229,
+   16.2
+  ],
+  [
+   951.0,
+   4428.3,
+   106.917229,
+   16.38
+  ],
+  [
+   943.3,
+   2077.4,
+   106.917229,
+   16.56
+  ],
+  [
+   3253.4,
+   4421.6,
+   107.097229,
+   16.38
+  ],
+  [
+   3245.8,
+   2071.8,
+   107.097229,
+   16.56
+  ]
+ ],
+ "neatline": [
+  [
+   904.4,
+   990.7
+  ],
+  [
+   5076.0,
+   979.1
+  ],
+  [
+   5092.2,
+   6874.6
+  ],
+  [
+   920.6,
+   6886.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5541,
+  7782
+ ],
+ "source_bytes": 9054320,
+ "meta": {
+  "title": "Lao-Bao est (feuille 124E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.afdavw2h"
+ }
+}

@@ -1,0 +1,123 @@
+{
+ "image": "data/raw/scans/l509_nf48-11/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1078.7,
+   3214.6,
+   105.25,
+   21.0
+  ],
+  [
+   1081.1,
+   1706.5,
+   105.25,
+   21.5
+  ],
+  [
+   1078.8,
+   953.9,
+   105.25,
+   21.75
+  ],
+  [
+   1785.0,
+   1709.3,
+   105.5,
+   21.5
+  ],
+  [
+   1782.3,
+   957.3,
+   105.5,
+   21.75
+  ],
+  [
+   2491.1,
+   2468.5,
+   105.75,
+   21.25
+  ],
+  [
+   2489.9,
+   1712.1,
+   105.75,
+   21.5
+  ],
+  [
+   2484.3,
+   958.1,
+   105.75,
+   21.75
+  ],
+  [
+   3199.2,
+   2471.4,
+   106.0,
+   21.25
+  ],
+  [
+   3192.9,
+   1714.4,
+   106.0,
+   21.5
+  ],
+  [
+   3192.0,
+   964.2,
+   106.0,
+   21.75
+  ],
+  [
+   3903.8,
+   2471.3,
+   106.25,
+   21.25
+  ],
+  [
+   3901.8,
+   1717.9,
+   106.25,
+   21.5
+  ],
+  [
+   3896.4,
+   965.2,
+   106.25,
+   21.75
+  ]
+ ],
+ "neatline": [
+  [
+   369.5,
+   197.0
+  ],
+  [
+   4601.7,
+   214.1
+  ],
+  [
+   4609.4,
+   3229.0
+  ],
+  [
+   377.1,
+   3211.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 14 graticule nodes",
+ "work_size": [
+  5000,
+  3770
+ ],
+ "source_bytes": 6623915,
+ "meta": {
+  "title": "Hanoi (NF 48-11)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "",
+  "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-11.jpg"
+ }
+}

@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_235_fe262p43/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   563.1,
+   3917.0,
+   105.837229,
+   10.08
+  ],
+  [
+   2918.9,
+   1553.0,
+   106.017229,
+   10.26
+  ],
+  [
+   7573.7,
+   3920.3,
+   106.377229,
+   10.08
+  ]
+ ],
+ "neatline": [
+  [
+   588.4,
+   763.6
+  ],
+  [
+   9452.6,
+   767.7
+  ],
+  [
+   9415.0,
+   5450.1
+  ],
+  [
+   550.8,
+   5446.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10035,
+  7636
+ ],
+ "source_bytes": 17981416,
+ "meta": {
+  "title": "Vinh-Long (feuille 235)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.fe262p43"
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_35_619bx10i/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1000.5,
+   5552.7,
+   103.677229,
+   21.24
+  ],
+  [
+   1043.1,
+   846.5,
+   103.677229,
+   21.6
+  ],
+  [
+   3204.9,
+   5578.6,
+   103.857229,
+   21.24
+  ],
+  [
+   3255.7,
+   866.6,
+   103.857229,
+   21.6
+  ],
+  [
+   5409.7,
+   5603.5,
+   104.037229,
+   21.24
+  ]
+ ],
+ "neatline": [
+  [
+   891.5,
+   827.4
+  ],
+  [
+   9787.9,
+   925.5
+  ],
+  [
+   9729.0,
+   6757.1
+  ],
+  [
+   832.6,
+   6659.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10635,
+  7721
+ ],
+ "source_bytes": 23161345,
+ "meta": {
+  "title": "Sơn-La (feuille 35)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1930",
+  "dateNote": "edition dated 1930-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.619bx10i"
+ }
+}

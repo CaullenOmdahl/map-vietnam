@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_48w_c8d2z2d0/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   637.4,
+   2342.4,
+   105.117229,
+   21.06
+  ],
+  [
+   2843.5,
+   4690.3,
+   105.297229,
+   20.88
+  ],
+  [
+   5047.5,
+   4699.4,
+   105.477229,
+   20.88
+  ],
+  [
+   5047.0,
+   2358.9,
+   105.477229,
+   21.06
+  ]
+ ],
+ "neatline": [
+  [
+   637.0,
+   979.7
+  ],
+  [
+   5044.6,
+   996.5
+  ],
+  [
+   5047.0,
+   6861.7
+  ],
+  [
+   639.4,
+   6844.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5598,
+  7752
+ ],
+ "source_bytes": 10989418,
+ "meta": {
+  "title": "Són-Tây ouest (feuille 48W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-12; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.c8d2z2d0"
+ }
+}

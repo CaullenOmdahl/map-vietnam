@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_204e_01c6mtx6/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2553.9,
+   5705.1,
+   109.077229,
+   11.7
+  ],
+  [
+   2560.5,
+   3584.9,
+   109.077229,
+   11.88
+  ],
+  [
+   2566.5,
+   1467.4,
+   109.077229,
+   12.06
+  ],
+  [
+   4671.1,
+   5710.9,
+   109.257229,
+   11.7
+  ],
+  [
+   4674.4,
+   3590.4,
+   109.257229,
+   11.88
+  ],
+  [
+   4676.0,
+   1472.2,
+   109.257229,
+   12.06
+  ]
+ ],
+ "neatline": [
+  [
+   866.2,
+   927.3
+  ],
+  [
+   5533.8,
+   939.1
+  ],
+  [
+   5522.4,
+   6450.9
+  ],
+  [
+   854.8,
+   6439.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5865,
+  7968
+ ],
+ "source_bytes": 9271053,
+ "meta": {
+  "title": "Cam Ranh est (feuille 204E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1948",
+  "dateNote": "edition dated 1948-08; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.01c6mtx6"
+ }
+}

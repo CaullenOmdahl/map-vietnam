@@ -1,0 +1,44 @@
+{
+ "image": "data/raw/scans/warper_9667/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1739.9,
+   2687.8,
+   109.743805,
+   18.25022
+  ],
+  [
+   3433.2,
+   949.8,
+   113.846683,
+   22.196942
+  ],
+  [
+   1511.2,
+   5409.3,
+   109.203415,
+   11.881462
+  ],
+  [
+   3494.1,
+   5368.9,
+   114.0,
+   12.0
+  ]
+ ],
+ "placed_by": "Wikimaps Warper map 9667 (https://warper.wmflabs.org/maps/9667), control points scaled by 0.2464",
+ "work_size": [
+  3840,
+  5793
+ ],
+ "source_bytes": 6738572,
+ "meta": {
+  "title": "China Sea Sheet III (North West) Cam Ranh Bay to Hong Kong (chart 2660)",
+  "series": "British Admiralty charts",
+  "scale": "",
+  "date": "1859",
+  "dateNote": "published 1859",
+  "source": "https://commons.wikimedia.org/wiki/File%3AAdmiralty_Chart_No_2660_China_Sea_Sheet_III_%28North_West%29_Cam_Ranh_Bay_to_Hong_Kong%2C_Published_1859.jpg"
+ }
+}

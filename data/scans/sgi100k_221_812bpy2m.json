@@ -1,0 +1,85 @@
+{
+ "image": "data/raw/scans/sgi100k_221_812bpy2m/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1281.7,
+   4008.6,
+   106.557229,
+   10.98
+  ],
+  [
+   1279.1,
+   1654.9,
+   106.557229,
+   11.16
+  ],
+  [
+   3614.9,
+   6355.8,
+   106.737229,
+   10.8
+  ],
+  [
+   3609.3,
+   4001.0,
+   106.737229,
+   10.98
+  ],
+  [
+   5940.2,
+   6340.3,
+   106.917229,
+   10.8
+  ],
+  [
+   8259.9,
+   3977.3,
+   107.097229,
+   10.98
+  ],
+  [
+   8250.5,
+   1620.1,
+   107.097229,
+   11.16
+  ]
+ ],
+ "neatline": [
+  [
+   838.6,
+   872.0
+  ],
+  [
+   9713.4,
+   828.6
+  ],
+  [
+   9729.3,
+   6693.0
+  ],
+  [
+   854.5,
+   6736.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 7 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10542,
+  7719
+ ],
+ "source_bytes": 15527495,
+ "meta": {
+  "title": "Saigon (feuille 221)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1928",
+  "dateNote": "edition dated 1928-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.812bpy2m"
+ }
+}

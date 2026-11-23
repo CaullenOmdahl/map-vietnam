@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_119e_be883wu9/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   770.9,
+   5520.3,
+   106.917229,
+   16.74
+  ],
+  [
+   761.2,
+   3170.5,
+   106.917229,
+   16.92
+  ],
+  [
+   3029.1,
+   5508.7,
+   107.097229,
+   16.74
+  ],
+  [
+   3018.9,
+   3159.4,
+   107.097229,
+   16.92
+  ]
+ ],
+ "neatline": [
+  [
+   430.5,
+   893.8
+  ],
+  [
+   4851.3,
+   871.6
+  ],
+  [
+   4876.3,
+   6769.3
+  ],
+  [
+   455.5,
+   6791.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5316,
+  7659
+ ],
+ "source_bytes": 9237644,
+ "meta": {
+  "title": "Quảng-Trị est (feuille 119E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.be883wu9"
+ }
+}

@@ -36,10 +36,16 @@ def test_load_env_without_a_file_does_nothing(tmp_path):
 
 def test_user_agent_is_generic_and_appends_the_optional_contact(monkeypatch):
     monkeypatch.delenv("MAPVIETNAM_CONTACT", raising=False)
-    assert common.user_agent() == "MapVietnam/0.1 (historical map research; low-volume)"
+    assert (
+        common.user_agent()
+        == "MapVietnam/0.1 (+https://github.com/CaullenOmdahl/map-vietnam; historical map research; low-volume)"
+    )
     assert "@" not in common.BASE_USER_AGENT
     monkeypatch.setenv("MAPVIETNAM_CONTACT", "someone@example.org")
-    assert common.user_agent() == "MapVietnam/0.1 (historical map research; low-volume; someone@example.org)"
+    assert (
+        common.user_agent()
+        == "MapVietnam/0.1 (+https://github.com/CaullenOmdahl/map-vietnam; historical map research; low-volume; someone@example.org)"
+    )
 
 
 @pytest.fixture

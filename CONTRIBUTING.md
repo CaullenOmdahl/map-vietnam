@@ -51,6 +51,9 @@ scripts/
   l7014_meta.py             reads title, date and datum from a US GeoPDF (kept in its map's metadata)
   build_tiles.py            a GeoPDF sheet -> web/tiles/<id>.mbtiles
   georef_scan.py            a scanned map + control points (data/scans/<id>.json) -> web/tiles/<id>.mbtiles
+  sheet_lists.py            lists the sheets of the regular scanned series (French 1:100,000, US L509,
+                            Admiralty charts) -> data/sources/sheets.json
+  place_sheets.py           places those sheets from their printed graticule -> data/scans/<id>.json
   tiling.py, datums.py      shared tiling (WebP tiles in one MBTiles file per map) and datum code
   catalog.py                web/tiles/ -> web/catalog.json, the viewer's list of installed maps
   gridref.py                wartime MGRS grid references on Indian 1960 or WGS84

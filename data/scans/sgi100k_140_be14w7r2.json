@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_140_be14w7r2/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   912.1,
+   5549.2,
+   105.837229,
+   14.94
+  ],
+  [
+   912.1,
+   3206.9,
+   105.837229,
+   15.12
+  ],
+  [
+   7768.6,
+   5560.6,
+   106.377229,
+   14.94
+  ],
+  [
+   7768.5,
+   3218.1,
+   106.377229,
+   15.12
+  ]
+ ],
+ "neatline": [
+  [
+   928.5,
+   961.1
+  ],
+  [
+   9792.1,
+   975.8
+  ],
+  [
+   9792.2,
+   6861.9
+  ],
+  [
+   928.6,
+   6847.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10512,
+  7669
+ ],
+ "source_bytes": 11812784,
+ "meta": {
+  "title": "Pak-Song (feuille 140)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1932",
+  "dateNote": "edition dated 1932-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.be14w7r2"
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_218e_f7f6etp7/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2189.1,
+   4029.9,
+   104.937229,
+   10.98
+  ],
+  [
+   2191.3,
+   1686.9,
+   104.937229,
+   11.16
+  ],
+  [
+   4509.7,
+   6373.1,
+   105.117229,
+   10.8
+  ],
+  [
+   4504.8,
+   4032.7,
+   105.117229,
+   10.98
+  ],
+  [
+   4499.9,
+   1688.4,
+   105.117229,
+   11.16
+  ]
+ ],
+ "neatline": [
+  [
+   514.9,
+   869.5
+  ],
+  [
+   4939.0,
+   872.9
+  ],
+  [
+   4947.7,
+   6776.5
+  ],
+  [
+   523.7,
+   6773.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5400,
+  7545
+ ],
+ "source_bytes": 8337479,
+ "meta": {
+  "title": "Takeo est (feuille 218E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.f7f6etp7"
+ }
+}

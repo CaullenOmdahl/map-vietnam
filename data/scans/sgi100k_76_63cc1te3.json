@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_76_63cc1te3/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2756.1,
+   5312.7,
+   102.417229,
+   19.44
+  ],
+  [
+   5021.0,
+   3001.8,
+   102.597229,
+   19.62
+  ],
+  [
+   7240.9,
+   3041.3,
+   102.777229,
+   19.62
+  ],
+  [
+   9425.9,
+   5423.6,
+   102.957229,
+   19.44
+  ],
+  [
+   9466.6,
+   3078.8,
+   102.957229,
+   19.62
+  ]
+ ],
+ "neatline": [
+  [
+   1094.6,
+   708.7
+  ],
+  [
+   9706.4,
+   853.7
+  ],
+  [
+   9602.5,
+   6897.1
+  ],
+  [
+   990.7,
+   6752.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10530,
+  7716
+ ],
+ "source_bytes": 20267871,
+ "meta": {
+  "title": "Muong-Soui (feuille 76)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1927",
+  "dateNote": "edition dated 1927-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.63cc1te3"
+ }
+}

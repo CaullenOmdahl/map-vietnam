@@ -1,0 +1,135 @@
+{
+ "image": "data/raw/scans/l509_nc48-7_ed3/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   250.2,
+   1736.4,
+   105.75,
+   10.5
+  ],
+  [
+   1000.6,
+   2495.2,
+   106.0,
+   10.25
+  ],
+  [
+   995.9,
+   1739.0,
+   106.0,
+   10.5
+  ],
+  [
+   994.9,
+   984.5,
+   106.0,
+   10.75
+  ],
+  [
+   1752.5,
+   2497.6,
+   106.25,
+   10.25
+  ],
+  [
+   1746.6,
+   1740.9,
+   106.25,
+   10.5
+  ],
+  [
+   1743.7,
+   985.9,
+   106.25,
+   10.75
+  ],
+  [
+   1739.7,
+   233.1,
+   106.25,
+   11.0
+  ],
+  [
+   2495.1,
+   1741.8,
+   106.5,
+   10.5
+  ],
+  [
+   2492.4,
+   986.2,
+   106.5,
+   10.75
+  ],
+  [
+   3249.9,
+   2500.1,
+   106.75,
+   10.25
+  ],
+  [
+   3245.6,
+   1743.8,
+   106.75,
+   10.5
+  ],
+  [
+   3242.2,
+   987.5,
+   106.75,
+   10.75
+  ],
+  [
+   3999.7,
+   2498.6,
+   107.0,
+   10.25
+  ],
+  [
+   3995.2,
+   1741.3,
+   107.0,
+   10.5
+  ],
+  [
+   3988.8,
+   988.7,
+   107.0,
+   10.75
+  ]
+ ],
+ "neatline": [
+  [
+   242.4,
+   230.2
+  ],
+  [
+   4735.8,
+   236.4
+  ],
+  [
+   4751.8,
+   3255.2
+  ],
+  [
+   258.4,
+   3248.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 16 graticule nodes",
+ "work_size": [
+  5000,
+  3794
+ ],
+ "source_bytes": 6246726,
+ "meta": {
+  "title": "Saigon (NC 48-7)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "",
+  "dateNote": "edition 3 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-7-3rd-ed.jpg"
+ }
+}

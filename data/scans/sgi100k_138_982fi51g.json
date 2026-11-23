@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_138_982fi51g/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1939.6,
+   6303.4,
+   108.717229,
+   15.3
+  ],
+  [
+   1914.1,
+   3953.3,
+   108.717229,
+   15.48
+  ],
+  [
+   1881.2,
+   1603.5,
+   108.717229,
+   15.66
+  ],
+  [
+   6510.8,
+   6243.2,
+   109.077229,
+   15.3
+  ],
+  [
+   8761.6,
+   3859.8,
+   109.257229,
+   15.48
+  ],
+  [
+   8735.7,
+   1511.4,
+   109.257229,
+   15.66
+  ]
+ ],
+ "neatline": [
+  [
+   908.1,
+   757.3
+  ],
+  [
+   9734.9,
+   638.2
+  ],
+  [
+   9810.7,
+   6709.3
+  ],
+  [
+   984.0,
+   6828.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10533,
+  7703
+ ],
+ "source_bytes": 8704108,
+ "meta": {
+  "title": "Poulo-Canton (feuille 138)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1925",
+  "dateNote": "edition dated 1925-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.982fi51g"
+ }
+}

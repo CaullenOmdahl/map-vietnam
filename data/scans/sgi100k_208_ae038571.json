@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_208_ae038571/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2042.4,
+   5115.4,
+   104.577229,
+   11.34
+  ],
+  [
+   2052.2,
+   2758.4,
+   104.577229,
+   11.52
+  ],
+  [
+   4366.4,
+   5133.1,
+   104.757229,
+   11.34
+  ],
+  [
+   9008.0,
+   5168.1,
+   105.117229,
+   11.34
+  ]
+ ],
+ "neatline": [
+  [
+   602.9,
+   699.8
+  ],
+  [
+   9447.9,
+   766.7
+  ],
+  [
+   9425.5,
+   6734.9
+  ],
+  [
+   580.4,
+   6668.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10035,
+  7658
+ ],
+ "source_bytes": 17378654,
+ "meta": {
+  "title": "Phnom-Penh (feuille 208)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ae038571"
+ }
+}

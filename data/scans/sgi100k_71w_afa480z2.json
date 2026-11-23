@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_71w_afa480z2/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2625.1,
+   4666.3,
+   105.297229,
+   19.98
+  ],
+  [
+   2633.6,
+   2175.3,
+   105.297229,
+   20.16
+  ],
+  [
+   4980.0,
+   4661.8,
+   105.477229,
+   19.98
+  ],
+  [
+   4984.7,
+   2171.5,
+   105.477229,
+   20.16
+  ]
+ ],
+ "neatline": [
+  [
+   333.7,
+   770.7
+  ],
+  [
+   5027.1,
+   762.4
+  ],
+  [
+   5010.5,
+   7049.3
+  ],
+  [
+   317.1,
+   7057.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5544,
+  7770
+ ],
+ "source_bytes": 11302844,
+ "meta": {
+  "title": "Bái-Thương ouest (feuille 71W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.afa480z2"
+ }
+}

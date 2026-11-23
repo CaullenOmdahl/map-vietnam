@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_116_1d19o30m/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1048.4,
+   5541.3,
+   104.757229,
+   16.74
+  ],
+  [
+   1061.5,
+   3196.4,
+   104.757229,
+   16.92
+  ],
+  [
+   3313.0,
+   5556.8,
+   104.937229,
+   16.74
+  ],
+  [
+   3318.6,
+   3213.1,
+   104.937229,
+   16.92
+  ],
+  [
+   5571.1,
+   5563.5,
+   105.117229,
+   16.74
+  ],
+  [
+   5574.3,
+   3219.5,
+   105.117229,
+   16.92
+  ]
+ ],
+ "neatline": [
+  [
+   507.7,
+   863.2
+  ],
+  [
+   5798.2,
+   889.7
+  ],
+  [
+   5779.9,
+   6785.7
+  ],
+  [
+   489.4,
+   6759.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  6189,
+  7629
+ ],
+ "source_bytes": 9368213,
+ "meta": {
+  "title": "Keng-Kabao (feuille 116)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.1d19o30m"
+ }
+}

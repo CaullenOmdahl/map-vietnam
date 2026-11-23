@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_137e_fbf18x81/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1476.2,
+   6405.1,
+   108.357229,
+   15.3
+  ],
+  [
+   1456.3,
+   4058.4,
+   108.357229,
+   15.48
+  ],
+  [
+   3757.1,
+   6376.4,
+   108.537229,
+   15.3
+  ],
+  [
+   3728.3,
+   4032.5,
+   108.537229,
+   15.48
+  ],
+  [
+   3700.7,
+   1684.8,
+   108.537229,
+   15.66
+  ]
+ ],
+ "neatline": [
+  [
+   456.8,
+   871.3
+  ],
+  [
+   4865.9,
+   818.0
+  ],
+  [
+   4932.6,
+   6718.5
+  ],
+  [
+   523.5,
+   6771.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5379,
+  7479
+ ],
+ "source_bytes": 10338484,
+ "meta": {
+  "title": "Tam-Kỳ est (feuille 137E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.fbf18x81"
+ }
+}

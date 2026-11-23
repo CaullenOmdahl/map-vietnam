@@ -1,0 +1,135 @@
+{
+ "image": "data/raw/scans/l509_nc48-4_ed2/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   994.9,
+   2472.2,
+   106.75,
+   11.25
+  ],
+  [
+   992.2,
+   1716.4,
+   106.75,
+   11.5
+  ],
+  [
+   987.9,
+   959.0,
+   106.75,
+   11.75
+  ],
+  [
+   1744.4,
+   2476.9,
+   107.0,
+   11.25
+  ],
+  [
+   1740.8,
+   1716.7,
+   107.0,
+   11.5
+  ],
+  [
+   1735.9,
+   958.3,
+   107.0,
+   11.75
+  ],
+  [
+   2493.0,
+   3237.6,
+   107.25,
+   11.0
+  ],
+  [
+   2482.4,
+   956.0,
+   107.25,
+   11.75
+  ],
+  [
+   3240.0,
+   2476.3,
+   107.5,
+   11.25
+  ],
+  [
+   3236.5,
+   1720.0,
+   107.5,
+   11.5
+  ],
+  [
+   3230.2,
+   962.0,
+   107.5,
+   11.75
+  ],
+  [
+   3994.8,
+   3237.4,
+   107.75,
+   11.0
+  ],
+  [
+   3982.1,
+   1718.0,
+   107.75,
+   11.5
+  ],
+  [
+   3978.2,
+   960.5,
+   107.75,
+   11.75
+  ],
+  [
+   4733.6,
+   1718.8,
+   108.0,
+   11.5
+  ],
+  [
+   4727.1,
+   960.9,
+   108.0,
+   11.75
+  ]
+ ],
+ "neatline": [
+  [
+   234.8,
+   205.6
+  ],
+  [
+   4723.1,
+   209.9
+  ],
+  [
+   4740.4,
+   3237.7
+  ],
+  [
+   252.1,
+   3233.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 16 graticule nodes",
+ "work_size": [
+  5000,
+  3794
+ ],
+ "source_bytes": 6280595,
+ "meta": {
+  "title": "An Loc (NC 48-4)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "",
+  "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-4-2nd-ed.jpg"
+ }
+}

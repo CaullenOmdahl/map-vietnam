@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_204w_5ebei898/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2179.7,
+   5017.6,
+   108.717229,
+   11.88
+  ],
+  [
+   2165.9,
+   2716.9,
+   108.717229,
+   12.06
+  ],
+  [
+   4487.7,
+   5011.7,
+   108.897229,
+   11.88
+  ]
+ ],
+ "neatline": [
+  [
+   502.6,
+   1123.3
+  ],
+  [
+   4987.6,
+   1111.9
+  ],
+  [
+   5028.3,
+   7857.3
+  ],
+  [
+   543.3,
+   7868.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5391,
+  7485
+ ],
+ "source_bytes": 10002986,
+ "meta": {
+  "title": "Cam Ranh ouest (feuille 204W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.5ebei898"
+ }
+}

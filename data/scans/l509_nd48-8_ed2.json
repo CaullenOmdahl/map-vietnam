@@ -1,0 +1,129 @@
+{
+ "image": "data/raw/scans/l509_nd48-8_ed2/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1023.7,
+   2497.2,
+   106.75,
+   14.25
+  ],
+  [
+   1020.9,
+   1741.5,
+   106.75,
+   14.5
+  ],
+  [
+   1018.5,
+   985.5,
+   106.75,
+   14.75
+  ],
+  [
+   1761.5,
+   2501.5,
+   107.0,
+   14.25
+  ],
+  [
+   1759.0,
+   1743.5,
+   107.0,
+   14.5
+  ],
+  [
+   1755.6,
+   987.4,
+   107.0,
+   14.75
+  ],
+  [
+   2497.7,
+   2504.1,
+   107.25,
+   14.25
+  ],
+  [
+   2493.6,
+   1743.9,
+   107.25,
+   14.5
+  ],
+  [
+   2490.4,
+   987.0,
+   107.25,
+   14.75
+  ],
+  [
+   3235.8,
+   2503.7,
+   107.5,
+   14.25
+  ],
+  [
+   3231.6,
+   1745.0,
+   107.5,
+   14.5
+  ],
+  [
+   3228.7,
+   989.0,
+   107.5,
+   14.75
+  ],
+  [
+   3974.4,
+   2504.1,
+   107.75,
+   14.25
+  ],
+  [
+   3969.3,
+   1743.0,
+   107.75,
+   14.5
+  ],
+  [
+   3965.7,
+   989.0,
+   107.75,
+   14.75
+  ]
+ ],
+ "neatline": [
+  [
+   277.0,
+   231.6
+  ],
+  [
+   4699.5,
+   237.4
+  ],
+  [
+   4713.2,
+   3260.2
+  ],
+  [
+   290.6,
+   3254.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 15 graticule nodes",
+ "work_size": [
+  5000,
+  3786
+ ],
+ "source_bytes": 5660791,
+ "meta": {
+  "title": "Muong May (ND 48-8)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "",
+  "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-8-2nd-ed.jpg"
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_38_3c1ak229/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   565.7,
+   5756.0,
+   105.837229,
+   21.24
+  ],
+  [
+   560.6,
+   3401.0,
+   105.837229,
+   21.42
+  ],
+  [
+   564.0,
+   1047.4,
+   105.837229,
+   21.6
+  ],
+  [
+   7243.7,
+   3391.5,
+   106.377229,
+   21.42
+  ],
+  [
+   9465.7,
+   3388.5,
+   106.557229,
+   21.42
+  ]
+ ],
+ "neatline": [
+  [
+   562.7,
+   823.5
+  ],
+  [
+   9526.6,
+   810.3
+  ],
+  [
+   9528.8,
+   6731.4
+  ],
+  [
+   564.9,
+   6744.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  9996,
+  7719
+ ],
+ "source_bytes": 17774915,
+ "meta": {
+  "title": "Bắc Ninh (feuille 38)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1935",
+  "dateNote": "edition dated 1935-11; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.3c1ak229"
+ }
+}

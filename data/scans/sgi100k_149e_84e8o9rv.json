@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_149e_84e8o9rv/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1564.9,
+   6130.1,
+   108.357229,
+   14.4
+  ],
+  [
+   1574.5,
+   3658.8,
+   108.357229,
+   14.58
+  ],
+  [
+   1582.5,
+   1188.0,
+   108.357229,
+   14.76
+  ],
+  [
+   3923.7,
+   6127.0,
+   108.537229,
+   14.4
+  ],
+  [
+   3927.2,
+   3654.2,
+   108.537229,
+   14.58
+  ],
+  [
+   3928.9,
+   1180.1,
+   108.537229,
+   14.76
+  ]
+ ],
+ "neatline": [
+  [
+   454.2,
+   352.6
+  ],
+  [
+   5009.2,
+   342.6
+  ],
+  [
+   4994.9,
+   6548.2
+  ],
+  [
+   440.0,
+   6558.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5211,
+  7287
+ ],
+ "source_bytes": 7237378,
+ "meta": {
+  "title": "Kon Plong est (feuille 149E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.84e8o9rv"
+ }
+}

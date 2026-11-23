@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_109_bbcforlo/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2775.5,
+   762.7,
+   104.577229,
+   18.0
+  ],
+  [
+   7271.8,
+   5503.1,
+   104.937229,
+   17.64
+  ],
+  [
+   7280.6,
+   3154.2,
+   104.937229,
+   17.82
+  ],
+  [
+   9553.2,
+   822.2,
+   105.117229,
+   18.0
+  ]
+ ],
+ "neatline": [
+  [
+   869.0,
+   746.1
+  ],
+  [
+   9731.0,
+   824.1
+  ],
+  [
+   9702.9,
+   6705.1
+  ],
+  [
+   840.9,
+   6627.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10515,
+  7682
+ ],
+ "source_bytes": 20689665,
+ "meta": {
+  "title": "Pak-Hin-Boun (feuille 109)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1924",
+  "dateNote": "edition dated 1924-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.bbcforlo"
+ }
+}

@@ -1,0 +1,85 @@
+{
+ "image": "data/raw/scans/sgi100k_133e_5c3f8hx5/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   863.3,
+   6646.7,
+   105.477229,
+   15.3
+  ],
+  [
+   3138.7,
+   6647.3,
+   105.657229,
+   15.3
+  ],
+  [
+   3138.0,
+   4301.9,
+   105.657229,
+   15.48
+  ],
+  [
+   3139.2,
+   1958.7,
+   105.657229,
+   15.66
+  ],
+  [
+   5418.6,
+   6645.2,
+   105.837229,
+   15.3
+  ],
+  [
+   5417.1,
+   4298.9,
+   105.837229,
+   15.48
+  ],
+  [
+   5411.5,
+   1953.9,
+   105.837229,
+   15.66
+  ]
+ ],
+ "neatline": [
+  [
+   586.4,
+   857.9
+  ],
+  [
+   5413.3,
+   853.9
+  ],
+  [
+   5417.5,
+   6744.7
+  ],
+  [
+   590.6,
+   6748.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 7 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5895,
+  7524
+ ],
+ "source_bytes": 7941037,
+ "meta": {
+  "title": "Khong-Sédone (feuille 133E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-03; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.5c3f8hx5"
+ }
+}

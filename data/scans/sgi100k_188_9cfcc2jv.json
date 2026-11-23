@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_188_9cfcc2jv/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2116.1,
+   5110.6,
+   104.577229,
+   12.24
+  ],
+  [
+   2108.5,
+   2816.7,
+   104.577229,
+   12.42
+  ],
+  [
+   9030.9,
+   2856.0,
+   105.117229,
+   12.42
+  ]
+ ],
+ "neatline": [
+  [
+   587.1,
+   789.5
+  ],
+  [
+   9426.6,
+   839.7
+  ],
+  [
+   9445.7,
+   6620.2
+  ],
+  [
+   606.2,
+   6570.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10029,
+  7639
+ ],
+ "source_bytes": 14884804,
+ "meta": {
+  "title": "Kompong-Chhnang (feuille 188)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1926",
+  "dateNote": "edition dated 1926-08; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.9cfcc2jv"
+ }
+}

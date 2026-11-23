@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_61w_d0f8m6gs/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   609.1,
+   1179.7,
+   105.837229,
+   20.7
+  ],
+  [
+   5042.9,
+   5874.0,
+   106.197229,
+   20.34
+  ],
+  [
+   5042.5,
+   3522.5,
+   106.197229,
+   20.52
+  ],
+  [
+   5040.3,
+   1175.3,
+   106.197229,
+   20.7
+  ]
+ ],
+ "neatline": [
+  [
+   609.0,
+   1005.2
+  ],
+  [
+   5021.5,
+   1000.1
+  ],
+  [
+   5024.6,
+   6893.8
+  ],
+  [
+   612.2,
+   6898.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5550,
+  7773
+ ],
+ "source_bytes": 11719869,
+ "meta": {
+  "title": "Nam-Định ouest (feuille 61W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.d0f8m6gs"
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_109w_9b77s814/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2558.7,
+   5677.0,
+   104.577229,
+   17.64
+  ],
+  [
+   2575.3,
+   3329.2,
+   104.577229,
+   17.82
+  ],
+  [
+   2591.0,
+   985.6,
+   104.577229,
+   18.0
+  ],
+  [
+   4816.2,
+   5692.3,
+   104.757229,
+   17.64
+  ]
+ ],
+ "neatline": [
+  [
+   678.4,
+   971.3
+  ],
+  [
+   5098.0,
+   1002.6
+  ],
+  [
+   5057.6,
+   6878.8
+  ],
+  [
+   637.9,
+   6847.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5577,
+  7776
+ ],
+ "source_bytes": 8144755,
+ "meta": {
+  "title": "Pak-Hin-Boun ouest (feuille 109W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.9b77s814"
+ }
+}

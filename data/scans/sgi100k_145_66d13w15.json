@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_145_66d13w15/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   5183.8,
+   6656.1,
+   105.657229,
+   14.4
+  ],
+  [
+   5179.6,
+   4322.5,
+   105.657229,
+   14.58
+  ],
+  [
+   5172.1,
+   1989.6,
+   105.657229,
+   14.76
+  ],
+  [
+   7482.4,
+   6650.4,
+   105.837229,
+   14.4
+  ],
+  [
+   7474.2,
+   4314.5,
+   105.837229,
+   14.58
+  ],
+  [
+   7466.1,
+   1985.0,
+   105.837229,
+   14.76
+  ]
+ ],
+ "neatline": [
+  [
+   969.3,
+   953.6
+  ],
+  [
+   7464.1,
+   936.4
+  ],
+  [
+   7481.7,
+   6797.2
+  ],
+  [
+   987.0,
+   6814.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  8292,
+  7686
+ ],
+ "source_bytes": 9868969,
+ "meta": {
+  "title": "Ban Soukhouma (feuille 145)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.66d13w15"
+ }
+}

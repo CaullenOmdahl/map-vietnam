@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_232_c7d2zy8t/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2442.5,
+   9292.7,
+   103.857229,
+   9.9
+  ],
+  [
+   2482.4,
+   4595.8,
+   103.857229,
+   10.26
+  ],
+  [
+   4769.5,
+   9317.4,
+   104.037229,
+   9.9
+  ],
+  [
+   4789.3,
+   6970.7,
+   104.037229,
+   10.08
+  ],
+  [
+   4812.1,
+   4619.2,
+   104.037229,
+   10.26
+  ],
+  [
+   4832.7,
+   2273.4,
+   104.037229,
+   10.44
+  ]
+ ],
+ "neatline": [
+  [
+   496.1,
+   1010.6
+  ],
+  [
+   6339.4,
+   1073.6
+  ],
+  [
+   6261.1,
+   9891.3
+  ],
+  [
+   417.7,
+   9828.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  6782,
+  10515
+ ],
+ "source_bytes": 6792717,
+ "meta": {
+  "title": "Phu-Quoc (feuille 232)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1934",
+  "dateNote": "edition dated 1934-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.c7d2zy8t"
+ }
+}

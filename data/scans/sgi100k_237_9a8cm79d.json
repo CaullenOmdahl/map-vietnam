@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_237_9a8cm79d/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1962.1,
+   2694.6,
+   104.577229,
+   9.72
+  ],
+  [
+   4292.8,
+   5075.5,
+   104.757229,
+   9.54
+  ],
+  [
+   4298.8,
+   2708.4,
+   104.757229,
+   9.72
+  ],
+  [
+   6636.5,
+   5088.9,
+   104.937229,
+   9.54
+  ],
+  [
+   6636.6,
+   2730.9,
+   104.937229,
+   9.72
+  ],
+  [
+   8972.9,
+   2749.4,
+   105.117229,
+   9.72
+  ]
+ ],
+ "neatline": [
+  [
+   590.2,
+   738.9
+  ],
+  [
+   9445.6,
+   807.8
+  ],
+  [
+   9438.2,
+   6766.1
+  ],
+  [
+   582.8,
+   6697.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10038,
+  7646
+ ],
+ "source_bytes": 8587288,
+ "meta": {
+  "title": "Hon Rai (feuille 237)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1923",
+  "dateNote": "edition dated 1923-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.9a8cm79d"
+ }
+}

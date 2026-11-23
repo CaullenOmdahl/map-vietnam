@@ -1,0 +1,56 @@
+{
+ "image": "data/raw/scans/warper_9669/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2377.9,
+   5181.5,
+   109.22101,
+   11.716452
+  ],
+  [
+   704.0,
+   740.4,
+   109.128442,
+   11.95654
+  ],
+  [
+   2386.2,
+   2675.1,
+   109.221697,
+   11.851223
+  ],
+  [
+   2912.3,
+   3032.6,
+   109.250364,
+   11.832238
+  ],
+  [
+   3484.6,
+   957.9,
+   109.281821,
+   11.944868
+  ],
+  [
+   1041.7,
+   1884.2,
+   109.147303,
+   11.894228
+  ]
+ ],
+ "placed_by": "Wikimaps Warper map 9669 (https://warper.wmflabs.org/maps/9669), control points scaled by 0.5281",
+ "work_size": [
+  3840,
+  5328
+ ],
+ "source_bytes": 6886537,
+ "meta": {
+  "title": "Kam-Ranh Bay Cropped from Admiralty Chart No 3028 Plans on the Coast of Annam (chart 3028)",
+  "series": "British Admiralty charts",
+  "scale": "",
+  "date": "1948",
+  "dateNote": "published 1948",
+  "source": "https://commons.wikimedia.org/wiki/File%3AKam-Ranh_Bay_Cropped_from_Admiralty_Chart_No_3028_Plans_on_the_Coast_of_Annam%2C_Published_1948.jpg"
+ }
+}

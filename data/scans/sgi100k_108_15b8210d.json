@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_108_15b8210d/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2262.7,
+   5544.5,
+   104.217229,
+   17.64
+  ],
+  [
+   2280.3,
+   3191.5,
+   104.217229,
+   17.82
+  ],
+  [
+   4519.1,
+   5556.3,
+   104.397229,
+   17.64
+  ],
+  [
+   4532.4,
+   3204.9,
+   104.397229,
+   17.82
+  ]
+ ],
+ "neatline": [
+  [
+   477.0,
+   853.3
+  ],
+  [
+   4845.5,
+   877.6
+  ],
+  [
+   4806.4,
+   6805.7
+  ],
+  [
+   438.0,
+   6781.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5254,
+  7659
+ ],
+ "source_bytes": 4925464,
+ "meta": {
+  "title": "Ban-Poung (feuille 108)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1924",
+  "dateNote": "edition dated 1924-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.15b8210d"
+ }
+}

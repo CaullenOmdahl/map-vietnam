@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_139_111aa3ws/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   770.0,
+   5329.0,
+   105.477229,
+   14.94
+  ],
+  [
+   774.4,
+   2984.3,
+   105.477229,
+   15.12
+  ],
+  [
+   3049.8,
+   5327.4,
+   105.657229,
+   14.94
+  ],
+  [
+   5323.6,
+   5320.2,
+   105.837229,
+   14.94
+  ],
+  [
+   5318.9,
+   2978.9,
+   105.837229,
+   15.12
+  ]
+ ],
+ "neatline": [
+  [
+   510.4,
+   736.3
+  ],
+  [
+   5316.4,
+   728.9
+  ],
+  [
+   5319.4,
+   6618.8
+  ],
+  [
+   513.3,
+   6626.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5730,
+  7356
+ ],
+ "source_bytes": 8697488,
+ "meta": {
+  "title": "Paksé (feuille 139)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.111aa3ws"
+ }
+}

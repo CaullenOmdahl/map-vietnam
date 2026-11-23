@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_166w_fefbezq0/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1848.3,
+   3795.0,
+   108.717229,
+   13.68
+  ],
+  [
+   1864.4,
+   1453.3,
+   108.717229,
+   13.86
+  ],
+  [
+   4066.8,
+   6154.1,
+   108.897229,
+   13.5
+  ],
+  [
+   4083.9,
+   1465.5,
+   108.897229,
+   13.86
+  ]
+ ],
+ "neatline": [
+  [
+   711.9,
+   770.4
+  ],
+  [
+   4791.2,
+   795.6
+  ],
+  [
+   4766.0,
+   6678.7
+  ],
+  [
+   686.8,
+   6653.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5362,
+  7422
+ ],
+ "source_bytes": 10007361,
+ "meta": {
+  "title": "Qui Nhơn ouest (feuille 166W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.fefbezq0"
+ }
+}

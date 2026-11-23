@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_112_541d30m7/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1932.9,
+   6680.3,
+   104.757229,
+   17.1
+  ],
+  [
+   4197.8,
+   6679.0,
+   104.937229,
+   17.1
+  ],
+  [
+   4209.1,
+   1972.2,
+   104.937229,
+   17.46
+  ],
+  [
+   6467.8,
+   6670.3,
+   105.117229,
+   17.1
+  ],
+  [
+   6474.6,
+   1976.9,
+   105.117229,
+   17.46
+  ]
+ ],
+ "neatline": [
+  [
+   451.9,
+   814.0
+  ],
+  [
+   6680.5,
+   805.5
+  ],
+  [
+   6669.3,
+   6744.8
+  ],
+  [
+   440.7,
+   6753.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  7029,
+  7566
+ ],
+ "source_bytes": 9856450,
+ "meta": {
+  "title": "Thakhek (feuille 112)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.541d30m7"
+ }
+}

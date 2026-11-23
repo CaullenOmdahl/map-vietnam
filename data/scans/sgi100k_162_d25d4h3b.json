@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_162_d25d4h3b/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   580.5,
+   6485.4,
+   105.837229,
+   13.5
+  ],
+  [
+   574.3,
+   4142.6,
+   105.837229,
+   13.68
+  ],
+  [
+   574.4,
+   1802.0,
+   105.837229,
+   13.86
+  ],
+  [
+   5185.9,
+   6480.8,
+   106.197229,
+   13.5
+  ],
+  [
+   5180.0,
+   4144.2,
+   106.197229,
+   13.68
+  ],
+  [
+   5176.3,
+   1803.1,
+   106.197229,
+   13.86
+  ]
+ ],
+ "neatline": [
+  [
+   148.6,
+   805.8
+  ],
+  [
+   6480.5,
+   804.9
+  ],
+  [
+   6490.3,
+   6681.5
+  ],
+  [
+   158.4,
+   6682.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  7092,
+  7686
+ ],
+ "source_bytes": 11197082,
+ "meta": {
+  "title": "Stung Treng (feuille 162)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1936",
+  "dateNote": "edition dated 1936-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.d25d4h3b"
+ }
+}

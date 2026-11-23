@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_19w_c5db7afp/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2329.6,
+   3797.2,
+   106.737229,
+   22.32
+  ],
+  [
+   2303.1,
+   956.8,
+   106.737229,
+   22.5
+  ],
+  [
+   4995.9,
+   6605.3,
+   106.917229,
+   22.14
+  ],
+  [
+   4968.3,
+   3759.4,
+   106.917229,
+   22.32
+  ],
+  [
+   4936.9,
+   917.2,
+   106.917229,
+   22.5
+  ]
+ ],
+ "neatline": [
+  [
+   -251.3,
+   704.8
+  ],
+  [
+   5081.9,
+   628.0
+  ],
+  [
+   5154.6,
+   7779.4
+  ],
+  [
+   -178.6,
+   7856.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5451,
+  7893
+ ],
+ "source_bytes": 7206920,
+ "meta": {
+  "title": "Bi-Nhi ouest (feuille 19W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.c5db7afp"
+ }
+}

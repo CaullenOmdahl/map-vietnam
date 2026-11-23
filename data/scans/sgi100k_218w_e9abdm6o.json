@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_218w_e9abdm6o/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1808.7,
+   3583.7,
+   104.577229,
+   10.98
+  ],
+  [
+   4344.8,
+   6170.9,
+   104.757229,
+   10.8
+  ],
+  [
+   4350.4,
+   973.6,
+   104.757229,
+   11.16
+  ]
+ ],
+ "neatline": [
+  [
+   237.1,
+   86.6
+  ],
+  [
+   5080.4,
+   64.8
+  ],
+  [
+   5073.5,
+   6613.9
+  ],
+  [
+   230.1,
+   6635.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5406,
+  7569
+ ],
+ "source_bytes": 8983812,
+ "meta": {
+  "title": "Takeo ouest (feuille 218W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.e9abdm6o"
+ }
+}

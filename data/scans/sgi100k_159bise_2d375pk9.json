@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_159bise_2d375pk9/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1962.1,
+   6421.6,
+   104.217229,
+   13.5
+  ],
+  [
+   1982.2,
+   4081.5,
+   104.217229,
+   13.68
+  ],
+  [
+   2005.4,
+   1751.3,
+   104.217229,
+   13.86
+  ],
+  [
+   4278.3,
+   4108.0,
+   104.397229,
+   13.68
+  ],
+  [
+   4296.4,
+   1775.1,
+   104.397229,
+   13.86
+  ]
+ ],
+ "neatline": [
+  [
+   593.5,
+   839.0
+  ],
+  [
+   5003.5,
+   885.3
+  ],
+  [
+   4950.9,
+   6745.7
+  ],
+  [
+   540.9,
+   6699.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5433,
+  7509
+ ],
+ "source_bytes": 7549048,
+ "meta": {
+  "title": "Banteai Srei est (feuille 159bisE)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-01; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.2d375pk9"
+ }
+}

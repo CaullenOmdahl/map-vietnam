@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_14e_bfd982jd/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   604.7,
+   6178.5,
+   103.317229,
+   22.14
+  ],
+  [
+   621.6,
+   3585.4,
+   103.317229,
+   22.32
+  ],
+  [
+   636.7,
+   994.4,
+   103.317229,
+   22.5
+  ],
+  [
+   3022.5,
+   6191.2,
+   103.497229,
+   22.14
+  ],
+  [
+   3032.9,
+   3596.4,
+   103.497229,
+   22.32
+  ],
+  [
+   3044.9,
+   1008.9,
+   103.497229,
+   22.5
+  ]
+ ],
+ "neatline": [
+  [
+   307.5,
+   861.9
+  ],
+  [
+   5206.3,
+   887.8
+  ],
+  [
+   5172.1,
+   7392.9
+  ],
+  [
+   273.4,
+   7367.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5592,
+  7785
+ ],
+ "source_bytes": 11935958,
+ "meta": {
+  "title": "Lai-Chau est (feuille 14E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-12; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.bfd982jd"
+ }
+}

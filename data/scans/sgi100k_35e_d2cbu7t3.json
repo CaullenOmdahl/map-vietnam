@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_35e_d2cbu7t3/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   786.9,
+   6153.7,
+   104.037229,
+   21.24
+  ],
+  [
+   790.2,
+   3799.8,
+   104.037229,
+   21.42
+  ],
+  [
+   800.3,
+   1447.2,
+   104.037229,
+   21.6
+  ],
+  [
+   2909.5,
+   6158.6,
+   104.217229,
+   21.24
+  ],
+  [
+   2911.4,
+   3805.9,
+   104.217229,
+   21.42
+  ],
+  [
+   2913.9,
+   1452.5,
+   104.217229,
+   21.6
+  ]
+ ],
+ "neatline": [
+  [
+   671.2,
+   1292.3
+  ],
+  [
+   4989.7,
+   1303.4
+  ],
+  [
+   4978.6,
+   7210.0
+  ],
+  [
+   660.1,
+   7198.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5559,
+  7770
+ ],
+ "source_bytes": 12303004,
+ "meta": {
+  "title": "Sơn-La est (feuille 35E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.d2cbu7t3"
+ }
+}

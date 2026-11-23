@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_86e_d25crao8/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2604.1,
+   4537.0,
+   104.217229,
+   19.08
+  ],
+  [
+   2632.7,
+   2197.5,
+   104.217229,
+   19.26
+  ],
+  [
+   4831.7,
+   4562.7,
+   104.397229,
+   19.08
+  ],
+  [
+   4855.0,
+   2219.8,
+   104.397229,
+   19.26
+  ]
+ ],
+ "neatline": [
+  [
+   668.4,
+   957.4
+  ],
+  [
+   5060.9,
+   1004.7
+  ],
+  [
+   4995.7,
+   6881.5
+  ],
+  [
+   603.2,
+   6834.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5550,
+  7788
+ ],
+ "source_bytes": 7005271,
+ "meta": {
+  "title": "Khê-Kiên est (feuille 86E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-08; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.d25crao8"
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_39w_fcab92q5/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2707.0,
+   5677.1,
+   106.737229,
+   21.24
+  ],
+  [
+   2681.0,
+   3341.7,
+   106.737229,
+   21.42
+  ],
+  [
+   2654.6,
+   1001.0,
+   106.737229,
+   21.6
+  ],
+  [
+   4904.5,
+   5656.3,
+   106.917229,
+   21.24
+  ],
+  [
+   4852.2,
+   976.5,
+   106.917229,
+   21.6
+  ]
+ ],
+ "neatline": [
+  [
+   514.4,
+   823.5
+  ],
+  [
+   4921.2,
+   776.3
+  ],
+  [
+   4986.9,
+   6644.4
+  ],
+  [
+   580.0,
+   6691.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5370,
+  7437
+ ],
+ "source_bytes": 10765176,
+ "meta": {
+  "title": "Đinh-Lập ouest (feuille 39W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.fcab92q5"
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_113_b39b4l98/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2892.5,
+   4213.0,
+   105.297229,
+   17.28
+  ],
+  [
+   2890.8,
+   1856.3,
+   105.297229,
+   17.46
+  ],
+  [
+   5152.8,
+   4214.4,
+   105.477229,
+   17.28
+  ],
+  [
+   7418.7,
+   1864.1,
+   105.657229,
+   17.46
+  ]
+ ],
+ "neatline": [
+  [
+   818.2,
+   652.3
+  ],
+  [
+   9681.4,
+   665.6
+  ],
+  [
+   9680.2,
+   6574.1
+  ],
+  [
+   817.0,
+   6560.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10497,
+  7650
+ ],
+ "source_bytes": 21648265,
+ "meta": {
+  "title": "Mahaxay (feuille 113)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1926",
+  "dateNote": "edition dated 1926-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.b39b4l98"
+ }
+}

@@ -1,0 +1,111 @@
+{
+ "image": "data/raw/scans/l509_nf48-5/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1088.6,
+   2487.4,
+   102.25,
+   22.25
+  ],
+  [
+   1085.5,
+   1729.2,
+   102.25,
+   22.5
+  ],
+  [
+   1083.9,
+   972.8,
+   102.25,
+   22.75
+  ],
+  [
+   1790.0,
+   2490.9,
+   102.5,
+   22.25
+  ],
+  [
+   1786.8,
+   975.7,
+   102.5,
+   22.75
+  ],
+  [
+   2485.0,
+   1733.0,
+   102.75,
+   22.5
+  ],
+  [
+   2484.6,
+   978.6,
+   102.75,
+   22.75
+  ],
+  [
+   3195.6,
+   2493.6,
+   103.0,
+   22.25
+  ],
+  [
+   3189.8,
+   1737.2,
+   103.0,
+   22.5
+  ],
+  [
+   3184.1,
+   980.1,
+   103.0,
+   22.75
+  ],
+  [
+   3895.9,
+   2492.1,
+   103.25,
+   22.25
+  ],
+  [
+   3892.6,
+   1739.0,
+   103.25,
+   22.5
+  ]
+ ],
+ "neatline": [
+  [
+   377.5,
+   215.2
+  ],
+  [
+   4586.0,
+   226.9
+  ],
+  [
+   4599.8,
+   3253.3
+  ],
+  [
+   391.3,
+   3241.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 12 graticule nodes",
+ "work_size": [
+  5000,
+  3790
+ ],
+ "source_bytes": 6805144,
+ "meta": {
+  "title": "Lai Chau (NF 48-5)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "",
+  "dateNote": "edition 1 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-5.jpg"
+ }
+}

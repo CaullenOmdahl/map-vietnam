@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_120_02c0iys4/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   912.5,
+   5486.6,
+   107.277229,
+   16.74
+  ],
+  [
+   899.1,
+   3140.0,
+   107.277229,
+   16.92
+  ],
+  [
+   3174.1,
+   5473.8,
+   107.457229,
+   16.74
+  ],
+  [
+   3155.4,
+   3123.9,
+   107.457229,
+   16.92
+  ]
+ ],
+ "neatline": [
+  [
+   442.4,
+   888.6
+  ],
+  [
+   4877.1,
+   860.3
+  ],
+  [
+   4917.6,
+   6766.4
+  ],
+  [
+   482.9,
+   6794.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5355,
+  7665
+ ],
+ "source_bytes": 5610252,
+ "meta": {
+  "title": "Vân-Trình (feuille 120)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.02c0iys4"
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_113w_ad9f0il2/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2704.7,
+   4515.0,
+   105.297229,
+   17.28
+  ],
+  [
+   2718.9,
+   2170.1,
+   105.297229,
+   17.46
+  ],
+  [
+   4955.6,
+   4517.8,
+   105.477229,
+   17.28
+  ],
+  [
+   4968.4,
+   2180.8,
+   105.477229,
+   17.46
+  ]
+ ],
+ "neatline": [
+  [
+   664.6,
+   977.1
+  ],
+  [
+   5070.4,
+   990.3
+  ],
+  [
+   5036.4,
+   6882.0
+  ],
+  [
+   630.7,
+   6868.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5604,
+  7770
+ ],
+ "source_bytes": 8152179,
+ "meta": {
+  "title": "Mahaxay ouest (feuille 113W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ad9f0il2"
+ }
+}

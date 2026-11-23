@@ -4,6 +4,17 @@ Notable changes to Map Vietnam. Versions follow [semantic versioning](https://se
 
 ## Unreleased
 
+- The map library grows from 537 to 895 maps: 298 French Indochina 1:100,000 sheets and editions
+  (1895–1952, CNRS/NAKALA), 32 US Army L509 1:250,000 sheets (1950s–1960s, University of Texas),
+  18 US Army city plans at 1:12,500 (1963–1971), two more Joint Operations Graphics, and 8
+  British Admiralty charts of the coast (1855–1964)
+- The French and L509 sheets are placed automatically from their printed graticule
+  (`scripts/sheet_lists.py`, `scripts/place_sheets.py`); sheets it cannot place reliably are left
+  out rather than shown wrong
+- The Old maps card has a filter (place, sheet number or year, across every map), scale chips
+  with counts, Oldest / Newest order, and one row per sheet with its editions inside
+- Downloads name the project's page in their User-Agent, as Wikimedia and others ask
+
 - Windows: every text file is now read and written as UTF-8, so setup and the map server no longer
   fail on Vietnamese names; Control-C stops the map; removing a map that is being viewed retries
   instead of failing; CI now runs on Windows too

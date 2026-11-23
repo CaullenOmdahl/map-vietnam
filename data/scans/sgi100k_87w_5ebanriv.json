@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_87w_5ebanriv/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2617.3,
+   4458.3,
+   104.577229,
+   19.08
+  ],
+  [
+   2622.0,
+   2109.4,
+   104.577229,
+   19.26
+  ],
+  [
+   4863.0,
+   4457.7,
+   104.757229,
+   19.08
+  ],
+  [
+   4864.7,
+   2109.9,
+   104.757229,
+   19.26
+  ]
+ ],
+ "neatline": [
+  [
+   580.5,
+   882.4
+  ],
+  [
+   5015.6,
+   882.3
+  ],
+  [
+   5007.5,
+   6771.0
+  ],
+  [
+   572.5,
+   6771.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5484,
+  7566
+ ],
+ "source_bytes": 9327314,
+ "meta": {
+  "title": "Cứa-Rào ouest (feuille 87W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.5ebanriv"
+ }
+}

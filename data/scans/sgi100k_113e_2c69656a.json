@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_113e_2c69656a/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2808.9,
+   4515.8,
+   105.657229,
+   17.28
+  ],
+  [
+   2818.3,
+   2169.1,
+   105.657229,
+   17.46
+  ],
+  [
+   5065.5,
+   4519.9,
+   105.837229,
+   17.28
+  ],
+  [
+   5063.8,
+   2175.0,
+   105.837229,
+   17.46
+  ]
+ ],
+ "neatline": [
+  [
+   661.1,
+   968.1
+  ],
+  [
+   5068.5,
+   977.9
+  ],
+  [
+   5058.9,
+   6868.0
+  ],
+  [
+   651.5,
+   6858.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5595,
+  7770
+ ],
+ "source_bytes": 6981054,
+ "meta": {
+  "title": "Mahaxay est (feuille 113E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.2c69656a"
+ }
+}

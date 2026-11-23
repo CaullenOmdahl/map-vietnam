@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_110e_b5cavp71/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2765.0,
+   5593.3,
+   105.657229,
+   17.64
+  ],
+  [
+   2753.9,
+   3251.4,
+   105.657229,
+   17.82
+  ],
+  [
+   5011.8,
+   5586.6,
+   105.837229,
+   17.64
+  ],
+  [
+   4998.5,
+   3243.3,
+   105.837229,
+   17.82
+  ],
+  [
+   4980.6,
+   899.0,
+   105.837229,
+   18.0
+  ]
+ ],
+ "neatline": [
+  [
+   563.5,
+   867.3
+  ],
+  [
+   4981.9,
+   852.2
+  ],
+  [
+   5018.9,
+   6737.8
+  ],
+  [
+   600.4,
+   6752.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5475,
+  7527
+ ],
+ "source_bytes": 10102377,
+ "meta": {
+  "title": "Mu-Gia est (feuille 110E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-11; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.b5cavp71"
+ }
+}

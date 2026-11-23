@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_119w_d24bthz6/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   887.7,
+   5562.3,
+   106.557229,
+   16.74
+  ],
+  [
+   882.8,
+   3212.4,
+   106.557229,
+   16.92
+  ],
+  [
+   3154.8,
+   5551.1,
+   106.737229,
+   16.74
+  ],
+  [
+   3139.7,
+   3198.2,
+   106.737229,
+   16.92
+  ]
+ ],
+ "neatline": [
+  [
+   656.1,
+   908.7
+  ],
+  [
+   5078.9,
+   883.9
+  ],
+  [
+   5103.9,
+   6768.3
+  ],
+  [
+   681.2,
+   6793.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5580,
+  7650
+ ],
+ "source_bytes": 11807350,
+ "meta": {
+  "title": "Quảng-Trị Ouest (feuille 119W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.d24bthz6"
+ }
+}

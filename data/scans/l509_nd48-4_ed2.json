@@ -1,0 +1,135 @@
+{
+ "image": "data/raw/scans/l509_nd48-4_ed2/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   286.1,
+   1745.0,
+   106.5,
+   15.5
+  ],
+  [
+   1021.9,
+   2502.7,
+   106.75,
+   15.25
+  ],
+  [
+   1019.4,
+   1745.3,
+   106.75,
+   15.5
+  ],
+  [
+   1016.0,
+   988.5,
+   106.75,
+   15.75
+  ],
+  [
+   1757.3,
+   2504.5,
+   107.0,
+   15.25
+  ],
+  [
+   1754.6,
+   1746.1,
+   107.0,
+   15.5
+  ],
+  [
+   1748.4,
+   989.9,
+   107.0,
+   15.75
+  ],
+  [
+   2492.6,
+   2506.3,
+   107.25,
+   15.25
+  ],
+  [
+   2486.9,
+   1748.0,
+   107.25,
+   15.5
+  ],
+  [
+   2481.5,
+   989.8,
+   107.25,
+   15.75
+  ],
+  [
+   3227.1,
+   2503.0,
+   107.5,
+   15.25
+  ],
+  [
+   3221.5,
+   1746.6,
+   107.5,
+   15.5
+  ],
+  [
+   3214.9,
+   990.8,
+   107.5,
+   15.75
+  ],
+  [
+   3961.9,
+   2500.6,
+   107.75,
+   15.25
+  ],
+  [
+   3955.7,
+   1744.1,
+   107.75,
+   15.5
+  ],
+  [
+   3948.5,
+   989.9,
+   107.75,
+   15.75
+  ]
+ ],
+ "neatline": [
+  [
+   275.1,
+   235.8
+  ],
+  [
+   4678.8,
+   235.8
+  ],
+  [
+   4699.5,
+   3260.0
+  ],
+  [
+   295.7,
+   3260.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 16 graticule nodes",
+ "work_size": [
+  5000,
+  3800
+ ],
+ "source_bytes": 6530833,
+ "meta": {
+  "title": "Ben Giang (ND 48-4)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "",
+  "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-4-2nd-ed.jpg"
+ }
+}

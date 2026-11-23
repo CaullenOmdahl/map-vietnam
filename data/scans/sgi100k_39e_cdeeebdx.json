@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_39e_cdeeebdx/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2847.3,
+   5621.2,
+   107.097229,
+   21.24
+  ],
+  [
+   4960.8,
+   5609.4,
+   107.277229,
+   21.24
+  ],
+  [
+   4948.3,
+   3281.4,
+   107.277229,
+   21.42
+  ],
+  [
+   4929.2,
+   943.9,
+   107.277229,
+   21.6
+  ]
+ ],
+ "neatline": [
+  [
+   780.1,
+   805.1
+  ],
+  [
+   5023.7,
+   784.7
+  ],
+  [
+   5063.4,
+   6661.7
+  ],
+  [
+   819.8,
+   6682.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5388,
+  7425
+ ],
+ "source_bytes": 11314388,
+ "meta": {
+  "title": "Đinh-Lập est (feuille 39E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.cdeeebdx"
+ }
+}

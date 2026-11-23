@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_126_8136l582/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1071.9,
+   4264.3,
+   107.997229,
+   16.38
+  ],
+  [
+   3338.9,
+   4237.7,
+   108.177229,
+   16.38
+  ],
+  [
+   3322.2,
+   1889.4,
+   108.177229,
+   16.56
+  ]
+ ],
+ "neatline": [
+  [
+   407.5,
+   904.2
+  ],
+  [
+   4754.5,
+   853.3
+  ],
+  [
+   4797.0,
+   6818.2
+  ],
+  [
+   450.0,
+   6869.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5238,
+  7680
+ ],
+ "source_bytes": 4614666,
+ "meta": {
+  "title": "Phú-Gia (feuille 126)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1925",
+  "dateNote": "edition dated 1925-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.8136l582"
+ }
+}

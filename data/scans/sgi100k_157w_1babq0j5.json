@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_157w_1babq0j5/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1412.8,
+   2786.0,
+   107.997229,
+   14.22
+  ],
+  [
+   3710.3,
+   5109.9,
+   108.177229,
+   14.04
+  ],
+  [
+   3697.1,
+   2766.6,
+   108.177229,
+   14.22
+  ]
+ ],
+ "neatline": [
+  [
+   407.2,
+   782.6
+  ],
+  [
+   4810.2,
+   745.1
+  ],
+  [
+   4843.4,
+   6638.8
+  ],
+  [
+   440.4,
+   6676.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5238,
+  7599
+ ],
+ "source_bytes": 7938832,
+ "meta": {
+  "title": "Plei Ku ouest (feuille 157W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.1babq0j5"
+ }
+}

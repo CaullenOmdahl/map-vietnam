@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_146w_716562e6/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   756.3,
+   6503.0,
+   105.837229,
+   14.4
+  ],
+  [
+   3222.2,
+   6516.6,
+   106.017229,
+   14.4
+  ],
+  [
+   3214.7,
+   1535.9,
+   106.017229,
+   14.76
+  ]
+ ],
+ "neatline": [
+  [
+   748.7,
+   1465.7
+  ],
+  [
+   5514.4,
+   1492.1
+  ],
+  [
+   5522.2,
+   6692.8
+  ],
+  [
+   756.6,
+   6666.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5442,
+  7326
+ ],
+ "source_bytes": 8699963,
+ "meta": {
+  "title": "Phiafay ouest (feuille 146W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.716562e6"
+ }
+}

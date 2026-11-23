@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_143w_ca755icq/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1279.9,
+   4980.2,
+   107.997229,
+   14.94
+  ],
+  [
+   3591.5,
+   4982.6,
+   108.177229,
+   14.94
+  ],
+  [
+   3600.0,
+   2626.1,
+   108.177229,
+   15.12
+  ]
+ ],
+ "neatline": [
+  [
+   404.9,
+   563.8
+  ],
+  [
+   4871.6,
+   568.4
+  ],
+  [
+   4850.2,
+   6483.5
+  ],
+  [
+   383.6,
+   6478.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5172,
+  7440
+ ],
+ "source_bytes": 7337579,
+ "meta": {
+  "title": "Sơn Ha ouest (feuille 143W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ca755icq"
+ }
+}

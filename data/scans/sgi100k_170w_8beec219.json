@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_170w_8beec219/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   567.9,
+   5293.7,
+   105.837229,
+   13.14
+  ],
+  [
+   579.9,
+   2951.4,
+   105.837229,
+   13.32
+  ],
+  [
+   2865.5,
+   5299.3,
+   106.017229,
+   13.14
+  ],
+  [
+   2868.0,
+   2959.1,
+   106.017229,
+   13.32
+  ]
+ ],
+ "neatline": [
+  [
+   584.2,
+   811.7
+  ],
+  [
+   4992.5,
+   824.4
+  ],
+  [
+   4974.3,
+   6704.6
+  ],
+  [
+   566.0,
+   6691.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5415,
+  7446
+ ],
+ "source_bytes": 8256013,
+ "meta": {
+  "title": "Preak Préas ouest (feuille 170W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.8beec219"
+ }
+}

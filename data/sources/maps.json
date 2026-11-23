@@ -61,6 +61,8 @@
   "scans": [
     {
       "id": "ams_l509_nc48-6_1954",
+      "sheet": "NC 48-6",
+      "sheet_key": "l509:NC 48-6",
       "title": "Long Xuyên (NC 48-6)",
       "url": "https://openresearch-repository.anu.edu.au/server/api/core/bitstreams/4b8eed84-423a-4728-855b-45c7cee3377b/content",
       "bytes": 10018089,
@@ -69,6 +71,8 @@
     },
     {
       "id": "ams_l509_nc48-6_1962",
+      "sheet": "NC 48-6",
+      "sheet_key": "l509:NC 48-6",
       "title": "Long Xuyên (NC 48-6)",
       "url": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-6-2nd-ed.jpg",
       "page": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/",
@@ -100,7 +104,9 @@
     },
     {
       "id": "fr_sgi_100k_228_longxuyen",
-      "title": "Carte de l'Indochine 1:100 000, feuille 228 Long-Xuyên",
+      "sheet": "228",
+      "sheet_key": "sgi100k:228",
+      "title": "Long-Xuyên (feuille 228)",
       "url": "https://api.nakala.fr/data/10.34847/nkl.f2ffx15y/05684761a6be339b73fee0f51b1ecb7b6866090d",
       "page": "https://nakala.fr/10.34847/nkl.f2ffx15y",
       "source_file": "src.jp2",

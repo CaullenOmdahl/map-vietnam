@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_47e_a378t161/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   523.2,
+   4723.5,
+   104.757229,
+   20.88
+  ],
+  [
+   531.1,
+   2134.6,
+   104.757229,
+   21.06
+  ],
+  [
+   2938.5,
+   4728.4,
+   104.937229,
+   20.88
+  ],
+  [
+   2938.2,
+   2139.4,
+   104.937229,
+   21.06
+  ]
+ ],
+ "neatline": [
+  [
+   531.2,
+   630.9
+  ],
+  [
+   5327.6,
+   640.6
+  ],
+  [
+   5318.1,
+   7139.1
+  ],
+  [
+   521.7,
+   7129.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5400,
+  7656
+ ],
+ "source_bytes": 11435669,
+ "meta": {
+  "title": "Vạn-Yên est (feuille 47E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1948",
+  "dateNote": "edition dated 1948-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.a378t161"
+ }
+}

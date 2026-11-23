@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_29_eab1cx90/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   4518.4,
+   5750.4,
+   107.457229,
+   21.6
+  ],
+  [
+   4508.3,
+   1069.5,
+   107.457229,
+   21.78
+  ],
+  [
+   8799.4,
+   5749.1,
+   107.637229,
+   21.6
+  ],
+  [
+   8802.5,
+   1067.5,
+   107.637229,
+   21.78
+  ]
+ ],
+ "neatline": [
+  [
+   694.8,
+   738.9
+  ],
+  [
+   9436.6,
+   735.6
+  ],
+  [
+   9441.0,
+   6606.9
+  ],
+  [
+   699.1,
+   6610.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10467,
+  7965
+ ],
+ "source_bytes": 11721188,
+ "meta": {
+  "title": "Than-Poun Sud-Ouest (feuille 29)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.eab1cx90"
+ }
+}

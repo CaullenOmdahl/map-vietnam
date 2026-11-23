@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_100e_dcaeh07p/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2369.8,
+   6742.3,
+   103.497229,
+   18.0
+  ],
+  [
+   2399.4,
+   4396.3,
+   103.497229,
+   18.18
+  ],
+  [
+   2427.2,
+   2051.8,
+   103.497229,
+   18.36
+  ],
+  [
+   4631.6,
+   4421.1,
+   103.677229,
+   18.18
+  ],
+  [
+   4653.7,
+   2079.4,
+   103.677229,
+   18.36
+  ]
+ ],
+ "neatline": [
+  [
+   715.7,
+   978.5
+  ],
+  [
+   5105.3,
+   1029.1
+  ],
+  [
+   5036.3,
+   6933.4
+  ],
+  [
+   646.8,
+   6882.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5562,
+  7764
+ ],
+ "source_bytes": 4028158,
+ "meta": {
+  "title": "Paksane est (feuille 100E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.dcaeh07p"
+ }
+}

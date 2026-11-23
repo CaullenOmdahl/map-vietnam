@@ -233,6 +233,7 @@ const symSVG = (kind, size = 18) => {
 // Inline line icons (24x24, stroked with currentColor by app.css).
 const icon = {
   back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   pin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
   grid: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="M4 12h16M12 4v16"/></svg>',
@@ -521,11 +522,12 @@ function buildEras(layers) {
 const eraById = id => S.eras.find(e => e.id === id);
 // What a map is, in the same few words wherever it is named (the map bar, the library card): "US Army 1:50,000",
 // "US overview 1:250,000", "French 1:100,000". seriesId is the catalogue's series key, seriesName its full name.
-const SERIES_WORDS = { l7014: "US Army", jog1501: "US overview" };
+const SERIES_WORDS = { l7014: "US Army", jog1501: "US overview", l909: "US city plan", l509: "US Army", sgi100k: "French", warper: "British chart" };
 function kindWords(seriesId, seriesName, scale) {
   // US series: Army Map Service sheets and the Defense Mapping Agency's Joint Operations Graphics.
   const who = SERIES_WORDS[seriesId] || (/AMS|Army Map Service|US |Joint Operations Graphic/.test(seriesName || "") ? "US" : "French");
-  return [who, fullScale(scale)].filter(Boolean).join(" ");
+  // Only a real scale ("1:100,000") is named; a series of charts at many scales says just what it is.
+  return [who, /^1:/.test(fullScale(scale)) ? fullScale(scale) : ""].filter(Boolean).join(" ");
 }
 const eraInYears = e => !e || !S.years || !e.dated || (e.y1 >= S.years[0] && e.y0 <= S.years[1]);
 const yearsText = () => !S.years ? "All years" : S.years[0] === S.years[1] ? String(S.years[0]) : `${S.years[0]}–${S.years[1]}`;
@@ -1815,7 +1817,18 @@ const LIB_POLL_OPEN_MS = 1000, LIB_POLL_CLOSED_MS = 3000; // card open / closed;
 const BULK_ASK = { maps: 8, bytes: 100e6 }; // "Add all" asks first above either of these
 const BULK_MAX = 60; // and above this many maps it asks to zoom in instead (a whole region is many GB)
 // Each series' label in the series switch.
-const SERIES_SEG = { l7014: "1:50,000", jog1501: "1:250,000", scans: "Scans" };
+// The scale chips of the Old maps card, most detailed first: each map falls in the first whose test its scale passes.
+const LIB_KINDS = [
+  { k: "town", label: "Town plans", test: n => n && n <= 15000 },
+  { k: "25k", label: "1:25,000", test: n => n === 25000 },
+  { k: "50k", label: "1:50,000", test: n => n === 50000 },
+  { k: "100k", label: "1:100,000", test: n => n === 100000 },
+  { k: "250k", label: "1:250,000", test: n => n === 250000 },
+  { k: "other", label: "Other scales", test: () => true },
+];
+const LIB_SORTS = [["here", "Best here"], ["old", "Oldest"], ["new", "Newest"]];
+const LIB_LIST_MAX = 120; // rows listed at once; past this the card asks to zoom in or filter
+const scaleNumber = t => { const m = /1\s*:\s*([\d\s.,]+)/.exec(t || ""); return m ? +m[1].replace(/\D/g, "") || null : null; };
 // The footprint layers (see addFootprintLayers), shown only while the library card is open.
 const FP_LAYERS = ["libfp-fill", "libfp-halo", "libfp-line-av", "libfp-line-in", "libfp-sel", "libfp-label"];
 
@@ -1826,6 +1839,13 @@ const libBusyMaps = () => S.lib.maps.filter(m => LIB_BUSY.has(m.state));
 const estDisk = list => list.reduce((a, m) => a + (m.disk_estimate || 0), 0);
 const libScale = m => m.scale || (m.series !== "scans" ? S.lib.series[m.series]?.scale : "");
 const libWhat = m => kindWords(m.series, m.series_name, libScale(m)) || "Map";
+const libKind = m => LIB_KINDS.find(x => x.test(m.scale_n || scaleNumber(libScale(m)))).k;
+// Does a map match the card's filter? Every word typed must appear in its place, title, sheet number, year or kind,
+// accents and case ignored ("hue 1968", "feuille 221", "lang son").
+function libMatches(m, words) {
+  const text = fold([m.title, m.place, m.sheet, libYear(m), libWhat(m), m.id].filter(Boolean).join(" "));
+  return words.every(w => text.includes(w));
+}
 // The year when it is known: an installed map's from its own margin (catalog.json), a scan's from its control file.
 function libYear(m) {
   const e = eraById(m.id);
@@ -1973,7 +1993,7 @@ function addFootprintLayers(m) {
   m.addLayer({ id: "libfp-halo", type: "line", source: "libfp", layout: none, paint: { "line-color": c.halo, "line-width": 3.5, "line-opacity": 0.55 } });
   // Overview (1:250,000) sheets get a heavier dash than the 1:50,000 ones, so the two series read apart.
   m.addLayer({ id: "libfp-line-av", type: "line", source: "libfp", layout: none, filter: ["in", ["get", "st"], ["literal", ["available", "failed"]]],
-    paint: { "line-color": c.available, "line-width": ["match", ["get", "series"], "jog1501", 2.4, 1.4], "line-dasharray": [3, 2] } });
+    paint: { "line-color": c.available, "line-width": ["match", ["get", "kind"], "250k", 2.4, "other", 2, 1.4], "line-dasharray": [3, 2] } });
   m.addLayer({ id: "libfp-line-in", type: "line", source: "libfp", layout: none, filter: ["in", ["get", "st"], ["literal", ["installed", "busy"]]],
     paint: { "line-color": ["match", ["get", "st"], "installed", c.installed, c.busy], "line-width": 2.2 } });
   m.addLayer({ id: "libfp-sel", type: "line", source: "libfp", layout: none,
@@ -2007,7 +2027,7 @@ function drawFootprints() {
     if (!m.bounds) continue;
     const [w, s, e, n] = m.bounds;
     const st = m.state === "installed" ? "installed" : LIB_BUSY.has(m.state) ? "busy" : m.state === "failed" ? "failed" : "available";
-    const props = { id: m.id, st, series: m.series || "", area: (e - w) * (n - s), label: libLabel(m) };
+    const props = { id: m.id, st, kind: libKind(m), area: (e - w) * (n - s), label: libLabel(m) };
     polys.push({ type: "Feature", properties: props, geometry: { type: "Polygon", coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]] } });
   }
   setData("libfp", { type: "FeatureCollection", features: polys });
@@ -2021,10 +2041,15 @@ function showFootprints(on, force = false) {
   if (!on) { setFpState("sel", null); setFpState("hover", null); }
   applyFootprintFilter();
 }
-// The series switch filters the footprints as well as the list.
+// The scale chips and the filter field filter the footprints as well as the list.
 function applyFootprintFilter() {
-  const series = S.view.name === "library" && S.view.series && S.view.series !== "all" ? S.view.series : null;
-  const sf = series ? ["==", ["get", "series"], series] : ["to-boolean", 1];
+  const lib = S.view.name === "library";
+  const kind = lib && S.view.kind && S.view.kind !== "all" ? S.view.kind : null;
+  const words = lib ? fold(S.view.q || "").split(/\s+/).filter(Boolean) : [];
+  const parts = [];
+  if (kind) parts.push(["==", ["get", "kind"], kind]);
+  if (words.length) parts.push(["in", ["get", "id"], ["literal", S.lib.maps.filter(m => libMatches(m, words)).map(m => m.id)]]);
+  const sf = parts.length ? ["all", ...parts] : ["to-boolean", 1];
   eachMap(m => {
     if (!m.getLayer("libfp-fill")) return;
     for (const id of ["libfp-fill", "libfp-halo", "libfp-sel", "libfp-label"]) m.setFilter(id, sf);
@@ -2054,7 +2079,8 @@ function footprintAt(m, p) {
 function openLibrary(sel = null, confirm = null) {
   const from = document.activeElement;
   closePopovers();
-  show("library", { sel, confirm, series: S.view.name === "library" ? S.view.series : "all" });
+  const keep = S.view.name === "library" ? S.view : {};
+  show("library", { sel, confirm, kind: keep.kind || "all", sort: keep.sort || "here", q: keep.q || "", open: keep.open || null });
   setFpState("sel", sel);
   if (sel) fitFootprintIfHidden(sel);
   // Keyboard focus moves into the card, and back to what opened it when the card closes (see show).
@@ -2068,31 +2094,57 @@ function focusCard() {
   if (!t.hasAttribute("tabindex")) t.tabIndex = -1;
   t.focus({ preventScroll: true });
 }
-// What the card shows, shared by the card and its change check (libSig).
+// What the card shows, shared by the card and its change check (libSig). Without a filter it lists the maps on
+// screen; with one, every map in the catalogue that matches. Editions of one sheet (same sheet_key) share a row.
 function libModel() {
-  const v = S.view, [cx, cy] = viewCenter(), inView = libInView();
-  const seriesHere = Object.keys(SERIES_SEG).filter(k => inView.some(m => m.series === k));
-  const series = v.series && v.series !== "all" && seriesHere.includes(v.series) ? v.series : "all";
-  const shown = inView.filter(m => series === "all" || m.series === series);
+  const v = S.view, [cx, cy] = viewCenter();
+  const words = fold(v.q || "").split(/\s+/).filter(Boolean);
+  const pool = words.length ? S.lib.maps.filter(m => m.bounds && libMatches(m, words)) : libInView();
+  const kinds = LIB_KINDS.map(x => ({ ...x, n: pool.filter(m => libKind(m) === x.k).length })).filter(x => x.n);
+  const kind = v.kind && kinds.some(x => x.k === v.kind) ? v.kind : "all";
+  const shown = pool.filter(m => kind === "all" || libKind(m) === kind);
   const covers = m => cx >= m.bounds[0] && cx <= m.bounds[2] && cy >= m.bounds[1] && cy <= m.bounds[3];
   const area = m => (m.bounds[2] - m.bounds[0]) * (m.bounds[3] - m.bounds[1]);
   const dist = m => Math.hypot((m.bounds[0] + m.bounds[2]) / 2 - cx, (m.bounds[1] + m.bounds[3]) / 2 - cy);
-  // The maps under the centre of the view first, most detailed first; then the rest, nearest first.
-  const order = (a, b) => (covers(b) - covers(a)) || (covers(a) && covers(b) ? area(a) - area(b) : 0) || dist(a) - dist(b);
+  const yr = m => +libYear(m).slice(0, 4) || null;
+  // "Best here": the maps under the centre of the view first, most detailed first; then the rest, nearest first.
+  // "Oldest" / "Newest": by year, undated last; nearest first among the same year.
+  const sort = LIB_SORTS.some(([k]) => k === v.sort) ? v.sort : "here";
+  const order = sort === "here"
+    ? (a, b) => (covers(b) - covers(a)) || (covers(a) && covers(b) ? area(a) - area(b) : 0) || dist(a) - dist(b)
+    : (a, b) => ((yr(a) == null) - (yr(b) == null)) || (sort === "old" ? yr(a) - yr(b) : yr(b) - yr(a)) || dist(a) - dist(b);
   const rank = { downloading: 0, building: 0, queued: 1, failed: 2 };
   return {
-    inView, seriesHere, series, shown,
+    words, kinds, kind, sort, shown,
     adding: S.lib.maps.filter(m => m.state in rank).sort((a, b) => rank[a.state] - rank[b.state]), // wherever they are
-    installed: shown.filter(m => m.state === "installed").sort(order),
-    available: shown.filter(m => m.state === "available").sort(order),
+    installed: libGroup(shown.filter(m => m.state === "installed").sort(order)),
+    available: libGroup(shown.filter(m => m.state === "available").sort(order)),
   };
 }
+// Rows from maps in order: a map alone, or the editions of one sheet together (newest first) at the place of the
+// first of them. A group is { group: true, id: "g:<sheet_key>", maps, first }.
+function libGroup(maps) {
+  const by = new Map();
+  for (const m of maps) {
+    const k = m.sheet_key || m.id;
+    if (!by.has(k)) by.set(k, []);
+    by.get(k).push(m);
+  }
+  return [...by.entries()].map(([k, list]) => {
+    if (list.length === 1) return list[0];
+    const sorted = [...list].sort((a, b) => (+libYear(b).slice(0, 4) || 0) - (+libYear(a).slice(0, 4) || 0));
+    return { group: true, id: "g:" + k, maps: sorted, first: sorted[0] };
+  });
+}
+// The maps a row stands for, and the one its main control acts on (a group's newest edition).
+const rowMaps = r => r.group ? r.maps : [r];
+const rowLead = r => r.group ? r.first : r;
 // Everything the card's HTML depends on except progress numbers, which are patched in place (libPatchProgress), so
 // the card is not rebuilt (losing a click in progress) every time a download moves on.
 function libSig(md = libModel()) {
-  const ids = l => l.map(m => m.id + ":" + m.state).join();
-  return JSON.stringify([S.lib.loaded, S.lib.err, md.series, md.seriesHere, ids(md.adding), ids(md.installed), ids(md.available),
-    S.view.sel, S.view.confirm, S.eraA, S.catalog.length]);
+  const ids = l => l.flatMap(rowMaps).map(m => m.id + ":" + m.state).join();
+  return JSON.stringify([S.lib.loaded, S.lib.err, md.kind, md.kinds.map(x => x.k + x.n), md.sort, md.words, ids(md.adding),
+    ids(md.installed), ids(md.available), S.view.sel, S.view.open, S.view.confirm, S.eraA, S.catalog.length]);
 }
 let libLastSig = "";
 function libRefreshView(force = false) {
@@ -2172,48 +2224,100 @@ function libDetail(m) {
     ${confirm}
     ${licence ? `<details><summary>Licence</summary><p class="muted">${esc(licence)}</p></details>` : ""}</div>`;
 }
-function libRow(m) {
-  const sel = S.view.sel === m.id, id = esc(m.id);
-  return `<li class="lib-row${sel ? " sel" : ""}" data-lib-row="${id}">
+// One map's row. As an edition inside a sheet's row it is named by its year ("1952 edition").
+function libRow(m, edition = false) {
+  const sel = S.view.sel === m.id, id = esc(m.id), year = libYear(m);
+  const title = edition ? (year ? `${year} edition` : "Undated edition") : m.title;
+  return `<li class="lib-row${sel ? " sel" : ""}${edition ? " edition" : ""}" data-lib-row="${id}">
     <button class="main" data-act="libSel" data-id="${id}" aria-expanded="${sel}"${sel ? ` aria-controls="libd-${id}"` : ""}>
-      <span class="t">${esc(m.title)}</span><span class="m${m.state === "failed" ? " bad" : ""}" data-prog-t="${id}">${esc(libMeta(m))}</span></button>
+      <span class="t">${esc(title)}</span><span class="m${m.state === "failed" ? " bad" : ""}" data-prog-t="${id}">${esc(libMeta(m))}</span></button>
     ${libControl(m)}${sel ? libDetail(m) : ""}</li>`;
 }
+// A sheet with several editions: one row naming the sheet and its years; its control acts on the newest edition
+// (Show if one is on this computer, else Add); opening it lists every edition with its own controls.
+function libGroupRow(g) {
+  const open = S.view.open === g.id, id = esc(g.id);
+  const on = g.maps.find(m => m.state === "installed" && S.eraA === m.id) || g.maps.find(m => m.state === "installed");
+  const lead = on || g.maps.find(m => m.state === "available") || g.first;
+  // "2 editions, 1949–1952" (the row is short; opening it lists each edition by its year).
+  const ys = g.maps.map(m => +libYear(m).slice(0, 4)).filter(Boolean), lo = Math.min(...ys), hi = Math.max(...ys);
+  const years = !ys.length ? "" : lo === hi ? `, ${lo}` : `, ${lo}\u2060–\u2060${hi}`; // word joiners keep the range on one line
+  const title = String(g.first.title).replace(/,\s*\d{4}$/, "");
+  return `<li class="lib-row lib-group${open ? " sel" : ""}" data-lib-row="${esc(g.first.id)}">
+    <button class="main" data-act="libOpen" data-id="${id}" aria-expanded="${open}">
+      <span class="t">${esc(title)}</span><span class="m">${esc(libWhat(g.first))} · ${g.maps.length} editions${esc(years)}</span></button>
+    ${libControl(lead)}
+    ${open ? `<ul class="list lib-list lib-editions">${g.maps.map(m => libRow(m, true)).join("")}</ul>` : ""}</li>`;
+}
+const libItem = r => r.group ? libGroupRow(r) : libRow(r);
 VIEWS.library = v => {
   const md = libModel();
   libLastSig = libSig(md);
-  // Counted as the list shows them: in the series chosen, on the part of the map that is on screen.
-  const n = md.shown.length, scale = md.series === "all" ? "" : ` at ${SERIES_SEG[md.series]}`;
+  // Counted as the list shows them: in the scale chosen, on screen (or matching the filter).
+  const n = md.shown.length, scale = md.kind === "all" ? "" : ` at ${LIB_KINDS.find(x => x.k === md.kind).label}`;
+  const typed = md.words.length ? `“${v.q.trim()}”` : "";
   const sub = !S.lib.loaded ? "Looking for maps…" : S.lib.err ? "The list of maps could not be loaded"
+    : typed ? (n ? `${fmtInt(n)} map${n === 1 ? "" : "s"}${scale} match ${typed}` : `No maps match ${typed}`)
     : n ? `${fmtInt(n)} map${n === 1 ? "" : "s"}${scale} cover the area on screen` : "No old maps cover the area on screen";
   const busy = md.adding.filter(m => LIB_BUSY.has(m.state)), failed = md.adding.filter(m => m.state === "failed");
-  const rows = maps => `<div class="group"><ul class="list lib-list">${maps.map(libRow).join("")}</ul></div>`;
-  const list = (title, maps) => maps.length ? `<h3 class="sub-head">${title}</h3>${rows(maps)}` : "";
-  // "Add all": a quiet button for a few maps; above BULK_ASK it asks first; above BULK_MAX it asks to zoom in.
-  const av = md.available, avBytes = av.reduce((a, m) => a + (m.bytes || 0), 0);
+  // Long lists are cut at LIB_LIST_MAX rows; the installed maps come first, so they are never the ones cut.
+  let room = LIB_LIST_MAX;
+  const take = rows => { const out = rows.slice(0, Math.max(0, room)); room -= out.length; return out; };
+  const installed = take(md.installed), available = take(md.available);
+  const hidden = md.installed.length + md.available.length - installed.length - available.length;
+  const rows = items => `<div class="group"><ul class="list lib-list">${items.map(libItem).join("")}</ul></div>`;
+  const list = (title, items) => items.length ? `<h3 class="sub-head">${title}</h3>${rows(items)}` : "";
+  // "Add all": the newest edition of each sheet listed. A quiet button for a few maps; above BULK_ASK it asks first;
+  // above BULK_MAX it asks to zoom in.
+  const av = md.available.map(r => r.group ? r.maps.find(m => m.state === "available") : r), avBytes = av.reduce((a, m) => a + (m.bytes || 0), 0);
   let bulk = "";
-  if (av.length > BULK_MAX) bulk = `<p class="small-t muted lib-bulk-note">Zoom in to add maps in bulk: ${fmtInt(av.length)} cover this view.</p>`;
+  if (av.length > BULK_MAX) bulk = "";
   else if (v.confirm === "bulk") bulk = `<div class="confirm-box calm" role="alertdialog" aria-label="Add ${av.length} maps">
       <span>Add <b>${av.length} maps</b>? They download ${fmtMB(avBytes)} and take about ${fmtMB(estDisk(av))} on this computer. They are added one at a time; you can keep using the map.</span>
       <div class="row"><button class="btn small primary" data-act="libAddAll" data-yes="1">Add ${av.length} maps</button><button class="btn small" data-act="libCancel">Cancel</button></div></div>`;
-  else if (av.length >= 2) bulk = `<button class="btn lib-bulk" data-act="libAddAll">${icon.plus}<span>Add all ${av.length} maps here</span><span class="muted">${fmtMB(avBytes)}</span></button>`;
+  else if (av.length >= 2) bulk = `<button class="btn lib-bulk" data-act="libAddAll">${icon.plus}<span>Add all ${av.length} maps ${typed ? "listed" : "here"}</span><span class="muted">${fmtMB(avBytes)}</span></button>`;
   const used = S.lib.maps.filter(m => m.state === "installed").reduce((a, m) => a + (m.disk_bytes || 0), 0);
-  // The series switch comes first and stays put; the maps on their way follow under one status line (it is their
-  // heading), then the ones that failed, then the rest.
+  const chip = (k, label, count) => `<button data-act="libKind" data-s="${k}" aria-pressed="${md.kind === k}">${esc(label)}${count != null ? ` <span class="n">${fmtInt(count)}</span>` : ""}</button>`;
+  // The filter, the scale chips and the sort come first and stay put; the maps on their way follow under one status
+  // line (it is their heading), then the ones that failed, then the rest.
   return `${headHTML("Old maps", `<span>${esc(sub)}</span>`)}
-    ${md.seriesHere.length > 1 ? `<div class="seg lib-seg" role="group" aria-label="Show maps of one scale">
-      ${["all", ...md.seriesHere].map(k => `<button data-act="libSeries" data-s="${k}" aria-pressed="${md.series === k}">${k === "all" ? "All" : SERIES_SEG[k]}</button>`).join("")}</div>` : ""}
+    <div class="lib-tools">
+      <label class="lib-filter"><span class="ci" aria-hidden="true">${icon.search}</span>
+        <input id="libQ" type="search" data-act="libQ" autocomplete="off" spellcheck="false" enterkeyhint="search"
+          placeholder="Filter by place, sheet or year" aria-label="Filter old maps by place, sheet number or year" value="${esc(v.q || "")}"></label>
+      ${md.kinds.length > 1 ? `<div class="seg lib-seg" role="group" aria-label="Show maps of one scale">${chip("all", "All", null)}${md.kinds.map(x => chip(x.k, x.label, x.n)).join("")}</div>` : ""}
+      ${n > 1 ? `<div class="lib-sort" role="group" aria-label="Order of the list"><span class="small-t muted">Order</span>
+        ${LIB_SORTS.map(([k, label]) => `<button class="linkish small-t" data-act="libSort" data-s="${k}" aria-pressed="${md.sort === k}">${k === "here" && typed ? "Nearest" : label}</button>`).join("")}</div>` : ""}
+    </div>
     ${busy.length ? `<div class="lib-status" role="status"><span class="spin" aria-hidden="true"></span>
       <span class="grow"><b>Adding ${busy.length} map${busy.length === 1 ? "" : "s"}</b><span class="small-t muted" data-lib-left>${esc(leftText())}</span></span>
       ${busy.length > 1 ? `<button class="linkish small-t" data-act="libStopAll">Stop all</button>` : ""}</div>${rows(busy)}` : ""}
     ${list("Could not be added", failed)}
-    ${list("On this computer", md.installed)}
-    ${av.length ? `<h3 class="sub-head">Available here</h3>${bulk}` : ""}
-    ${av.length ? `<div class="group"><ul class="list lib-list">${av.map(libRow).join("")}</ul></div>` : ""}
-    ${S.lib.loaded && !n && !S.lib.err ? `<p class="muted">Move the map over Vietnam to see the old maps that can be added there.</p>` : ""}
+    ${list("On this computer", installed)}
+    ${available.length ? `<h3 class="sub-head">${typed ? "Can be added" : "Available here"}</h3>${bulk}${rows(available)}` : ""}
+    ${hidden > 0 ? `<p class="small-t muted lib-bulk-note">${fmtInt(hidden)} more ${typed ? "match" : "cover this view"}. Zoom in, pick a scale or type a place to narrow the list.</p>` : ""}
+    ${S.lib.loaded && !n && !S.lib.err && typed ? `<p class="muted">Check the spelling, or <button class="linkish" data-act="libClear">clear the filter</button> to see the maps on screen.</p>` : ""}
+    ${S.lib.loaded && !n && !S.lib.err && !typed ? `<p class="muted">Move the map over Vietnam, or type a place above, to find old maps.</p>` : ""}
     <p class="foot-note">Maps come from public archives and stay on this computer. Nothing downloads until you add it.${used ? ` Old maps use ${fmtMB(used)} here.` : ""}</p>`;
 };
+let libQTimer = null;
 VIEWS.library.after = () => {
+  // Typing filters as you go; the card is redrawn a moment after the last key, keeping the caret in the field.
+  const q = $("#libQ");
+  q?.addEventListener("input", () => {
+    S.view.q = q.value; clearTimeout(libQTimer);
+    libQTimer = setTimeout(() => { S.view.sel = null; S.view.open = null; rerenderKeepingFocus(); }, 150);
+  });
+  q?.addEventListener("keydown", e => { if (e.key === "Escape" && q.value) { e.stopPropagation(); S.view.q = ""; rerenderKeepingFocus(); } });
+  if (document.activeElement === q) q.setSelectionRange(q.value.length, q.value.length);
+  const seg = $("#view .lib-seg");
+  if (seg) {
+    const edge = () => seg.classList.toggle("end", seg.scrollLeft + seg.clientWidth >= seg.scrollWidth - 4);
+    seg.classList.toggle("more", seg.scrollWidth > seg.clientWidth + 4);
+    seg.addEventListener("scroll", edge, { passive: true });
+    edge();
+    seg.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
   // Pointing at a row lights up its footprint on the map.
   $$("#view [data-lib-row]").forEach(li => {
     li.addEventListener("mouseenter", () => setFpState("hover", li.dataset.libRow));
@@ -2258,7 +2362,18 @@ ACTIONS.libStop = el => libRemove([el.dataset.id], true);
 ACTIONS.libStopAll = () => libRemove(libBusyMaps().map(m => m.id), true);
 ACTIONS.libShow = el => setEra(S.eraA === el.dataset.id ? "today" : el.dataset.id);
 ACTIONS.libFit = el => { if (!isDesk()) setSheet("peek"); fitFootprintIfHidden(el.dataset.id, true); };
-ACTIONS.libSeries = el => { S.view.series = el.dataset.s; S.view.sel = null; S.view.confirm = null; setFpState("sel", null); rerenderKeepingFocus(); };
+ACTIONS.libKind = el => { S.view.kind = el.dataset.s; S.view.sel = null; S.view.open = null; S.view.confirm = null; setFpState("sel", null); rerenderKeepingFocus(); };
+ACTIONS.libSort = el => { S.view.sort = el.dataset.s; rerenderKeepingFocus(); };
+ACTIONS.libQ = () => {}; // the filter field: typing is handled in VIEWS.library.after
+ACTIONS.libClear = () => { S.view.q = ""; rerenderKeepingFocus(); $("#libQ")?.focus(); };
+// Opens or closes a sheet's editions; its outline is picked out on the map, and the map moves to it if off screen.
+ACTIONS.libOpen = el => {
+  const id = el.dataset.id, g = [...libModel().installed, ...libModel().available].find(r => r.id === id);
+  S.view.open = S.view.open === id ? null : id; S.view.sel = null; S.view.confirm = null;
+  setFpState("sel", S.view.open && g ? g.first.id : null);
+  rerenderKeepingFocus();
+  if (S.view.open && g) fitFootprintIfHidden(g.first.id);
+};
 ACTIONS.libCancel = () => { S.view.confirm = null; rerenderKeepingFocus(); };
 ACTIONS.libAskRemove = el => {
   S.view.confirm = "remove:" + el.dataset.id;
@@ -2269,7 +2384,7 @@ ACTIONS.libAskRemove = el => {
 };
 ACTIONS.libRemove = el => libRemove([el.dataset.id]);
 ACTIONS.libAddAll = el => {
-  const av = libModel().available, bytes = av.reduce((a, m) => a + (m.bytes || 0), 0);
+  const av = libModel().available.map(r => r.group ? r.maps.find(m => m.state === "available") : r), bytes = av.reduce((a, m) => a + (m.bytes || 0), 0);
   if (!el.dataset.yes && (av.length > BULK_ASK.maps || bytes > BULK_ASK.bytes)) {
     S.view.confirm = "bulk"; rerenderKeepingFocus();
     $('#view [data-act="libAddAll"][data-yes]')?.focus();

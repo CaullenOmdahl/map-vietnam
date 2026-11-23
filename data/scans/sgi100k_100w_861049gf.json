@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_100w_861049gf/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2293.2,
+   6692.5,
+   103.137229,
+   18.0
+  ],
+  [
+   2323.9,
+   4343.7,
+   103.137229,
+   18.18
+  ],
+  [
+   2356.6,
+   1999.5,
+   103.137229,
+   18.36
+  ],
+  [
+   4530.2,
+   6723.0,
+   103.317229,
+   18.0
+  ],
+  [
+   4558.7,
+   4376.3,
+   103.317229,
+   18.18
+  ],
+  [
+   4587.1,
+   2033.3,
+   103.317229,
+   18.36
+  ]
+ ],
+ "neatline": [
+  [
+   705.1,
+   877.5
+  ],
+  [
+   5042.5,
+   940.3
+  ],
+  [
+   4962.6,
+   7166.3
+  ],
+  [
+   625.2,
+   7103.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5562,
+  7764
+ ],
+ "source_bytes": 6056251,
+ "meta": {
+  "title": "Paksane ouest (feuille 100W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.861049gf"
+ }
+}

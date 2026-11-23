@@ -3,11 +3,18 @@
 The catalogue is generated here but committed, so nobody running Map Vietnam ever has to probe
 a map server to find out what exists. Nothing in it is downloaded until the person adds it.
 
-Three series:
+The series:
   - l7014: US Army Map Service 1:50,000 GeoPDFs from the USGS Store, one entry per hosted
     15-minute cell touching Vietnam (series L7014, plus the L7015/L7016 sheets that cover the
     Laos and Cambodia borders on the same grid).
-  - jog1501: Joint Operations Graphic (Air) 1:250,000 GeoPDFs, series 1501A, from the USGS Store.
+  - jog1501: Joint Operations Graphic (Air) 1:250,000 GeoPDFs, series 1501A, from the USGS Store
+    (two sheets the Store lacks come from the University of Texas Libraries).
+  - l909: US Army Map Service city plans, mostly 1:12,500, GeoPDFs from the USGS Store.
+  - sgi100k and l509: the French Indochina 1:100,000 sheets (Service Géographique de l'Indochine,
+    on NAKALA) and the US Army Map Service L509 1:250,000 sheets (University of Texas Libraries),
+    listed by scripts/sheet_lists.py (data/sources/sheets.json) and placed automatically by
+    scripts/place_sheets.py; only sheets with a control file in data/scans/ are catalogued. An image
+    served by IIIF is made on request, so its size is only approximately known (bytes_estimated).
   - scans: older scanned maps, copied unchanged from data/sources/maps.json; each has its own
     hand-made control file in data/scans/<id>.json.
 
@@ -48,6 +55,7 @@ import gns  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "sources" / "map_library.json"
 LEGACY = ROOT / "data" / "sources" / "maps.json"
+SHEETS = ROOT / "data" / "sources" / "sheets.json"
 SCANS = ROOT / "data" / "scans"
 CACHE = "map_library"  # sub-folder of data/raw for everything this script downloads
 
@@ -63,19 +71,51 @@ ALLOWED_HOSTS = {
     "humazur.univ-cotedazur.fr",
     "www.davidrumsey.com",
     "api.nakala.fr",
+    "thumb.wikimedia.org",
+    "upload.wikimedia.org",
 }
+# NAKALA's IIIF JPEG of a sheet runs about this many bytes per pixel (measured on several sheets);
+# the catalogue size of an sgi100k map is an estimate from its pixel count.
+IIIF_JPEG_BYTES_PER_PX = 0.153
+# Vietnam with a little slack: an automatically listed sheet must overlap it to be catalogued (the
+# French collection also holds sheets of Yunnan and Kouang-Tchéou-Wan, in China).
+VIETNAM_BOX = (102.1, 8.2, 109.6, 23.45)
 # The PDF metadata the titles come from sits in the file's last incremental update, which in
 # every L7014-family sheet checked lies within the final 64 KB.
 TAIL_BYTES = 65536
 REQUEST_INTERVAL_S = 1.2
 
-# JOG 1501A sheets touching Vietnam that the USGS Store hosts (HEAD-probed 2026-11-05). NC 48-5
-# and NF 48-10 exist only on the University of Texas site under irregular names, so are left out.
+# JOG 1501A sheets touching Vietnam that the USGS Store hosts (HEAD-probed 2026-11-05).
 JOG_SHEETS = (
     "NC4803 NC4804 NC4806 NC4807 NC4808 NC4810 NC4811 NC4815 NC4901 "
     "ND4804 ND4808 ND4812 ND4816 ND4901 ND4905 ND4909 ND4913 "
     "NE4802 NE4803 NE4807 NE4811 NE4812 NE4816 "
     "NF4805 NF4807 NF4809 NF4811 NF4812 NF4813 NF4814 NF4815 NF4816"
+).split()
+# JOG sheets the USGS Store lacks, which the University of Texas Libraries host under their own
+# names (checked 2026-11-24). NF 48-10's PDF records no corners, so its cell is given here: the
+# 1:250,000 grid north of 12 N is regular (1 x 1.5 degrees), as its neighbours NF 48-9/11 show.
+JOG_UT_SHEETS = {
+    "NC4805": "nc-48-5-kampot-cambodia-vietnam.pdf",
+    "NF4810": "nf-48-10-yen_bay-vietnam.pdf",
+}
+JOG_BOUNDS = {"NF4810": [103.5, 21.0, 105.0, 22.0]}
+JOG_TITLES = {"NF4810": "Yên Bái (NF 48-10)"}  # its PDF has no title (the University of Texas names it)
+# L909 city plans the USGS Store hosts, by their NGA record name (the PDF is <name>_geo.pdf).
+# Found by HEAD-probing the Store for Vietnamese towns (2026-11-24); NGA truncates long names
+# (VINHBENT = Vinh and Ben Thuy, PHULANGT = Phu Lang Thuong, QUANGNGA = Quang Ngai).
+# Towns whose NGA name runs words together or is the old one, so the gazetteer cannot spell it.
+L909_TOWNS = {
+    "L909XHONGAY__001": "Hòn Gai",
+    "L909XLACGIAO": "Buôn Ma Thuột (Lạc Giao)",
+    "L909XPHULANGT": "Bắc Giang (Phủ Lạng Thương)",
+    "L909XQUINHON": "Quy Nhơn",
+    "L909XVINHBENT": "Vinh and Bến Thủy",
+}
+L909_SHEETS = (
+    "L909XBIENHOA L909XCANTHO L909XDALAT L909XDANANG L909XDONGHOI L909XHAIPHONG L909XHANOI "
+    "L909XHONGAY__001 L909XHUE L909XLACGIAO L909XMYTHO L909XNHATRANG L909XPHULANGT L909XQUANGNGA "
+    "L909XQUINHON L909XTUYHOA L909XVINHBENT L909XVINHLONG"
 ).split()
 
 # disk_per_download_byte: disk space a map takes once added, per byte downloaded (the download is
@@ -108,6 +148,51 @@ SERIES = {
         "Bounds are each PDF's own corner fields, because the sheet layout is irregular. Datums vary "
         "by sheet (Indian 1960, or WGS84 on three later reprints). Some PDFs carry release code 'DS'; check the "
         "printed margin before redistributing tiles.",
+    },
+    "l909": {
+        "name": "US Army Map Service city plans, series L909",
+        "scale": "1:12,500",
+        "publisher": "US Army Map Service; GeoPDFs prepared by the US National Geospatial-Intelligence Agency",
+        "years": "mostly 1965-1970 editions",
+        "licence": "Work of the US Government: public domain in the United States. NGA makes the GeoPDFs "
+        "freely downloadable from the USGS Store.",
+        "disk_per_download_byte": 2.4,
+        "notes": "Street-level plans of the main towns, each on its own sheet. The PDFs carry their own "
+        "georeferencing (Indian 1960). Release code 'ZZ/DS'; check the printed margin before "
+        "redistributing tiles.",
+    },
+    "sgi100k": {
+        "name": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+        "scale": "1:100,000",
+        "publisher": "Service Géographique de l'Indochine; scans by the Centre IST REGARDS (CNRS) on NAKALA",
+        "years": "1910s-1952 editions",
+        "licence": "Each sheet has its own licence on NAKALA, given with it: most are CC BY-NC-SA 4.0 "
+        "(non-commercial use only, with attribution, adaptations shared alike), some CC BY 4.0.",
+        "disk_per_download_byte": 2.4,
+        "notes": "Placed automatically from each sheet's printed graticule (every 0.2 grad from the Paris "
+        "meridian) by scripts/place_sheets.py, then shifted 0.0045 degrees east for the old Paris meridian "
+        "value. Expect positions within a few hundred metres.",
+    },
+    "l509": {
+        "name": "US Army Map Service series L509, Indochina and Thailand",
+        "scale": "1:250,000",
+        "publisher": "US Army Map Service; scans by the University of Texas Libraries",
+        "years": "1954-1967 editions",
+        "licence": "Work of the US Government: public domain in the United States. Credit: Courtesy of the "
+        "University of Texas Libraries, The University of Texas at Austin.",
+        "disk_per_download_byte": 3.0,
+        "notes": "Placed automatically from each sheet's printed 15-minute graticule on the Indian 1960 datum "
+        "by scripts/place_sheets.py. Expect positions within a few hundred metres.",
+    },
+    "warper": {
+        "name": "British Admiralty charts",
+        "scale": "various",
+        "publisher": "UK Hydrographic Office; scans on Wikimedia Commons, georeferenced on the Wikimaps Warper",
+        "years": "1855-1964 editions",
+        "licence": "Crown copyright expired: public domain. Control points by Wikimaps Warper contributors.",
+        "disk_per_download_byte": 3.0,
+        "notes": "Nautical charts of the coast: soundings, harbours, lights and the shore as surveyed. Placed "
+        "from the control points volunteers set on the Wikimaps Warper; expect a few hundred metres.",
     },
     "scans": {
         "name": "Older scanned maps",
@@ -363,6 +448,15 @@ class Gazetteer:
         return _approved_name(min(self.places, key=lambda r: _distance2(r, lon, lat))), False
 
 
+def city_name(title):
+    """The town in an L909 PDF title: 'CITY MAP:  VIETNAM. HUE, VIETNAM L909 HUE. [L909 HUE].' -> 'Hue'."""
+    m = re.search(r"\.\s*([^.]+?),\s*VIET", title or "", re.IGNORECASE)
+    if not m:
+        return None
+    name = " ".join(m.group(1).split())
+    return name.title() if name.isupper() else name
+
+
 def sheet_title(printed, label, bounds, gazetteer):
     """'Cần Thơ (6129 II)': the printed place name in Vietnamese spelling, then the sheet number.
     Falls back to GNS's most notable place on the sheet, or 'Near X' for a sheet with none."""
@@ -397,8 +491,17 @@ def xmp_title(data):
 
 def fetch_jog(sheet):
     """Local path of the JOG GeoPDF for sheet, downloaded once (about 10 MB each)."""
+    if sheet in JOG_UT_SHEETS:
+        name = JOG_UT_SHEETS[sheet]
+        return common.cached_get(PCL_JOG + name, f"{CACHE}/jog", name=name, min_interval=REQUEST_INTERVAL_S)
     url = f"{USGS_MOD}1501A{sheet}_geo.pdf"
     return common.cached_get(url, f"{CACHE}/jog", name=f"1501A{sheet}_geo.pdf", min_interval=REQUEST_INTERVAL_S)
+
+
+def fetch_l909(name):
+    """Local path of an L909 city plan GeoPDF, downloaded once (5 to 17 MB each)."""
+    url = f"{USGS_MOD}{name}_geo.pdf"
+    return common.cached_get(url, f"{CACHE}/l909", name=f"{name}_geo.pdf", min_interval=REQUEST_INTERVAL_S)
 
 
 def sha256_of(path):
@@ -455,22 +558,59 @@ def l7014_entries(probe, legacy, gazetteer, tail_for=fetch_tail):
     return sorted(entries, key=lambda e: e["id"])
 
 
+def pdf_year(info):
+    """The edition year NGA recorded in a GeoPDF's metadata (pri_date "1968-01-01"), or ""."""
+    m = re.match(r"\s*(1[89]\d\d|20\d\d)", str(info.get("/pri_date", "")))
+    return m.group(1) if m else ""
+
+
 def jog_entry(sheet, pdf, gazetteer):
     """The catalogue entry for one JOG sheet from its downloaded PDF."""
-    info = PdfReader(pdf).metadata
-    bounds = [round(float(info[k]), 6) for k in ("/ll_long", "/ll_lat", "/ur_long", "/ur_lat")]
+    info = PdfReader(pdf).metadata or {}
+    if sheet in JOG_BOUNDS:
+        bounds = JOG_BOUNDS[sheet]
+    else:
+        bounds = [round(float(info[k]), 6) for k in ("/ll_long", "/ll_lat", "/ur_long", "/ur_lat")]
     name = f"1501A{sheet}_geo.pdf"
     sheet_lower = f"{sheet[:2].lower()}-{sheet[2:]}"
+    if sheet in JOG_UT_SHEETS:
+        urls = [PCL_JOG + JOG_UT_SHEETS[sheet]]
+    else:
+        urls = [USGS_MOD + name, USGS_YIMAGES + name, f"{PCL_JOG}{sheet_lower}_geo.pdf"]
     return {
         "id": f"JOG_{sheet}",
         "series": "jog1501",
-        "title": sheet_title(printed_name(str(info.get("/title", ""))), jog_label(sheet), bounds, gazetteer),
+        "title": JOG_TITLES.get(sheet)
+        or sheet_title(printed_name(str(info.get("/title", ""))), jog_label(sheet), bounds, gazetteer),
         "bounds": bounds,
         "region": region_for(bounds),
-        "urls": [USGS_MOD + name, USGS_YIMAGES + name, f"{PCL_JOG}{sheet_lower}_geo.pdf"],
+        "urls": urls,
+        "date": pdf_year(info),
         "bytes": Path(pdf).stat().st_size,
         "sha256": sha256_of(pdf),
         "kind": "geopdf",
+    }
+
+
+def l909_entry(name, pdf, gazetteer):
+    """The catalogue entry for one L909 city plan from its downloaded PDF."""
+    info = PdfReader(pdf).metadata
+    bounds = [round(float(info[k]), 6) for k in ("/ll_long", "/ll_lat", "/ur_long", "/ur_lat")]
+    town = city_name(str(info.get("/title", ""))) or str(info.get("/sheet_id", name)).title()
+    file = f"{name}_geo.pdf"
+    scale = int(str(info.get("/scale") or "12500"))
+    return {
+        "id": name,
+        "series": "l909",
+        "title": f"{L909_TOWNS.get(name) or gazetteer.spell(town, bounds)} (city plan)",
+        "bounds": bounds,
+        "region": region_for(bounds),
+        "urls": [USGS_MOD + file, USGS_YIMAGES + file],
+        "bytes": Path(pdf).stat().st_size,
+        "sha256": sha256_of(pdf),
+        "kind": "geopdf",
+        "date": pdf_year(info),
+        **({"scale": f"1:{scale:,}"} if scale != 12500 else {}),
     }
 
 
@@ -509,12 +649,90 @@ ABOUT = (
 )
 
 
-def build(probe, legacy, jog_pdfs, gazetteer, tail_for=fetch_tail, scans_dir=SCANS):
-    """The whole catalogue. jog_pdfs: {sheet: local PDF path}."""
+def sheet_entries(sheets, scans_dir=SCANS):
+    """Catalogue entries for the listed sheets (data/sources/sheets.json) that have been placed: those
+    with a control file in scans_dir, which also records the image's pixel size and byte count."""
+    entries = []
+    for sheet in sheets:
+        control_path = scans_dir / f"{sheet['id']}.json"
+        if not control_path.exists():
+            continue
+        control = json.loads(control_path.read_text(encoding="utf-8"))
+        if not control.get("work_size"):
+            continue
+        bounds = scan_bounds(control)
+        w0, s0, e0, n0 = VIETNAM_BOX
+        if bounds[2] < w0 or bounds[0] > e0 or bounds[3] < s0 or bounds[1] > n0:
+            continue
+        w, h = control["work_size"]
+        iiif = "iiif" in sheet["image"]
+        entries.append(
+            {
+                "id": sheet["id"],
+                "series": sheet["series"],
+                "title": sheet["meta"]["title"],
+                "bounds": bounds,
+                "region": region_for(bounds),
+                "urls": [sheet["download"]],
+                "bytes": control.get("source_bytes") or round(w * h * IIIF_JPEG_BYTES_PER_PX),
+                # An IIIF image is made on request: the next one may differ by a few bytes.
+                **({"bytes_estimated": True} if iiif else {}),
+                "sha256": None,
+                "kind": "scan",
+                "licence": sheet["licence"],
+                "credit": sheet["credit"],
+                "page": sheet["page"],
+                "work_size": [w, h],
+                "sheet": sheet["sheet"],
+                "place": sheet["place"],
+                "date": sheet["date"][:4],
+            }
+        )
+    return entries
+
+
+SCALE_RE = re.compile(r"1\s*:\s*([\d\s.,]+)")
+
+
+def scale_number(text):
+    """1:100 000, 1:100,000 or 1:100.000 -> 100000; None if there is no scale."""
+    m = SCALE_RE.search(text or "")
+    digits = re.sub(r"\D", "", m.group(1)) if m else ""
+    return int(digits) if digits else None
+
+
+def finder_fields(entry, series, scans_dir=SCANS):
+    """What the viewer's Old maps card sorts, filters and groups by, added to an entry:
+    year (int or None), scale_n (the scale's denominator), place (the name without the sheet
+    number) and sheet_key (the editions of one sheet share it). A scan's facts come from its
+    control file's meta block, read here once rather than on every request."""
+    out = dict(entry)
+    meta = {}
+    if entry["kind"] == "scan" and (scans_dir / f"{entry['id']}.json").exists():
+        meta = json.loads((scans_dir / f"{entry['id']}.json").read_text(encoding="utf-8")).get("meta", {})
+        for key, name in (("date", "date"), ("scale", "scale"), ("series", "series_name")):
+            if meta.get(key) and not out.get(name):
+                out[name] = meta[key]
+    year = re.match(r"\d{4}", str(out.get("date") or ""))
+    out["year"] = int(year.group(0)) if year else None
+    out["scale_n"] = scale_number(out.get("scale") or series.get(entry["series"], {}).get("scale"))
+    out["place"] = out.get("place") or re.sub(r"\s*\([^)]*\)\s*$", "", entry["title"])
+    # A hand-placed scan of a sheet that a series also lists gives its sheet_key in data/sources/maps.json.
+    out["sheet_key"] = out.get("sheet_key") or (
+        f"{entry['series']}:{out['sheet']}" if out.get("sheet") else entry["id"]
+    )
+    return out
+
+
+def build(probe, legacy, jog_pdfs, gazetteer, tail_for=fetch_tail, scans_dir=SCANS, l909_pdfs=None, sheets=()):
+    """The whole catalogue. jog_pdfs, l909_pdfs: {sheet: local PDF path}; sheets: the listed sheets
+    of the automatically placed series (data/sources/sheets.json)."""
     maps = l7014_entries(probe, legacy["l7014"], gazetteer, tail_for)
     maps += [jog_entry(s, jog_pdfs[s], gazetteer) for s in sorted(jog_pdfs)]
+    maps += [l909_entry(n, path, gazetteer) for n, path in sorted((l909_pdfs or {}).items())]
     maps += scan_entries(legacy["scans"], scans_dir)
-    return {"about": ABOUT, "series": SERIES, "maps": maps}
+    maps += sheet_entries(sheets, scans_dir)
+    return {"about": ABOUT, "series": SERIES, "maps": [finder_fields(m, SERIES, scans_dir) for m in maps]}
 
 
 def probe_from_catalogue(catalogue):
@@ -547,9 +765,11 @@ def main(argv=None):
     gns_zip = args.gns or common.cached_get(gns.URL, gns.SOURCE, name=gns.ZIP_NAME, timeout=600)
     gazetteer = Gazetteer(gns.load_zip(gns_zip))
     legacy = json.loads(LEGACY.read_text(encoding="utf-8"))
-    jog_pdfs = {s: fetch_jog(s) for s in JOG_SHEETS}
+    jog_pdfs = {s: fetch_jog(s) for s in [*JOG_SHEETS, *JOG_UT_SHEETS]}
+    l909_pdfs = {n: fetch_l909(n) for n in L909_SHEETS}
 
-    catalogue = build(probe, legacy, jog_pdfs, gazetteer)
+    sheets = json.loads(SHEETS.read_text(encoding="utf-8")) if SHEETS.exists() else []
+    catalogue = build(probe, legacy, jog_pdfs, gazetteer, l909_pdfs=l909_pdfs, sheets=sheets)
     args.out.write_text(json.dumps(catalogue, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     counts = {}
     for e in catalogue["maps"]:

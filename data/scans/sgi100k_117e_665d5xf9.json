@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_117e_665d5xf9/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2745.0,
+   5670.3,
+   105.657229,
+   16.74
+  ],
+  [
+   2753.7,
+   3324.3,
+   105.657229,
+   16.92
+  ],
+  [
+   5005.3,
+   5674.4,
+   105.837229,
+   16.74
+  ],
+  [
+   5007.2,
+   3328.9,
+   105.837229,
+   16.92
+  ]
+ ],
+ "neatline": [
+  [
+   521.1,
+   977.6
+  ],
+  [
+   5014.1,
+   986.3
+  ],
+  [
+   5000.9,
+   6874.3
+  ],
+  [
+   507.9,
+   6865.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5517,
+  7773
+ ],
+ "source_bytes": 7511545,
+ "meta": {
+  "title": "Muong-Phalane est (feuille 117E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.665d5xf9"
+ }
+}

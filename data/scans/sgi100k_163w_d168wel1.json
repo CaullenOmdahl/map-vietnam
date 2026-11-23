@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_163w_d168wel1/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   847.4,
+   6807.1,
+   106.557229,
+   13.5
+  ],
+  [
+   842.7,
+   4452.3,
+   106.557229,
+   13.68
+  ],
+  [
+   3088.8,
+   6795.6,
+   106.737229,
+   13.5
+  ],
+  [
+   3078.4,
+   2089.0,
+   106.737229,
+   13.86
+  ]
+ ],
+ "neatline": [
+  [
+   498.6,
+   1150.0
+  ],
+  [
+   4806.7,
+   1129.6
+  ],
+  [
+   4819.5,
+   7025.5
+  ],
+  [
+   511.4,
+   7045.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5310,
+  7779
+ ],
+ "source_bytes": 7440353,
+ "meta": {
+  "title": "Bô-Kheo ouest (feuille 163W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.d168wel1"
+ }
+}

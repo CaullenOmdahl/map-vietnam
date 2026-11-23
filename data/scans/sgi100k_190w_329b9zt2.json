@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_190w_329b9zt2/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   542.0,
+   5253.9,
+   105.837229,
+   12.24
+  ],
+  [
+   548.0,
+   2922.2,
+   105.837229,
+   12.42
+  ],
+  [
+   2853.9,
+   5251.3,
+   106.017229,
+   12.24
+  ],
+  [
+   2851.3,
+   2920.7,
+   106.017229,
+   12.42
+  ]
+ ],
+ "neatline": [
+  [
+   547.3,
+   850.4
+  ],
+  [
+   4960.3,
+   846.4
+  ],
+  [
+   4956.1,
+   6692.7
+  ],
+  [
+   543.1,
+   6696.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5397,
+  7464
+ ],
+ "source_bytes": 8449706,
+ "meta": {
+  "title": "Kratié ouest (feuille 190W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.329b9zt2"
+ }
+}

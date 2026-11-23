@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_9_05df8656/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   609.5,
+   2526.1,
+   105.837229,
+   22.86
+  ],
+  [
+   4966.9,
+   5018.4,
+   106.197229,
+   22.68
+  ],
+  [
+   9317.0,
+   5035.6,
+   106.557229,
+   22.68
+  ]
+ ],
+ "neatline": [
+  [
+   605.2,
+   1078.1
+  ],
+  [
+   9428.1,
+   1113.1
+  ],
+  [
+   9445.4,
+   6904.8
+  ],
+  [
+   622.4,
+   6869.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10038,
+  7911
+ ],
+ "source_bytes": 21253350,
+ "meta": {
+  "title": "Cao-Bằng (feuille 9)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.05df8656"
+ }
+}

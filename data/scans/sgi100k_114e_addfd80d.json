@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_114e_addfd80d/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   915.3,
+   4499.4,
+   106.197229,
+   17.28
+  ],
+  [
+   919.3,
+   2377.8,
+   106.197229,
+   17.46
+  ],
+  [
+   2963.0,
+   4499.7,
+   106.377229,
+   17.28
+  ],
+  [
+   2959.0,
+   2380.1,
+   106.377229,
+   17.46
+  ]
+ ],
+ "neatline": [
+  [
+   831.2,
+   1296.5
+  ],
+  [
+   4832.6,
+   1299.0
+  ],
+  [
+   4832.6,
+   6616.9
+  ],
+  [
+   831.3,
+   6614.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5568,
+  7722
+ ],
+ "source_bytes": 10454303,
+ "meta": {
+  "title": "Kê-Bang est (feuille 114E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.addfd80d"
+ }
+}

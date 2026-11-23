@@ -411,7 +411,8 @@ class Library:
                 maps.append(
                     {
                         **entry,
-                        **(self.scan_facts(map_id) if entry.get("kind") == "scan" else {}),
+                        # Catalogues built since the finder fields were added carry a scan's facts already.
+                        **(self.scan_facts(map_id) if entry.get("kind") == "scan" and "year" not in entry else {}),
                         "outline": self.outline(map_id, entry),
                         "state": state,
                         "progress": progress,

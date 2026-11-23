@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_121_bb746v8w/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2980.5,
+   6729.0,
+   104.937229,
+   16.2
+  ],
+  [
+   3000.1,
+   4386.0,
+   104.937229,
+   16.38
+  ],
+  [
+   3020.0,
+   2049.0,
+   104.937229,
+   16.56
+  ],
+  [
+   5280.2,
+   2071.3,
+   105.117229,
+   16.56
+  ]
+ ],
+ "neatline": [
+  [
+   364.6,
+   892.1
+  ],
+  [
+   5503.9,
+   945.1
+  ],
+  [
+   5454.2,
+   6836.3
+  ],
+  [
+   315.0,
+   6783.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5924,
+  7722
+ ],
+ "source_bytes": 8790503,
+ "meta": {
+  "title": "Savannakhet (feuille 121)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1931",
+  "dateNote": "edition dated 1931-12; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.bb746v8w"
+ }
+}

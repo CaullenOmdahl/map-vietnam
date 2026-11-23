@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_187w_b45d2txt/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1670.5,
+   5091.8,
+   103.857229,
+   12.24
+  ],
+  [
+   1699.7,
+   2758.8,
+   103.857229,
+   12.42
+  ],
+  [
+   3971.8,
+   5128.7,
+   104.037229,
+   12.24
+  ],
+  [
+   3996.0,
+   2787.7,
+   104.037229,
+   12.42
+  ]
+ ],
+ "neatline": [
+  [
+   571.6,
+   757.4
+  ],
+  [
+   5015.3,
+   821.1
+  ],
+  [
+   4948.4,
+   6675.4
+  ],
+  [
+   504.8,
+   6611.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5421,
+  7488
+ ],
+ "source_bytes": 9856750,
+ "meta": {
+  "title": "Pursat ouest (feuille 187W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.b45d2txt"
+ }
+}

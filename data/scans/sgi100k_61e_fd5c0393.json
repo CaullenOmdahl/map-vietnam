@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_61e_fd5c0393/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   619.0,
+   5856.5,
+   106.197229,
+   20.34
+  ],
+  [
+   624.6,
+   1155.6,
+   106.197229,
+   20.7
+  ],
+  [
+   5046.6,
+   3503.3,
+   106.557229,
+   20.52
+  ],
+  [
+   5051.0,
+   1156.3,
+   106.557229,
+   20.7
+  ]
+ ],
+ "neatline": [
+  [
+   644.2,
+   986.7
+  ],
+  [
+   5031.5,
+   985.4
+  ],
+  [
+   5023.7,
+   6886.9
+  ],
+  [
+   636.4,
+   6888.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5556,
+  7764
+ ],
+ "source_bytes": 11605806,
+ "meta": {
+  "title": "Nam-Định est (feuille 61E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.fd5c0393"
+ }
+}

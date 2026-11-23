@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_191w_e005rb5b/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   872.0,
+   5235.5,
+   106.557229,
+   12.24
+  ],
+  [
+   869.0,
+   3000.4,
+   106.557229,
+   12.42
+  ],
+  [
+   3077.6,
+   5219.8,
+   106.737229,
+   12.24
+  ],
+  [
+   3067.1,
+   2983.3,
+   106.737229,
+   12.42
+  ]
+ ],
+ "neatline": [
+  [
+   488.5,
+   1038.0
+  ],
+  [
+   4675.4,
+   1006.8
+  ],
+  [
+   4692.4,
+   6618.9
+  ],
+  [
+   505.5,
+   6650.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5289,
+  7506
+ ],
+ "source_bytes": 7064151,
+ "meta": {
+  "title": "Sré Khtum ouest (feuille 191W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.e005rb5b"
+ }
+}

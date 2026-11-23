@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_40_bc2blw41/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   5194.9,
+   5747.7,
+   107.457229,
+   21.42
+  ],
+  [
+   5205.3,
+   1049.9,
+   107.457229,
+   21.6
+  ],
+  [
+   9681.3,
+   5750.4,
+   107.637229,
+   21.42
+  ],
+  [
+   9684.5,
+   1048.7,
+   107.637229,
+   21.6
+  ]
+ ],
+ "neatline": [
+  [
+   939.5,
+   814.0
+  ],
+  [
+   9898.5,
+   815.5
+  ],
+  [
+   9890.1,
+   6632.1
+  ],
+  [
+   931.1,
+   6630.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10422,
+  7758
+ ],
+ "source_bytes": 19595238,
+ "meta": {
+  "title": "Moun-Cay Nord-Ouest (feuille 40)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.bc2blw41"
+ }
+}

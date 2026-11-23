@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_60w_93a490qc/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2778.8,
+   5853.5,
+   105.297229,
+   20.34
+  ],
+  [
+   5006.8,
+   5869.0,
+   105.477229,
+   20.34
+  ],
+  [
+   5018.3,
+   3525.4,
+   105.477229,
+   20.52
+  ],
+  [
+   5029.3,
+   1181.6,
+   105.477229,
+   20.7
+  ]
+ ],
+ "neatline": [
+  [
+   598.0,
+   974.7
+  ],
+  [
+   5030.3,
+   1005.8
+  ],
+  [
+   5002.0,
+   6890.5
+  ],
+  [
+   569.8,
+   6859.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5550,
+  7803
+ ],
+ "source_bytes": 10937524,
+ "meta": {
+  "title": "Phủ-Nho-Quan ouest (feuille 60W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.93a490qc"
+ }
+}

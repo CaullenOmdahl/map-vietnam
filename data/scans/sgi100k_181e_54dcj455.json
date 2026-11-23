@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_181e_54dcj455/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2007.2,
+   6106.0,
+   107.637229,
+   12.6
+  ],
+  [
+   2009.9,
+   3882.1,
+   107.637229,
+   12.78
+  ],
+  [
+   2012.4,
+   1648.5,
+   107.637229,
+   12.96
+  ],
+  [
+   4246.3,
+   3875.7,
+   107.817229,
+   12.78
+  ],
+  [
+   4246.4,
+   1647.9,
+   107.817229,
+   12.96
+  ]
+ ],
+ "neatline": [
+  [
+   1069.8,
+   886.1
+  ],
+  [
+   5377.4,
+   880.7
+  ],
+  [
+   5372.1,
+   6452.0
+  ],
+  [
+   1064.6,
+   6457.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  6048,
+  7650
+ ],
+ "source_bytes": 8456267,
+ "meta": {
+  "title": "Ban Don est (feuille 181E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.54dcj455"
+ }
+}

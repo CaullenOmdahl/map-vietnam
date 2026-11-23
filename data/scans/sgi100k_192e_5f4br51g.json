@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_192e_5f4br51g/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1992.0,
+   5280.0,
+   107.637229,
+   12.24
+  ],
+  [
+   1980.2,
+   2944.7,
+   107.637229,
+   12.42
+  ],
+  [
+   4292.3,
+   5253.3,
+   107.817229,
+   12.24
+  ],
+  [
+   4272.7,
+   2921.9,
+   107.817229,
+   12.42
+  ]
+ ],
+ "neatline": [
+  [
+   970.8,
+   1002.0
+  ],
+  [
+   5374.1,
+   954.6
+  ],
+  [
+   5413.8,
+   6837.3
+  ],
+  [
+   1010.4,
+   6884.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5988,
+  7611
+ ],
+ "source_bytes": 10023287,
+ "meta": {
+  "title": "Poste maître est (feuille 192E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-01; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.5f4br51g"
+ }
+}

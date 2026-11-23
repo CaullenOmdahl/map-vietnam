@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_239_bcaa470f/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   497.2,
+   5089.2,
+   105.837229,
+   9.54
+  ],
+  [
+   504.8,
+   2714.9,
+   105.837229,
+   9.72
+  ],
+  [
+   2836.6,
+   5102.4,
+   106.017229,
+   9.54
+  ],
+  [
+   2845.3,
+   2733.3,
+   106.017229,
+   9.72
+  ],
+  [
+   7515.1,
+   2762.9,
+   106.377229,
+   9.72
+  ],
+  [
+   9844.8,
+   2774.2,
+   106.557229,
+   9.72
+  ]
+ ],
+ "neatline": [
+  [
+   509.8,
+   764.4
+  ],
+  [
+   11446.5,
+   833.5
+  ],
+  [
+   11426.8,
+   6798.5
+  ],
+  [
+   490.1,
+   6729.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  11928,
+  7714
+ ],
+ "source_bytes": 19345687,
+ "meta": {
+  "title": "Soc-Trang (feuille 239)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1934",
+  "dateNote": "edition dated 1934-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.bcaa470f"
+ }
+}

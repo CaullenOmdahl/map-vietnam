@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_93e_fd4632k7/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2654.5,
+   3217.1,
+   104.217229,
+   18.72
+  ],
+  [
+   2679.7,
+   869.8,
+   104.217229,
+   18.9
+  ],
+  [
+   4869.8,
+   5584.0,
+   104.397229,
+   18.54
+  ],
+  [
+   4885.8,
+   3235.8,
+   104.397229,
+   18.72
+  ],
+  [
+   4903.8,
+   894.7,
+   104.397229,
+   18.9
+  ]
+ ],
+ "neatline": [
+  [
+   756.0,
+   855.4
+  ],
+  [
+   5651.9,
+   904.0
+  ],
+  [
+   5605.3,
+   6763.3
+  ],
+  [
+   709.4,
+   6714.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5709,
+  7386
+ ],
+ "source_bytes": 5887321,
+ "meta": {
+  "title": "Borikhane est (feuille 93E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.fd4632k7"
+ }
+}

@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_93w_65ac65y0/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2447.7,
+   5608.9,
+   103.857229,
+   18.54
+  ],
+  [
+   2471.0,
+   3258.3,
+   103.857229,
+   18.72
+  ],
+  [
+   4763.4,
+   5636.3,
+   104.037229,
+   18.54
+  ]
+ ],
+ "neatline": [
+  [
+   492.3,
+   931.5
+  ],
+  [
+   5068.2,
+   985.6
+  ],
+  [
+   5009.6,
+   6897.7
+  ],
+  [
+   433.6,
+   6843.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5553,
+  7473
+ ],
+ "source_bytes": 6129993,
+ "meta": {
+  "title": "Borikhane ouest (feuille 93W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.65ac65y0"
+ }
+}

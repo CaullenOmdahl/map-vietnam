@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_134w_ae3d57b8/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   992.2,
+   4329.6,
+   105.837229,
+   15.48
+  ],
+  [
+   1000.2,
+   1989.7,
+   105.837229,
+   15.66
+  ],
+  [
+   3270.6,
+   6669.6,
+   106.017229,
+   15.3
+  ],
+  [
+   3273.9,
+   4337.5,
+   106.017229,
+   15.48
+  ],
+  [
+   3277.0,
+   2000.2,
+   106.017229,
+   15.66
+  ]
+ ],
+ "neatline": [
+  [
+   1000.3,
+   892.8
+  ],
+  [
+   5429.0,
+   908.9
+  ],
+  [
+   5418.5,
+   6785.4
+  ],
+  [
+   989.8,
+   6769.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5931,
+  7602
+ ],
+ "source_bytes": 8520878,
+ "meta": {
+  "title": "Saravane ouest (feuille 134W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ae3d57b8"
+ }
+}

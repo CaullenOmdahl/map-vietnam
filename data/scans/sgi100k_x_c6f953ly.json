@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_x_c6f953ly/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   773.1,
+   4799.6,
+   105.117229,
+   21.78
+  ],
+  [
+   787.2,
+   2454.4,
+   105.117229,
+   21.96
+  ],
+  [
+   2971.2,
+   4803.6,
+   105.297229,
+   21.78
+  ],
+  [
+   2977.4,
+   2456.7,
+   105.297229,
+   21.96
+  ]
+ ],
+ "neatline": [
+  [
+   708.4,
+   1020.2
+  ],
+  [
+   5144.1,
+   1026.6
+  ],
+  [
+   5118.5,
+   6950.8
+  ],
+  [
+   682.7,
+   6944.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5406,
+  7830
+ ],
+ "source_bytes": 9438547,
+ "meta": {
+  "title": "Tuyen-Quang",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.c6f953ly"
+ }
+}

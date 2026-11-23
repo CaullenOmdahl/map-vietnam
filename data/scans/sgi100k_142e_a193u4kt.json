@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_142e_a193u4kt/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1215.7,
+   5160.2,
+   107.637229,
+   14.94
+  ],
+  [
+   1204.8,
+   2690.6,
+   107.637229,
+   15.12
+  ],
+  [
+   3605.7,
+   5157.1,
+   107.817229,
+   14.94
+  ],
+  [
+   3598.2,
+   2695.0,
+   107.817229,
+   15.12
+  ]
+ ],
+ "neatline": [
+  [
+   421.0,
+   475.5
+  ],
+  [
+   5066.7,
+   476.7
+  ],
+  [
+   5089.8,
+   6696.8
+  ],
+  [
+   444.2,
+   6695.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5250,
+  7455
+ ],
+ "source_bytes": 9210022,
+ "meta": {
+  "title": "Dak-Sut est (feuille 142E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.a193u4kt"
+ }
+}

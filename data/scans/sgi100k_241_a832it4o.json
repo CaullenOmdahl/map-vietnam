@@ -1,0 +1,85 @@
+{
+ "image": "data/raw/scans/sgi100k_241_a832it4o/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1937.0,
+   6186.3,
+   104.577229,
+   9.0
+  ],
+  [
+   1944.9,
+   3829.7,
+   104.577229,
+   9.18
+  ],
+  [
+   4278.4,
+   6200.7,
+   104.757229,
+   9.0
+  ],
+  [
+   4292.2,
+   1487.6,
+   104.757229,
+   9.36
+  ],
+  [
+   8958.3,
+   6226.0,
+   105.117229,
+   9.0
+  ],
+  [
+   8962.3,
+   3877.4,
+   105.117229,
+   9.18
+  ],
+  [
+   8965.9,
+   1518.1,
+   105.117229,
+   9.36
+  ]
+ ],
+ "neatline": [
+  [
+   578.1,
+   740.3
+  ],
+  [
+   9457.6,
+   795.7
+  ],
+  [
+   9442.0,
+   7119.9
+  ],
+  [
+   562.4,
+   7064.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 7 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10038,
+  7644
+ ],
+ "source_bytes": 9193308,
+ "meta": {
+  "title": "Ca-Mau (feuille 241)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1924",
+  "dateNote": "edition dated 1924-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.a832it4o"
+ }
+}

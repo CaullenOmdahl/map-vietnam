@@ -1,0 +1,97 @@
+{
+ "image": "data/raw/scans/sgi100k_234_a716l53o/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2489.7,
+   6260.3,
+   105.297229,
+   9.9
+  ],
+  [
+   2488.7,
+   3909.8,
+   105.297229,
+   10.08
+  ],
+  [
+   2491.7,
+   1554.5,
+   105.297229,
+   10.26
+  ],
+  [
+   4818.4,
+   3913.8,
+   105.477229,
+   10.08
+  ],
+  [
+   4822.9,
+   1562.1,
+   105.477229,
+   10.26
+  ],
+  [
+   7145.8,
+   6267.9,
+   105.657229,
+   9.9
+  ],
+  [
+   7146.6,
+   3913.2,
+   105.657229,
+   10.08
+  ],
+  [
+   7147.7,
+   1563.3,
+   105.657229,
+   10.26
+  ],
+  [
+   9480.0,
+   3921.8,
+   105.837229,
+   10.08
+  ]
+ ],
+ "neatline": [
+  [
+   620.7,
+   761.3
+  ],
+  [
+   9482.6,
+   776.1
+  ],
+  [
+   9478.8,
+   6699.9
+  ],
+  [
+   616.9,
+   6685.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 9 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10032,
+  7654
+ ],
+ "source_bytes": 15431878,
+ "meta": {
+  "title": "Can-Tho (feuille 234)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.a716l53o"
+ }
+}

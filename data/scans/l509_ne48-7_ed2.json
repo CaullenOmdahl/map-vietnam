@@ -1,0 +1,123 @@
+{
+ "image": "data/raw/scans/l509_ne48-7_ed2/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1054.1,
+   2475.0,
+   105.25,
+   18.25
+  ],
+  [
+   1049.9,
+   1721.4,
+   105.25,
+   18.5
+  ],
+  [
+   1048.4,
+   964.5,
+   105.25,
+   18.75
+  ],
+  [
+   1779.4,
+   2480.2,
+   105.5,
+   18.25
+  ],
+  [
+   1771.2,
+   1722.7,
+   105.5,
+   18.5
+  ],
+  [
+   1771.7,
+   967.7,
+   105.5,
+   18.75
+  ],
+  [
+   2499.1,
+   2481.7,
+   105.75,
+   18.25
+  ],
+  [
+   2496.4,
+   1724.3,
+   105.75,
+   18.5
+  ],
+  [
+   2492.0,
+   965.6,
+   105.75,
+   18.75
+  ],
+  [
+   3217.7,
+   1729.3,
+   106.0,
+   18.5
+  ],
+  [
+   3214.2,
+   969.8,
+   106.0,
+   18.75
+  ],
+  [
+   3949.6,
+   2484.5,
+   106.25,
+   18.25
+  ],
+  [
+   3944.3,
+   1725.8,
+   106.25,
+   18.5
+  ],
+  [
+   3937.6,
+   968.7,
+   106.25,
+   18.75
+  ]
+ ],
+ "neatline": [
+  [
+   319.1,
+   210.6
+  ],
+  [
+   4657.3,
+   220.1
+  ],
+  [
+   4674.3,
+   3244.1
+  ],
+  [
+   336.0,
+   3234.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 14 graticule nodes",
+ "work_size": [
+  5000,
+  3792
+ ],
+ "source_bytes": 5670904,
+ "meta": {
+  "title": "Vinh (NE 48-7)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "",
+  "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-7-2nd-ed.jpg"
+ }
+}

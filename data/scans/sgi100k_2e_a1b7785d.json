@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_2e_a1b7785d/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   823.8,
+   6146.6,
+   105.477229,
+   23.04
+  ],
+  [
+   829.7,
+   3791.0,
+   105.477229,
+   23.22
+  ],
+  [
+   834.0,
+   1438.1,
+   105.477229,
+   23.4
+  ],
+  [
+   2946.9,
+   6151.3,
+   105.657229,
+   23.04
+  ],
+  [
+   2947.9,
+   3795.0,
+   105.657229,
+   23.22
+  ],
+  [
+   2948.0,
+   1440.0,
+   105.657229,
+   23.4
+  ]
+ ],
+ "neatline": [
+  [
+   774.5,
+   1128.4
+  ],
+  [
+   5063.3,
+   1135.5
+  ],
+  [
+   5056.2,
+   7026.1
+  ],
+  [
+   767.4,
+   7019.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5619,
+  7779
+ ],
+ "source_bytes": 6197381,
+ "meta": {
+  "title": "Dống-Văn, Ouest (feuille 2E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.a1b7785d"
+ }
+}

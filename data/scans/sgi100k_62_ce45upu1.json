@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_62_ce45upu1/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2814.1,
+   5637.5,
+   106.737229,
+   20.34
+  ],
+  [
+   2802.5,
+   3291.6,
+   106.737229,
+   20.52
+  ],
+  [
+   5033.4,
+   5625.5,
+   106.917229,
+   20.34
+  ],
+  [
+   7252.4,
+   5619.3,
+   107.097229,
+   20.34
+  ],
+  [
+   7236.9,
+   3270.0,
+   107.097229,
+   20.52
+  ],
+  [
+   7222.1,
+   915.7,
+   107.097229,
+   20.7
+  ]
+ ],
+ "neatline": [
+  [
+   567.6,
+   785.3
+  ],
+  [
+   9439.7,
+   743.0
+  ],
+  [
+   9476.1,
+   6681.6
+  ],
+  [
+   604.0,
+   6723.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10023,
+  7629
+ ],
+ "source_bytes": 8594128,
+ "meta": {
+  "title": "Hòn-Dấu (feuille 62)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ce45upu1"
+ }
+}

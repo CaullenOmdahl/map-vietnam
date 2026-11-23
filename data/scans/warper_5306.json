@@ -1,0 +1,74 @@
+{
+ "image": "data/raw/scans/warper_5306/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   178.1,
+   525.5,
+   99.0,
+   14.0
+  ],
+  [
+   1087.4,
+   1184.9,
+   100.962296,
+   12.597455
+  ],
+  [
+   2434.6,
+   2226.0,
+   103.842087,
+   10.374362
+  ],
+  [
+   2513.7,
+   2386.5,
+   104.013748,
+   10.010777
+  ],
+  [
+   2505.4,
+   2191.7,
+   103.993149,
+   10.444598
+  ],
+  [
+   1368.7,
+   3840.1,
+   101.556931,
+   6.845987
+  ],
+  [
+   3446.8,
+   4694.3,
+   106.0,
+   5.0
+  ],
+  [
+   3435.4,
+   523.4,
+   106.0,
+   14.0
+  ],
+  [
+   192.9,
+   4243.8,
+   99.0,
+   6.0
+  ]
+ ],
+ "placed_by": "Wikimaps Warper map 5306 (https://warper.wmflabs.org/maps/5306), control points scaled by 1.0000",
+ "work_size": [
+  3778,
+  5000
+ ],
+ "source_bytes": 4650102,
+ "meta": {
+  "title": "Gulf of Siam (chart 2414)",
+  "series": "British Admiralty charts",
+  "scale": "",
+  "date": "1855",
+  "dateNote": "published 1855",
+  "source": "https://commons.wikimedia.org/wiki/File%3AAdmiralty_Chart_No_2414_Gulf_of_Siam%2C_Published_1855%2C_Corrections_to_1858.jpg"
+ }
+}

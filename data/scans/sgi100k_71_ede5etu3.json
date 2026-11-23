@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_71_ede5etu3/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2762.0,
+   4458.7,
+   105.297229,
+   19.98
+  ],
+  [
+   9439.1,
+   6698.8,
+   105.837229,
+   19.8
+  ],
+  [
+   9422.8,
+   2205.4,
+   105.837229,
+   20.16
+  ]
+ ],
+ "neatline": [
+  [
+   573.6,
+   925.4
+  ],
+  [
+   9418.2,
+   916.7
+  ],
+  [
+   9439.1,
+   6710.2
+  ],
+  [
+   594.5,
+   6718.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10014,
+  7623
+ ],
+ "source_bytes": 19415488,
+ "meta": {
+  "title": "Thanh-Hóa (feuille 71)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ede5etu3"
+ }
+}

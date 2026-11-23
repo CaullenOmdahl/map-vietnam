@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_118e_cc6d19g8/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   571.7,
+   5538.2,
+   106.197229,
+   16.74
+  ],
+  [
+   2944.1,
+   5536.4,
+   106.377229,
+   16.74
+  ],
+  [
+   2933.7,
+   3118.5,
+   106.377229,
+   16.92
+  ]
+ ],
+ "neatline": [
+  [
+   439.1,
+   704.5
+  ],
+  [
+   5072.2,
+   700.9
+  ],
+  [
+   5098.3,
+   6780.3
+  ],
+  [
+   465.3,
+   6783.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5466,
+  7518
+ ],
+ "source_bytes": 11726446,
+ "meta": {
+  "title": "Tchépone est (feuille 118E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-11; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.cc6d19g8"
+ }
+}

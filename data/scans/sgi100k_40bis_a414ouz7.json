@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_40bis_a414ouz7/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   5148.2,
+   5478.0,
+   108.177229,
+   21.42
+  ],
+  [
+   5139.3,
+   999.9,
+   108.177229,
+   21.6
+  ],
+  [
+   9380.0,
+   5469.3,
+   108.357229,
+   21.42
+  ],
+  [
+   9358.7,
+   984.0,
+   108.357229,
+   21.6
+  ]
+ ],
+ "neatline": [
+  [
+   975.2,
+   874.5
+  ],
+  [
+   9802.0,
+   848.7
+  ],
+  [
+   9820.9,
+   6462.1
+  ],
+  [
+   994.1,
+   6487.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10347,
+  7758
+ ],
+ "source_bytes": 11898192,
+ "meta": {
+  "title": "Tra-Co Ouest (feuille 40bis)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.a414ouz7"
+ }
+}

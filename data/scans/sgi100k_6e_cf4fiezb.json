@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_6e_cf4fiezb/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   958.6,
+   4547.4,
+   104.037229,
+   22.68
+  ],
+  [
+   963.6,
+   2194.2,
+   104.037229,
+   22.86
+  ],
+  [
+   3163.5,
+   4557.4,
+   104.217229,
+   22.68
+  ],
+  [
+   3170.0,
+   2202.8,
+   104.217229,
+   22.86
+  ]
+ ],
+ "neatline": [
+  [
+   697.7,
+   819.7
+  ],
+  [
+   5102.8,
+   838.3
+  ],
+  [
+   5088.3,
+   6758.9
+  ],
+  [
+   683.2,
+   6740.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5589,
+  7794
+ ],
+ "source_bytes": 8713158,
+ "meta": {
+  "title": "Pa-Kha, est (feuille 6E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-11; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.cf4fiezb"
+ }
+}

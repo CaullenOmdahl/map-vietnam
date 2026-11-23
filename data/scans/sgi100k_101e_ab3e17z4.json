@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_101e_ab3e17z4/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2441.7,
+   6825.3,
+   104.217229,
+   18.0
+  ],
+  [
+   2453.8,
+   4473.9,
+   104.217229,
+   18.18
+  ],
+  [
+   2459.4,
+   2130.1,
+   104.217229,
+   18.36
+  ],
+  [
+   4677.8,
+   6841.0,
+   104.397229,
+   18.0
+  ],
+  [
+   4698.2,
+   2138.0,
+   104.397229,
+   18.36
+  ]
+ ],
+ "neatline": [
+  [
+   596.3,
+   935.3
+  ],
+  [
+   4998.2,
+   961.0
+  ],
+  [
+   4974.1,
+   6899.8
+  ],
+  [
+   572.2,
+   6874.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5583,
+  7752
+ ],
+ "source_bytes": 7092259,
+ "meta": {
+  "title": "Ban-Sot est (feuille 101E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ab3e17z4"
+ }
+}

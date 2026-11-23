@@ -1,0 +1,63 @@
+{
+ "image": "data/raw/scans/l509_nd49-1_ed2/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   437.7,
+   776.4,
+   108.0,
+   16.25
+  ],
+  [
+   3194.5,
+   3496.6,
+   108.75,
+   15.5
+  ],
+  [
+   3203.6,
+   1684.9,
+   108.75,
+   16.0
+  ],
+  [
+   4126.5,
+   2589.2,
+   109.0,
+   15.75
+  ]
+ ],
+ "neatline": [
+  [
+   440.5,
+   169.5
+  ],
+  [
+   4754.8,
+   170.8
+  ],
+  [
+   4725.5,
+   5309.1
+  ],
+  [
+   411.3,
+   5307.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "work_size": [
+  5000,
+  3662
+ ],
+ "source_bytes": 5385878,
+ "meta": {
+  "title": "Quang Ngai (ND 49-1)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "",
+  "dateNote": "edition 2 (the series ran 1954-1967; the year is printed in the sheet's margin); placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-1-2nd-ed.jpg"
+ }
+}

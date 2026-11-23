@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_10w_b9bc7u5p/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   3073.2,
+   4721.8,
+   106.737229,
+   22.68
+  ],
+  [
+   3058.2,
+   2381.0,
+   106.737229,
+   22.86
+  ],
+  [
+   5253.8,
+   4699.5,
+   106.917229,
+   22.68
+  ],
+  [
+   5237.4,
+   2364.7,
+   106.917229,
+   22.86
+  ]
+ ],
+ "neatline": [
+  [
+   975.1,
+   984.0
+  ],
+  [
+   5400.0,
+   944.9
+  ],
+  [
+   5439.9,
+   6883.8
+  ],
+  [
+   1015.0,
+   6922.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  6069,
+  7683
+ ],
+ "source_bytes": 8051459,
+ "meta": {
+  "title": "Hạ-Lang, ouest (feuille 10W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.b9bc7u5p"
+ }
+}

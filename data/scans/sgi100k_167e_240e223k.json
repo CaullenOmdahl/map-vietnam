@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_167e_240e223k/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1550.6,
+   5128.5,
+   103.497229,
+   13.14
+  ],
+  [
+   3844.0,
+   5153.8,
+   103.677229,
+   13.14
+  ],
+  [
+   3864.8,
+   2812.9,
+   103.677229,
+   13.32
+  ]
+ ],
+ "neatline": [
+  [
+   572.6,
+   766.5
+  ],
+  [
+   4982.1,
+   815.3
+  ],
+  [
+   4929.7,
+   6702.9
+  ],
+  [
+   520.3,
+   6654.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5352,
+  7482
+ ],
+ "source_bytes": 6271182,
+ "meta": {
+  "title": "Battambang est (feuille 167E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.240e223k"
+ }
+}

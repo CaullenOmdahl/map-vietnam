@@ -28,14 +28,41 @@ US Army Map Service series L7014, with border sheets L7015 and L7016, 1:50,000 (
   The PDF metadata carries release code "DS" or "OO"; check the printed margin of a sheet before
   redistributing tiles made from it.
 
-Joint Operations Graphic (Air), series 1501A, 1:250,000 (about 1966-2000), 32 sheets
+Joint Operations Graphic (Air), series 1501A, 1:250,000 (about 1966-2000), 34 sheets
   US Defense Mapping Agency; GeoPDFs prepared by the US National Geospatial-Intelligence Agency,
-  downloaded from the USGS Store, or, when the Store fails, from the Perry-Castaneda Library Map
+  downloaded from the USGS Store, or, when the Store fails (and for NC 48-5 and NF 48-10, which
+  the Store lacks), from the Perry-Castaneda Library Map
   Collection, University of Texas Libraries (https://maps.lib.utexas.edu/maps/jog/vietnam/).
   Works of the US Government: public domain in the United States. Some PDFs carry release code
   "DS"; check the printed margin before redistributing tiles. When a file came from the
   University of Texas, credit: "Courtesy of the University of Texas Libraries, The University of
   Texas at Austin".
+
+US Army Map Service series L909, city plans, 1:12,500 (1963-1971), 18 towns
+  GeoPDFs prepared by the US National Geospatial-Intelligence Agency, downloaded from the USGS
+  Store. Works of the US Government: public domain in the United States. Release code "ZZ/DS";
+  check the printed margin of a plan before redistributing tiles made from it.
+
+Carte de l'Indochine 1:100,000 (Service Geographique de l'Indochine, 1895-1952), 298 sheets
+  Fonds de cartes de l'Indochine francaise du Centre IST REGARDS (CNRS), published on NAKALA
+  (collection https://nakala.fr/collection/10.34847/nkl.16bcmpc6), downloaded through NAKALA's
+  IIIF image service. Each sheet has its own licence, recorded with it in
+  data/sources/map_library.json and shown in the viewer: most are CC BY-NC-SA 4.0
+  (https://creativecommons.org/licenses/by-nc-sa/4.0/: non-commercial use only, with attribution,
+  adaptations shared alike), some CC BY 4.0. Credit: "Centre IST REGARDS (CNRS), NAKALA" and the
+  sheet's record. The control points in data/scans/sgi100k_*.json were computed for this project
+  from each sheet's printed graticule (Apache-2.0).
+
+US Army Map Service series L509, Indochina and Thailand, 1:250,000 (1950s-1960s), 32 sheets
+  Scans by the Perry-Castaneda Library Map Collection, University of Texas Libraries
+  (https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/). Works of the US Government;
+  the library describes such maps as public domain. Credit: "Courtesy of the University of Texas
+  Libraries, The University of Texas at Austin".
+
+British Admiralty charts (UK Hydrographic Office, 1855-1964), 8 charts
+  Scans on Wikimedia Commons (https://commons.wikimedia.org), marked public domain (Crown
+  copyright expired). Control points from the Wikimaps Warper (https://warper.wmflabs.org) by its
+  contributors, scaled to the image Commons serves. Each chart links to its Commons page.
 
 Carte Generale de la Cochinchine Francaise, 10e feuille (Bigrel, Depot de la Marine, 1873)
   David Rumsey Map Collection, David Rumsey Map Center, Stanford Libraries.

@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_209_e2a11ez7/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   5211.2,
+   2948.8,
+   105.477229,
+   11.52
+  ],
+  [
+   9835.2,
+   5308.0,
+   105.837229,
+   11.34
+  ],
+  [
+   9834.7,
+   2952.7,
+   105.837229,
+   11.52
+  ]
+ ],
+ "neatline": [
+  [
+   995.5,
+   909.5
+  ],
+  [
+   9834.2,
+   917.0
+  ],
+  [
+   9835.5,
+   6806.9
+  ],
+  [
+   996.8,
+   6799.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10806,
+  7728
+ ],
+ "source_bytes": 16193275,
+ "meta": {
+  "title": "Prey-Veng (feuille 209)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1932",
+  "dateNote": "edition dated 1932-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.e2a11ez7"
+ }
+}

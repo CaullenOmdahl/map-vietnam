@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_104w_23b54yy5/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   631.3,
+   4520.0,
+   105.837229,
+   18.18
+  ],
+  [
+   639.9,
+   2174.9,
+   105.837229,
+   18.36
+  ],
+  [
+   2876.9,
+   4526.9,
+   106.017229,
+   18.18
+  ],
+  [
+   2877.9,
+   2184.0,
+   106.017229,
+   18.36
+  ]
+ ],
+ "neatline": [
+  [
+   640.5,
+   932.4
+  ],
+  [
+   5051.3,
+   948.2
+  ],
+  [
+   5039.2,
+   6830.1
+  ],
+  [
+   628.5,
+   6814.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5481,
+  7653
+ ],
+ "source_bytes": 9506719,
+ "meta": {
+  "title": "Hâ-Tĩnh ouest (feuille 104W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-03; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.23b54yy5"
+ }
+}

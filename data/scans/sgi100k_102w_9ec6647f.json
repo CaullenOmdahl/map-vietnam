@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_102w_9ec6647f/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2557.6,
+   6859.2,
+   104.577229,
+   18.0
+  ],
+  [
+   2558.3,
+   4511.1,
+   104.577229,
+   18.18
+  ],
+  [
+   2553.9,
+   2164.9,
+   104.577229,
+   18.36
+  ],
+  [
+   4796.2,
+   4518.9,
+   104.757229,
+   18.18
+  ],
+  [
+   4795.0,
+   2172.2,
+   104.757229,
+   18.36
+  ]
+ ],
+ "neatline": [
+  [
+   598.6,
+   972.9
+  ],
+  [
+   5019.0,
+   987.4
+  ],
+  [
+   5023.3,
+   6865.1
+  ],
+  [
+   602.9,
+   6850.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5607,
+  7764
+ ],
+ "source_bytes": 7819286,
+ "meta": {
+  "title": "Napé ouest (feuille 102W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-08; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.9ec6647f"
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_150e_419b4su0/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2042.3,
+   6399.3,
+   109.077229,
+   14.4
+  ],
+  [
+   2016.8,
+   4053.4,
+   109.077229,
+   14.58
+  ],
+  [
+   1990.4,
+   1706.7,
+   109.077229,
+   14.76
+  ],
+  [
+   4298.0,
+   4021.2,
+   109.257229,
+   14.58
+  ],
+  [
+   4264.8,
+   1674.3,
+   109.257229,
+   14.76
+  ]
+ ],
+ "neatline": [
+  [
+   576.4,
+   1074.9
+  ],
+  [
+   4980.3,
+   1012.6
+  ],
+  [
+   5049.1,
+   6902.3
+  ],
+  [
+   645.3,
+   6964.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5475,
+  7662
+ ],
+ "source_bytes": 6333480,
+ "meta": {
+  "title": "Bồng Sơn est (feuille 150E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.419b4su0"
+ }
+}
