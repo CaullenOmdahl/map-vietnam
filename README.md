@@ -31,15 +31,16 @@ On a Mac you also need macOS 15 or newer.
 
 1. Download this project. On GitHub that's the green **Code** button, then **Download ZIP**, then
    unzip it. Or `git clone` it if you use git.
-2. On a Mac, open the folder and double-click **Start Map Vietnam.command**. On anything else,
-   open a terminal in the folder and run:
+2. On Windows, open the folder and double-click **Start Map Vietnam.bat**. On a Mac,
+   double-click **Start Map Vietnam.command**. On Linux, open a terminal in the folder and run:
 
    ```sh
    python3 start.py
    ```
 
-   On Windows it's `py start.py` (or `python start.py`). When you install Python on Windows,
-   tick **Add python.exe to PATH**.
+   (On Windows or a Mac you can also run it from a terminal: `py start.py` on Windows.) When you
+   install Python on Windows, tick **Add python.exe to PATH**. On Debian or Ubuntu you may first
+   need `sudo apt install python3-venv`.
 
 The first start takes a minute or two while it installs what it needs, then the map opens in
 your browser. Everything after that is done in the map: there is nothing more to type. Keep the
@@ -49,7 +50,8 @@ side panel.
 The first time, macOS may refuse to open the `.command` file because it came from the internet
 ("Apple could not verify..."). Click **Done**, open **System Settings > Privacy & Security**,
 scroll down and click **Open Anyway** next to the file's name, then confirm. You only do this
-once. Running `python3 start.py` in Terminal works too.
+once. Running `python3 start.py` in Terminal works too. On Windows, SmartScreen may say
+"Windows protected your PC" about the `.bat` file: click **More info**, then **Run anyway**.
 
 If something goes wrong, see [docs/troubleshooting.md](docs/troubleshooting.md).
 

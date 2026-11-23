@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Map Vietnam in one command: make its private Python environment if needed, then open the map in a web browser.
 
-    python3 start.py              open the map (on macOS: double-click "Start Map Vietnam.command")
+    python3 start.py              open the map (on Windows: double-click "Start Map Vietnam.bat";
+                                  on macOS: double-click "Start Map Vietnam.command")
     python3 start.py setup        add the records from the terminal instead (python3 start.py setup --help)
     python3 start.py serve        the same as no command at all
     python3 start.py maps ...     list, add or remove old maps (python3 start.py maps --help)
@@ -40,7 +41,9 @@ if sys.version_info < MIN_PYTHON:
     sys.exit(
         "Map Vietnam needs Python {}.{} or newer, but this is Python {}.{}.\n"
         "Download the latest Python from https://www.python.org/downloads/ , install it, then run this again "
-        "(on a Mac: double-click 'Start Map Vietnam.command').".format(*MIN_PYTHON, *sys.version_info[:2])
+        "(on Windows: double-click 'Start Map Vietnam.bat'; on a Mac: 'Start Map Vietnam.command').".format(
+            *MIN_PYTHON, *sys.version_info[:2]
+        )
     )
 
 import argparse  # noqa: E402
@@ -69,6 +72,11 @@ PORTS_TO_TRY = 50  # if the default port is taken, try the next ones
 SERVER_START_TIMEOUT_S = 60
 
 
+def start_command():
+    """How this script is typed in a terminal here: Windows has the `py` launcher, not `python3`."""
+    return "py start.py" if os.name == "nt" else "python3 start.py"
+
+
 def say(text=""):
     """Print a line at once (output is often piped through a log)."""
     print(text, flush=True)
@@ -89,6 +97,21 @@ def runs(cmd):
         return False
 
 
+def venv_failure_help(error):
+    """Plain advice for a failed `venv` creation. Debian and Ubuntu ship Python without the piece
+    that makes environments (ensurepip), so the usual cause there is a missing package."""
+    minor = f"{sys.version_info[0]}.{sys.version_info[1]}"
+    text = f"Could not make the Python environment ({error})."
+    if sys.platform.startswith("linux"):
+        if Path("/etc/debian_version").exists():
+            text += f"\nOn Debian or Ubuntu this usually means a package is missing. Run:  sudo apt install python3-venv\n(or python{minor}-venv if you installed Python {minor} separately), then run this again."
+        else:
+            text += "\nOn Linux, install your distribution's Python venv package first, then run this again."
+    else:
+        text += "\nCheck that there is free disk space and that the folder can be written to, then run this again."
+    return text
+
+
 def ensure_venv():
     """Make .venv if needed and install requirements.txt when it changed. Exits with a plain
     message if that is impossible."""
@@ -102,12 +125,17 @@ def ensure_venv():
             venv.EnvBuilder(with_pip=True).create(VENV)
         except (OSError, subprocess.CalledProcessError) as e:
             shutil.rmtree(VENV, ignore_errors=True)
-            sys.exit(
-                f"Could not make the Python environment ({e}).\n"
-                "On Linux, install the venv package first (for example: sudo apt install python3-venv)."
-            )
+            sys.exit(venv_failure_help(e))
+        except KeyboardInterrupt:
+            shutil.rmtree(VENV, ignore_errors=True)  # a half-made environment would only confuse the next run
+            raise
     if not runs([str(py), "-m", "pip", "--version"]) and not runs([str(py), "-m", "ensurepip", "--upgrade"]):
-        sys.exit("The Python environment in .venv has no pip. Delete the .venv folder and run this again.")
+        # Left over from an interrupted first run: start the environment again rather than ask the person to.
+        shutil.rmtree(VENV, ignore_errors=True)
+        sys.exit(
+            "The Python environment in .venv was not finished (an earlier start was probably interrupted). "
+            f"It has been removed; run {start_command()} again to make it afresh."
+        )
     wanted = hashlib.sha256(REQUIREMENTS.read_bytes()).hexdigest()
     have = REQUIREMENTS_STAMP.read_text(encoding="utf-8").strip() if REQUIREMENTS_STAMP.exists() else ""
     if have == wanted:
@@ -119,7 +147,8 @@ def ensure_venv():
     if result.returncode != 0:
         sys.exit(
             "Installing the Python add-ons failed (see the messages above). Check the internet connection "
-            "and run this again."
+            "(behind a proxy, set the HTTPS_PROXY environment variable first) and run this again; "
+            "what was already downloaded is kept."
         )
     REQUIREMENTS_STAMP.write_text(wanted + "\n", encoding="utf-8")
     return py
@@ -232,7 +261,8 @@ def serve(args):
         say("Leave this window open while you use it. Records and old maps are added from the map itself.")
         say('To stop, choose "Quit Map Vietnam" in the map, or press Control-C here (or close the window).')
         if not args.no_browser:
-            webbrowser.open(url)
+            if not webbrowser.open(url):
+                say(f"Could not open a browser by itself. Open {url} in your web browser.")
         # Poll rather than wait(): on Windows a bare wait() blocks Control-C until the server exits.
         while proc.poll() is None:
             time.sleep(0.5)
@@ -240,7 +270,7 @@ def serve(args):
             say("The map server stopped unexpectedly (see the messages above).")
             return False
         say()
-        say("Map Vietnam has stopped. Run python3 start.py to open it again.")
+        say(f"Map Vietnam has stopped. Run {start_command()} to open it again.")
         return True
     except KeyboardInterrupt:
         say()
@@ -361,6 +391,8 @@ def main(argv=None):
     if argv[:1] == ["records"]:
         return records_command(argv[1:])
     args = parse_args(argv)
+    if not 1 <= args.port <= 65535:
+        sys.exit(f"--port must be a number from 1 to 65535, not {args.port}.")
     try:
         if args.command == "setup":
             return setup(args)
@@ -370,7 +402,7 @@ def main(argv=None):
         return 0 if serve(args) else 1
     except KeyboardInterrupt:
         say()
-        say("Stopped. Nothing is lost: run python3 start.py again to carry on where it left off.")
+        say(f"Stopped. Nothing is lost: run {start_command()} again to carry on where it left off.")
         return 130
 
 

@@ -9,11 +9,14 @@ Map Vietnam takes the next free port and prints the address to open. To choose o
 
 Install the latest Python from [python.org/downloads](https://www.python.org/downloads/) and
 start again. To see which version you have, type `python3 --version` in a terminal. On a Mac, the
-`.command` file uses the newest Python it finds.
+`.command` file uses the newest Python it finds, and on Windows the `.bat` file looks for the `py`
+launcher first, then `python`.
 
 ## "Installing the Python add-ons failed"
 
-Check your internet connection and start again. On a Mac older than macOS 15 the map tools won't
+Check your internet connection and start again; what was already downloaded is kept. Behind a
+proxy, set the `HTTPS_PROXY` environment variable (for example `https://proxy.example:8080`)
+before starting. On a Mac older than macOS 15 the map tools won't
 install, so update macOS first.
 
 ## macOS won't open the .command file
@@ -24,11 +27,29 @@ click **Open Anyway** next to the file's name, then confirm. You only have to do
 macOS 14 and older, right-clicking the file and choosing **Open** did the same, but the map tools
 need macOS 15.) Or skip the file: open Terminal in the folder and run `python3 start.py`.
 
-## Windows says "Python was not found"
+## "Could not make the Python environment" (Linux)
 
-Typing `python` on Windows can open the Microsoft Store instead of running Python. Use the
-`py` launcher that the python.org installer adds: `py start.py`. If that isn't found either,
-run the installer again and tick **Add python.exe to PATH**.
+Debian and Ubuntu ship Python without its environment maker. Run `sudo apt install python3-venv`
+(or `python3.12-venv` if you installed Python 3.12 separately) and start again.
+
+## "The Python environment in .venv was not finished"
+
+An earlier start was stopped part-way. The half-made folder has been removed; start again and it
+is made afresh.
+
+## Windows: the `.bat` file says Python was not found, or the window closes
+
+Double-click **Start Map Vietnam.bat**. If it says no Python 3.12 or newer was found, install it
+from [python.org/downloads](https://www.python.org/downloads/) and tick **Add python.exe to
+PATH**, then double-click it again. Typing `python` in a terminal can open the Microsoft Store
+instead of running Python; the `.bat` file avoids that by using the `py` launcher that the
+installer adds (`py start.py` in a terminal). If Windows says "Windows protected your PC", click
+**More info**, then **Run anyway**. The window stays open when something goes wrong, so you can
+read the message.
+
+## The browser doesn't open
+
+Open the address `start.py` prints (normally `http://127.0.0.1:8765/app/`) yourself.
 
 ## Some records could not be added
 

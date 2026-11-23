@@ -197,3 +197,89 @@ def test_a_port_whose_last_connections_are_still_closing_is_reused():
         conn.close()  # the server side closes first, so the server's port is the one left waiting
         client.close()
     assert start.free_port(port) == port
+
+
+def test_a_failed_environment_on_debian_names_the_apt_package(monkeypatch):
+    monkeypatch.setattr(start.sys, "platform", "linux")
+    monkeypatch.setattr(start, "Path", lambda p: Path(p) if p != "/etc/debian_version" else Path(__file__))
+    text = start.venv_failure_help("ensurepip failed")
+    assert "sudo apt install python3-venv" in text and "ensurepip failed" in text
+
+
+def test_a_failed_environment_elsewhere_has_no_apt_advice(monkeypatch):
+    monkeypatch.setattr(start.sys, "platform", "win32")
+    assert "apt" not in start.venv_failure_help("disk full")
+
+
+def test_ensure_venv_removes_a_half_made_environment_on_failure_and_on_control_c(tmp_path, monkeypatch):
+    monkeypatch.setattr(start, "VENV", tmp_path / ".venv")
+
+    class Broken:
+        def __init__(self, **kw):
+            pass
+
+        def create(self, path):
+            path.mkdir()
+            raise error
+
+    monkeypatch.setattr(start.venv, "EnvBuilder", Broken)
+    error = subprocess.CalledProcessError(1, "ensurepip")
+    with pytest.raises(SystemExit) as exc:
+        start.ensure_venv()
+    assert "Could not make the Python environment" in str(exc.value) and not start.VENV.exists()
+    error = KeyboardInterrupt()
+    with pytest.raises(KeyboardInterrupt):
+        start.ensure_venv()
+    assert not start.VENV.exists()
+
+
+def test_an_environment_without_pip_is_removed_so_the_next_run_makes_it_afresh(tmp_path, monkeypatch):
+    monkeypatch.setattr(start, "VENV", tmp_path / ".venv")
+    start.VENV.mkdir()
+    calls = iter([True, False, False])  # it runs; pip is missing; ensurepip fails
+    monkeypatch.setattr(start, "runs", lambda cmd: next(calls))
+    with pytest.raises(SystemExit) as exc:
+        start.ensure_venv()
+    assert "was not finished" in str(exc.value) and not start.VENV.exists()
+
+
+def test_a_pip_failure_says_what_to_check(tmp_path, monkeypatch):
+    monkeypatch.setattr(start, "VENV", tmp_path / ".venv")
+    start.VENV.mkdir()
+    monkeypatch.setattr(start, "runs", lambda cmd: True)
+    monkeypatch.setattr(start.subprocess, "run", lambda cmd, **kw: start.subprocess.CompletedProcess(cmd, 1))
+    with pytest.raises(SystemExit) as exc:
+        start.ensure_venv()
+    assert "HTTPS_PROXY" in str(exc.value) and not (start.VENV / "requirements.sha256").exists()
+
+
+def test_a_browser_that_will_not_open_gets_the_address_printed(ran, monkeypatch, capsys):
+    monkeypatch.setattr(start, "free_port", lambda port: port)
+    monkeypatch.setattr(start, "wait_until_up", lambda url, proc: True)
+    monkeypatch.setattr(start.webbrowser, "open", lambda url: False)
+    assert start.main([]) == 0
+    assert f"Open http://127.0.0.1:{start.DEFAULT_PORT}/app/ in your web browser" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("port", ["0", "70000", "-1"])
+def test_an_impossible_port_is_refused_in_plain_words(port, ran):
+    with pytest.raises(SystemExit) as exc:
+        start.main(["--port", port])
+    assert "--port must be a number from 1 to 65535" in str(exc.value)
+
+
+def test_the_windows_launcher_keeps_crlf_and_finds_python_the_way_start_py_needs():
+    bat = (start.ROOT / "Start Map Vietnam.bat").read_bytes()
+    assert b"\n" not in bat.replace(b"\r\n", b"")  # every line ends CRLF, so labels and goto work
+    text = bat.decode("utf-8")
+    assert text.index("py -3") < text.index("python -c")  # the py launcher first
+    assert "start.py" in text and "python.org/downloads" in text and "pause" in text
+    attributes = (start.ROOT / ".gitattributes").read_text(encoding="utf-8")
+    assert "*.bat text eol=crlf" in attributes
+    assert str(start.MIN_PYTHON[0]) + ", " + str(start.MIN_PYTHON[1]) in text  # the same minimum as start.py
+
+
+def test_the_mac_launcher_asks_for_the_same_python_and_runs_start_py():
+    sh = (start.ROOT / "Start Map Vietnam.command").read_text(encoding="utf-8")
+    assert f"python3.{start.MIN_PYTHON[1]}" in sh and f"< ({start.MIN_PYTHON[0]}, {start.MIN_PYTHON[1]})" in sh
+    assert 'start.py "$@"' in sh
