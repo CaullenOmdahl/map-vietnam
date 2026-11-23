@@ -13,6 +13,11 @@ Everything is done from the map
 - Records and old maps added from a terminal (`start.py setup`, `maps`, `records`) and from the
   map share their state; the terminal route stays for people who script it
 
+Installers
+- A Windows installer (per user, no administrator needed), a Linux `.tar.gz` and an unsigned macOS
+  `.zip` are built by `.github/workflows/release.yml` for every version tag, from `packaging/`.
+  None is code-signed; docs/troubleshooting.md explains SmartScreen and macOS' first-open step
+
 Its own window
 - Map Vietnam now opens in its own window instead of a browser tab (`scripts/desktop.py`, using
   pywebview). Links to record sources open in your browser, exports show a Save dialog, and closing
