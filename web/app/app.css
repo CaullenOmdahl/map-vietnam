@@ -7,10 +7,10 @@
 :root {
   --bg: #e9e6dd; --surface: #fffefb; --surface-2: #f3f1ea; --surface-3: #e8e5db;
   --glass: rgba(255,254,251,.94);
-  --ink: #1b1a17; --muted: #5f5c53; --faint: #8b877c; --line: #e2ded2;
+  --ink: #1b1a17; --muted: #5f5c53; --faint: #67645a; --line: #e2ded2;
   --accent: #0e5a4b; --accent-ink: #ffffff; --accent-soft: #d8ebe5;
   --warn: #8a3a0c; --warn-soft: #fbf0e4; --danger: #a61b1b;
-  --site: #c0267a;
+  --site: #b01f70;
   --shadow: 0 1px 2px rgba(20,18,10,.10), 0 6px 20px rgba(20,18,10,.14);
   --shadow-lg: 0 2px 6px rgba(20,18,10,.10), 0 16px 40px rgba(20,18,10,.18);
   --focus: 0 0 0 3px #f2b134;
@@ -27,7 +27,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #111210; --surface: #1c1d1b; --surface-2: #262724; --surface-3: #30312d; --glass: rgba(28,29,27,.95);
-    --ink: #eeece5; --muted: #b1ada2; --faint: #8a867b; --line: #363731;
+    --ink: #eeece5; --muted: #b1ada2; --faint: #a29e93; --line: #363731;
     --accent: #6fd0b4; --accent-ink: #0c1f1a; --accent-soft: #1d3a32;
     --warn: #f3b27a; --warn-soft: #33241a; --danger: #ff8d8d; --site: #ff6fb7;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.45);
@@ -37,7 +37,7 @@
 }
 :root[data-theme="dark"] {
   --bg: #111210; --surface: #1c1d1b; --surface-2: #262724; --surface-3: #30312d; --glass: rgba(28,29,27,.95);
-  --ink: #eeece5; --muted: #b1ada2; --faint: #8a867b; --line: #363731;
+  --ink: #eeece5; --muted: #b1ada2; --faint: #a29e93; --line: #363731;
   --accent: #6fd0b4; --accent-ink: #0c1f1a; --accent-soft: #1d3a32;
   --warn: #f3b27a; --warn-soft: #33241a; --danger: #ff8d8d; --site: #ff6fb7;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.45);
@@ -173,7 +173,7 @@ body.filtered #loading { top: 58px; }
 .kind-row:hover { background: var(--surface-2); }
 .kind-row .name { flex: 1; min-width: 0; }
 .kind-row .n { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
-.kind-row .tog { width: 36px; height: 22px; border-radius: 11px; background: var(--line); position: relative; flex: none; transition: background .15s; }
+.kind-row .tog { width: 36px; height: 22px; border-radius: 11px; background: var(--faint); position: relative; flex: none; transition: background .15s; }
 .kind-row .tog::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .15s; }
 .kind-row[aria-pressed="true"] .tog { background: var(--accent); }
 .kind-row[aria-pressed="true"] .tog::after { transform: translateX(14px); }
@@ -244,6 +244,7 @@ body.comparing .mb-opacity .mono { display: none; }
 #toast { position: fixed; z-index: 20; width: max-content; left: calc(var(--map-left) + (100vw - var(--map-left)) / 2); transform: translate(-50%, -10px); top: 14px; background: var(--ink); color: var(--surface);
   padding: 10px 16px; border-radius: 12px; max-width: min(92vw, 460px); opacity: 0; pointer-events: none; transition: .2s; box-shadow: var(--shadow);
   display: flex; gap: 14px; align-items: center; }
+#toast:not(.on) { visibility: hidden; } /* its Undo button must not stay a hidden tab stop */
 #toast.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
 #toast .linkish { color: var(--surface); font-weight: 700; min-height: 32px; }
 body.filtered #toast { top: 58px; }
@@ -348,7 +349,7 @@ body.filtered #toast { top: 58px; }
 .near-tools { display: grid; gap: 8px; }
 .switch { display: inline-flex; align-items: center; gap: 10px; min-height: 36px; cursor: pointer; font-size: 14px; width: max-content; }
 .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.switch .tog { width: 36px; height: 22px; border-radius: 11px; background: var(--line); position: relative; flex: none; transition: background .15s; }
+.switch .tog { width: 36px; height: 22px; border-radius: 11px; background: var(--faint); position: relative; flex: none; transition: background .15s; }
 .switch .tog::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .15s; }
 .switch input:checked + .tog { background: var(--accent); }
 .switch input:checked + .tog::after { transform: translateX(14px); }
@@ -444,7 +445,14 @@ body.no-old-maps.lib-open #mapbar { display: none; }
 .lib-pill:hover { background: var(--accent-soft); }
 .lib-pill.on { background: var(--accent); color: var(--accent-ink); }
 /* Thumb-sized targets on touch screens (44 px, as Apple's guidelines ask). */
-@media (pointer: coarse) { .lib-pill, .lib-detail .btn.small { min-height: 44px; } }
+@media (pointer: coarse) {
+  .lib-pill, .lib-detail .btn.small, .btn.small, .chip, .seg button, .only, .mb-chip, .switch, .linkish, .quit-link, #filterPill button { min-height: 44px; }
+  .round.small { width: 44px; height: 44px; }
+  #filterClear { width: 44px; }
+  #grab { position: relative; }
+  #grab::before { content: ""; position: absolute; inset: -12px 0; } /* a 44px grip around the 5px handle */
+  .linkish { padding-inline: 6px; }
+}
 /* Progress ring with a stop square; spins while waiting or when the size is unknown. */
 .lib-ring { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; cursor: pointer; color: var(--accent); }
 .lib-ring:hover { background: var(--surface-3); }
