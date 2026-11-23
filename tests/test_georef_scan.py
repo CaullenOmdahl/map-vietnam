@@ -19,7 +19,7 @@ def scan(tmp_path, monkeypatch):
     def make(**extra):
         c = {"image": "s.jpg", "crs": "EPSG:4326", "gcps": gcps, "max_zoom": 9, **extra}
         p = tmp_path / "ctl.json"
-        p.write_text(json.dumps(c))
+        p.write_text(json.dumps(c), encoding="utf-8")
         return p
 
     return make

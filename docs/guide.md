@@ -28,7 +28,7 @@ deleted. You can add it again later.
 
 ## Doing it from a terminal
 
-Run these in the Map Vietnam folder. On Windows, type `python` instead of `python3`.
+Run these in the Map Vietnam folder. On Windows, type `py` instead of `python3`.
 
 ```sh
 python3 start.py maps list --area 105.4,10.2,105.9,10.6   # maps of an area (west,south,east,north)
@@ -108,6 +108,37 @@ These are off by default. They come from the Vietnam Helicopter Pilots Associati
 which is copyrighted, so Map Vietnam keeps only short facts from it, for personal research. It
 also reads the site slowly so as not to be a nuisance: one page every three seconds, about four
 hours in all. Turn it on with `python3 start.py setup --only vhpa`.
+
+## Disk space, backups and starting over
+
+Setup needs about 1 GB, plus about 200 MB for its private Python in `.venv/`. The air-strike
+records add about 0.5 GB. Each old map adds about 20 MB (a 1:250,000 sheet about 30 MB), and all
+of them together come to about 12 GB.
+
+Your cases, sites and notes are kept only in `data/evidence.sqlite`, next to the records. To back
+them up, stop the map (Control-C) and copy that file. Export a case as GeoJSON, KML or GPX to keep
+it in a form other tools can read.
+
+Everything Map Vietnam downloads or makes stays inside its folder:
+
+| Path | Holds |
+| --- | --- |
+| `.venv/` | its private Python and add-ons |
+| `data/raw/` | the downloaded records and old-map files |
+| `data/work/` | intermediate files, setup logs and your first-run answers |
+| `data/evidence.sqlite` | the records, and your cases and notes |
+| `web/tiles/`, `web/catalog.json` | the old maps you have added |
+| `.env` | your Kaggle key, if you saved one |
+
+To ask the first-run questions again, delete `data/work/setup/choices.json`. To uninstall, delete
+the folder (and `~/.kaggle/kaggle.json` if you put a Kaggle key there and no longer want it).
+
+## Running without questions
+
+`python3 start.py --yes` sets up without asking anything, leaving the optional parts off.
+`--no-browser` doesn't open a browser window, `--port` picks another port, and
+`python3 start.py serve` opens the map without checking setup. `python3 start.py --help` lists
+everything.
 
 ## What goes over the internet
 

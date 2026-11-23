@@ -18,8 +18,17 @@ install, so update macOS first.
 
 ## macOS won't open the .command file
 
-It came from the internet, so macOS wants you to say it's all right. Right-click the file, choose
-**Open**, then **Open** again. You only have to do this once.
+It came from the internet, so macOS wants you to say it's all right. When it says "Apple could
+not verify...", click **Done**, open **System Settings > Privacy & Security**, scroll down and
+click **Open Anyway** next to the file's name, then confirm. You only have to do this once. (On
+macOS 14 and older, right-clicking the file and choosing **Open** did the same, but the map tools
+need macOS 15.) Or skip the file: open Terminal in the folder and run `python3 start.py`.
+
+## Windows says "Python was not found"
+
+Typing `python` on Windows can open the Microsoft Store instead of running Python. Use the
+`py` launcher that the python.org installer adds: `py start.py`. If that isn't found either,
+run the installer again and tick **Add python.exe to PATH**.
 
 ## A download failed
 

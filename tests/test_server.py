@@ -358,3 +358,47 @@ def test_a_failure_inside_the_server_is_answered_not_dropped(maps, monkeypatch):
     monkeypatch.setattr(lib, "remove", lambda ids: (_ for _ in ()).throw(OSError("disk on fire")))
     status, body = post(f"{base}/api/library/remove", {"ids": ["L7014A"]}, JSON)
     assert status == 500 and "disk on fire" in body["error"]
+
+
+def status_of(url, method="GET", body=None, headers=None):
+    """The HTTP status a request gets, error or not."""
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(
+        url, data=data, method=method, headers={"Content-Type": "application/json", **(headers or {})}
+    )
+    try:
+        with urllib.request.urlopen(req) as r:
+            return r.status
+    except urllib.error.HTTPError as e:
+        return e.code
+
+
+def test_sites_with_infinite_or_out_of_range_numbers_are_refused(base):
+    cid = call(f"{base}/api/cases", "POST", {"name": "c"})["id"]
+    site = {"name": "s", "lon": 105.6, "lat": 10.4, "uncertainty_m": 100}
+    for bad in ({"uncertainty_m": "inf"}, {"uncertainty_m": "nan"}, {"lon": "nan"}, {"lon": 1e308}, {"lat": 95}):
+        assert status_of(f"{base}/api/cases/{cid}/sites", "POST", {**site, **bad}) == 400, bad
+    assert call(f"{base}/api/cases/{cid}/sites", "POST", site)["sites"]
+    # The case still reads back as valid JSON.
+    assert call(f"{base}/api/cases/{cid}")["sites"][0]["uncertainty_m"] == 100
+
+
+def test_wrong_field_types_and_unknown_records_get_a_400(base):
+    assert status_of(f"{base}/api/cases", "POST", {"name": 5}) == 400
+    cid = call(f"{base}/api/cases", "POST", {"name": "c"})["id"]
+    assert status_of(f"{base}/api/cases/{cid}/items", "POST", {"evidence_id": 999999}) == 400
+    assert status_of(f"{base}/api/cases/{cid}/notes", "POST", {"body": ["x"]}) == 400
+
+
+def test_a_negative_limit_does_not_lift_the_cap(base):
+    # SQLite treats a negative LIMIT as none at all; the server clamps it to at least one row.
+    for limit in (-1, -2, -1000):
+        got = call(f"{base}/api/evidence?limit={limit}")
+        assert len(got["features"]) == 1 and got["truncated"], limit
+    assert len(call(f"{base}/api/search?q=hamlet&limit=-5")) <= 1
+
+
+def test_static_files_also_check_the_host(base):
+    port = base.rsplit(":", 1)[1]
+    assert status_of(f"{base}/app/index.html") in (200, 404)  # the temporary web root may be empty
+    assert status_of(f"{base}/app/index.html", headers={"Host": f"evil.example:{port}"}) == 403

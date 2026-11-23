@@ -162,12 +162,21 @@ def path_bytes(path):
     return 0
 
 
-def delete(path):
-    """Remove a file or folder if it is there."""
+def delete(path, attempts=10):
+    """Remove a file or folder if it is there. Windows refuses to delete a file that is open, and
+    the server opens a map's .mbtiles for each tile it serves, so a refused delete is retried
+    for a couple of seconds before giving up."""
     if path.is_dir():
         shutil.rmtree(path, ignore_errors=True)
-    else:
-        path.unlink(missing_ok=True)
+        return
+    for attempt in range(attempts):
+        try:
+            path.unlink(missing_ok=True)
+            return
+        except PermissionError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(0.2)
 
 
 def prune_empty(folder, stop):
@@ -185,7 +194,9 @@ def prune_empty(folder, stop):
 def write_json(path, data):
     """Write JSON so a reader in another process sees the old file or the new one, never half."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile("w", dir=path.parent, prefix=path.name, suffix=".tmp", delete=False) as f:
+    with tempfile.NamedTemporaryFile(
+        "w", encoding="utf-8", dir=path.parent, prefix=path.name, suffix=".tmp", delete=False
+    ) as f:
         json.dump(data, f)
     os.replace(f.name, path)
 
@@ -262,7 +273,7 @@ class Library:
         except FileNotFoundError:
             return {"series": {}, "maps": []}
         if self._catalogue[0] != mtime:
-            self._catalogue = (mtime, json.loads(self.catalogue_path.read_text()))
+            self._catalogue = (mtime, json.loads(self.catalogue_path.read_text(encoding="utf-8")))
         return self._catalogue[1]
 
     def entries(self):
@@ -329,7 +340,7 @@ class Library:
         latest state: a writer that listed the maps before a removal cannot replace the file
         after the removal's own rewrite."""
         self.work.mkdir(parents=True, exist_ok=True)
-        with self._catalog_lock, open(self.work / "catalog.lock", "a+") as f:
+        with self._catalog_lock, open(self.work / "catalog.lock", "a+", encoding="utf-8") as f:
             lock_file(f)
             try:
                 catalog.write_catalog(
@@ -528,7 +539,7 @@ class Library:
         """{"id", "state", "pid"} of the map another process is adding right now, or None.
         A record left by a process that died is ignored: then nobody holds the lock."""
         try:
-            current = json.loads((self.work / "current.json").read_text())
+            current = json.loads((self.work / "current.json").read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return None
         if not isinstance(current, dict) or current.get("pid") == os.getpid():
@@ -676,7 +687,7 @@ class Library:
         """download_maps.derive_work_image in a child process: decoding a large JPEG 2000 takes
         gigabytes of memory, which a long-running server would not give back."""
         cmd = [self.python, str(SCRIPTS / "download_maps.py"), "--derive", str(src), str(dst), json.dumps(derive)]
-        done = subprocess.run(cmd, cwd=self.root, capture_output=True, text=True, errors="replace")
+        done = subprocess.run(cmd, cwd=self.root, capture_output=True, text=True, errors="replace", encoding="utf-8")
         if done.returncode != 0:
             message = (done.stderr.strip().splitlines() or ["no message"])[-1]
             raise OSError(message)
@@ -707,12 +718,18 @@ class Library:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         last = ""
         timed_out = threading.Event()
-        with open(log_path, "w") as log:
+        with open(log_path, "w", encoding="utf-8") as log:
             with self._lock:
                 if job.cancel.is_set():
                     raise download_maps.Cancelled()
                 proc = job.proc = subprocess.Popen(
-                    cmd, cwd=self.root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace"
+                    cmd,
+                    cwd=self.root,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    errors="replace",
+                    encoding="utf-8",
                 )
             timer = threading.Timer(BUILD_TIMEOUT_S, lambda: (timed_out.set(), proc.kill()))
             timer.daemon = True
@@ -748,7 +765,7 @@ class Library:
         """Hold data/work/maps/worker.lock: only one process adds maps at a time. on_wait() is
         called once if another process holds it (the command line says so before waiting)."""
         self.work.mkdir(parents=True, exist_ok=True)
-        with open(self.work / "worker.lock", "a+") as f:
+        with open(self.work / "worker.lock", "a+", encoding="utf-8") as f:
             if not lock_file(f, blocking=False):
                 if on_wait:
                     on_wait()
@@ -763,7 +780,7 @@ class Library:
         """Like exclusive(), but never waits: yields True holding the lock, or False when
         someone else (another process, or this process's worker) holds it."""
         self.work.mkdir(parents=True, exist_ok=True)
-        with open(self.work / "worker.lock", "a+") as f:
+        with open(self.work / "worker.lock", "a+", encoding="utf-8") as f:
             free = lock_file(f, blocking=False)
             try:
                 yield free
@@ -853,7 +870,7 @@ class Library:
         for sub in LEGACY_WORK:
             f = self.root / "data" / "work" / sub / f"{map_id}.bounds.json"
             if f.exists():
-                data = json.loads(f.read_text())
+                data = json.loads(f.read_text(encoding="utf-8"))
                 extent = data if isinstance(data, dict) else {"bounds": data}
         meta = {"bounds": extent.get("bounds"), "name": map_id}
         entry = self.entries().get(map_id)
@@ -864,7 +881,7 @@ class Library:
                 meta.update(name=f["title"] or map_id, date=f["date"], edition=f["edition"], date_note=f["date_note"])
         control = self.scans / f"{map_id}.json"
         if control.exists():
-            m = json.loads(control.read_text()).get("meta", {})
+            m = json.loads(control.read_text(encoding="utf-8")).get("meta", {})
             meta.update(name=m.get("title", map_id), date=m.get("date", ""), date_note=m.get("dateNote", ""))
         return meta
 

@@ -210,7 +210,7 @@ def ask_yes_no(question, default):
 def load_choices():
     """Answers to the first-run questions: {"agreed": bool, "vhpa": bool}; {} before the first run."""
     try:
-        return json.loads(CHOICES.read_text())
+        return json.loads(CHOICES.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
 
@@ -218,7 +218,7 @@ def load_choices():
 def save_choices(choices):
     """Keep the first-run answers for later runs."""
     STATE.mkdir(parents=True, exist_ok=True)
-    CHOICES.write_text(json.dumps(choices, indent=1))
+    CHOICES.write_text(json.dumps(choices, indent=1), encoding="utf-8")
 
 
 def explain_first_run(steps, has_key):
@@ -259,7 +259,7 @@ def sheet_sizes():
     disk for all of them: from the map library catalogue, so the text never drifts from it.
     None if the catalogue cannot be read."""
     try:
-        catalogue = json.loads(MAP_LIBRARY.read_text())
+        catalogue = json.loads(MAP_LIBRARY.read_text(encoding="utf-8"))
         sheets = [m["bytes"] for m in catalogue["maps"] if m["series"] == "l7014"]
         ratio = catalogue["series"]["l7014"]["disk_per_download_byte"]
     except (OSError, ValueError, KeyError, TypeError):
@@ -283,7 +283,7 @@ def read_env_file():
     ingesters use; duplicated because this file must not need anything outside the stdlib)."""
     values = {}
     if ENV_FILE.exists():
-        for line in ENV_FILE.read_text().splitlines():
+        for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
                 continue
@@ -305,7 +305,7 @@ def kaggle_key_available():
         return True
     config = Path(env.get("KAGGLE_CONFIG_DIR") or Path.home() / ".kaggle") / "kaggle.json"
     try:
-        cfg = json.loads(config.read_text())
+        cfg = json.loads(config.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return False
     return isinstance(cfg, dict) and bool(cfg.get("username") and cfg.get("key"))
@@ -313,12 +313,12 @@ def kaggle_key_available():
 
 def write_env(updates):
     """Set keys in .env, keeping its other lines, and make the file readable by this user only."""
-    lines = ENV_FILE.read_text().splitlines() if ENV_FILE.exists() else []
+    lines = ENV_FILE.read_text(encoding="utf-8").splitlines() if ENV_FILE.exists() else []
     kept = [ln for ln in lines if ln.split("=", 1)[0].strip().removeprefix("export ").strip() not in updates]
     kept += [f"{k}={v}" for k, v in updates.items()]
     # Create with 0600 from the start so the key is never readable by others, even briefly.
     fd = os.open(ENV_FILE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w") as f:
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
         f.write("\n".join(kept) + "\n")
     os.chmod(ENV_FILE, 0o600)
 
@@ -379,7 +379,7 @@ def ensure_venv():
     if not runs([str(py), "-m", "pip", "--version"]) and not runs([str(py), "-m", "ensurepip", "--upgrade"]):
         sys.exit("The Python environment in .venv has no pip. Delete the .venv folder and run this again.")
     wanted = hashlib.sha256(REQUIREMENTS.read_bytes()).hexdigest()
-    have = REQUIREMENTS_STAMP.read_text().strip() if REQUIREMENTS_STAMP.exists() else ""
+    have = REQUIREMENTS_STAMP.read_text(encoding="utf-8").strip() if REQUIREMENTS_STAMP.exists() else ""
     if have == wanted:
         return py
     say("Installing the Python add-ons (a few minutes the first time) ...")
@@ -391,7 +391,7 @@ def ensure_venv():
             "Installing the Python add-ons failed (see the messages above). Check the internet connection "
             "and run this again."
         )
-    REQUIREMENTS_STAMP.write_text(wanted + "\n")
+    REQUIREMENTS_STAMP.write_text(wanted + "\n", encoding="utf-8")
     return py
 
 
@@ -399,9 +399,16 @@ def ensure_venv():
 def script_env():
     """Environment for running a project script in .venv's Python: the same import path the tests
     use (pytest.ini), scripts/ and scripts/ingest/, so a script finds store, common, gridref...
-    whatever order its own sys.path setup and imports are in; and unbuffered output."""
+    whatever order its own sys.path setup and imports are in; unbuffered output; and Python's UTF-8
+    mode, so Vietnamese text is read, written and printed as UTF-8 on Windows too (whose default
+    text encoding, cp1252, cannot hold it)."""
     paths = [str(ROOT / "scripts"), str(ROOT / "scripts" / "ingest"), os.environ.get("PYTHONPATH", "")]
-    return {**os.environ, "PYTHONUNBUFFERED": "1", "PYTHONPATH": os.pathsep.join(p for p in paths if p)}
+    return {
+        **os.environ,
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONUTF8": "1",
+        "PYTHONPATH": os.pathsep.join(p for p in paths if p),
+    }
 
 
 def run_logged(py, step):
@@ -409,7 +416,7 @@ def run_logged(py, step):
     LOGS.mkdir(parents=True, exist_ok=True)
     env = script_env()
     last = ""
-    with open(LOGS / (step.name + ".log"), "w") as log:
+    with open(LOGS / (step.name + ".log"), "w", encoding="utf-8") as log:
         log.write(f"{step.name} started {datetime.now().isoformat(timespec='seconds')}\n")
         for cmd in step.commands:
             proc = subprocess.Popen(
@@ -420,6 +427,7 @@ def run_logged(py, step):
                 stderr=subprocess.STDOUT,
                 text=True,
                 errors="replace",
+                encoding="utf-8",
             )
             for line in proc.stdout:
                 sys.stdout.write("  " + line)
@@ -495,7 +503,7 @@ def setup(args):
         minutes = (time.monotonic() - started) / 60
         if ok:
             STATE.mkdir(parents=True, exist_ok=True)
-            step.stamp.write_text(datetime.now().isoformat(timespec="seconds") + "\n")
+            step.stamp.write_text(datetime.now().isoformat(timespec="seconds") + "\n", encoding="utf-8")
         if ok and step.is_done():
             worked.append((step, minutes))
         else:
@@ -577,7 +585,7 @@ def serve(args):
     # Own process group: Control-C reaches only this script, which then stops the server
     # quietly instead of both printing tracebacks.
     group = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
-    proc = subprocess.Popen([str(py), "scripts/server.py", "--port", str(port)], cwd=ROOT, **group)
+    proc = subprocess.Popen([str(py), "scripts/server.py", "--port", str(port)], cwd=ROOT, env=script_env(), **group)
     # Closing the Terminal window sends SIGHUP; treat it (and SIGTERM) like Control-C, so the
     # server, which is in its own session and would not get the signal, is not left running.
     # SIGINT is reset too: a shell that starts this in the background has it ignored.
@@ -594,7 +602,9 @@ def serve(args):
         say("Leave this window open while you use it. To stop, press Control-C here (or close the window).")
         if not args.no_browser:
             webbrowser.open(url)
-        proc.wait()
+        # Poll rather than wait(): on Windows a bare wait() blocks Control-C until the server exits.
+        while proc.poll() is None:
+            time.sleep(0.5)
         return proc.returncode == 0
     except KeyboardInterrupt:
         say()
@@ -709,6 +719,10 @@ def main(argv=None):
     """Set up and/or serve, or run a maps command. Returns the exit status: 0 all well,
     1 something failed, 130 stopped."""
     argv = sys.argv[1:] if argv is None else argv
+    # A console or log that cannot show a character (a cp1252 pipe on Windows) gets "?" instead of a crash.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
     if argv[:1] == ["maps"]:
         # Everything after "maps" belongs to the map library's own command line.
         return maps_command(argv[1:])

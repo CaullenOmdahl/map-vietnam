@@ -40,7 +40,7 @@ def load_env(path=None):
     path = ENV_FILE if path is None else path
     if not path.exists():
         return
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         m = _ENV_LINE.match(line)
         if not m or line.lstrip().startswith("#"):
             continue

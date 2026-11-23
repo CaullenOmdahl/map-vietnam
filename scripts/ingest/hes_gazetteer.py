@@ -526,7 +526,9 @@ def main(argv=None):
     records, stats, located = build(by_usid)
     n, deleted, withdrawn = save(store.connect(), records, vintage)
     OUT_PROVINCES.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PROVINCES.write_text(json.dumps(provinces(located, gns_places()), indent=1, ensure_ascii=False))
+    OUT_PROVINCES.write_text(
+        json.dumps(provinces(located, gns_places()), indent=1, ensure_ascii=False), encoding="utf-8"
+    )
     aoi = sum(common.in_bbox(e.lon, e.lat) for e in records)
     print(
         f"hamlet USIDs: {len(by_usid)}; synced {n} (deleted {deleted}, withdrawn {withdrawn}); "

@@ -116,9 +116,11 @@ def no_key(tmp_path, monkeypatch):
 def test_credentials_come_from_env_file_then_kaggle_json(no_key):
     assert thor.kaggle_credentials() is None
     (no_key / "kaggle").mkdir()
-    (no_key / "kaggle" / "kaggle.json").write_text(json.dumps({"username": "jsonuser", "key": "jsonkey"}))
+    (no_key / "kaggle" / "kaggle.json").write_text(
+        json.dumps({"username": "jsonuser", "key": "jsonkey"}), encoding="utf-8"
+    )
     assert thor.kaggle_credentials() == ("jsonuser", "jsonkey")
-    (no_key / ".env").write_text("KAGGLE_USERNAME=envuser\nKAGGLE_KEY=envkey\n")
+    (no_key / ".env").write_text("KAGGLE_USERNAME=envuser\nKAGGLE_KEY=envkey\n", encoding="utf-8")
     assert thor.kaggle_credentials() == ("envuser", "envkey")
 
 
@@ -135,7 +137,7 @@ def test_missing_key_explains_how_to_get_one(no_key):
 
 
 def test_refused_key_is_explained(no_key, monkeypatch):
-    (no_key / ".env").write_text("KAGGLE_USERNAME=u\nKAGGLE_KEY=bad\n")
+    (no_key / ".env").write_text("KAGGLE_USERNAME=u\nKAGGLE_KEY=bad\n", encoding="utf-8")
 
     def refuse(url, *a, headers=None, **k):
         assert headers["Authorization"].startswith("Basic ")

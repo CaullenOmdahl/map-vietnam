@@ -1,8 +1,9 @@
 # Data sources
 
-Map Vietnam ships no maps or records. `python3 start.py` downloads each record source from its
+Map Vietnam ships no maps or record databases (only the catalogue of where to fetch them, and
+small excerpts for the tests). `python3 start.py` downloads each record source from its
 publisher onto your computer the first time it runs, and keeps the download in `data/raw/` so it
-is never fetched twice. Old maps are downloaded only when you add one (the viewer's "Add old maps",
+is not fetched again unless you ask (most ingesters take `--refresh`). Old maps are downloaded only when you add one (the viewer's "Add old maps",
 or `python3 start.py maps add`), and removing a map deletes its download too. This page says, for each source, what it is, where it comes from, its licence, how
 its records are placed on the map, and what is left out.
 
@@ -199,6 +200,8 @@ setup:
 .venv/bin/python scripts/ingest/thor.py --bbox 106.0,10.5,107.0,11.5
 .venv/bin/python scripts/ingest/thor.py --all-vietnam
 ```
+
+On Windows, use `.venv\Scripts\python` instead of `.venv/bin/python`.
 
 `--bbox` takes west,south,east,north in degrees. Each run replaces the stored strikes with the
 ones inside the new area.

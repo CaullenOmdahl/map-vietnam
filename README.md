@@ -36,15 +36,19 @@ On a Mac you also need macOS 15 or newer.
    python3 start.py
    ```
 
-   On Windows it's `python start.py`.
+   On Windows it's `py start.py` (or `python start.py`). When you install Python on Windows,
+   tick **Add python.exe to PATH**.
 
 The first run tells you what it's about to download and waits for a yes. Expect about 120 MB of
-public records and 20 to 40 minutes, most of which you can spend elsewhere. If it stops partway,
+public records, about 1 GB of disk space, and 20 to 40 minutes, most of which you can spend
+elsewhere. The optional air-strike records add about 320 MB. If it stops partway,
 run it again and it picks up where it left off. When it's done the map opens in your browser.
 Keep the terminal window open while you use it. Control-C stops it.
 
-The first time, macOS may refuse to open the `.command` file because it came from the internet.
-Right-click it, choose **Open**, then **Open** again.
+The first time, macOS may refuse to open the `.command` file because it came from the internet
+("Apple could not verify..."). Click **Done**, open **System Settings > Privacy & Security**,
+scroll down and click **Open Anyway** next to the file's name, then confirm. You only do this
+once. Running `python3 start.py` in Terminal works too.
 
 If something goes wrong, see [docs/troubleshooting.md](docs/troubleshooting.md).
 
@@ -54,7 +58,8 @@ Setup doesn't download any old maps. There are more than 500 of them and you pro
 
 Go to the place you care about and click **Add old maps** at the bottom of the screen. You get
 every map that covers what's on screen, with its size, and outlines showing where each one sits.
-Click **Add** on the ones you want. A map takes about a minute and about 20 MB.
+Click **Add** on the ones you want. A typical 1:50,000 sheet takes about a minute, a 10 MB
+download and about 20 MB of disk.
 
 ![The Old maps list open beside the map, with outlines on the map showing where each old map lies](docs/images/add-old-maps.jpg)
 
@@ -69,11 +74,14 @@ references, cases and exports, and the optional air-strike records, which need a
 
 ## Data sources
 
-None of the data is in this repository. Records are downloaded from their publishers during
-setup, and each old map when you add it.
+No maps or record databases are in this repository. Records are downloaded from their
+publishers during setup, and each old map when you add it. The repository holds only the
+catalogue of where to fetch them, small source excerpts for the tests, and the screenshots in
+this README, each under its own licence.
 
-The maps are US Army 1:50,000 and 1:250,000 sheets from the USGS store, which are public domain,
-and older French and US scans from five map libraries. The records come from the US National
+The maps are US Army 1:50,000 sheets and US Defense Mapping Agency 1:250,000 sheets, from the
+USGS store or the University of Texas Libraries, all public domain, and older French and US
+scans from five map libraries. The records come from the US National
 Archives, the NGA place-name server, Wikipedia, Wikidata and OpenStreetMap. Two more sources are
 optional: US Air Force strike records from Kaggle, and helicopter losses from the Vietnam
 Helicopter Pilots Association website.
@@ -122,4 +130,5 @@ before it's merged. To report a security problem, see [SECURITY.md](SECURITY.md)
 ## Licence
 
 The code is under the [Apache License 2.0](LICENSE). The maps and records it downloads aren't
-part of this repository and keep their own licences.
+part of this repository and keep their own licences. The test excerpts and the map content in the
+screenshots keep their sources' licences too; [NOTICE](NOTICE) lists them.

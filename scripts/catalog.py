@@ -28,10 +28,29 @@ CORRECTIONS = ROOT / "data" / "maps.json"
 MBTILES = ".mbtiles"
 DEFAULT_MAXZOOM = 15
 
+# The credit the viewer shows on the map while an old map is on screen (MapLibre attribution, so
+# plain text or simple links only). Short forms of the credit lines in NOTICE; some licences (CC BY,
+# CC BY-NC-SA) require the credit wherever the map is shown, screenshots included.
+SERIES_CREDITS = {
+    "l7014": "Old map: US Army Map Service, public domain",
+    "jog1501": "Old map: US Defense Mapping Agency, public domain",
+}
+SCAN_CREDITS = {
+    "ams_l509_nc48-6_1954": "Old map: US Army Map Service, via ANU Asia Pacific Map Collection",
+    "ams_l509_nc48-6_1962": "Old map: US Army Map Service, courtesy of the University of Texas Libraries, "
+    "The University of Texas at Austin",
+    "atlas_1909_sadec": "Old map: Humazur digital library, Université Côte d'Azur",
+    "bigrel_1873_f10": "Old map: David Rumsey Map Collection, David Rumsey Map Center, Stanford Libraries "
+    "(CC BY-NC-SA 3.0)",
+    "fr_sgi_100k_228_longxuyen": "Old map: Centre IST REGARDS (CNRS), NAKALA (CC BY-NC-SA 4.0)",
+    "koch_1889_f2": "Old map: Centre IST REGARDS (CNRS), NAKALA (CC BY 4.0)",
+    "routiere_1951_f20_phnompenh": "Old map: ANU Asia Pacific Map Collection",
+}
+
 
 def read_json(path, default):
     """Parsed JSON from path, or `default` when the file does not exist."""
-    return json.loads(path.read_text()) if path.exists() else default
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else default
 
 
 def installed_ids(tiles_dir):
@@ -61,6 +80,7 @@ def layer(layer_id, meta, entry, series, scan_meta, corrections):
         "date": meta.get("date", ""),  # ISO-ish: "1966" or "1966-03"
         "dateNote": meta.get("date_note", ""),  # what the date means (edition, survey, print)
         "source": entry.get("page") or (entry.get("urls") or [""])[0],
+        "attribution": SCAN_CREDITS.get(layer_id) or SERIES_CREDITS.get(entry.get("series"), ""),
         "region": entry.get("region", ""),
         "tiles": f"tiles/{layer_id}/{{z}}/{{x}}/{{y}}.webp",
         "bounds": parse_bounds(meta.get("bounds")),
@@ -96,7 +116,7 @@ def write_catalog(out=None, **sources):
     data = build_catalog(**sources)
     out.parent.mkdir(parents=True, exist_ok=True)
     tmp = out.with_name(out.name + ".part")
-    tmp.write_text(json.dumps(data, indent=1, ensure_ascii=False))
+    tmp.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
     tmp.replace(out)
     return len(data["layers"])
 

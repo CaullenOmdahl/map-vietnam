@@ -85,7 +85,7 @@ def make_library(root, archive, monkeypatch, *, fill=True):
     monkeypatch.setattr(download_maps, "ALLOWED_URL_PREFIXES", ("https://", archive.base))
     monkeypatch.setattr(download_maps, "RETRY_WAIT_S", 0)
     monkeypatch.setattr(download_maps, "MIN_INTERVAL_S", 0)
-    cat = json.loads(FIXTURE.read_text())
+    cat = json.loads(FIXTURE.read_text(encoding="utf-8"))
     tmp = root / "src"
     tmp.mkdir(parents=True, exist_ok=True)
     bodies = {
@@ -103,12 +103,12 @@ def make_library(root, archive, monkeypatch, *, fill=True):
                 archive.files[url.removeprefix(archive.base)] = body
     path = root / "data" / "sources" / "map_library.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(cat, ensure_ascii=False))
+    path.write_text(json.dumps(cat, ensure_ascii=False), encoding="utf-8")
     gcps = [[c, r, 105.0 + c / 1000, 10.4 - r / 1000] for c in (0, 300, 600) for r in (0, 200, 400)]
     control = {"image": "data/raw/scans/scan_test/work.jpg", "crs": "EPSG:4326", "gcps": gcps, "max_zoom": 9}
     control["meta"] = {"title": "A test scan", "date": "1909", "dateNote": "publication"}
     (root / "data" / "scans").mkdir(parents=True, exist_ok=True)
-    (root / "data" / "scans" / "scan_test.json").write_text(json.dumps(control))
+    (root / "data" / "scans" / "scan_test.json").write_text(json.dumps(control), encoding="utf-8")
     return library.Library(root)
 
 

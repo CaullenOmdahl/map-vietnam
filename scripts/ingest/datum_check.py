@@ -328,7 +328,7 @@ def main(db_path=store.DB_PATH, out=OUT):
         ],
     }
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(result, indent=2, ensure_ascii=False))
+    out.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
     print(json.dumps({k: result[k] for k in ("inputs", "match_stats", "headline_unrounded_gns", "fits")}, indent=2))
     print(conclusion)
     return result

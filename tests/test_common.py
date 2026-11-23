@@ -17,7 +17,8 @@ def test_load_env_reads_values_but_never_overrides_the_environment(tmp_path, mon
         "export MV_TEST_EXPORTED=three\n"
         "MV_TEST_EMPTY=\n"
         "MV_TEST_SET=from-file\n"
-        "not a setting\n"
+        "not a setting\n",
+        encoding="utf-8",
     )
     # A private copy of the environment: load_env writes to os.environ directly.
     monkeypatch.setattr(os, "environ", {"MV_TEST_SET": "from-env"})

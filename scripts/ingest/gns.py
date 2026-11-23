@@ -362,7 +362,8 @@ def main(argv=None):
             },
             ensure_ascii=False,
             separators=(",", ":"),
-        )
+        ),
+        encoding="utf-8",
     )
     tmp.replace(INDEX_PATH)
 

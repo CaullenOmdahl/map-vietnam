@@ -66,7 +66,7 @@ def build(control_path, out, *, image=None, progress=None):
     Returns a report dict: {"id", "tiles", "bounds", "maxzoom", "misfit"}."""
     report = progress or (lambda fraction: None)
     layer_id = control_path.stem
-    c = json.loads(control_path.read_text())
+    c = json.loads(control_path.read_text(encoding="utf-8"))
     image = Path(image) if image else ROOT / c["image"]
     if not image.exists():
         raise FileNotFoundError(f"{image} is missing: add the map again to download it")

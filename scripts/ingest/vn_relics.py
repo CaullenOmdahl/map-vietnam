@@ -994,7 +994,7 @@ def fetch_district_members(refresh=False):
         headers={"Accept": "application/sparql-results+json", "Content-Type": "application/x-www-form-urlencoded"},
     )
     try:
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
     except ValueError as err:
         path.unlink(missing_ok=True)
         raise RuntimeError(
@@ -1048,7 +1048,7 @@ def fetch_province_borders(refresh=False):
         data=urllib.parse.urlencode({"data": PROVINCE_BORDER_QUERY}),
     )
     try:
-        return check_province_borders(parse_province_borders(json.loads(path.read_text())))
+        return check_province_borders(parse_province_borders(json.loads(path.read_text(encoding="utf-8"))))
     except (ValueError, RuntimeError) as err:
         path.unlink(missing_ok=True)
         raise RuntimeError(f"province borders: {err}") from err
@@ -1622,7 +1622,7 @@ def fetch_coords(titles, refresh=False):
             }
         )
         name = "coords_" + hashlib.sha1("|".join(batch).encode()).hexdigest()[:12] + ".json"
-        data = json.loads(cached_get(f"{API}?{q}", SOURCE, name=name, refresh=refresh).read_text())
+        data = json.loads(cached_get(f"{API}?{q}", SOURCE, name=name, refresh=refresh).read_text(encoding="utf-8"))
         if "error" in data or "query" not in data:
             # e.g. maxlag: drop the cache file so a re-run retries, and stop - writing the store
             # without these coordinates would silently move records to coarser centroids
@@ -2286,7 +2286,7 @@ def load(refresh=False):
         name="list_special.wikitext",
         refresh=refresh,
     )
-    return main_rows(main_p.read_text()), special_rows(spec_p.read_text())
+    return main_rows(main_p.read_text(encoding="utf-8")), special_rows(spec_p.read_text(encoding="utf-8"))
 
 
 def wanted_titles(main_r, special_r):
@@ -2311,7 +2311,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
     main_r, special_r = load(args.refresh)
     gaz = Gazetteer(
-        json.loads(GNS_INDEX.read_text()),
+        json.loads(GNS_INDEX.read_text(encoding="utf-8")),
         districts=fetch_district_members(refresh=args.refresh),
         borders=fetch_province_borders(refresh=args.refresh),
     )
@@ -2332,7 +2332,7 @@ def main(argv=None):
         "aoi_titles": [(e.title, e.lon, e.lat, e.uncertainty_m, e.original_datum) for e in aoi],
     }
     WORK.mkdir(parents=True, exist_ok=True)
-    (WORK / "vn_relics_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=1))
+    (WORK / "vn_relics_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps({k: v for k, v in report.items() if k != "aoi_titles"}, ensure_ascii=False, indent=1))
     print(f"{len(records)} records, {len(aoi)} in the area of interest")
     return report

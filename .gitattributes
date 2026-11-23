@@ -1,0 +1,6 @@
+# Keep line endings as committed on every OS. Windows checkouts would otherwise turn LF into CRLF,
+# which breaks the shell launcher and changes the byte-exact fixed-width test fixtures.
+* text=auto eol=lf
+tests/fixtures/** -text
+*.jpg binary
+*.png binary

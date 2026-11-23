@@ -2,6 +2,19 @@
 
 Notable changes to Map Vietnam. Versions follow [semantic versioning](https://semver.org).
 
+## Unreleased
+
+- Windows: every text file is now read and written as UTF-8, so setup and the map server no longer
+  fail on Vietnamese names; Control-C stops the map; removing a map that is being viewed retries
+  instead of failing; CI now runs on Windows too
+- The map now credits each old map on screen, and the OpenStreetMap and Esri credits follow their
+  providers' wording
+- The viewer explains when MapLibre can't be loaded (offline or blocked) instead of showing a blank
+  page, and ignores a damaged saved view
+- The server refuses non-finite or out-of-range site positions, wrongly typed fields and negative
+  limits with a 400, and checks the Host header for every file it serves
+- Docs: macOS 15 Gatekeeper steps, `py` on Windows, disk space, backups and uninstalling
+
 ## 0.1.0 (2026-11-05)
 
 First public version.

@@ -318,7 +318,7 @@ def _hes_provinces():
     if _HES is None:
         _HES = {}
         if HES_PROVINCES.exists():
-            for v in json.loads(HES_PROVINCES.read_text())["provinces"].values():
+            for v in json.loads(HES_PROVINCES.read_text(encoding="utf-8"))["provinces"].values():
                 for n in v["names"]:
                     k = norm_province(n.replace("-", " "))
                     if k and k not in _HES:
@@ -1223,7 +1223,7 @@ def _gns_cells():
                 "losses are in Vietnam; aborting, nothing written"
             )
         cells = {}
-        for feats in json.loads(GNS_INDEX.read_text())["names"].values():
+        for feats in json.loads(GNS_INDEX.read_text(encoding="utf-8"))["names"].values():
             for f in feats:
                 if f.get("fc") in ("P", "A", "T", "L", "S"):  # places, admin, terrain, islands
                     cells.setdefault((math.floor(f["lon"] / _GNS_CELL), math.floor(f["lat"] / _GNS_CELL)), set()).add(
@@ -1277,7 +1277,7 @@ def _vn_boundary():
                 f"{VN_BOUNDARY} missing (run scripts/ingest/wikidata_osm.py): cannot "
                 "tell which positions are inside Vietnam; aborting, nothing written"
             )
-        el = json.loads(VN_BOUNDARY.read_text())["elements"]
+        el = json.loads(VN_BOUNDARY.read_text(encoding="utf-8"))["elements"]
         if len(el) != 1 or el[0].get("type") != "relation":
             raise RuntimeError(f"{VN_BOUNDARY}: expected one boundary relation; aborting")
         segs = [
@@ -2032,7 +2032,7 @@ def _failures():
     global _FAILURES
     if _FAILURES is None:
         try:
-            _FAILURES = json.loads((RAW / FAILURES_NAME).read_text())
+            _FAILURES = json.loads((RAW / FAILURES_NAME).read_text(encoding="utf-8"))
         except (FileNotFoundError, ValueError):
             _FAILURES = {}
     return _FAILURES
@@ -2042,7 +2042,7 @@ def _save_failures():
     """Write the remembered failures atomically (temp file, then rename)."""
     RAW.mkdir(parents=True, exist_ok=True)
     tmp = RAW / (FAILURES_NAME + ".part")
-    tmp.write_text(json.dumps(_failures(), indent=1, sort_keys=True))
+    tmp.write_text(json.dumps(_failures(), indent=1, sort_keys=True), encoding="utf-8")
     tmp.replace(RAW / FAILURES_NAME)
 
 
@@ -2336,7 +2336,7 @@ def main(argv=None):
         ],
     }
     WORK.mkdir(parents=True, exist_ok=True)
-    (WORK / "vhpa_summary.json").write_text(json.dumps(summary, indent=1))
+    (WORK / "vhpa_summary.json").write_text(json.dumps(summary, indent=1), encoding="utf-8")
     print(json.dumps({k: v for k, v in summary.items() if k != "aoi_records"}, indent=1))
     return summary
 

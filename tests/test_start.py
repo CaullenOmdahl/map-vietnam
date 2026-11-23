@@ -106,11 +106,11 @@ def test_ingest_steps_need_their_stamp_the_database_and_their_outputs(home, monk
     monkeypatch.setattr(start, "ROOT", home)
     step = start.Step("src", "Source", [], 0, "", produces=["index.json"])
     home.joinpath("setup").mkdir()
-    step.stamp.write_text("x")
+    step.stamp.write_text("x", encoding="utf-8")
     assert not step.is_done()
-    (home / "evidence.sqlite").write_text("")
+    (home / "evidence.sqlite").write_text("", encoding="utf-8")
     assert not step.is_done()
-    (home / "index.json").write_text("{}")
+    (home / "index.json").write_text("{}", encoding="utf-8")
     assert step.is_done()
 
 
@@ -130,10 +130,10 @@ def test_first_run_total_counts_thor_only_with_a_key(capsys):
 def test_kaggle_key_is_found_in_env_file_kaggle_json_or_a_cached_download(home):
     assert not start.kaggle_key_available()
     (home / "kaggle").mkdir()
-    (home / "kaggle" / "kaggle.json").write_text(json.dumps({"username": "u", "key": "k"}))
+    (home / "kaggle" / "kaggle.json").write_text(json.dumps({"username": "u", "key": "k"}), encoding="utf-8")
     assert start.kaggle_key_available()
     (home / "kaggle" / "kaggle.json").unlink()
-    (home / ".env").write_text('KAGGLE_USERNAME="u"\nexport KAGGLE_KEY=k\n')
+    (home / ".env").write_text('KAGGLE_USERNAME="u"\nexport KAGGLE_KEY=k\n', encoding="utf-8")
     assert start.kaggle_key_available()
     (home / ".env").unlink()
     (home / "thor.zip").write_bytes(b"")
@@ -141,11 +141,12 @@ def test_kaggle_key_is_found_in_env_file_kaggle_json_or_a_cached_download(home):
 
 
 def test_write_env_is_private_and_keeps_other_settings(home):
-    (home / ".env").write_text("# my settings\nMAPVIETNAM_CONTACT=me@example.org\nKAGGLE_KEY=old\n")
+    (home / ".env").write_text("# my settings\nMAPVIETNAM_CONTACT=me@example.org\nKAGGLE_KEY=old\n", encoding="utf-8")
     start.write_env({"KAGGLE_USERNAME": "u", "KAGGLE_KEY": "new"})
-    text = (home / ".env").read_text()
+    text = (home / ".env").read_text(encoding="utf-8")
     assert text == "# my settings\nMAPVIETNAM_CONTACT=me@example.org\nKAGGLE_USERNAME=u\nKAGGLE_KEY=new\n"
-    assert stat.S_IMODE((home / ".env").stat().st_mode) == 0o600
+    if os.name != "nt":  # Windows has no owner-only mode bits; the file sits in the user's own folder
+        assert stat.S_IMODE((home / ".env").stat().st_mode) == 0o600
 
 
 def test_free_port_skips_a_port_in_use():
@@ -161,7 +162,9 @@ def test_requirements_are_not_reinstalled_when_unchanged(home, monkeypatch):
     monkeypatch.setattr(start, "VENV", venv)
     monkeypatch.setattr(start, "REQUIREMENTS_STAMP", venv / "requirements.sha256")
     venv.mkdir()
-    (venv / "requirements.sha256").write_text(start.hashlib.sha256(start.REQUIREMENTS.read_bytes()).hexdigest())
+    (venv / "requirements.sha256").write_text(
+        start.hashlib.sha256(start.REQUIREMENTS.read_bytes()).hexdigest(), encoding="utf-8"
+    )
     monkeypatch.setattr(start, "runs", lambda cmd: True)
 
     def no_install(*a, **k):
@@ -174,7 +177,9 @@ def test_requirements_are_not_reinstalled_when_unchanged(home, monkeypatch):
 def fake_steps(home):
     """Three steps run with this Python: one succeeds, one fails, one needs the failing one."""
     script = home / "step.py"
-    script.write_text("import sys\nprint('working on', sys.argv[1])\nsys.exit(sys.argv[1] == 'bad')\n")
+    script.write_text(
+        "import sys\nprint('working on', sys.argv[1])\nsys.exit(sys.argv[1] == 'bad')\n", encoding="utf-8"
+    )
     return [
         start.Step("good", "Good source", [[str(script), "good"]], 1, ""),
         start.Step("bad", "Bad source", [[str(script), "bad"]], 1, ""),
@@ -187,7 +192,7 @@ def test_setup_carries_on_past_failures_and_retries_only_what_did_not_finish(hom
     monkeypatch.setattr(start, "STEPS", steps)
     monkeypatch.setattr(start, "BY_NAME", {s.name: s for s in steps})
     monkeypatch.setattr(start, "ensure_venv", lambda: Path(sys.executable))
-    (home / "evidence.sqlite").write_text("")
+    (home / "evidence.sqlite").write_text("", encoding="utf-8")
     args = start.parse_args(["setup", "--yes"])
 
     assert start.setup(args) is False
@@ -196,7 +201,7 @@ def test_setup_carries_on_past_failures_and_retries_only_what_did_not_finish(hom
     assert "done      Good source" in out
     assert "FAILED    Bad source" in out and "last message: working on bad" in out
     assert "skipped   Needs bad: needs bad to finish first" in out
-    assert "working on bad" in (home / "setup" / "logs" / "bad.log").read_text()
+    assert "working on bad" in (home / "setup" / "logs" / "bad.log").read_text(encoding="utf-8")
     assert steps[0].stamp.exists() and not steps[1].stamp.exists()
 
     assert start.setup(args) is False

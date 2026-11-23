@@ -12,8 +12,8 @@ from pypdf import PdfWriter
 from pypdf.generic import NameObject, TextStringObject
 
 ROOT = Path(__file__).resolve().parent.parent
-CATALOGUE = json.loads(mlc.OUT.read_text())
-LEGACY = json.loads(mlc.LEGACY.read_text())
+CATALOGUE = json.loads(mlc.OUT.read_text(encoding="utf-8"))
+LEGACY = json.loads(mlc.LEGACY.read_text(encoding="utf-8"))
 MAPS = CATALOGUE["maps"]
 # Vietnam's mainland with a little slack, for "this sheet is about Vietnam" checks.
 VIETNAM = (102.1, 8.2, 109.6, 23.45)

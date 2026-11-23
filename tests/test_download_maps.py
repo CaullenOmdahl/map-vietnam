@@ -43,7 +43,7 @@ def test_raw_paths_keep_the_layout_older_versions_used():
 def test_scan_control_files_read_the_image_the_library_downloads():
     root = dm.ROOT
     for control in (root / "data" / "scans").glob("*.json"):
-        image = json.loads(control.read_text())["image"]
+        image = json.loads(control.read_text(encoding="utf-8"))["image"]
         entry = {"id": control.stem, "series": "scans", "kind": "scan"}
         assert root / image == dm.raw_paths(entry)[0]
 
@@ -263,5 +263,7 @@ def test_the_derive_step_runs_as_a_command_too(tmp_path):
 def test_importing_the_downloader_leaves_pillows_guard_alone():
     # The viewer's server imports it; only the builders, in their own processes, lift the guard.
     code = "import download_maps, PIL.Image; print(PIL.Image.MAX_IMAGE_PIXELS)"
-    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True, cwd=SCRIPTS)
+    out = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True, cwd=SCRIPTS, encoding="utf-8"
+    )
     assert out.stdout.strip() not in ("", "None")

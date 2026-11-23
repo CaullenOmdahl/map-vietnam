@@ -308,7 +308,7 @@ def test_404_is_remembered_and_not_refetched(raw_dir):
     folder, fake = raw_dir
     assert vhpa._get(vhpa.BASE + "incident/NOPE.HTM", "incident_NOPE.HTM") is None
     assert len(fake.calls) == 1
-    failures = json.loads((folder / vhpa.FAILURES_NAME).read_text())
+    failures = json.loads((folder / vhpa.FAILURES_NAME).read_text(encoding="utf-8"))
     assert failures["incident_NOPE.HTM"]["status"] == 404
     # A re-run (fresh process state) makes no request for it.
     vhpa._FAILURES = None
