@@ -932,3 +932,38 @@ def test_setup_offers_to_save_a_key_only_after_kaggle_asked_and_then_tries_again
 def test_first_run_map_sizes_come_from_the_catalogue():
     mb, disk_mb, count, all_gb = records.sheet_sizes()
     assert 5 < mb < 15 and disk_mb > mb and count == 498 and 5 < all_gb < 20
+
+
+def test_env_files_with_a_bom_or_another_encoding_do_not_break_the_listing(tmp_path):
+    path = tmp_path / ".env"
+    path.write_bytes(b"\xef\xbb\xbfKAGGLE_USERNAME=sam\r\n")  # Notepad's "UTF-8 with BOM"
+    assert records.read_env(path) == {"KAGGLE_USERNAME": "sam"}
+    path.write_bytes("KAGGLE_USERNAME=sam\n".encode("utf-16"))
+    assert records.read_env(path) == {}
+    with pytest.raises(RecordsError, match="not saved as UTF-8"):
+        records.write_env(path, {"KAGGLE_KEY": "x"})
+
+
+def test_counts_are_read_from_a_database_in_an_oddly_named_folder(tmp_path, home):
+    path = tmp_path / "my maps #1 ?" / "e.sqlite"
+    db = store.connect(path)
+    store.upsert_source(db, "thor", name="Thor")
+    store.upsert_many(
+        db,
+        [
+            store.Evidence(
+                source="thor",
+                source_record_id="1",
+                kind="air_strike",
+                lon=105.6,
+                lat=10.4,
+                uncertainty_m=50,
+                original_coord="x",
+                original_datum="wgs84",
+                title="strike",
+            )
+        ],
+    )
+    db.close()
+    rec = Records(home, sources=fake_sources(), db_path=path)
+    assert rec.store_facts()["thor"]["records"] == 1

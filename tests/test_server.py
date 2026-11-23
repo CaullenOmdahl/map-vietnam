@@ -705,3 +705,65 @@ def test_static_files_also_check_the_host(base):
     port = base.rsplit(":", 1)[1]
     assert status_of(f"{base}/app/index.html") in (200, 404)  # the temporary web root may be empty
     assert status_of(f"{base}/app/index.html", headers={"Host": f"evil.example:{port}"}) == 403
+
+
+def status_and_error(url, method="GET", body=None):
+    """(HTTP status, the "error" sentence) of a request the server refuses."""
+    with pytest.raises(urllib.error.HTTPError) as e:
+        call(url, method, body)
+    return e.value.code, json.loads(e.value.read())["error"]
+
+
+def test_a_case_needs_a_name_and_the_name_must_be_new(base):
+    assert status_and_error(f"{base}/api/cases", "POST", {"name": "   "}) == (400, "name must not be empty")
+    assert status_and_error(f"{base}/api/cases", "POST", {}) == (400, "name is missing")
+    call(f"{base}/api/cases", "POST", {"name": "Hue"})
+    assert status_and_error(f"{base}/api/cases", "POST", {"name": "Hue"}) == (
+        400,
+        "A case with that name already exists.",
+    )
+
+
+def test_blank_notes_and_sites_are_refused(base):
+    cid = call(f"{base}/api/cases", "POST", {"name": "Hue"})["id"]
+    assert status_and_error(f"{base}/api/cases/{cid}/notes", "POST", {"body": " \n"})[0] == 400
+    site = {"name": " ", "lon": 105.6, "lat": 10.4, "uncertainty_m": 100}
+    assert status_and_error(f"{base}/api/cases/{cid}/sites", "POST", site) == (400, "name must not be empty")
+
+
+def test_pinning_needs_a_real_whole_record_number(base):
+    cid = call(f"{base}/api/cases", "POST", {"name": "Hue"})["id"]
+    url = f"{base}/api/cases/{cid}/items"
+    assert status_and_error(url, "POST", {"evidence_id": 9999}) == (400, "That record or case does not exist.")
+    for bad in (None, True, 1.5, "1"):
+        assert status_and_error(url, "POST", {"evidence_id": bad}) == (400, "evidence_id must be a whole number")
+    assert status_and_error(url, "POST", {}) == (400, "evidence_id is missing")
+
+
+def test_a_huge_number_in_a_path_or_query_is_not_a_server_failure(base):
+    assert status_and_error(f"{base}/api/cases/{'9' * 30}")[0] == 404
+    assert status_and_error(f"{base}/api/evidence?ids={'9' * 30}") == (400, "a number in the request is too large")
+
+
+def test_malformed_query_values_get_plain_400s(base):
+    assert status_and_error(f"{base}/api/gridref") == (400, "ref is missing")
+    assert status_and_error(f"{base}/api/evidence?bbox=1,2,3") == (
+        400,
+        "bbox must be 4 numbers: west,south,east,north",
+    )
+    assert status_and_error(f"{base}/api/evidence?bbox=1,2,3,nan")[0] == 400
+    assert status_and_error(f"{base}/api/search?q=cao&near=105.6") == (400, "near must be 2 numbers: lon,lat")
+
+
+def test_a_dropped_connection_is_not_reported_as_a_server_error(base, capsys):
+    srv = server.MapServer.__new__(server.MapServer)  # handle_error needs nothing else
+    try:
+        raise ConnectionResetError("the browser cancelled the tile")
+    except ConnectionError:
+        srv.handle_error(None, ("127.0.0.1", 1))
+    assert capsys.readouterr().err == ""
+    try:
+        raise RuntimeError("a real fault")
+    except RuntimeError:
+        srv.handle_error(None, ("127.0.0.1", 1))
+    assert "a real fault" in capsys.readouterr().err

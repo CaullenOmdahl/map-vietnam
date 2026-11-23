@@ -5,6 +5,7 @@ and deleting or sizing a file or folder. Standard library only, so start.py can 
 (which imports this) before .venv exists. Import it; there is nothing to run.
 """
 
+import contextlib
 import json
 import os
 import shutil
@@ -20,13 +21,22 @@ except ImportError:  # pragma: no cover - Windows
 
 
 def path_bytes(path):
-    """Size on disk of a file or a folder's files; 0 if it does not exist."""
+    """Size on disk of a file or a folder's files; 0 if it does not exist. A file deleted while
+    this counts (the viewer lists sizes every second while a map or source is being removed)
+    counts as nothing, never as an error."""
     path = Path(path)
-    if path.is_file():
-        return path.stat().st_size
-    if path.is_dir():
-        return sum(p.stat().st_size for p in path.rglob("*") if p.is_file())
-    return 0
+    total = 0
+    try:
+        if path.is_dir():
+            for p in path.rglob("*"):
+                with contextlib.suppress(OSError):
+                    if p.is_file():
+                        total += p.stat().st_size
+        else:
+            total = path.stat().st_size
+    except OSError:
+        pass
+    return total
 
 
 def delete(path, attempts=10):
@@ -54,7 +64,12 @@ def write_json(path, data):
     with tempfile.NamedTemporaryFile(
         "w", encoding="utf-8", dir=path.parent, prefix=path.name, suffix=".tmp", delete=False
     ) as f:
-        json.dump(data, f)
+        try:
+            json.dump(data, f)
+        except BaseException:  # not JSON, or the disk is full: leave no half file behind
+            f.close()
+            Path(f.name).unlink(missing_ok=True)
+            raise
     os.replace(f.name, path)
 
 

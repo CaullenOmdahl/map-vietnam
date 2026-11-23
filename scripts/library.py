@@ -787,14 +787,19 @@ class Library:
     def legacy_folders(self):
         """Tile folders web/tiles/<id>/ of PNG tiles, as versions before the map library made:
         folders holding at least one zoom-level folder (a number). Other folders are not ours."""
+
+        def has_zoom_folder(folder):
+            try:
+                return any(z.is_dir() and z.name.isdigit() for z in folder.iterdir())
+            except OSError:  # deleted while the viewer lists the maps, by a conversion finishing
+                return False
+
         if not self.tiles.is_dir():
             return []
         return sorted(
             p
             for p in self.tiles.iterdir()
-            if p.is_dir()
-            and not p.name.endswith(tiling.PARTIAL_SUFFIX)
-            and any(z.is_dir() and z.name.isdigit() for z in p.iterdir())
+            if p.is_dir() and not p.name.endswith(tiling.PARTIAL_SUFFIX) and has_zoom_folder(p)
         )
 
     def legacy_status(self):
@@ -806,7 +811,10 @@ class Library:
         folders = self.legacy_folders()
         for folder in folders:
             # Thousands of small files each: measured once, and again only if the folder changes.
-            mtime = folder.stat().st_mtime_ns
+            try:
+                mtime = folder.stat().st_mtime_ns
+            except OSError:  # converted and deleted since the folders were listed
+                continue
             if self._legacy_sizes.get(folder.name, (None,))[0] != mtime:
                 self._legacy_sizes[folder.name] = (mtime, path_bytes(folder))
             total += self._legacy_sizes[folder.name][1]
@@ -904,7 +912,8 @@ def convert_png_folder(folder, out, meta):
         bounds = [west.left, west.bottom, east.right, east.top]
     with tiling.MBTilesWriter(out) as w:
         for png in folder.glob("*/*/*.png"):
-            rgba = np.asarray(Image.open(png).convert("RGBA"))
+            with Image.open(png) as img:  # closed before the folder is deleted (Windows refuses otherwise)
+                rgba = np.asarray(img.convert("RGBA"))
             if rgba[..., 3].any():
                 w.put(int(png.parent.parent.name), int(png.parent.name), int(png.stem), tiling.encode_webp(rgba))
         w.metadata = tiling.standard_metadata(meta.pop("name"), bounds, zooms[0], zooms[-1], **meta)
