@@ -91,8 +91,9 @@ BEN_HAI_LAT = 17.05  # DMZ line; GNS places north of it are North Vietnam
 
 
 def clean(s):
-    """Fixed-width text field -> trimmed printable ASCII (the EBCDIC conversion left stray bytes)."""
-    return re.sub(r"[^\x20-\x7e]", "", s).strip()
+    """Fixed-width text field -> printable ASCII with single spaces (the EBCDIC conversion left
+    stray bytes, and padding inside a field: 'NGOAI O     (MOT)' -> 'NGOAI O (MOT)')."""
+    return " ".join(re.sub(r"[^\x20-\x7e]", "", s).split())
 
 
 def read_records(path, reclen):

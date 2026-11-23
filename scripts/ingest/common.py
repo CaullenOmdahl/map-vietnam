@@ -29,6 +29,7 @@ import re
 import ssl
 import sys
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -45,6 +46,9 @@ BASE_USER_AGENT = "MapVietnam/0.1 (+https://github.com/CaullenOmdahl/map-vietnam
 AREA_OF_INTEREST = (105.35, 10.15, 105.95, 10.75)
 PROGRESS_ENV = "MAPVIETNAM_PROGRESS"  # set by whoever wants progress lines on stdout (see the docstring)
 DOWNLOAD_BLOCK = 1 << 20  # bytes read at a time; a download is reported once it is past its first block
+RETRIES = 3  # attempts per download
+RETRY_WAIT = 10.0  # seconds to wait after the first failure; after the second, twice that
+RETRY_STATUS = {429, 500, 502, 503, 504}  # HTTP errors worth asking again about
 _ENV_LINE = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")
 _last_request = {}
 
@@ -108,6 +112,23 @@ USER_AGENT = user_agent()
 _TLS = _tls_context()
 
 
+def _download(req, path, timeout):
+    """Stream one response to <path>.part and rename it to path once complete."""
+    with urllib.request.urlopen(req, timeout=timeout, context=_TLS) as r:
+        tmp = path.with_suffix(path.suffix + ".part")
+        total = int(r.headers.get("Content-Length") or 0)
+        done = 0
+        with open(tmp, "wb") as f:
+            while chunk := r.read(DOWNLOAD_BLOCK):
+                f.write(chunk)
+                done += len(chunk)
+                if total > DOWNLOAD_BLOCK:
+                    progress(done / total, f"Downloading {megabytes(done)} of {megabytes(total)}")
+                elif done > DOWNLOAD_BLOCK:
+                    progress(None, f"Downloading {megabytes(done)}")
+        tmp.replace(path)
+
+
 def cached_get(url, source, *, name=None, min_interval=2.0, refresh=False, headers=None, data=None, timeout=120):
     """Fetch url once and keep it under data/raw/<source>/ (source may hold a sub-folder,
     e.g. "scans/koch_1889_f2"). Returns the local Path.
@@ -135,19 +156,17 @@ def cached_get(url, source, *, name=None, min_interval=2.0, refresh=False, heade
         headers={"User-Agent": USER_AGENT, **(headers or {})},
     )
     try:
-        with urllib.request.urlopen(req, timeout=timeout, context=_TLS) as r:
-            tmp = path.with_suffix(path.suffix + ".part")
-            total = int(r.headers.get("Content-Length") or 0)
-            done = 0
-            with open(tmp, "wb") as f:
-                while chunk := r.read(DOWNLOAD_BLOCK):
-                    f.write(chunk)
-                    done += len(chunk)
-                    if total > DOWNLOAD_BLOCK:
-                        progress(done / total, f"Downloading {megabytes(done)} of {megabytes(total)}")
-                    elif done > DOWNLOAD_BLOCK:
-                        progress(None, f"Downloading {megabytes(done)}")
-            tmp.replace(path)
+        for attempt in range(1, RETRIES + 1):
+            try:
+                _download(req, path, timeout)
+                break
+            except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+                # Public endpoints (Overpass, WDQS) answer 502/504 under load: wait and ask again
+                # rather than fail a whole setup. Anything else (404, 403) is final.
+                code = getattr(e, "code", None)
+                if attempt == RETRIES or (code is not None and code not in RETRY_STATUS):
+                    raise
+                time.sleep(RETRY_WAIT * attempt)
     finally:
         # Count failed requests too: a retry straight after an error is still a request.
         _last_request[host] = time.monotonic()
