@@ -1,6 +1,8 @@
 # Keep line endings as committed on every OS. Windows checkouts would otherwise turn LF into CRLF,
-# which breaks the shell launcher and changes the byte-exact fixed-width test fixtures.
+# which breaks the shell launcher (Windows batch files are the exception: they want CRLF) and changes the byte-exact fixed-width test fixtures.
 * text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
 tests/fixtures/** -text
 *.jpg binary
 *.png binary
