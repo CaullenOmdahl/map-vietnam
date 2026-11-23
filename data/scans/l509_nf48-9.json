@@ -1,0 +1,123 @@
+{
+ "image": "data/raw/scans/l509_nf48-9/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1088.9,
+   2482.6,
+   102.25,
+   21.25
+  ],
+  [
+   1084.2,
+   1723.9,
+   102.25,
+   21.5
+  ],
+  [
+   1080.7,
+   964.6,
+   102.25,
+   21.75
+  ],
+  [
+   1795.9,
+   2483.5,
+   102.5,
+   21.25
+  ],
+  [
+   1793.3,
+   1724.7,
+   102.5,
+   21.5
+  ],
+  [
+   1789.5,
+   966.6,
+   102.5,
+   21.75
+  ],
+  [
+   2503.0,
+   2484.5,
+   102.75,
+   21.25
+  ],
+  [
+   2499.0,
+   1725.5,
+   102.75,
+   21.5
+  ],
+  [
+   2493.9,
+   964.0,
+   102.75,
+   21.75
+  ],
+  [
+   3216.9,
+   2482.2,
+   103.0,
+   21.25
+  ],
+  [
+   3208.7,
+   1721.7,
+   103.0,
+   21.5
+  ],
+  [
+   3203.0,
+   958.2,
+   103.0,
+   21.75
+  ],
+  [
+   3919.9,
+   1719.5,
+   103.25,
+   21.5
+  ],
+  [
+   3911.1,
+   959.5,
+   103.25,
+   21.75
+  ]
+ ],
+ "neatline": [
+  [
+   366.1,
+   206.3
+  ],
+  [
+   4615.8,
+   199.1
+  ],
+  [
+   4635.3,
+   3239.2
+  ],
+  [
+   385.5,
+   3246.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 14 graticule nodes",
+ "work_size": [
+  5000,
+  3800
+ ],
+ "source_bytes": 6745032,
+ "meta": {
+  "title": "Dien Bien Phu (NF 48-9)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "1957",
+  "dateNote": "edition 1, printed by the Army Map Service 6/1957; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-9.jpg"
+ }
+}

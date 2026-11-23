@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_93_b862qx53/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2398.2,
+   5465.9,
+   103.857229,
+   18.54
+  ],
+  [
+   6928.5,
+   774.9,
+   104.217229,
+   18.9
+  ],
+  [
+   9141.9,
+   5539.7,
+   104.397229,
+   18.54
+  ],
+  [
+   9172.9,
+   791.4,
+   104.397229,
+   18.9
+  ]
+ ],
+ "neatline": [
+  [
+   572.5,
+   704.0
+  ],
+  [
+   9915.8,
+   802.9
+  ],
+  [
+   9873.9,
+   6809.6
+  ],
+  [
+   530.6,
+   6710.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10032,
+  7657
+ ],
+ "source_bytes": 16607422,
+ "meta": {
+  "title": "Borikhane (feuille 93)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.b862qx53"
+ }
+}

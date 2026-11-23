@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_159bisw_bb4cer37/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1831.1,
+   6457.2,
+   103.857229,
+   13.5
+  ],
+  [
+   1823.1,
+   1750.7,
+   103.857229,
+   13.86
+  ],
+  [
+   4092.3,
+   4101.9,
+   104.037229,
+   13.68
+  ]
+ ],
+ "neatline": [
+  [
+   577.5,
+   848.5
+  ],
+  [
+   4955.3,
+   844.6
+  ],
+  [
+   4965.3,
+   6751.5
+  ],
+  [
+   587.5,
+   6755.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5421,
+  7563
+ ],
+ "source_bytes": 6330986,
+ "meta": {
+  "title": "Banteai Srei ouest (feuille 159bisW)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-01; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.bb4cer37"
+ }
+}

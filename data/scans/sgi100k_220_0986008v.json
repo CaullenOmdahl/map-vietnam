@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_220_0986008v/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   3305.4,
+   6434.2,
+   106.017229,
+   10.8
+  ],
+  [
+   3327.5,
+   1728.4,
+   106.017229,
+   11.16
+  ],
+  [
+   5617.3,
+   6446.2,
+   106.197229,
+   10.8
+  ],
+  [
+   5640.4,
+   1743.4,
+   106.197229,
+   11.16
+  ],
+  [
+   7953.2,
+   1761.0,
+   106.377229,
+   11.16
+  ]
+ ],
+ "neatline": [
+  [
+   1002.1,
+   886.0
+  ],
+  [
+   9845.2,
+   945.0
+  ],
+  [
+   9816.8,
+   6830.5
+  ],
+  [
+   973.7,
+   6771.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10833,
+  7758
+ ],
+ "source_bytes": 19375756,
+ "meta": {
+  "title": "Trang-Bang (feuille 220)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1925",
+  "dateNote": "edition dated 1925-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.0986008v"
+ }
+}

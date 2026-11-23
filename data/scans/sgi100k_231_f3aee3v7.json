@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_231_f3aee3v7/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1491.0,
+   5046.3,
+   107.277229,
+   10.44
+  ],
+  [
+   1474.0,
+   2676.0,
+   107.277229,
+   10.62
+  ],
+  [
+   3799.9,
+   2658.1,
+   107.457229,
+   10.62
+  ],
+  [
+   8461.3,
+   5001.3,
+   107.817229,
+   10.44
+  ]
+ ],
+ "neatline": [
+  [
+   554.7,
+   809.3
+  ],
+  [
+   9424.8,
+   751.0
+  ],
+  [
+   9463.1,
+   6627.4
+  ],
+  [
+   593.0,
+   6685.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10029,
+  7651
+ ],
+ "source_bytes": 12120174,
+ "meta": {
+  "title": "Xuyên-Mộc (feuille 231)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.f3aee3v7"
+ }
+}

@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_125e_ee3es2zf/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1135.3,
+   3851.0,
+   107.637229,
+   16.38
+  ],
+  [
+   1123.2,
+   1408.3,
+   107.637229,
+   16.56
+  ],
+  [
+   3491.5,
+   3832.5,
+   107.817229,
+   16.38
+  ]
+ ],
+ "neatline": [
+  [
+   501.1,
+   352.1
+  ],
+  [
+   5102.4,
+   316.0
+  ],
+  [
+   5131.0,
+   6065.1
+  ],
+  [
+   529.7,
+   6101.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5493,
+  7485
+ ],
+ "source_bytes": 8087519,
+ "meta": {
+  "title": "Huế est (feuille 125E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-12; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ee3es2zf"
+ }
+}

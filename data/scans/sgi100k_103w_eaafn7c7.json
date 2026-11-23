@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_103w_eaafn7c7/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2701.4,
+   4438.9,
+   105.297229,
+   18.18
+  ],
+  [
+   2716.2,
+   2089.2,
+   105.297229,
+   18.36
+  ],
+  [
+   4944.3,
+   4451.0,
+   105.477229,
+   18.18
+  ],
+  [
+   4951.9,
+   2102.4,
+   105.477229,
+   18.36
+  ]
+ ],
+ "neatline": [
+  [
+   646.0,
+   831.9
+  ],
+  [
+   5030.4,
+   856.8
+  ],
+  [
+   5002.2,
+   6763.5
+  ],
+  [
+   617.8,
+   6738.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5505,
+  7566
+ ],
+ "source_bytes": 10674752,
+ "meta": {
+  "title": "Hương-Khê ouest (feuille 103W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-12; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.eaafn7c7"
+ }
+}

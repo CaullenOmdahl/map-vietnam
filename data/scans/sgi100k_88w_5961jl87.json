@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_88w_5961jl87/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2733.9,
+   4531.3,
+   105.297229,
+   19.08
+  ],
+  [
+   2720.2,
+   2187.3,
+   105.297229,
+   19.26
+  ],
+  [
+   4964.9,
+   4520.7,
+   105.477229,
+   19.08
+  ],
+  [
+   4949.5,
+   2172.1,
+   105.477229,
+   19.26
+  ]
+ ],
+ "neatline": [
+  [
+   569.0,
+   918.3
+  ],
+  [
+   4986.0,
+   892.7
+  ],
+  [
+   5022.6,
+   6786.7
+  ],
+  [
+   605.5,
+   6812.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5469,
+  7539
+ ],
+ "source_bytes": 9238263,
+ "meta": {
+  "title": "Phủ-Diễn-Châu ouest (feuille 88W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.5961jl87"
+ }
+}

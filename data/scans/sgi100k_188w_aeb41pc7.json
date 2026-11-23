@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_188w_aeb41pc7/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2049.6,
+   5254.0,
+   104.577229,
+   12.24
+  ],
+  [
+   4354.8,
+   5265.2,
+   104.757229,
+   12.24
+  ],
+  [
+   4349.9,
+   2818.8,
+   104.757229,
+   12.42
+  ]
+ ],
+ "neatline": [
+  [
+   519.6,
+   650.3
+  ],
+  [
+   4939.8,
+   671.7
+  ],
+  [
+   4952.0,
+   6824.9
+  ],
+  [
+   531.7,
+   6803.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5379,
+  7551
+ ],
+ "source_bytes": 8043304,
+ "meta": {
+  "title": "Kompong-Chhnang ouest (feuille 188W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-03; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.aeb41pc7"
+ }
+}

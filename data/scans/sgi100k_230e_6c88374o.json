@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_230e_6c88374o/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1278.9,
+   5705.8,
+   106.917229,
+   10.44
+  ],
+  [
+   1281.8,
+   3351.9,
+   106.917229,
+   10.62
+  ],
+  [
+   3599.3,
+   5713.7,
+   107.097229,
+   10.44
+  ],
+  [
+   3593.7,
+   3356.4,
+   107.097229,
+   10.62
+  ]
+ ],
+ "neatline": [
+  [
+   593.1,
+   1410.0
+  ],
+  [
+   5000.9,
+   1421.8
+  ],
+  [
+   5004.3,
+   7346.5
+  ],
+  [
+   596.6,
+   7334.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5565,
+  7743
+ ],
+ "source_bytes": 9593739,
+ "meta": {
+  "title": "Chợ-Lớn est (feuille 230E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.6c88374o"
+ }
+}

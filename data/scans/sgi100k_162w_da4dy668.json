@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_162w_da4dy668/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   498.1,
+   6443.9,
+   105.837229,
+   13.5
+  ],
+  [
+   504.6,
+   4101.5,
+   105.837229,
+   13.68
+  ],
+  [
+   2808.2,
+   6447.1,
+   106.017229,
+   13.5
+  ],
+  [
+   2805.9,
+   4106.5,
+   106.017229,
+   13.68
+  ],
+  [
+   2804.5,
+   1771.3,
+   106.017229,
+   13.86
+  ]
+ ],
+ "neatline": [
+  [
+   500.9,
+   763.9
+  ],
+  [
+   4932.6,
+   773.5
+  ],
+  [
+   4933.1,
+   6652.5
+  ],
+  [
+   501.5,
+   6642.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5334,
+  7356
+ ],
+ "source_bytes": 8489485,
+ "meta": {
+  "title": "Stung Treng ouest (feuille 162W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.da4dy668"
+ }
+}

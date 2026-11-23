@@ -1,0 +1,85 @@
+{
+ "image": "data/raw/scans/sgi100k_134_eb17tnh2/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   845.9,
+   4228.3,
+   105.837229,
+   15.48
+  ],
+  [
+   3122.0,
+   4231.8,
+   106.017229,
+   15.48
+  ],
+  [
+   3122.6,
+   1899.3,
+   106.017229,
+   15.66
+  ],
+  [
+   5396.4,
+   6565.7,
+   106.197229,
+   15.3
+  ],
+  [
+   5388.9,
+   1900.5,
+   106.197229,
+   15.66
+  ],
+  [
+   7666.9,
+   6562.0,
+   106.377229,
+   15.3
+  ],
+  [
+   7661.7,
+   4231.0,
+   106.377229,
+   15.48
+  ]
+ ],
+ "neatline": [
+  [
+   846.1,
+   803.1
+  ],
+  [
+   9684.5,
+   805.4
+  ],
+  [
+   9689.8,
+   6564.2
+  ],
+  [
+   851.5,
+   6561.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 7 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10497,
+  7653
+ ],
+ "source_bytes": 22171920,
+ "meta": {
+  "title": "Saravane (feuille 134)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1932",
+  "dateNote": "edition dated 1932-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.eb17tnh2"
+ }
+}

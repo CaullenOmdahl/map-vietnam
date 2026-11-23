@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_242w_cf0e3gn0/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2406.6,
+   3809.3,
+   105.297229,
+   9.18
+  ],
+  [
+   2415.0,
+   1472.0,
+   105.297229,
+   9.36
+  ],
+  [
+   4736.3,
+   6149.3,
+   105.477229,
+   9.0
+  ],
+  [
+   4740.3,
+   3810.3,
+   105.477229,
+   9.18
+  ],
+  [
+   4737.6,
+   1469.5,
+   105.477229,
+   9.36
+  ]
+ ],
+ "neatline": [
+  [
+   571.2,
+   749.0
+  ],
+  [
+   4990.4,
+   747.8
+  ],
+  [
+   4984.9,
+   6616.6
+  ],
+  [
+   565.7,
+   6617.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5445,
+  7230
+ ],
+ "source_bytes": 6103173,
+ "meta": {
+  "title": "Bác Liêu ouest (feuille 242W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.cf0e3gn0"
+ }
+}

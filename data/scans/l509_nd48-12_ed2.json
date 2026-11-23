@@ -1,0 +1,135 @@
+{
+ "image": "data/raw/scans/l509_nd48-12_ed2/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1142.6,
+   1668.0,
+   106.75,
+   13.5
+  ],
+  [
+   1139.5,
+   936.5,
+   106.75,
+   13.75
+  ],
+  [
+   1863.8,
+   3125.5,
+   107.0,
+   13.0
+  ],
+  [
+   1861.5,
+   2397.3,
+   107.0,
+   13.25
+  ],
+  [
+   1858.4,
+   1667.9,
+   107.0,
+   13.5
+  ],
+  [
+   1854.4,
+   937.6,
+   107.0,
+   13.75
+  ],
+  [
+   2580.9,
+   3131.0,
+   107.25,
+   13.0
+  ],
+  [
+   2576.0,
+   2398.2,
+   107.25,
+   13.25
+  ],
+  [
+   2571.3,
+   1668.5,
+   107.25,
+   13.5
+  ],
+  [
+   2566.6,
+   937.1,
+   107.25,
+   13.75
+  ],
+  [
+   3289.3,
+   2399.4,
+   107.5,
+   13.25
+  ],
+  [
+   3284.2,
+   1669.1,
+   107.5,
+   13.5
+  ],
+  [
+   3276.8,
+   938.9,
+   107.5,
+   13.75
+  ],
+  [
+   4005.2,
+   2396.6,
+   107.75,
+   13.25
+  ],
+  [
+   3999.2,
+   1667.9,
+   107.75,
+   13.5
+  ],
+  [
+   3995.1,
+   937.0,
+   107.75,
+   13.75
+  ]
+ ],
+ "neatline": [
+  [
+   420.4,
+   209.9
+  ],
+  [
+   4704.0,
+   211.1
+  ],
+  [
+   4721.8,
+   3128.9
+  ],
+  [
+   438.2,
+   3127.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 16 graticule nodes",
+ "work_size": [
+  5000,
+  3665
+ ],
+ "source_bytes": 4982768,
+ "meta": {
+  "title": "Voeune Sai (ND 48-12)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "1962",
+  "dateNote": "edition 2, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd48-12-2nd-ed.jpg"
+ }
+}

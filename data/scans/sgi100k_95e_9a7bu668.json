@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_95e_9a7bu668/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2763.5,
+   5606.5,
+   105.657229,
+   18.54
+  ],
+  [
+   2754.3,
+   909.1,
+   105.657229,
+   18.9
+  ],
+  [
+   5005.6,
+   5604.5,
+   105.837229,
+   18.54
+  ],
+  [
+   4996.4,
+   3256.5,
+   105.837229,
+   18.72
+  ]
+ ],
+ "neatline": [
+  [
+   573.1,
+   838.8
+  ],
+  [
+   6961.2,
+   834.3
+  ],
+  [
+   6975.0,
+   6708.8
+  ],
+  [
+   587.0,
+   6713.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  7326,
+  7485
+ ],
+ "source_bytes": 11794610,
+ "meta": {
+  "title": "Vinh est (feuille 95E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-11; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.9a7bu668"
+ }
+}

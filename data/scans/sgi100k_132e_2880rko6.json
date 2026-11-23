@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_132e_2880rko6/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1417.9,
+   5274.9,
+   108.357229,
+   15.84
+  ],
+  [
+   1388.3,
+   2938.6,
+   108.357229,
+   16.02
+  ],
+  [
+   3686.4,
+   5246.4,
+   108.537229,
+   15.84
+  ],
+  [
+   3655.0,
+   2912.0,
+   108.537229,
+   16.02
+  ]
+ ],
+ "neatline": [
+  [
+   461.4,
+   921.3
+  ],
+  [
+   4872.3,
+   867.8
+  ],
+  [
+   4948.6,
+   6717.9
+  ],
+  [
+   537.8,
+   6771.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5406,
+  7503
+ ],
+ "source_bytes": 6555441,
+ "meta": {
+  "title": "Tourane est (feuille 132E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.2880rko6"
+ }
+}

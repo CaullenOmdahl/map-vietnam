@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_159bis_6d8861mk/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2161.1,
+   6418.0,
+   103.857229,
+   13.5
+  ],
+  [
+   6740.3,
+   1750.6,
+   104.217229,
+   13.86
+  ],
+  [
+   9009.5,
+   4144.4,
+   104.397229,
+   13.68
+  ]
+ ],
+ "neatline": [
+  [
+   951.9,
+   731.2
+  ],
+  [
+   9681.8,
+   846.3
+  ],
+  [
+   9655.8,
+   6851.1
+  ],
+  [
+   925.9,
+   6736.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10524,
+  7700
+ ],
+ "source_bytes": 11520812,
+ "meta": {
+  "title": "Phnom Koulen (feuille 159bis)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1925",
+  "dateNote": "edition dated 1925-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.6d8861mk"
+ }
+}

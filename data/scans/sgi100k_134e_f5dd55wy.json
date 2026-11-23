@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_134e_f5dd55wy/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   651.8,
+   6641.7,
+   106.197229,
+   15.3
+  ],
+  [
+   660.2,
+   4298.4,
+   106.197229,
+   15.48
+  ],
+  [
+   2929.1,
+   6643.5,
+   106.377229,
+   15.3
+  ],
+  [
+   2929.8,
+   4298.2,
+   106.377229,
+   15.48
+  ],
+  [
+   2931.8,
+   1959.8,
+   106.377229,
+   15.66
+  ]
+ ],
+ "neatline": [
+  [
+   519.3,
+   865.1
+  ],
+  [
+   4948.3,
+   868.1
+  ],
+  [
+   4941.4,
+   6762.3
+  ],
+  [
+   512.4,
+   6759.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5391,
+  7548
+ ],
+ "source_bytes": 8289290,
+ "meta": {
+  "title": "Saravane est (feuille 134E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.f5dd55wy"
+ }
+}

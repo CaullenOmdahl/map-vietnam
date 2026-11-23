@@ -1,0 +1,117 @@
+{
+ "image": "data/raw/scans/l509_ne48-3_ed2/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1040.3,
+   2490.9,
+   105.25,
+   19.25
+  ],
+  [
+   1036.1,
+   982.1,
+   105.25,
+   19.75
+  ],
+  [
+   1759.9,
+   2491.9,
+   105.5,
+   19.25
+  ],
+  [
+   1756.5,
+   1739.8,
+   105.5,
+   19.5
+  ],
+  [
+   1752.0,
+   982.2,
+   105.5,
+   19.75
+  ],
+  [
+   2472.2,
+   1737.9,
+   105.75,
+   19.5
+  ],
+  [
+   3192.9,
+   2496.5,
+   106.0,
+   19.25
+  ],
+  [
+   3188.9,
+   1741.8,
+   106.0,
+   19.5
+  ],
+  [
+   3185.5,
+   984.1,
+   106.0,
+   19.75
+  ],
+  [
+   3911.8,
+   2495.5,
+   106.25,
+   19.25
+  ],
+  [
+   3907.2,
+   1739.5,
+   106.25,
+   19.5
+  ],
+  [
+   3901.9,
+   982.2,
+   106.25,
+   19.75
+  ],
+  [
+   3899.0,
+   232.9,
+   106.25,
+   20.0
+  ]
+ ],
+ "neatline": [
+  [
+   314.1,
+   229.2
+  ],
+  [
+   4616.2,
+   234.7
+  ],
+  [
+   4631.1,
+   3251.4
+  ],
+  [
+   329.0,
+   3245.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 13 graticule nodes",
+ "work_size": [
+  5000,
+  3798
+ ],
+ "source_bytes": 5700748,
+ "meta": {
+  "title": "Thanh Hoa (NE 48-3)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "1962",
+  "dateNote": "edition 2, printed by the Army Map Service 10/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-3-2nd-ed.jpg"
+ }
+}

@@ -19,6 +19,10 @@ MAPS = CATALOGUE["maps"]
 VIETNAM = (102.1, 8.2, 109.6, 23.45)
 
 
+GEOPDF_SERIES = {"l7014", "jog1501", "l909"}
+PLACED_SERIES = {"sgi100k", "l509", "warper"}  # placed by scripts/place_sheets.py or copied from the Warper
+
+
 def by_series(series):
     return [m for m in MAPS if m["series"] == series]
 
@@ -28,16 +32,20 @@ def by_series(series):
 
 def test_catalogue_shape():
     assert isinstance(CATALOGUE["about"], str) and CATALOGUE["about"]
-    assert set(CATALOGUE["series"]) == {"l7014", "jog1501", "scans"}
+    assert set(CATALOGUE["series"]) == GEOPDF_SERIES | PLACED_SERIES | {"scans"}
     for meta in CATALOGUE["series"].values():
         assert set(meta) == {"name", "scale", "publisher", "years", "licence", "notes", "disk_per_download_byte"}
         assert all(isinstance(v, str) and v for k, v in meta.items() if k != "disk_per_download_byte")
         assert 1 < meta["disk_per_download_byte"] < 5
     required = {"id", "series", "title", "bounds", "region", "urls", "bytes", "sha256", "kind"}
+    # What the viewer's Old maps card sorts, filters and groups by.
+    required |= {"year", "scale_n", "place", "sheet_key"}
     for m in MAPS:
         assert required <= set(m), m["id"]
         assert m["series"] in CATALOGUE["series"]
-        assert m["kind"] == ("scan" if m["series"] == "scans" else "geopdf")
+        assert m["kind"] == ("geopdf" if m["series"] in GEOPDF_SERIES else "scan")
+        assert m["year"] is None or 1850 <= m["year"] <= 2010
+        assert m["place"] and m["sheet_key"]
         assert m["region"] in ("north", "centre", "south")
         assert isinstance(m["title"], str) and m["title"].strip() == m["title"] and m["title"]
         assert isinstance(m["bytes"], int) and m["bytes"] > 100_000
@@ -47,12 +55,16 @@ def test_catalogue_shape():
 
 def test_counts_per_series():
     # 501 hosted 15' cells (L7014 472, L7015 22, L7016 7), less three that cannot be added
-    # (mlc.UNUSABLE: two L7014, one L7015); 32 JOG sheets on the USGS Store; 7 scans.
+    # (mlc.UNUSABLE: two L7014, one L7015); 32 JOG sheets on the USGS Store and two from the
+    # University of Texas; 18 city plans; 7 hand-placed scans.
     assert len(by_series("l7014")) == 498
     assert sum(m["id"].startswith("L7015") for m in MAPS) == 21
     assert sum(m["id"].startswith("L7016") for m in MAPS) == 7
-    assert len(by_series("jog1501")) == len(mlc.JOG_SHEETS) == 32
+    assert len(by_series("jog1501")) == len(mlc.JOG_SHEETS) + len(mlc.JOG_UT_SHEETS) == 34
+    assert len(by_series("l909")) == len(mlc.L909_SHEETS) == 18
     assert len(by_series("scans")) == 7
+    # The automatically placed series: as many as passed place_sheets.py's checks.
+    assert len(by_series("sgi100k")) > 200 and len(by_series("l509")) > 25 and len(by_series("warper")) >= 6
 
 
 def test_ids_titles_and_urls_are_unique():
@@ -60,7 +72,8 @@ def test_ids_titles_and_urls_are_unique():
     assert len(ids) == len(set(ids))
     # The id names the installed file (web/tiles/<id>.mbtiles), so it must be a safe file name.
     assert all(re.fullmatch(r"[A-Za-z0-9_.-]+", i) and not i.startswith(".") for i in ids)
-    titles = [m["title"] for m in MAPS if m["series"] != "scans"]
+    # Editions of one scanned sheet share its title (the year is shown beside it); the PDF sheets do not.
+    titles = [m["title"] for m in MAPS if m["series"] in GEOPDF_SERIES]
     assert len(titles) == len(set(titles))
     urls = [u for m in MAPS for u in m["urls"]]
     assert len(urls) == len(set(urls))
@@ -73,7 +86,7 @@ def test_every_url_is_https_on_an_allowed_host():
             assert parts.scheme == "https", url
             assert parts.hostname in mlc.ALLOWED_HOSTS, url
             assert not parts.username and not parts.port, url
-        if m["kind"] == "geopdf":
+        if m["kind"] == "geopdf" and m["id"].removeprefix("JOG_") not in mlc.JOG_UT_SHEETS:
             assert all(u.startswith("https://store.usgs.gov/") for u in m["urls"][:2]), m["id"]
 
 
@@ -81,7 +94,9 @@ def test_bounds_are_sane_and_touch_vietnam():
     for m in MAPS:
         w, s, e, n = m["bounds"]
         assert -180 <= w < e <= 180 and -90 <= s < n <= 90, m["id"]
-        assert e - w <= 3 and n - s <= 3, m["id"]
+        # Sheets are at most 1:250,000 (1.5 x 1 degrees); the Admiralty charts cover a whole gulf.
+        limit = 15 if m["series"] == "warper" else 3
+        assert e - w <= limit and n - s <= limit, m["id"]
         assert w < VIETNAM[2] and e > VIETNAM[0] and s < VIETNAM[3] and n > VIETNAM[1], m["id"]
         assert m["region"] == mlc.region_for(m["bounds"]), m["id"]
 
@@ -112,7 +127,9 @@ def test_the_sheets_the_project_started_with_keep_their_ids_and_checksums():
 def test_scans_keep_every_field_the_downloader_needs():
     entries = {m["id"]: m for m in by_series("scans")}
     assert set(entries) == {s["id"] for s in LEGACY["scans"]}
-    assert set(entries) == {p.stem for p in mlc.SCANS.glob("*.json")}
+    # Every control file belongs to a hand-placed scan or a placed sheet of the catalogue, and back.
+    placed = {m["id"] for m in MAPS if m["series"] in PLACED_SERIES}
+    assert set(entries) | placed == {p.stem for p in mlc.SCANS.glob("*.json")}
     for old in LEGACY["scans"]:
         new = entries[old["id"]]
         assert new["urls"] == [old["url"]]
@@ -125,6 +142,9 @@ def test_scans_keep_every_field_the_downloader_needs():
 def test_jog_sheets_have_checksums_and_three_addresses():
     for m in by_series("jog1501"):
         sheet = m["id"].removeprefix("JOG_")
+        if sheet in mlc.JOG_UT_SHEETS:
+            assert [urlsplit(u).hostname for u in m["urls"]] == ["maps.lib.utexas.edu"]
+            continue
         assert sheet in mlc.JOG_SHEETS
         assert m["sha256"] is not None
         assert [urlsplit(u).hostname for u in m["urls"]] == ["store.usgs.gov", "store.usgs.gov", "maps.lib.utexas.edu"]

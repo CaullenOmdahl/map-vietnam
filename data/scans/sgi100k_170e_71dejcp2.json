@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_170e_71dejcp2/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   623.3,
+   5273.0,
+   106.197229,
+   13.14
+  ],
+  [
+   624.4,
+   2919.2,
+   106.197229,
+   13.32
+  ],
+  [
+   2928.2,
+   5268.6,
+   106.377229,
+   13.14
+  ],
+  [
+   2919.6,
+   2915.7,
+   106.377229,
+   13.32
+  ]
+ ],
+ "neatline": [
+  [
+   428.8,
+   780.4
+  ],
+  [
+   4867.8,
+   772.8
+  ],
+  [
+   4877.3,
+   6684.7
+  ],
+  [
+   438.4,
+   6692.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5232,
+  7419
+ ],
+ "source_bytes": 7315307,
+ "meta": {
+  "title": "Preak Préas est (feuille 170E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.71dejcp2"
+ }
+}

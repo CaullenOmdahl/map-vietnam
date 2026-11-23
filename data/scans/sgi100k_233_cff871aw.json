@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_233_cff871aw/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1978.6,
+   3886.2,
+   104.577229,
+   10.08
+  ],
+  [
+   1990.2,
+   1514.9,
+   104.577229,
+   10.26
+  ],
+  [
+   6644.6,
+   6283.1,
+   104.937229,
+   9.9
+  ],
+  [
+   6659.2,
+   1551.1,
+   104.937229,
+   10.26
+  ],
+  [
+   8987.1,
+   3934.5,
+   105.117229,
+   10.08
+  ]
+ ],
+ "neatline": [
+  [
+   599.0,
+   777.8
+  ],
+  [
+   9458.0,
+   841.1
+  ],
+  [
+   9437.7,
+   6777.8
+  ],
+  [
+   578.7,
+   6714.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10047,
+  7674
+ ],
+ "source_bytes": 12630423,
+ "meta": {
+  "title": "Rạch-Gía (feuille 233)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.cff871aw"
+ }
+}

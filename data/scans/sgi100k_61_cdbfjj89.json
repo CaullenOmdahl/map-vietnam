@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_61_cdbfjj89/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   551.9,
+   5679.7,
+   105.837229,
+   20.34
+  ],
+  [
+   548.5,
+   3323.0,
+   105.837229,
+   20.52
+  ],
+  [
+   7215.0,
+   947.9,
+   106.377229,
+   20.7
+  ],
+  [
+   9458.9,
+   5649.7,
+   106.557229,
+   20.34
+  ],
+  [
+   9453.3,
+   3297.4,
+   106.557229,
+   20.52
+  ]
+ ],
+ "neatline": [
+  [
+   537.6,
+   780.7
+  ],
+  [
+   9424.1,
+   752.9
+  ],
+  [
+   9444.0,
+   6748.9
+  ],
+  [
+   557.5,
+   6776.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10020,
+  7658
+ ],
+ "source_bytes": 19005708,
+ "meta": {
+  "title": "Nam-Dịnh (feuille 61)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1927",
+  "dateNote": "edition dated 1927-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.cdbfjj89"
+ }
+}

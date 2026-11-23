@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_137w_fc4fwgnh/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1387.6,
+   6513.1,
+   107.997229,
+   15.3
+  ],
+  [
+   1374.9,
+   4164.3,
+   107.997229,
+   15.48
+  ],
+  [
+   1356.1,
+   1817.4,
+   107.997229,
+   15.66
+  ],
+  [
+   3654.1,
+   6491.3,
+   108.177229,
+   15.3
+  ],
+  [
+   3635.5,
+   4145.1,
+   108.177229,
+   15.48
+  ],
+  [
+   3613.6,
+   1797.0,
+   108.177229,
+   15.66
+  ]
+ ],
+ "neatline": [
+  [
+   523.4,
+   912.0
+  ],
+  [
+   5870.9,
+   863.6
+  ],
+  [
+   5916.2,
+   6767.9
+  ],
+  [
+   568.6,
+   6816.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5421,
+  7563
+ ],
+ "source_bytes": 8671601,
+ "meta": {
+  "title": "Tam-Kỳ ouest (feuille 137W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.fc4fwgnh"
+ }
+}

@@ -1,0 +1,135 @@
+{
+ "image": "data/raw/scans/l509_ne48-11_ed4/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1044.5,
+   3232.6,
+   105.25,
+   17.0
+  ],
+  [
+   1041.6,
+   2481.4,
+   105.25,
+   17.25
+  ],
+  [
+   1042.6,
+   1725.4,
+   105.25,
+   17.5
+  ],
+  [
+   1041.6,
+   971.4,
+   105.25,
+   17.75
+  ],
+  [
+   1769.0,
+   2486.0,
+   105.5,
+   17.25
+  ],
+  [
+   1768.5,
+   1730.0,
+   105.5,
+   17.5
+  ],
+  [
+   1764.7,
+   974.8,
+   105.5,
+   17.75
+  ],
+  [
+   2492.9,
+   2487.3,
+   105.75,
+   17.25
+  ],
+  [
+   2485.7,
+   976.0,
+   105.75,
+   17.75
+  ],
+  [
+   3220.0,
+   2488.7,
+   106.0,
+   17.25
+  ],
+  [
+   3217.9,
+   1732.5,
+   106.0,
+   17.5
+  ],
+  [
+   3212.1,
+   980.5,
+   106.0,
+   17.75
+  ],
+  [
+   3947.3,
+   2491.8,
+   106.25,
+   17.25
+  ],
+  [
+   3944.6,
+   1735.2,
+   106.25,
+   17.5
+  ],
+  [
+   3939.8,
+   980.6,
+   106.25,
+   17.75
+  ],
+  [
+   4670.3,
+   1736.3,
+   106.5,
+   17.5
+  ]
+ ],
+ "neatline": [
+  [
+   310.5,
+   218.1
+  ],
+  [
+   4663.9,
+   232.2
+  ],
+  [
+   4673.6,
+   3247.4
+  ],
+  [
+   320.2,
+   3233.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 16 graticule nodes",
+ "work_size": [
+  5000,
+  3777
+ ],
+ "source_bytes": 6668592,
+ "meta": {
+  "title": "Badon (NE 48-11)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "1962",
+  "dateNote": "edition 4, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-11-4th-ed.jpg"
+ }
+}

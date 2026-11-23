@@ -34,6 +34,10 @@ DEFAULT_MAXZOOM = 15
 SERIES_CREDITS = {
     "l7014": "Old map: US Army Map Service, public domain",
     "jog1501": "Old map: US Defense Mapping Agency, public domain",
+    "l909": "Old map: US Army Map Service, public domain",
+    "l509": "Old map: US Army Map Service, courtesy of the University of Texas Libraries",
+    "warper": "Old map: Admiralty chart, via Wikimedia Commons and Wikimaps Warper",
+    "sgi100k": "Old map: Service Géographique de l'Indochine, via CNRS/NAKALA",
 }
 SCAN_CREDITS = {
     "ams_l509_nc48-6_1954": "Old map: US Army Map Service, via ANU Asia Pacific Map Collection",
@@ -80,7 +84,7 @@ def layer(layer_id, meta, entry, series, scan_meta, corrections):
         "date": meta.get("date", ""),  # ISO-ish: "1966" or "1966-03"
         "dateNote": meta.get("date_note", ""),  # what the date means (edition, survey, print)
         "source": entry.get("page") or (entry.get("urls") or [""])[0],
-        "attribution": SCAN_CREDITS.get(layer_id) or SERIES_CREDITS.get(entry.get("series"), ""),
+        "attribution": entry.get("credit") or SCAN_CREDITS.get(layer_id) or SERIES_CREDITS.get(entry.get("series"), ""),
         "region": entry.get("region", ""),
         "tiles": f"tiles/{layer_id}/{{z}}/{{x}}/{{y}}.webp",
         "bounds": parse_bounds(meta.get("bounds")),

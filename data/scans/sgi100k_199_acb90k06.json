@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_199_acb90k06/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2521.4,
+   1670.3,
+   105.297229,
+   12.06
+  ],
+  [
+   4824.7,
+   6382.6,
+   105.477229,
+   11.7
+  ],
+  [
+   4831.3,
+   4032.5,
+   105.477229,
+   11.88
+  ],
+  [
+   4837.5,
+   1679.0,
+   105.477229,
+   12.06
+  ],
+  [
+   9455.5,
+   4036.0,
+   105.837229,
+   11.88
+  ],
+  [
+   9463.9,
+   1678.4,
+   105.837229,
+   12.06
+  ]
+ ],
+ "neatline": [
+  [
+   614.9,
+   767.3
+  ],
+  [
+   9465.4,
+   777.1
+  ],
+  [
+   9450.4,
+   6651.0
+  ],
+  [
+   600.0,
+   6641.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10017,
+  7631
+ ],
+ "source_bytes": 19948240,
+ "meta": {
+  "title": "Kompong-Cham (feuille 199)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.acb90k06"
+ }
+}

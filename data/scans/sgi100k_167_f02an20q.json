@@ -1,0 +1,85 @@
+{
+ "image": "data/raw/scans/sgi100k_167_f02an20q/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1713.0,
+   5093.9,
+   103.137229,
+   13.14
+  ],
+  [
+   1730.6,
+   2747.1,
+   103.137229,
+   13.32
+  ],
+  [
+   4031.1,
+   2775.3,
+   103.317229,
+   13.32
+  ],
+  [
+   6306.1,
+   5156.4,
+   103.497229,
+   13.14
+  ],
+  [
+   6324.6,
+   2806.1,
+   103.497229,
+   13.32
+  ],
+  [
+   8609.6,
+   5182.5,
+   103.677229,
+   13.14
+  ],
+  [
+   8627.7,
+   2831.0,
+   103.677229,
+   13.32
+  ]
+ ],
+ "neatline": [
+  [
+   899.7,
+   718.4
+  ],
+  [
+   9684.9,
+   829.2
+  ],
+  [
+   9637.1,
+   6845.6
+  ],
+  [
+   851.8,
+   6734.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 7 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10521,
+  7695
+ ],
+ "source_bytes": 14799695,
+ "meta": {
+  "title": "Battambang (feuille 167)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1926",
+  "dateNote": "edition dated 1926-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.f02an20q"
+ }
+}

@@ -37,7 +37,9 @@ import store  # noqa: E402
 
 RAW = store.ROOT / "data" / "raw"
 ENV_FILE = store.ROOT / ".env"
-BASE_USER_AGENT = "MapVietnam/0.1 (historical map research; low-volume)"
+# The project page lets an archive see what is calling it (Wikimedia, for one, throttles clients that
+# give no way to find out); it says nothing about the person running the copy.
+BASE_USER_AGENT = "MapVietnam/0.1 (+https://github.com/CaullenOmdahl/map-vietnam; historical map research; low-volume)"
 # Area the project started with (around Cao Lanh, Dong Thap); ingesters for national sources
 # still load everything they can, so the map can widen later without re-ingesting.
 AREA_OF_INTEREST = (105.35, 10.15, 105.95, 10.75)

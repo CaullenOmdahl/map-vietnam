@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_x_faf87uqf/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   846.6,
+   5950.0,
+   105.117229,
+   22.14
+  ],
+  [
+   878.4,
+   3608.1,
+   105.117229,
+   22.32
+  ],
+  [
+   3040.7,
+   5973.4,
+   105.297229,
+   22.14
+  ],
+  [
+   3066.0,
+   3631.4,
+   105.297229,
+   22.32
+  ],
+  [
+   3090.5,
+   1287.0,
+   105.297229,
+   22.5
+  ]
+ ],
+ "neatline": [
+  [
+   816.9,
+   1003.4
+  ],
+  [
+   5197.0,
+   1049.4
+  ],
+  [
+   5131.3,
+   6906.8
+  ],
+  [
+   751.2,
+   6860.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5514,
+  7869
+ ],
+ "source_bytes": 11596111,
+ "meta": {
+  "title": "Bac-Kan",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1912",
+  "dateNote": "edition dated 1912-03; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.faf87uqf"
+ }
+}

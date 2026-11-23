@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_163e_d9dde2x1/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1067.8,
+   6812.6,
+   106.917229,
+   13.5
+  ],
+  [
+   1076.5,
+   2098.1,
+   106.917229,
+   13.86
+  ],
+  [
+   3421.8,
+   4453.2,
+   107.097229,
+   13.68
+  ]
+ ],
+ "neatline": [
+  [
+   542.6,
+   1146.2
+  ],
+  [
+   5094.8,
+   1142.0
+  ],
+  [
+   5083.9,
+   7047.0
+  ],
+  [
+   531.7,
+   7051.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5352,
+  7779
+ ],
+ "source_bytes": 7593520,
+ "meta": {
+  "title": "feuille n°163E (feuille 163E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.d9dde2x1"
+ }
+}

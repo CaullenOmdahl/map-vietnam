@@ -11,9 +11,11 @@ on your own computer and you use it in your browser.
 
 ## Features
 
-- Dated old maps, the earliest from 1873, faded over today's street map or satellite view
-- More than 500 maps covering nearly all of Vietnam. You add the ones you want and nothing else
-  is downloaded
+- Dated old maps, the earliest from 1855, faded over today's street map or satellite view
+- About 900 maps covering nearly all of Vietnam: 1960s US Army sheets and city plans, French
+  Indochina sheets from 1895 to 1952, and British Admiralty charts of the coast. You add the
+  ones you want and nothing else is downloaded
+- Find maps by place, sheet number or year, sort them by date, and see every edition of a sheet
 - Swipe between any two maps side by side
 - Search by place name or by a wartime grid reference such as `WS683427`
 - Public war-era records: air strikes, aircraft losses, casualty records, hamlets, bases, battles
@@ -59,11 +61,12 @@ public archives. Click **Add the standard records** and carry on using the map w
 which takes about 15 minutes. **Records** in the side panel lists every source, with Add and
 Remove on each.
 
-Old maps work the same way. There are more than 500 of them and you probably want six. Go to the
+Old maps work the same way. There are about 900 of them and you probably want six. Go to the
 place you care about and click **Add old maps** at the bottom of the screen. You get
 every map that covers what's on screen, with its size, and outlines showing where each one sits.
-Click **Add** on the ones you want. A typical 1:50,000 sheet takes about a minute, a 10 MB
-download and about 20 MB of disk.
+Click **Add** on the ones you want. A typical sheet takes about a minute, a 10 MB download and
+about 20 MB of disk. To find a map somewhere else, type a town, sheet number or year in the box
+at the top of the list.
 
 ![The Old maps list open beside the map, with outlines on the map showing where each old map lies](docs/images/add-old-maps.jpg)
 
@@ -84,9 +87,10 @@ downloaded from its publisher when you add it. The repository holds only the cat
 to fetch them, small source excerpts for the tests, and the screenshots in this README, each
 under its own licence.
 
-The maps are US Army 1:50,000 sheets and US Defense Mapping Agency 1:250,000 sheets, from the
-USGS store or the University of Texas Libraries, all public domain, and older French and US
-scans from five map libraries. The records come from the US National
+The maps are US Army Map Service and Defense Mapping Agency sheets and city plans from the USGS
+store and the University of Texas Libraries, all public domain; French Indochina 1:100,000
+sheets scanned by the CNRS (on NAKALA, mostly CC BY-NC-SA); British Admiralty charts on Wikimedia
+Commons; and a few older scans from other map libraries. The records come from the US National
 Archives, the NGA place-name server, Wikipedia, Wikidata and OpenStreetMap. Two more sources are
 optional: US Air Force strike records from Kaggle, and helicopter losses from the Vietnam
 Helicopter Pilots Association website.

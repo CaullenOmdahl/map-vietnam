@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_131e_c05a1264/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1165.3,
+   5397.6,
+   107.637229,
+   15.84
+  ],
+  [
+   1145.9,
+   3060.1,
+   107.637229,
+   16.02
+  ],
+  [
+   3432.2,
+   5376.5,
+   107.817229,
+   15.84
+  ],
+  [
+   3405.5,
+   3037.0,
+   107.817229,
+   16.02
+  ]
+ ],
+ "neatline": [
+  [
+   483.1,
+   916.4
+  ],
+  [
+   4903.0,
+   873.1
+  ],
+  [
+   4960.7,
+   6743.0
+  ],
+  [
+   540.8,
+   6786.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5415,
+  7551
+ ],
+ "source_bytes": 9742255,
+ "meta": {
+  "title": "An-Diêm est (feuille 131E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.c05a1264"
+ }
+}

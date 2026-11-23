@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_15e_7cdagpg7/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   619.2,
+   6358.8,
+   104.037229,
+   22.14
+  ],
+  [
+   624.6,
+   3783.1,
+   104.037229,
+   22.32
+  ],
+  [
+   625.7,
+   1203.9,
+   104.037229,
+   22.5
+  ],
+  [
+   2931.0,
+   6360.5,
+   104.217229,
+   22.14
+  ],
+  [
+   2927.2,
+   3781.6,
+   104.217229,
+   22.32
+  ],
+  [
+   2925.8,
+   1206.2,
+   104.217229,
+   22.5
+  ]
+ ],
+ "neatline": [
+  [
+   411.1,
+   996.3
+  ],
+  [
+   5055.8,
+   998.1
+  ],
+  [
+   5055.0,
+   7454.3
+  ],
+  [
+   410.3,
+   7452.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5592,
+  7725
+ ],
+ "source_bytes": 11029428,
+ "meta": {
+  "title": "Lao-Kay, est (feuille 15E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-11; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.7cdagpg7"
+ }
+}

@@ -1,0 +1,117 @@
+{
+ "image": "data/raw/scans/l509_ne48-16_ed2/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1048.5,
+   2514.8,
+   106.75,
+   16.25
+  ],
+  [
+   1043.4,
+   1754.5,
+   106.75,
+   16.5
+  ],
+  [
+   1043.2,
+   995.4,
+   106.75,
+   16.75
+  ],
+  [
+   1780.7,
+   2516.0,
+   107.0,
+   16.25
+  ],
+  [
+   1776.4,
+   1754.4,
+   107.0,
+   16.5
+  ],
+  [
+   1774.4,
+   997.4,
+   107.0,
+   16.75
+  ],
+  [
+   2507.7,
+   1757.4,
+   107.25,
+   16.5
+  ],
+  [
+   2503.5,
+   998.5,
+   107.25,
+   16.75
+  ],
+  [
+   3242.8,
+   2520.9,
+   107.5,
+   16.25
+  ],
+  [
+   3236.3,
+   1759.9,
+   107.5,
+   16.5
+  ],
+  [
+   3233.4,
+   1000.4,
+   107.5,
+   16.75
+  ],
+  [
+   3975.9,
+   2516.3,
+   107.75,
+   16.25
+  ],
+  [
+   3965.3,
+   998.8,
+   107.75,
+   16.75
+  ]
+ ],
+ "neatline": [
+  [
+   306.4,
+   241.4
+  ],
+  [
+   4692.9,
+   248.1
+  ],
+  [
+   4708.7,
+   3279.6
+  ],
+  [
+   322.2,
+   3272.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 13 graticule nodes",
+ "work_size": [
+  5000,
+  3804
+ ],
+ "source_bytes": 6427534,
+ "meta": {
+  "title": "Hue (NE 48-16)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "1962",
+  "dateNote": "edition 2, printed by the Army Map Service 8/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-ne48-16-2nd-ed.jpg"
+ }
+}

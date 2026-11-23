@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_86w_258696dg/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2548.0,
+   6832.1,
+   103.857229,
+   18.9
+  ],
+  [
+   2577.6,
+   4488.4,
+   103.857229,
+   19.08
+  ],
+  [
+   2602.2,
+   2145.6,
+   103.857229,
+   19.26
+  ],
+  [
+   4781.7,
+   6862.7,
+   104.037229,
+   18.9
+  ],
+  [
+   4807.9,
+   4514.7,
+   104.037229,
+   19.08
+  ]
+ ],
+ "neatline": [
+  [
+   785.0,
+   878.4
+  ],
+  [
+   5086.2,
+   932.2
+  ],
+  [
+   5018.1,
+   6863.8
+  ],
+  [
+   716.9,
+   6810.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5547,
+  7782
+ ],
+ "source_bytes": 6943711,
+ "meta": {
+  "title": "Khê-Kiên ouest (feuille 86W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-08; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.258696dg"
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_166bise_1faf5x25/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1236.1,
+   5422.5,
+   102.777229,
+   13.14
+  ],
+  [
+   1254.0,
+   2830.7,
+   102.777229,
+   13.32
+  ],
+  [
+   3823.9,
+   5422.5,
+   102.957229,
+   13.14
+  ],
+  [
+   3839.4,
+   2843.8,
+   102.957229,
+   13.32
+  ]
+ ],
+ "neatline": [
+  [
+   544.0,
+   730.1
+  ],
+  [
+   5493.5,
+   742.6
+  ],
+  [
+   5451.6,
+   7244.8
+  ],
+  [
+   502.1,
+   7232.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5523,
+  7737
+ ],
+ "source_bytes": 7596322,
+ "meta": {
+  "title": "Lovéa est (feuille 166bisE)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-03; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.1faf5x25"
+ }
+}

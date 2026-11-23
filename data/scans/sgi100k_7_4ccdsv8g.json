@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_7_4ccdsv8g/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1101.0,
+   2154.9,
+   104.397229,
+   22.86
+  ],
+  [
+   5450.8,
+   4541.1,
+   104.757229,
+   22.68
+  ],
+  [
+   5458.7,
+   2158.0,
+   104.757229,
+   22.86
+  ],
+  [
+   7645.1,
+   2156.4,
+   104.937229,
+   22.86
+  ]
+ ],
+ "neatline": [
+  [
+   824.0,
+   760.4
+  ],
+  [
+   9700.7,
+   763.0
+  ],
+  [
+   9673.1,
+   6690.7
+  ],
+  [
+   796.3,
+   6688.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10497,
+  7739
+ ],
+ "source_bytes": 20650274,
+ "meta": {
+  "title": "Hà-Giang (feuille 7)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1926",
+  "dateNote": "edition dated 1926-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.4ccdsv8g"
+ }
+}

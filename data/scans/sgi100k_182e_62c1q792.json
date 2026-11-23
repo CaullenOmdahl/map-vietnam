@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_182e_62c1q792/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1810.6,
+   6175.0,
+   108.357229,
+   12.6
+  ],
+  [
+   1785.7,
+   3833.4,
+   108.357229,
+   12.78
+  ],
+  [
+   1757.9,
+   1494.3,
+   108.357229,
+   12.96
+  ],
+  [
+   4074.3,
+   3817.9,
+   108.537229,
+   12.78
+  ]
+ ],
+ "neatline": [
+  [
+   428.6,
+   794.1
+  ],
+  [
+   4807.1,
+   762.9
+  ],
+  [
+   4873.3,
+   6649.3
+  ],
+  [
+   494.8,
+   6680.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5271,
+  7575
+ ],
+ "source_bytes": 8444132,
+ "meta": {
+  "title": "Ban Mé Thuot est (feuille 182E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.62c1q792"
+ }
+}

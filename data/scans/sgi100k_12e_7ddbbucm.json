@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_12e_7ddbbucm/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   899.7,
+   5921.3,
+   101.877229,
+   22.14
+  ],
+  [
+   908.1,
+   3467.4,
+   101.877229,
+   22.32
+  ],
+  [
+   3253.0,
+   5927.1,
+   102.057229,
+   22.14
+  ],
+  [
+   3258.1,
+   3477.3,
+   102.057229,
+   22.32
+  ]
+ ],
+ "neatline": [
+  [
+   452.8,
+   1163.7
+  ],
+  [
+   5203.9,
+   1179.5
+  ],
+  [
+   5186.8,
+   7420.5
+  ],
+  [
+   435.7,
+   7404.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5553,
+  7785
+ ],
+ "source_bytes": 11522956,
+ "meta": {
+  "title": "Muong-Ou-Tay, est (feuille 12E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-01; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.7ddbbucm"
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_72w_fcb6074j/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   510.8,
+   4660.3,
+   105.837229,
+   19.98
+  ],
+  [
+   532.1,
+   2310.0,
+   105.837229,
+   20.16
+  ],
+  [
+   2813.3,
+   4671.2,
+   106.017229,
+   19.98
+  ],
+  [
+   2820.1,
+   2326.8,
+   106.017229,
+   20.16
+  ]
+ ],
+ "neatline": [
+  [
+   536.5,
+   971.9
+  ],
+  [
+   5102.4,
+   999.4
+  ],
+  [
+   5067.0,
+   6903.2
+  ],
+  [
+   501.1,
+   6875.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5535,
+  7755
+ ],
+ "source_bytes": 9901484,
+ "meta": {
+  "title": "Ninh-Bính ouest (feuille 72W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-08; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.fcb6074j"
+ }
+}

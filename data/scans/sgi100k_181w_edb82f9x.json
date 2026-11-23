@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_181w_edb82f9x/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1749.7,
+   6237.9,
+   107.277229,
+   12.6
+  ],
+  [
+   1741.7,
+   4010.4,
+   107.277229,
+   12.78
+  ],
+  [
+   1739.0,
+   1782.3,
+   107.277229,
+   12.96
+  ],
+  [
+   3938.5,
+   4013.4,
+   107.457229,
+   12.78
+  ],
+  [
+   3942.4,
+   1786.9,
+   107.457229,
+   12.96
+  ]
+ ],
+ "neatline": [
+  [
+   1002.0,
+   960.3
+  ],
+  [
+   5229.4,
+   967.3
+  ],
+  [
+   5238.2,
+   6592.3
+  ],
+  [
+   1010.8,
+   6585.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5979,
+  7665
+ ],
+ "source_bytes": 7753436,
+ "meta": {
+  "title": "Ban Don ouest (feuille 181W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.edb82f9x"
+ }
+}

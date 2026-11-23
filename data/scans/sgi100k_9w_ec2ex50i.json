@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_9w_ec2ex50i/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   623.2,
+   5046.9,
+   105.837229,
+   22.68
+  ],
+  [
+   639.3,
+   2694.0,
+   105.837229,
+   22.86
+  ],
+  [
+   2737.8,
+   5060.5,
+   106.017229,
+   22.68
+  ],
+  [
+   4859.4,
+   5067.8,
+   106.197229,
+   22.68
+  ],
+  [
+   4868.6,
+   2713.1,
+   106.197229,
+   22.86
+  ]
+ ],
+ "neatline": [
+  [
+   648.3,
+   856.5
+  ],
+  [
+   4933.0,
+   876.8
+  ],
+  [
+   4896.0,
+   7186.8
+  ],
+  [
+   611.3,
+   7166.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5568,
+  7908
+ ],
+ "source_bytes": 12571363,
+ "meta": {
+  "title": "Cao-Bằng, ouest (feuille 9W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ec2ex50i"
+ }
+}

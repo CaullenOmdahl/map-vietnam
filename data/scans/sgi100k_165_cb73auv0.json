@@ -1,0 +1,97 @@
+{
+ "image": "data/raw/scans/sgi100k_165_cb73auv0/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   4161.1,
+   6215.8,
+   108.177229,
+   13.5
+  ],
+  [
+   4137.1,
+   3865.7,
+   108.177229,
+   13.68
+  ],
+  [
+   4111.5,
+   1515.5,
+   108.177229,
+   13.86
+  ],
+  [
+   6460.6,
+   6190.8,
+   108.357229,
+   13.5
+  ],
+  [
+   6441.4,
+   3841.6,
+   108.357229,
+   13.68
+  ],
+  [
+   6418.6,
+   1491.3,
+   108.357229,
+   13.86
+  ],
+  [
+   8763.1,
+   6165.6,
+   108.537229,
+   13.5
+  ],
+  [
+   8742.1,
+   3817.5,
+   108.537229,
+   13.68
+  ],
+  [
+   8722.4,
+   1469.8,
+   108.537229,
+   13.86
+  ]
+ ],
+ "neatline": [
+  [
+   764.4,
+   696.8
+  ],
+  [
+   9681.1,
+   603.9
+  ],
+  [
+   9736.5,
+   6500.7
+  ],
+  [
+   819.8,
+   6593.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 9 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10533,
+  7688
+ ],
+ "source_bytes": 19154905,
+ "meta": {
+  "title": "Ban-Tur (feuille 165)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1932",
+  "dateNote": "edition dated 1932-12; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.cb73auv0"
+ }
+}

@@ -1,0 +1,123 @@
+{
+ "image": "data/raw/scans/l509_nf48-13/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1157.6,
+   2416.2,
+   102.25,
+   20.25
+  ],
+  [
+   1151.9,
+   951.6,
+   102.25,
+   20.75
+  ],
+  [
+   1845.5,
+   2417.3,
+   102.5,
+   20.25
+  ],
+  [
+   1842.0,
+   1685.7,
+   102.5,
+   20.5
+  ],
+  [
+   1840.0,
+   951.6,
+   102.5,
+   20.75
+  ],
+  [
+   2536.4,
+   2416.9,
+   102.75,
+   20.25
+  ],
+  [
+   2530.9,
+   1682.9,
+   102.75,
+   20.5
+  ],
+  [
+   2528.1,
+   953.3,
+   102.75,
+   20.75
+  ],
+  [
+   3225.9,
+   2417.6,
+   103.0,
+   20.25
+  ],
+  [
+   3220.8,
+   1684.1,
+   103.0,
+   20.5
+  ],
+  [
+   3217.0,
+   952.6,
+   103.0,
+   20.75
+  ],
+  [
+   3917.9,
+   2417.8,
+   103.25,
+   20.25
+  ],
+  [
+   3913.2,
+   1684.7,
+   103.25,
+   20.5
+  ],
+  [
+   3906.7,
+   954.4,
+   103.25,
+   20.75
+  ]
+ ],
+ "neatline": [
+  [
+   456.0,
+   225.6
+  ],
+  [
+   4593.2,
+   227.5
+  ],
+  [
+   4609.0,
+   3148.6
+  ],
+  [
+   471.8,
+   3146.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 14 graticule nodes",
+ "work_size": [
+  5000,
+  3742
+ ],
+ "source_bytes": 6086658,
+ "meta": {
+  "title": "Muong Ngoi (NF 48-13)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "1957",
+  "dateNote": "edition 1, printed by the Army Map Service 6/1957; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-13.jpg"
+ }
+}

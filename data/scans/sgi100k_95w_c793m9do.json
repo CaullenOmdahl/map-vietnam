@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_95w_c793m9do/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2694.8,
+   5616.6,
+   105.297229,
+   18.54
+  ],
+  [
+   4940.9,
+   5621.9,
+   105.477229,
+   18.54
+  ],
+  [
+   4935.6,
+   3280.8,
+   105.477229,
+   18.72
+  ],
+  [
+   4929.1,
+   936.9,
+   105.477229,
+   18.9
+  ]
+ ],
+ "neatline": [
+  [
+   532.0,
+   837.4
+  ],
+  [
+   4976.8,
+   848.8
+  ],
+  [
+   4991.7,
+   6728.7
+  ],
+  [
+   546.9,
+   6717.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5484,
+  7548
+ ],
+ "source_bytes": 9881825,
+ "meta": {
+  "title": "Vinh ouest (feuille 95W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-12; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.c793m9do"
+ }
+}

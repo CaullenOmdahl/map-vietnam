@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_156_1d7a3779/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   812.3,
+   2899.5,
+   107.457229,
+   14.22
+  ],
+  [
+   3115.2,
+   5223.6,
+   107.637229,
+   14.04
+  ],
+  [
+   3097.8,
+   2876.2,
+   107.637229,
+   14.22
+  ],
+  [
+   5405.8,
+   5201.7,
+   107.817229,
+   14.04
+  ],
+  [
+   5389.4,
+   2848.9,
+   107.817229,
+   14.22
+  ]
+ ],
+ "neatline": [
+  [
+   310.4,
+   839.5
+  ],
+  [
+   6731.4,
+   770.5
+  ],
+  [
+   6771.7,
+   6621.9
+  ],
+  [
+   350.8,
+   6691.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  7086,
+  7723
+ ],
+ "source_bytes": 9904667,
+ "meta": {
+  "title": "Ya Li (feuille 156)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1928",
+  "dateNote": "edition dated 1928-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.1d7a3779"
+ }
+}

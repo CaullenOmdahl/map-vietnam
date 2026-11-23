@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_92w_bde1ibll/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2207.8,
+   5483.8,
+   103.137229,
+   18.54
+  ],
+  [
+   2239.5,
+   3125.7,
+   103.137229,
+   18.72
+  ],
+  [
+   4438.7,
+   5504.2,
+   103.317229,
+   18.54
+  ],
+  [
+   4465.3,
+   3135.3,
+   103.317229,
+   18.72
+  ]
+ ],
+ "neatline": [
+  [
+   445.6,
+   854.7
+  ],
+  [
+   4943.6,
+   885.0
+  ],
+  [
+   4870.4,
+   6817.6
+  ],
+  [
+   372.4,
+   6787.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5439,
+  7458
+ ],
+ "source_bytes": 8918623,
+ "meta": {
+  "title": "Muong-May ouest (feuille 92W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.bde1ibll"
+ }
+}

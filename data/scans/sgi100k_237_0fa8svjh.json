@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_237_0fa8svjh/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2056.0,
+   2737.1,
+   104.937229,
+   9.72
+  ],
+  [
+   4382.4,
+   5076.3,
+   105.117229,
+   9.54
+  ],
+  [
+   4380.6,
+   2725.1,
+   105.117229,
+   9.72
+  ]
+ ],
+ "neatline": [
+  [
+   441.6,
+   838.0
+  ],
+  [
+   4865.4,
+   815.1
+  ],
+  [
+   4869.9,
+   6700.6
+  ],
+  [
+   446.0,
+   6723.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5202,
+  7422
+ ],
+ "source_bytes": 6657691,
+ "meta": {
+  "title": "An Bien (feuille 237)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.0fa8svjh"
+ }
+}

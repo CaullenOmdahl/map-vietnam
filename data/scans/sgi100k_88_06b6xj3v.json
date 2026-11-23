@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_88_06b6xj3v/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2858.6,
+   2112.5,
+   105.297229,
+   19.26
+  ],
+  [
+   7344.6,
+   4476.0,
+   105.657229,
+   19.08
+  ],
+  [
+   7346.3,
+   2123.0,
+   105.657229,
+   19.26
+  ],
+  [
+   9581.7,
+   2127.0,
+   105.837229,
+   19.26
+  ]
+ ],
+ "neatline": [
+  [
+   689.6,
+   824.2
+  ],
+  [
+   11132.2,
+   847.0
+  ],
+  [
+   11136.9,
+   6778.4
+  ],
+  [
+   694.3,
+   6755.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  11808,
+  7764
+ ],
+ "source_bytes": 19057493,
+ "meta": {
+  "title": "Phủ-Diễn (feuille 88)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1933",
+  "dateNote": "edition dated 1933-08; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.06b6xj3v"
+ }
+}

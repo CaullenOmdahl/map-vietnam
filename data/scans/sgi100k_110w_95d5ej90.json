@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_110w_95d5ej90/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2682.4,
+   5576.9,
+   105.297229,
+   17.64
+  ],
+  [
+   2688.3,
+   3233.7,
+   105.297229,
+   17.82
+  ],
+  [
+   2693.9,
+   886.4,
+   105.297229,
+   18.0
+  ],
+  [
+   4932.7,
+   5582.2,
+   105.477229,
+   17.64
+  ],
+  [
+   4930.8,
+   3237.3,
+   105.477229,
+   17.82
+  ]
+ ],
+ "neatline": [
+  [
+   600.3,
+   835.2
+  ],
+  [
+   5020.9,
+   844.8
+  ],
+  [
+   5010.3,
+   6743.5
+  ],
+  [
+   589.6,
+   6733.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5487,
+  7515
+ ],
+ "source_bytes": 9951319,
+ "meta": {
+  "title": "Mu-Gia ouest (feuille 110W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-11; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.95d5ej90"
+ }
+}

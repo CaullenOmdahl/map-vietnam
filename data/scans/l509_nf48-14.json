@@ -1,0 +1,111 @@
+{
+ "image": "data/raw/scans/l509_nf48-14/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1063.8,
+   1701.1,
+   103.75,
+   20.5
+  ],
+  [
+   1062.2,
+   944.6,
+   103.75,
+   20.75
+  ],
+  [
+   1775.9,
+   2457.5,
+   104.0,
+   20.25
+  ],
+  [
+   1772.6,
+   1702.4,
+   104.0,
+   20.5
+  ],
+  [
+   1770.9,
+   945.1,
+   104.0,
+   20.75
+  ],
+  [
+   2486.4,
+   2460.7,
+   104.25,
+   20.25
+  ],
+  [
+   2482.9,
+   1703.2,
+   104.25,
+   20.5
+  ],
+  [
+   3200.1,
+   2463.0,
+   104.5,
+   20.25
+  ],
+  [
+   3196.2,
+   1703.8,
+   104.5,
+   20.5
+  ],
+  [
+   3187.5,
+   946.2,
+   104.5,
+   20.75
+  ],
+  [
+   3913.8,
+   2462.0,
+   104.75,
+   20.25
+  ],
+  [
+   3906.8,
+   1704.0,
+   104.75,
+   20.5
+  ]
+ ],
+ "neatline": [
+  [
+   344.2,
+   192.2
+  ],
+  [
+   4609.1,
+   197.5
+  ],
+  [
+   4625.0,
+   3220.2
+  ],
+  [
+   360.1,
+   3214.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 12 graticule nodes",
+ "work_size": [
+  5000,
+  3782
+ ],
+ "source_bytes": 5847896,
+ "meta": {
+  "title": "Sam Neua (NF 48-14)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "1954",
+  "dateNote": "edition 1, printed by the Army Map Service 6/1954; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-14.jpg"
+ }
+}

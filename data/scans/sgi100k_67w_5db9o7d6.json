@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_67w_5db9o7d6/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2594.9,
+   4231.6,
+   102.417229,
+   19.98
+  ],
+  [
+   2597.5,
+   1644.2,
+   102.417229,
+   20.16
+  ],
+  [
+   4928.1,
+   6825.2,
+   102.597229,
+   19.8
+  ],
+  [
+   4936.3,
+   4238.1,
+   102.597229,
+   19.98
+  ],
+  [
+   4938.2,
+   1649.0,
+   102.597229,
+   20.16
+  ]
+ ],
+ "neatline": [
+  [
+   524.4,
+   528.0
+  ],
+  [
+   5170.1,
+   539.0
+  ],
+  [
+   5158.7,
+   7035.1
+  ],
+  [
+   512.9,
+   7024.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5472,
+  7689
+ ],
+ "source_bytes": 12284163,
+ "meta": {
+  "title": "Pak-Seng ouest (feuille 67W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1948",
+  "dateNote": "edition dated 1948-08; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.5db9o7d6"
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_167bise_0a50w8la/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1905.1,
+   5204.2,
+   104.217229,
+   13.14
+  ],
+  [
+   1941.3,
+   2863.6,
+   104.217229,
+   13.32
+  ],
+  [
+   4201.7,
+   5238.6,
+   104.397229,
+   13.14
+  ],
+  [
+   4231.8,
+   2898.0,
+   104.397229,
+   13.32
+  ]
+ ],
+ "neatline": [
+  [
+   574.3,
+   750.4
+  ],
+  [
+   4995.9,
+   816.7
+  ],
+  [
+   4912.5,
+   6715.4
+  ],
+  [
+   490.9,
+   6649.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5355,
+  7470
+ ],
+ "source_bytes": 8024782,
+ "meta": {
+  "title": "Siem Réap est (feuille 167bisE)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.0a50w8la"
+ }
+}

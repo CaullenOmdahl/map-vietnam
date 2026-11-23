@@ -35,7 +35,11 @@ downloaded until someone adds that map.
 | Series | Maps | Typical size | Holder |
 | --- | --- | --- | --- |
 | US Army Map Service L7014 (with border sheets L7015, L7016), 1:50,000 | 498 sheets, almost the whole country | about 10 MB to download, about 20 MB on disk once added; all 498: about 5 GB to download, 11 GB on disk | USGS Store |
-| Joint Operations Graphic (Air) 1501, 1:250,000 | 32 sheets, an overview of the whole country | about 10 MB to download, about 30 MB on disk | USGS Store; University of Texas Libraries as a fallback |
+| Joint Operations Graphic (Air) 1501, 1:250,000 | 34 sheets, an overview of the whole country | about 10 MB to download, about 30 MB on disk | USGS Store; University of Texas Libraries |
+| US Army Map Service L909 city plans, 1:12,500 | 18 towns, 1963–1971 | about 10 MB to download | USGS Store |
+| Carte de l'Indochine (Service Géographique de l'Indochine), 1:100,000 | 298 sheets and editions, 1895–1952, most of the country | about 10 MB to download | Centre IST REGARDS (CNRS), on NAKALA |
+| US Army Map Service L509, 1:250,000 | 32 sheets, 1950s–1960s | about 6 MB to download | University of Texas Libraries |
+| British Admiralty charts | 8 charts of the coast, 1855–1964 | about 5 MB to download | Wikimedia Commons, placed on the Wikimaps Warper |
 | Older scanned maps | 7 maps, 1873–1962, Mekong Delta | 2–70 MB each | five map libraries, see below |
 
 "On disk" counts the map's tiles and its downloaded file, which is kept so the map can be rebuilt
@@ -62,8 +66,10 @@ The 1:250,000 Joint Operations Graphics fill most of these gaps at less detail. 
 series covers: the far north along the China border (Lào Cai, Hà Giang, northern Cao Bằng and
 Lạng Sơn, around Sơn La), the Móng Cái tip, the Laos border in western Nghệ An, Phú Quốc's
 southern half with the islands west of Rạch Giá, and Phú Quý island. The JOG sheets for Lào Cai
-(NF 48-6), Yên Bái (NF 48-10), the far north (NF 48-2, 3, 4), eastern Cao Bằng (NF 48-8) and
-Kampot with Phú Quốc (NC 48-5) are not on the USGS Store, so they are not offered.
+(NF 48-6), the far north (NF 48-2, 3, 4) and eastern Cao Bằng (NF 48-8) are not on the USGS
+Store, so they are not offered; Yên Bái (NF 48-10) and Kampot with Phú Quốc (NC 48-5) come from
+the University of Texas Libraries instead. The French 1:100,000 sheets cover most of these gaps,
+at an older date.
 
 ### US Army Map Service L7014, 1:50,000 (mostly 1965–1970)
 
@@ -97,6 +103,49 @@ Public domain as works of the US Government.
 Some GeoPDFs of both US series carry the release code "DS" or "OO" in their metadata. The
 sheets are US Government works and freely downloadable; check the printed margin before
 redistributing tiles made from them.
+
+### US Army Map Service L909 city plans, 1:12,500 (1963–1971)
+
+Street plans of 18 towns, from Hà Nội and Hải Phòng to Huế, Đà Nẵng, Đà Lạt and Cần Thơ, at
+about eight times the detail of the 1:50,000 sheets. GeoPDFs from the USGS Store, georeferenced
+and handled like the L7014 sheets (Indian 1960). Public domain as works of the US Government.
+
+### Carte de l'Indochine, 1:100,000 (1895–1952)
+
+The French survey of Indochina, sheet by sheet: 298 sheets and editions that cover Vietnam,
+scanned by the Centre IST REGARDS (CNRS) and published on NAKALA, the French research data
+repository (collection "Fonds de cartes de l'Indochine française"). Many sheets were printed
+more than once, and each edition is its own map; the viewer groups a sheet's editions. The
+library downloads each scan from NAKALA's IIIF image service as a JPEG of about 10 MB (the
+archive's TIFFs run to 150 MB). Licences are per sheet and shown with it: most are CC BY-NC-SA
+4.0 (non-commercial use, with credit, adaptations shared alike), some CC BY 4.0.
+
+The sheets were placed automatically (`scripts/sheet_lists.py`, then `scripts/place_sheets.py`;
+see [how-it-works.md](how-it-works.md#the-map-pipeline)) from their printed graticule, every 0.2
+grad from the Paris meridian, then shifted 0.0045° east, the offset measured by hand on sheet 228
+and confirmed on sheets across the country. Expect positions within a few hundred metres; the
+surveys themselves are older and rougher than the 1960s US sheets. Of the 335 sheets in the
+collection that touch Vietnam, 37 could not be placed reliably and are not offered: most have too
+few graticule crossings on them (small sheets, open sea), or an extent in the archive's record
+that cannot be the sheet's.
+
+### US Army Map Service L509, 1:250,000 (1950s–1960s)
+
+The overview series before the Joint Operations Graphics: 32 sheets touching Vietnam, scanned by
+the University of Texas Libraries (Perry-Castañeda Library Map Collection). Placed automatically
+from the 15′ graticule on the Indian 1960 datum, which is printed in black over a blue UTM grid,
+so only dark ink is looked at; on the sheet placed by hand as well (NC 48-6) the two agree within
+about 60 m. The scans carry no date in their record, so the viewer lists them as undated: the
+edition and year are printed in each sheet's margin. Public domain as works of the US Government;
+credit "Courtesy of the University of Texas Libraries, The University of Texas at Austin".
+
+### British Admiralty charts (1855–1964)
+
+Eight nautical charts of the coast and gulfs of Vietnam, from the Gulf of Siam (1855) to the
+Gulf of Tongking (1961) and Cam Ranh Bay (1948), on Wikimedia Commons. Volunteers placed them on
+the Wikimaps Warper; their control points are copied and scaled to the 3,840-pixel-wide image
+Commons serves, which the library downloads. Crown copyright has expired, so they are public
+domain. Charts show the sea, soundings, harbours and the shore as surveyed; inland they are blank.
 
 ### Older scanned maps (1873–1962)
 

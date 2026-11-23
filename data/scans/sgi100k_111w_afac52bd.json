@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_111w_afac52bd/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   587.3,
+   5560.1,
+   105.837229,
+   17.64
+  ],
+  [
+   583.5,
+   3222.7,
+   105.837229,
+   17.82
+  ],
+  [
+   2848.5,
+   5553.4,
+   106.017229,
+   17.64
+  ],
+  [
+   2836.3,
+   3215.2,
+   106.017229,
+   17.82
+  ],
+  [
+   2822.0,
+   872.8,
+   106.017229,
+   18.0
+  ]
+ ],
+ "neatline": [
+  [
+   568.0,
+   832.9
+  ],
+  [
+   4995.1,
+   817.7
+  ],
+  [
+   5023.7,
+   6692.3
+  ],
+  [
+   596.7,
+   6707.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5496,
+  7569
+ ],
+ "source_bytes": 8861008,
+ "meta": {
+  "title": "Ron ouest (feuille 111W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-12; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.afac52bd"
+ }
+}

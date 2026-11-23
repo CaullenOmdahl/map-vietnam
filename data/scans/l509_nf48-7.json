@@ -1,0 +1,117 @@
+{
+ "image": "data/raw/scans/l509_nf48-7/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1146.3,
+   1753.5,
+   105.25,
+   22.5
+  ],
+  [
+   1143.4,
+   1020.5,
+   105.25,
+   22.75
+  ],
+  [
+   1832.1,
+   2492.8,
+   105.5,
+   22.25
+  ],
+  [
+   1827.9,
+   1755.8,
+   105.5,
+   22.5
+  ],
+  [
+   1825.9,
+   1020.1,
+   105.5,
+   22.75
+  ],
+  [
+   2505.8,
+   1757.7,
+   105.75,
+   22.5
+  ],
+  [
+   2501.7,
+   1020.9,
+   105.75,
+   22.75
+  ],
+  [
+   3190.2,
+   2496.2,
+   106.0,
+   22.25
+  ],
+  [
+   3185.3,
+   1759.7,
+   106.0,
+   22.5
+  ],
+  [
+   3182.5,
+   1024.8,
+   106.0,
+   22.75
+  ],
+  [
+   3871.7,
+   2492.6,
+   106.25,
+   22.25
+  ],
+  [
+   3867.7,
+   1760.0,
+   106.25,
+   22.5
+  ],
+  [
+   3861.0,
+   1024.4,
+   106.25,
+   22.75
+  ]
+ ],
+ "neatline": [
+  [
+   459.6,
+   293.9
+  ],
+  [
+   4537.5,
+   301.3
+  ],
+  [
+   4554.4,
+   3232.1
+  ],
+  [
+   476.5,
+   3224.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 13 graticule nodes",
+ "work_size": [
+  5000,
+  3842
+ ],
+ "source_bytes": 6194074,
+ "meta": {
+  "title": "Cao Bang (NF 48-7)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "1954",
+  "dateNote": "edition 1, printed by the Army Map Service 7/1954; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nf48-7.jpg"
+ }
+}

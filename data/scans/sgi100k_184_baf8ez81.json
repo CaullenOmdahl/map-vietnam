@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_184_baf8ez81/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2305.7,
+   3818.8,
+   109.437229,
+   12.78
+  ],
+  [
+   2276.4,
+   1472.3,
+   109.437229,
+   12.96
+  ],
+  [
+   4570.8,
+   1432.7,
+   109.617229,
+   12.96
+  ]
+ ],
+ "neatline": [
+  [
+   376.0,
+   1031.0
+  ],
+  [
+   4848.7,
+   953.7
+  ],
+  [
+   4921.4,
+   6760.7
+  ],
+  [
+   448.7,
+   6837.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5273,
+  7686
+ ],
+ "source_bytes": 6079018,
+ "meta": {
+  "title": "Cap-Varella (feuille 184)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1927",
+  "dateNote": "edition dated 1927-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.baf8ez81"
+ }
+}

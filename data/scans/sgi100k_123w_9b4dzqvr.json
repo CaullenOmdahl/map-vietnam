@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_123w_9b4dzqvr/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   572.6,
+   6880.2,
+   105.837229,
+   16.2
+  ],
+  [
+   574.4,
+   4534.0,
+   105.837229,
+   16.38
+  ],
+  [
+   572.3,
+   2189.3,
+   105.837229,
+   16.56
+  ],
+  [
+   2843.8,
+   6877.0,
+   106.017229,
+   16.2
+  ],
+  [
+   2840.9,
+   4527.9,
+   106.017229,
+   16.38
+  ]
+ ],
+ "neatline": [
+  [
+   573.7,
+   1032.7
+  ],
+  [
+   4991.1,
+   1022.7
+  ],
+  [
+   4992.8,
+   6923.5
+  ],
+  [
+   575.5,
+   6933.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5478,
+  7821
+ ],
+ "source_bytes": 9347642,
+ "meta": {
+  "title": "Muong-Phine ouest (feuille 123W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.9b4dzqvr"
+ }
+}

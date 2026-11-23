@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_27_72ffc70s/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2563.4,
+   4795.2,
+   106.377229,
+   21.78
+  ],
+  [
+   2565.1,
+   2393.3,
+   106.377229,
+   21.96
+  ],
+  [
+   4832.4,
+   4792.7,
+   106.557229,
+   21.78
+  ]
+ ],
+ "neatline": [
+  [
+   321.6,
+   964.3
+  ],
+  [
+   4884.2,
+   959.3
+  ],
+  [
+   4879.9,
+   6976.2
+  ],
+  [
+   317.4,
+   6981.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5472,
+  7836
+ ],
+ "source_bytes": 9540625,
+ "meta": {
+  "title": "Pho-Binh-Gia (feuille 27)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1910",
+  "dateNote": "edition dated 1910-12; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.72ffc70s"
+ }
+}

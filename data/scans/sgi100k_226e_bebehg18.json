@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_226e_bebehg18/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1939.9,
+   5627.3,
+   104.217229,
+   10.44
+  ],
+  [
+   1951.7,
+   3272.4,
+   104.217229,
+   10.62
+  ],
+  [
+   4294.3,
+   5636.8,
+   104.397229,
+   10.44
+  ],
+  [
+   4300.0,
+   3282.6,
+   104.397229,
+   10.62
+  ]
+ ],
+ "neatline": [
+  [
+   751.8,
+   1269.7
+  ],
+  [
+   5237.4,
+   1288.5
+  ],
+  [
+   5215.2,
+   7270.0
+  ],
+  [
+   729.5,
+   7251.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5481,
+  7668
+ ],
+ "source_bytes": 8015317,
+ "meta": {
+  "title": "Kampot est (feuille 226E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1948",
+  "dateNote": "edition dated 1948-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.bebehg18"
+ }
+}

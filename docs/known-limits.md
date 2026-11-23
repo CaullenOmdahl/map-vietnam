@@ -30,6 +30,21 @@ and placed is in [data-sources.md](data-sources.md).
 - The scanned maps are placed from printed graticules on surveys of their day. Errors of hundreds
   of metres are normal, and the 1873 and 1889 maps are off by 1–5 km in places. Each map's date
   note in the viewer gives what was measured.
+- The French 1:100,000 and US L509 sheets were placed automatically from their printed graticule
+  (see [how-it-works.md](how-it-works.md#the-map-pipeline)). Where the method was unsure it refused
+  the sheet rather than guess, but a sheet placed from only three graticule crossings has nothing
+  to check them against beyond the series' own geometry. If a sheet sits visibly wrong, report it
+  with its name and two places it puts wrongly.
+- The French sheets' longitude is shifted 0.0045° east for the old value of the Paris meridian,
+  as measured on sheet 228 and checked on sheets in the north, centre and south. Some later
+  editions may have been drawn on a corrected meridian and sit about 500 m east of where they
+  should; none has been found so far.
+- A French sheet's edges come from the extent in its archive record, moved onto the nearest
+  printed frame rule. Where neither is exact, a strip of the frame band or a sliver of the map
+  edge can show where two sheets meet.
+- The University of Texas does not record the L509 scans' dates, so those sheets are listed as
+  undated; the year is in each sheet's margin. The Admiralty charts' images are Commons' 3,840 px
+  renditions, sharp enough for their scale but softer than the originals.
 - Some US sheets' georeferencing names a datum other than the Indian 1960 their margins print:
   `IND-I` and `IND-B` (the Indian datum of India and of Bangladesh) and `INF-A` (Indian 1954).
   Their corners match neighbouring Indian 1960 sheets to about 5 m, and the margins checked say

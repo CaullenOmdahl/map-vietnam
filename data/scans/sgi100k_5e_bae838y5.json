@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_5e_bae838y5/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   636.7,
+   4982.4,
+   103.317229,
+   22.68
+  ],
+  [
+   640.5,
+   2391.4,
+   103.317229,
+   22.86
+  ],
+  [
+   3057.8,
+   4992.3,
+   103.497229,
+   22.68
+  ],
+  [
+   3060.3,
+   2403.5,
+   103.497229,
+   22.86
+  ]
+ ],
+ "neatline": [
+  [
+   221.0,
+   961.8
+  ],
+  [
+   5146.9,
+   984.1
+  ],
+  [
+   5139.0,
+   7526.8
+  ],
+  [
+   213.0,
+   7504.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5607,
+  7782
+ ],
+ "source_bytes": 7990484,
+ "meta": {
+  "title": "Phong-thô, est (feuille 5E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-12; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.bae838y5"
+ }
+}

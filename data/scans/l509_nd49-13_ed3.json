@@ -1,0 +1,123 @@
+{
+ "image": "data/raw/scans/l509_nd49-13_ed3/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1018.7,
+   2478.1,
+   108.25,
+   12.25
+  ],
+  [
+   1014.8,
+   1724.5,
+   108.25,
+   12.5
+  ],
+  [
+   1009.9,
+   966.5,
+   108.25,
+   12.75
+  ],
+  [
+   1763.4,
+   2482.1,
+   108.5,
+   12.25
+  ],
+  [
+   1759.5,
+   1723.6,
+   108.5,
+   12.5
+  ],
+  [
+   1754.3,
+   965.8,
+   108.5,
+   12.75
+  ],
+  [
+   2505.7,
+   2481.8,
+   108.75,
+   12.25
+  ],
+  [
+   2499.8,
+   1722.2,
+   108.75,
+   12.5
+  ],
+  [
+   2495.9,
+   967.1,
+   108.75,
+   12.75
+  ],
+  [
+   3251.7,
+   2480.5,
+   109.0,
+   12.25
+  ],
+  [
+   3244.6,
+   1723.5,
+   109.0,
+   12.5
+  ],
+  [
+   3239.5,
+   965.6,
+   109.0,
+   12.75
+  ],
+  [
+   3989.3,
+   1721.8,
+   109.25,
+   12.5
+  ],
+  [
+   3983.0,
+   965.6,
+   109.25,
+   12.75
+  ]
+ ],
+ "neatline": [
+  [
+   261.2,
+   214.1
+  ],
+  [
+   4721.9,
+   213.1
+  ],
+  [
+   4742.0,
+   3235.6
+  ],
+  [
+   281.3,
+   3236.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 14 graticule nodes",
+ "work_size": [
+  5000,
+  3787
+ ],
+ "source_bytes": 6604307,
+ "meta": {
+  "title": "Nha Trang (ND 49-13)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "1962",
+  "dateNote": "edition 3, printed by the Army Map Service 8/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nd49-13-3rd-ed.jpg"
+ }
+}

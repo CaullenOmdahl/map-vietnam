@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_17w_bcba4b84/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   619.7,
+   5920.5,
+   105.117229,
+   22.14
+  ],
+  [
+   620.1,
+   3570.0,
+   105.117229,
+   22.32
+  ],
+  [
+   2915.8,
+   5926.1,
+   105.297229,
+   22.14
+  ],
+  [
+   2918.6,
+   3569.9,
+   105.297229,
+   22.32
+  ],
+  [
+   2922.1,
+   1214.1,
+   105.297229,
+   22.5
+  ]
+ ],
+ "neatline": [
+  [
+   490.8,
+   973.9
+  ],
+  [
+   5175.7,
+   978.6
+  ],
+  [
+   5169.2,
+   6868.5
+  ],
+  [
+   484.3,
+   6863.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5616,
+  7758
+ ],
+ "source_bytes": 10966746,
+ "meta": {
+  "title": "Bắc-Kan ouest (feuille 17W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.bcba4b84"
+ }
+}

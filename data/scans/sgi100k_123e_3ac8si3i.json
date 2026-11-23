@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_123e_3ac8si3i/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   711.3,
+   6884.0,
+   106.197229,
+   16.2
+  ],
+  [
+   701.1,
+   4533.7,
+   106.197229,
+   16.38
+  ],
+  [
+   685.6,
+   2184.8,
+   106.197229,
+   16.56
+  ],
+  [
+   2981.6,
+   6879.7,
+   106.377229,
+   16.2
+  ],
+  [
+   2966.1,
+   4528.0,
+   106.377229,
+   16.38
+  ],
+  [
+   2944.7,
+   2177.7,
+   106.377229,
+   16.56
+  ]
+ ],
+ "neatline": [
+  [
+   557.5,
+   1038.4
+  ],
+  [
+   4980.3,
+   1027.3
+  ],
+  [
+   5019.7,
+   6932.7
+  ],
+  [
+   596.8,
+   6943.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5481,
+  7821
+ ],
+ "source_bytes": 9832730,
+ "meta": {
+  "title": "Muong-Phine est (feuille 123E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.3ac8si3i"
+ }
+}

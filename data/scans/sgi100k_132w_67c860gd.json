@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_132w_67c860gd/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1287.2,
+   5314.7,
+   107.997229,
+   15.84
+  ],
+  [
+   1279.3,
+   2973.3,
+   107.997229,
+   16.02
+  ],
+  [
+   3561.9,
+   5303.1,
+   108.177229,
+   15.84
+  ],
+  [
+   3560.3,
+   2958.2,
+   108.177229,
+   16.02
+  ]
+ ],
+ "neatline": [
+  [
+   505.5,
+   882.3
+  ],
+  [
+   4930.7,
+   856.4
+  ],
+  [
+   4942.6,
+   6738.0
+  ],
+  [
+   517.4,
+   6763.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5394,
+  7482
+ ],
+ "source_bytes": 10660407,
+ "meta": {
+  "title": "Tourane ouest (feuille 132W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.67c860gd"
+ }
+}

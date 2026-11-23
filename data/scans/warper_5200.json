@@ -1,0 +1,56 @@
+{
+ "image": "data/raw/scans/warper_5200/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1699.5,
+   2255.4,
+   109.622269,
+   18.173254
+  ],
+  [
+   3422.0,
+   563.3,
+   114.092674,
+   22.325941
+  ],
+  [
+   663.3,
+   1194.7,
+   106.917229,
+   20.798806
+  ],
+  [
+   734.3,
+   2718.5,
+   107.109833,
+   17.013454
+  ],
+  [
+   790.2,
+   5321.1,
+   107.248535,
+   10.378414
+  ],
+  [
+   3522.2,
+   4900.0,
+   114.331219,
+   11.428332
+  ]
+ ],
+ "placed_by": "Wikimaps Warper map 5200 (https://warper.wmflabs.org/maps/5200), control points scaled by 0.3422",
+ "work_size": [
+  3840,
+  5592
+ ],
+ "source_bytes": 4277575,
+ "meta": {
+  "title": "China Sea Northern Portion Western Sheet (chart 2661a)",
+  "series": "British Admiralty charts",
+  "scale": "",
+  "date": "1964",
+  "dateNote": "published 1964",
+  "source": "https://commons.wikimedia.org/wiki/File%3AAdmiralty_Chart_No_2661a_China_Sea_Northern_Portion_Western_Sheet%2C_Published_1964.jpg"
+ }
+}

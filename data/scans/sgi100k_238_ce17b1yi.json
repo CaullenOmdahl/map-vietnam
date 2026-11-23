@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_238_ce17b1yi/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2533.4,
+   5035.2,
+   105.297229,
+   9.54
+  ],
+  [
+   4838.5,
+   2689.5,
+   105.477229,
+   9.72
+  ],
+  [
+   7163.3,
+   5039.1,
+   105.657229,
+   9.54
+  ],
+  [
+   9469.5,
+   5040.0,
+   105.837229,
+   9.54
+  ]
+ ],
+ "neatline": [
+  [
+   697.1,
+   765.8
+  ],
+  [
+   9453.2,
+   772.0
+  ],
+  [
+   9474.5,
+   6605.3
+  ],
+  [
+   718.4,
+   6599.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10020,
+  7635
+ ],
+ "source_bytes": 13469130,
+ "meta": {
+  "title": "Gò-Quao (feuille 238)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1936",
+  "dateNote": "edition dated 1936-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ce17b1yi"
+ }
+}

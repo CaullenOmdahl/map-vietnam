@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_143e_d392fjdz/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   907.3,
+   4971.6,
+   108.357229,
+   14.94
+  ],
+  [
+   917.1,
+   2617.1,
+   108.357229,
+   15.12
+  ],
+  [
+   3210.7,
+   4964.5,
+   108.537229,
+   14.94
+  ],
+  [
+   3207.2,
+   2611.3,
+   108.537229,
+   15.12
+  ]
+ ],
+ "neatline": [
+  [
+   -129.7,
+   623.2
+  ],
+  [
+   4331.5,
+   610.7
+  ],
+  [
+   4323.6,
+   6519.1
+  ],
+  [
+   -137.6,
+   6531.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5094,
+  7431
+ ],
+ "source_bytes": 8283499,
+ "meta": {
+  "title": "Sơn Ha est (feuille 143E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.d392fjdz"
+ }
+}

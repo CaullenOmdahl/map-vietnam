@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_50e_c1331zk1/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2791.0,
+   4774.0,
+   107.097229,
+   20.88
+  ],
+  [
+   2777.3,
+   2414.3,
+   107.097229,
+   21.06
+  ],
+  [
+   5022.3,
+   4768.7,
+   107.277229,
+   20.88
+  ],
+  [
+   5022.3,
+   2413.7,
+   107.277229,
+   21.06
+  ]
+ ],
+ "neatline": [
+  [
+   538.7,
+   1096.9
+  ],
+  [
+   5015.0,
+   1091.0
+  ],
+  [
+   5032.3,
+   7008.2
+  ],
+  [
+   556.0,
+   7014.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5556,
+  7767
+ ],
+ "source_bytes": 12228411,
+ "meta": {
+  "title": "Hải-Phòng est (feuille 50E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-08; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.c1331zk1"
+ }
+}

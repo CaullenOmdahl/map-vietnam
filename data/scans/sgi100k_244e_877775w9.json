@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_244e_877775w9/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1082.6,
+   4997.7,
+   105.117229,
+   8.64
+  ],
+  [
+   1094.3,
+   2655.9,
+   105.117229,
+   8.82
+  ],
+  [
+   3417.3,
+   2659.4,
+   105.297229,
+   8.82
+  ]
+ ],
+ "neatline": [
+  [
+   443.2,
+   774.4
+  ],
+  [
+   4830.0,
+   780.9
+  ],
+  [
+   4800.8,
+   6670.9
+  ],
+  [
+   414.0,
+   6664.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5112,
+  7332
+ ],
+ "source_bytes": 5721909,
+ "meta": {
+  "title": "Pointe de Cà Mau est (feuille 244E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.877775w9"
+ }
+}

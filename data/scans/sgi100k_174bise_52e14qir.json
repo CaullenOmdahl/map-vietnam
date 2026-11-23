@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_174bise_52e14qir/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1251.3,
+   6400.2,
+   102.777229,
+   12.6
+  ],
+  [
+   1256.4,
+   4046.1,
+   102.777229,
+   12.78
+  ],
+  [
+   1260.4,
+   1691.6,
+   102.777229,
+   12.96
+  ],
+  [
+   3602.2,
+   6398.3,
+   102.957229,
+   12.6
+  ],
+  [
+   3601.0,
+   4043.2,
+   102.957229,
+   12.78
+  ],
+  [
+   3600.9,
+   1691.2,
+   102.957229,
+   12.96
+  ]
+ ],
+ "neatline": [
+  [
+   612.6,
+   987.8
+  ],
+  [
+   5183.5,
+   984.4
+  ],
+  [
+   5178.6,
+   6957.2
+  ],
+  [
+   607.7,
+   6960.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5526,
+  7767
+ ],
+ "source_bytes": 8660448,
+ "meta": {
+  "title": "Pailin est (feuille 174bisE)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.52e14qir"
+ }
+}

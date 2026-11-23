@@ -1,0 +1,85 @@
+{
+ "image": "data/raw/scans/sgi100k_17e_87bf1e42/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   688.4,
+   3797.4,
+   105.477229,
+   22.32
+  ],
+  [
+   2877.8,
+   6147.7,
+   105.657229,
+   22.14
+  ],
+  [
+   2875.8,
+   3792.7,
+   105.657229,
+   22.32
+  ],
+  [
+   2875.4,
+   1436.6,
+   105.657229,
+   22.5
+  ],
+  [
+   5063.0,
+   6138.0,
+   105.837229,
+   22.14
+  ],
+  [
+   5063.9,
+   3783.6,
+   105.837229,
+   22.32
+  ],
+  [
+   5062.5,
+   1429.6,
+   105.837229,
+   22.5
+  ]
+ ],
+ "neatline": [
+  [
+   641.8,
+   1208.6
+  ],
+  [
+   5062.5,
+   1193.9
+  ],
+  [
+   5064.3,
+   7078.6
+  ],
+  [
+   643.7,
+   7093.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 7 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5601,
+  7758
+ ],
+ "source_bytes": 11133165,
+ "meta": {
+  "title": "Bắc-Kan est (feuille 17E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.87bf1e42"
+ }
+}

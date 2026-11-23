@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_18w_f98etfb0/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   628.2,
+   5931.7,
+   105.837229,
+   22.14
+  ],
+  [
+   620.1,
+   1246.1,
+   105.837229,
+   22.5
+  ],
+  [
+   2822.0,
+   5928.8,
+   106.017229,
+   22.14
+  ],
+  [
+   5010.1,
+   5922.9,
+   106.197229,
+   22.14
+  ],
+  [
+   5005.9,
+   3587.4,
+   106.197229,
+   22.32
+  ],
+  [
+   4998.2,
+   1240.5,
+   106.197229,
+   22.5
+  ]
+ ],
+ "neatline": [
+  [
+   618.6,
+   986.7
+  ],
+  [
+   5034.6,
+   981.3
+  ],
+  [
+   5048.2,
+   6854.3
+  ],
+  [
+   632.2,
+   6859.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5595,
+  7773
+ ],
+ "source_bytes": 11693001,
+ "meta": {
+  "title": "Thất-Khê ouest (feuille 18W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.f98etfb0"
+ }
+}

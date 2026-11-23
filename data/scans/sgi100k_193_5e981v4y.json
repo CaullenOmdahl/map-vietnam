@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_193_5e981v4y/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2656.8,
+   4745.5,
+   107.817229,
+   12.24
+  ],
+  [
+   2650.3,
+   2632.3,
+   107.817229,
+   12.42
+  ],
+  [
+   4774.1,
+   4746.2,
+   107.997229,
+   12.24
+  ],
+  [
+   6881.4,
+   2626.4,
+   108.177229,
+   12.42
+  ],
+  [
+   9001.5,
+   2620.9,
+   108.357229,
+   12.42
+  ]
+ ],
+ "neatline": [
+  [
+   572.1,
+   986.7
+  ],
+  [
+   9079.2,
+   973.6
+  ],
+  [
+   9097.4,
+   6176.6
+  ],
+  [
+   590.3,
+   6189.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10311,
+  7656
+ ],
+ "source_bytes": 25276510,
+ "meta": {
+  "title": "Poste du Lac (feuille 193)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.5e981v4y"
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_28_06d42xx0/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2740.5,
+   4532.7,
+   106.737229,
+   21.78
+  ],
+  [
+   4940.4,
+   4512.9,
+   106.917229,
+   21.78
+  ],
+  [
+   9341.6,
+   4465.5,
+   107.277229,
+   21.78
+  ],
+  [
+   9311.2,
+   2107.3,
+   107.277229,
+   21.96
+  ]
+ ],
+ "neatline": [
+  [
+   562.8,
+   781.8
+  ],
+  [
+   9729.3,
+   687.6
+  ],
+  [
+   9805.8,
+   6643.4
+  ],
+  [
+   639.3,
+   6737.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10026,
+  7666
+ ],
+ "source_bytes": 16916350,
+ "meta": {
+  "title": "Lang-Sơn (feuille 28)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.06d42xx0"
+ }
+}

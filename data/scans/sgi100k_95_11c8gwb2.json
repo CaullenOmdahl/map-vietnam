@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_95_11c8gwb2/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   5081.3,
+   5690.0,
+   105.477229,
+   18.54
+  ],
+  [
+   5069.4,
+   953.4,
+   105.477229,
+   18.9
+  ],
+  [
+   7330.9,
+   5680.7,
+   105.657229,
+   18.54
+  ],
+  [
+   7315.1,
+   944.8,
+   105.657229,
+   18.9
+  ],
+  [
+   9581.9,
+   5677.5,
+   105.837229,
+   18.54
+  ],
+  [
+   9565.0,
+   936.1,
+   105.837229,
+   18.9
+  ]
+ ],
+ "neatline": [
+  [
+   683.1,
+   871.1
+  ],
+  [
+   11755.1,
+   834.4
+  ],
+  [
+   11774.0,
+   6858.6
+  ],
+  [
+   702.0,
+   6895.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  11799,
+  7718
+ ],
+ "source_bytes": 20979413,
+ "meta": {
+  "title": "Vinh (feuille 95)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1927",
+  "dateNote": "edition dated 1927-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.11c8gwb2"
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_122e_a63bvh8m/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2752.9,
+   6836.9,
+   105.657229,
+   16.2
+  ],
+  [
+   2752.0,
+   4489.7,
+   105.657229,
+   16.38
+  ],
+  [
+   5023.3,
+   6836.9,
+   105.837229,
+   16.2
+  ],
+  [
+   5018.9,
+   4482.9,
+   105.837229,
+   16.38
+  ],
+  [
+   5009.1,
+   2133.5,
+   105.837229,
+   16.56
+  ]
+ ],
+ "neatline": [
+  [
+   591.9,
+   987.7
+  ],
+  [
+   5008.4,
+   980.9
+  ],
+  [
+   5023.1,
+   6894.6
+  ],
+  [
+   606.6,
+   6901.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5523,
+  7782
+ ],
+ "source_bytes": 9986479,
+ "meta": {
+  "title": "Muong-Song-Khone est (feuille 122E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.a63bvh8m"
+ }
+}

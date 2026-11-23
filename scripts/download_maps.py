@@ -200,7 +200,9 @@ def fetch_any(entry, dest, *, progress=None, cancelled=None, check=None):
             continue
         for attempt in range(1, ATTEMPTS + 1):
             try:
-                digest = fetch_url(url, dest, progress=progress, cancelled=cancelled, expected_bytes=entry.get("bytes"))
+                # An estimated size (an IIIF image, made on request) is only a guide for progress.
+                expected = None if entry.get("bytes_estimated") else entry.get("bytes")
+                digest = fetch_url(url, dest, progress=progress, cancelled=cancelled, expected_bytes=expected)
                 if check:
                     check(dest)
             except Damaged as e:
@@ -228,7 +230,9 @@ class Damaged(MapFetchError):
 def catalogue_notes(entry, path, digest):
     """Differences between a downloaded file and its catalogue entry, as notes (see the docstring)."""
     size = path.stat().st_size
-    if (entry.get("bytes") in (None, size)) and (entry.get("sha256") in (None, digest)):
+    # An IIIF image is made on request: its size was only estimated, and no checksum is kept.
+    size_ok = entry.get("bytes_estimated") or entry.get("bytes") in (None, size)
+    if size_ok and (entry.get("sha256") in (None, digest)):
         return []
     return [f"the archive's file differs from the one this project was made with ({size:,} bytes); using it anyway"]
 

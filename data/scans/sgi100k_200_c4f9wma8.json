@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_200_c4f9wma8/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2937.0,
+   1671.9,
+   106.017229,
+   12.06
+  ],
+  [
+   5243.5,
+   6374.5,
+   106.197229,
+   11.7
+  ],
+  [
+   7558.8,
+   4024.7,
+   106.377229,
+   11.88
+  ],
+  [
+   7555.7,
+   1669.9,
+   106.377229,
+   12.06
+  ]
+ ],
+ "neatline": [
+  [
+   619.3,
+   792.6
+  ],
+  [
+   9465.3,
+   791.9
+  ],
+  [
+   9462.5,
+   6683.8
+  ],
+  [
+   616.4,
+   6684.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10029,
+  7669
+ ],
+ "source_bytes": 15049532,
+ "meta": {
+  "title": "Mimot (feuille 200)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1931",
+  "dateNote": "edition dated 1931-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.c4f9wma8"
+ }
+}

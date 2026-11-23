@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_140w_5f92r6h3/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   546.3,
+   5454.7,
+   105.837229,
+   14.94
+  ],
+  [
+   547.6,
+   3110.2,
+   105.837229,
+   15.12
+  ],
+  [
+   2828.3,
+   5461.8,
+   106.017229,
+   14.94
+  ],
+  [
+   2824.0,
+   3118.6,
+   106.017229,
+   15.12
+  ]
+ ],
+ "neatline": [
+  [
+   544.8,
+   863.1
+  ],
+  [
+   4960.7,
+   878.1
+  ],
+  [
+   4964.5,
+   6768.2
+  ],
+  [
+   548.6,
+   6753.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5400,
+  7545
+ ],
+ "source_bytes": 7885629,
+ "meta": {
+  "title": "Bassac ouest (feuille 140W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-03; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.5f92r6h3"
+ }
+}

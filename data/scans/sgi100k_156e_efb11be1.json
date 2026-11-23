@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_156e_efb11be1/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1269.9,
+   5165.3,
+   107.637229,
+   14.04
+  ],
+  [
+   1255.8,
+   2824.3,
+   107.637229,
+   14.22
+  ],
+  [
+   3544.4,
+   5140.4,
+   107.817229,
+   14.04
+  ],
+  [
+   3524.6,
+   2801.3,
+   107.817229,
+   14.22
+  ]
+ ],
+ "neatline": [
+  [
+   411.3,
+   777.0
+  ],
+  [
+   4812.6,
+   730.6
+  ],
+  [
+   4855.2,
+   6616.3
+  ],
+  [
+   453.9,
+   6662.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5235,
+  7380
+ ],
+ "source_bytes": 8624382,
+ "meta": {
+  "title": "Ya Li est (feuille 156E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.efb11be1"
+ }
+}

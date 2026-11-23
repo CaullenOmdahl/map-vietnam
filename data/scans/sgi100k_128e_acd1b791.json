@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_128e_acd1b791/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2686.4,
+   5485.5,
+   105.657229,
+   15.84
+  ],
+  [
+   2682.2,
+   3149.3,
+   105.657229,
+   16.02
+  ],
+  [
+   4965.6,
+   5483.5,
+   105.837229,
+   15.84
+  ],
+  [
+   4957.1,
+   3144.7,
+   105.837229,
+   16.02
+  ]
+ ],
+ "neatline": [
+  [
+   528.3,
+   873.2
+  ],
+  [
+   4952.0,
+   866.9
+  ],
+  [
+   4967.9,
+   6727.5
+  ],
+  [
+   544.2,
+   6733.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5415,
+  7512
+ ],
+ "source_bytes": 7959173,
+ "meta": {
+  "title": "Ban-Taphane est (feuille 128E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-03; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.acd1b791"
+ }
+}

@@ -1,0 +1,105 @@
+{
+ "image": "data/raw/scans/l509_nc49-1/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1023.2,
+   2467.2,
+   108.25,
+   11.25
+  ],
+  [
+   1014.3,
+   1714.1,
+   108.25,
+   11.5
+  ],
+  [
+   1765.7,
+   2468.9,
+   108.5,
+   11.25
+  ],
+  [
+   1762.0,
+   1714.1,
+   108.5,
+   11.5
+  ],
+  [
+   1750.2,
+   961.5,
+   108.5,
+   11.75
+  ],
+  [
+   2501.3,
+   1715.8,
+   108.75,
+   11.5
+  ],
+  [
+   3250.1,
+   2471.3,
+   109.0,
+   11.25
+  ],
+  [
+   3246.5,
+   1715.2,
+   109.0,
+   11.5
+  ],
+  [
+   3995.3,
+   2468.2,
+   109.25,
+   11.25
+  ],
+  [
+   3989.4,
+   1715.3,
+   109.25,
+   11.5
+  ],
+  [
+   3985.1,
+   960.7,
+   109.25,
+   11.75
+  ]
+ ],
+ "neatline": [
+  [
+   259.6,
+   210.8
+  ],
+  [
+   4723.6,
+   212.4
+  ],
+  [
+   4748.5,
+   3225.3
+  ],
+  [
+   284.5,
+   3223.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 11 graticule nodes",
+ "work_size": [
+  5000,
+  3790
+ ],
+ "source_bytes": 6498276,
+ "meta": {
+  "title": "Dalat (NC 49-1)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "1957",
+  "dateNote": "edition 1, printed by the Army Map Service 3/1957; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc49-1.jpg"
+ }
+}

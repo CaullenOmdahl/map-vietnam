@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_189e_ffaac7q1/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2599.8,
+   5467.1,
+   105.657229,
+   12.24
+  ],
+  [
+   2592.3,
+   2956.7,
+   105.657229,
+   12.42
+  ],
+  [
+   4962.3,
+   2959.9,
+   105.837229,
+   12.42
+  ]
+ ],
+ "neatline": [
+  [
+   422.2,
+   718.8
+  ],
+  [
+   4955.6,
+   725.0
+  ],
+  [
+   4974.5,
+   7029.9
+  ],
+  [
+   441.0,
+   7023.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5403,
+  7530
+ ],
+ "source_bytes": 8061152,
+ "meta": {
+  "title": "Krau-Chmar est (feuille 189E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-01; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ffaac7q1"
+ }
+}

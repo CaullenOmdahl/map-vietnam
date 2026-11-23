@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_198w_e12d7a46/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2028.5,
+   6408.7,
+   104.577229,
+   11.7
+  ],
+  [
+   2046.2,
+   1976.4,
+   104.577229,
+   12.06
+  ],
+  [
+   4335.5,
+   6419.6,
+   104.757229,
+   11.7
+  ]
+ ],
+ "neatline": [
+  [
+   570.6,
+   1152.3
+  ],
+  [
+   4971.7,
+   1173.2
+  ],
+  [
+   4949.4,
+   6741.5
+  ],
+  [
+   548.4,
+   6720.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5382,
+  7509
+ ],
+ "source_bytes": 8579734,
+ "meta": {
+  "title": "Phsar-Oudong ouest (feuille 198W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-01; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.e12d7a46"
+ }
+}

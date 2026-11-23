@@ -1,0 +1,56 @@
+{
+ "image": "data/raw/scans/warper_4317/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   758.5,
+   1132.4,
+   104.606323,
+   10.136524
+  ],
+  [
+   140.9,
+   693.8,
+   103.049011,
+   11.213428
+  ],
+  [
+   2581.3,
+   546.5,
+   109.13269,
+   11.560762
+  ],
+  [
+   3592.8,
+   4064.3,
+   111.64856,
+   2.833317
+  ],
+  [
+   585.1,
+   4679.8,
+   104.138031,
+   1.338837
+  ],
+  [
+   2480.6,
+   5024.1,
+   108.862152,
+   0.480646
+  ]
+ ],
+ "placed_by": "Wikimaps Warper map 4317 (https://warper.wmflabs.org/maps/4317), control points scaled by 0.7195",
+ "work_size": [
+  3840,
+  5756
+ ],
+ "source_bytes": 6294038,
+ "meta": {
+  "title": "China Sea, Southern Portion, Western Sheet (chart 2660a)",
+  "series": "British Admiralty charts",
+  "scale": "",
+  "date": "1881",
+  "dateNote": "published 1881",
+  "source": "https://commons.wikimedia.org/wiki/File%3AAdmiralty_Chart_No_2660a_China_Sea%2C_Southern_Portion%2C_Western_Sheet%2C_Published_1881%2C_Corrections_to_1887.jpg"
+ }
+}

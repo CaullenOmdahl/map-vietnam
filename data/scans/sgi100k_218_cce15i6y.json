@@ -1,0 +1,85 @@
+{
+ "image": "data/raw/scans/sgi100k_218_cce15i6y/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2056.1,
+   3922.0,
+   104.577229,
+   10.98
+  ],
+  [
+   4381.7,
+   3937.6,
+   104.757229,
+   10.98
+  ],
+  [
+   4391.3,
+   1584.7,
+   104.757229,
+   11.16
+  ],
+  [
+   6700.1,
+   3946.9,
+   104.937229,
+   10.98
+  ],
+  [
+   6708.2,
+   1596.9,
+   104.937229,
+   11.16
+  ],
+  [
+   9019.2,
+   6307.0,
+   105.117229,
+   10.8
+  ],
+  [
+   9034.0,
+   1607.9,
+   105.117229,
+   11.16
+  ]
+ ],
+ "neatline": [
+  [
+   622.3,
+   735.9
+  ],
+  [
+   9458.5,
+   779.6
+  ],
+  [
+   9438.7,
+   6737.1
+  ],
+  [
+   602.5,
+   6693.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 7 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10026,
+  7610
+ ],
+ "source_bytes": 16913943,
+ "meta": {
+  "title": "Takéo (feuille 218)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.cce15i6y"
+ }
+}

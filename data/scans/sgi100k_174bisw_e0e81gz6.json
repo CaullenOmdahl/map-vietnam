@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_174bisw_e0e81gz6/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   958.3,
+   6379.5,
+   102.417229,
+   12.6
+  ],
+  [
+   958.0,
+   4027.5,
+   102.417229,
+   12.78
+  ],
+  [
+   956.1,
+   1675.7,
+   102.417229,
+   12.96
+  ],
+  [
+   3317.1,
+   6376.1,
+   102.597229,
+   12.6
+  ],
+  [
+   3312.1,
+   4023.6,
+   102.597229,
+   12.78
+  ],
+  [
+   3302.6,
+   1670.0,
+   102.597229,
+   12.96
+  ]
+ ],
+ "neatline": [
+  [
+   467.0,
+   1046.2
+  ],
+  [
+   5064.1,
+   1037.9
+  ],
+  [
+   5074.5,
+   6916.9
+  ],
+  [
+   477.4,
+   6925.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5547,
+  7755
+ ],
+ "source_bytes": 7684087,
+ "meta": {
+  "title": "Pailin ouest (feuille 174bisW)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.e0e81gz6"
+ }
+}

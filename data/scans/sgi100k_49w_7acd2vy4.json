@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_49w_7acd2vy4/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   547.7,
+   4535.0,
+   105.837229,
+   20.88
+  ],
+  [
+   557.2,
+   2189.9,
+   105.837229,
+   21.06
+  ],
+  [
+   2826.7,
+   4540.0,
+   106.017229,
+   20.88
+  ],
+  [
+   5111.9,
+   4537.9,
+   106.197229,
+   20.88
+  ],
+  [
+   5111.8,
+   2193.2,
+   106.197229,
+   21.06
+  ]
+ ],
+ "neatline": [
+  [
+   558.2,
+   803.0
+  ],
+  [
+   5117.6,
+   806.1
+  ],
+  [
+   5103.1,
+   6707.5
+  ],
+  [
+   543.7,
+   6704.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5571,
+  7965
+ ],
+ "source_bytes": 11136970,
+ "meta": {
+  "title": "Hanoi ouest (feuille 49W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-03; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.7acd2vy4"
+ }
+}

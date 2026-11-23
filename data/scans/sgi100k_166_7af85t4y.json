@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_166_7af85t4y/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   318.5,
+   6193.4,
+   108.897229,
+   13.5
+  ],
+  [
+   310.0,
+   3872.4,
+   108.897229,
+   13.68
+  ],
+  [
+   312.4,
+   1552.5,
+   108.897229,
+   13.86
+  ],
+  [
+   2687.9,
+   1538.5,
+   109.077229,
+   13.86
+  ]
+ ],
+ "neatline": [
+  [
+   145.3,
+   979.0
+  ],
+  [
+   6919.3,
+   939.6
+  ],
+  [
+   6926.7,
+   6652.0
+  ],
+  [
+   152.7,
+   6691.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  7119,
+  7713
+ ],
+ "source_bytes": 14324503,
+ "meta": {
+  "title": "Qui-Nhơn (feuille 166)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1933",
+  "dateNote": "edition dated 1933-08; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.7af85t4y"
+ }
+}

@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_173_99dc5887/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1942.8,
+   5160.0,
+   107.997229,
+   13.14
+  ],
+  [
+   1903.5,
+   2805.4,
+   107.997229,
+   13.32
+  ],
+  [
+   4248.6,
+   5118.8,
+   108.177229,
+   13.14
+  ],
+  [
+   4212.6,
+   2764.7,
+   108.177229,
+   13.32
+  ],
+  [
+   8867.9,
+   5051.4,
+   108.537229,
+   13.14
+  ],
+  [
+   8835.6,
+   2695.1,
+   108.537229,
+   13.32
+  ]
+ ],
+ "neatline": [
+  [
+   773.9,
+   927.1
+  ],
+  [
+   9711.9,
+   787.1
+  ],
+  [
+   9800.1,
+   6581.7
+  ],
+  [
+   862.2,
+   6721.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10533,
+  7694
+ ],
+ "source_bytes": 20662165,
+ "meta": {
+  "title": "Cheo-Reo (feuille 173)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1931",
+  "dateNote": "edition dated 1931-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.99dc5887"
+ }
+}

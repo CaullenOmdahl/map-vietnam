@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_38e_3841906i/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   507.0,
+   1141.8,
+   106.197229,
+   21.6
+  ],
+  [
+   2735.4,
+   5835.9,
+   106.377229,
+   21.24
+  ],
+  [
+   2743.2,
+   3485.3,
+   106.377229,
+   21.42
+  ],
+  [
+   4981.9,
+   3477.6,
+   106.557229,
+   21.42
+  ],
+  [
+   4985.2,
+   1133.7,
+   106.557229,
+   21.6
+  ]
+ ],
+ "neatline": [
+  [
+   507.7,
+   935.3
+  ],
+  [
+   5047.6,
+   924.4
+  ],
+  [
+   5035.0,
+   6810.9
+  ],
+  [
+   495.0,
+   6821.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5457,
+  7665
+ ],
+ "source_bytes": 11026748,
+ "meta": {
+  "title": "Bắc-Ninh est (feuille 38E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1948",
+  "dateNote": "edition dated 1948-08; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.3841906i"
+ }
+}

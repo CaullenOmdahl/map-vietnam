@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_72_6ad40bv9/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   627.3,
+   2086.1,
+   105.837229,
+   20.16
+  ],
+  [
+   2818.8,
+   4453.1,
+   106.017229,
+   19.98
+  ],
+  [
+   7240.2,
+   4478.7,
+   106.377229,
+   19.98
+  ],
+  [
+   7244.6,
+   2126.3,
+   106.377229,
+   20.16
+  ]
+ ],
+ "neatline": [
+  [
+   611.9,
+   767.1
+  ],
+  [
+   8890.4,
+   816.6
+  ],
+  [
+   8865.2,
+   6700.8
+  ],
+  [
+   586.7,
+   6651.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10035,
+  7675
+ ],
+ "source_bytes": 14141490,
+ "meta": {
+  "title": "Phat-Diệm (feuille 72)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1927",
+  "dateNote": "edition dated 1927-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.6ad40bv9"
+ }
+}

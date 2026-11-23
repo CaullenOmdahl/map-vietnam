@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_5_f3400ov2/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   3504.1,
+   4293.2,
+   103.137229,
+   22.68
+  ],
+  [
+   3537.7,
+   1950.5,
+   103.137229,
+   22.86
+  ],
+  [
+   5686.7,
+   4321.4,
+   103.317229,
+   22.68
+  ],
+  [
+   5714.8,
+   1975.2,
+   103.317229,
+   22.86
+  ],
+  [
+   7893.4,
+   1997.4,
+   103.497229,
+   22.86
+  ]
+ ],
+ "neatline": [
+  [
+   948.3,
+   617.9
+  ],
+  [
+   9770.2,
+   716.8
+  ],
+  [
+   9695.8,
+   6426.9
+  ],
+  [
+   874.0,
+   6328.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10491,
+  7629
+ ],
+ "source_bytes": 10894438,
+ "meta": {
+  "title": "Phong-Tho (feuille 5)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1929",
+  "dateNote": "edition dated 1929-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.f3400ov2"
+ }
+}

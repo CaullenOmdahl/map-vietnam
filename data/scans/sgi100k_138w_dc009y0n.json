@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_138w_dc009y0n/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1665.4,
+   6515.8,
+   108.717229,
+   15.3
+  ],
+  [
+   1676.6,
+   4092.0,
+   108.717229,
+   15.48
+  ],
+  [
+   3906.8,
+   1701.6,
+   108.897229,
+   15.66
+  ]
+ ],
+ "neatline": [
+  [
+   616.6,
+   860.4
+  ],
+  [
+   4927.5,
+   925.2
+  ],
+  [
+   4899.4,
+   6993.0
+  ],
+  [
+   588.5,
+   6928.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5595,
+  7569
+ ],
+ "source_bytes": 6480150,
+ "meta": {
+  "title": "Trì-Bình ouest (feuille 138W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-06; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.dc009y0n"
+ }
+}

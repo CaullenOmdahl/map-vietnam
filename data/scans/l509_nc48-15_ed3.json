@@ -1,0 +1,123 @@
+{
+ "image": "data/raw/scans/l509_nc48-15_ed3/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   992.1,
+   2484.8,
+   104.75,
+   8.25
+  ],
+  [
+   989.2,
+   1734.8,
+   104.75,
+   8.5
+  ],
+  [
+   985.7,
+   980.5,
+   104.75,
+   8.75
+  ],
+  [
+   1744.2,
+   2488.6,
+   105.0,
+   8.25
+  ],
+  [
+   1740.5,
+   1733.5,
+   105.0,
+   8.5
+  ],
+  [
+   1735.8,
+   981.8,
+   105.0,
+   8.75
+  ],
+  [
+   2490.7,
+   2489.5,
+   105.25,
+   8.25
+  ],
+  [
+   2487.7,
+   1733.6,
+   105.25,
+   8.5
+  ],
+  [
+   2483.2,
+   980.5,
+   105.25,
+   8.75
+  ],
+  [
+   3243.4,
+   2489.6,
+   105.5,
+   8.25
+  ],
+  [
+   3238.7,
+   1734.6,
+   105.5,
+   8.5
+  ],
+  [
+   3234.5,
+   980.9,
+   105.5,
+   8.75
+  ],
+  [
+   3984.3,
+   981.5,
+   105.75,
+   8.75
+  ],
+  [
+   4735.5,
+   979.4,
+   106.0,
+   8.75
+  ]
+ ],
+ "neatline": [
+  [
+   231.7,
+   232.6
+  ],
+  [
+   4730.7,
+   233.6
+  ],
+  [
+   4745.9,
+   3242.4
+  ],
+  [
+   246.9,
+   3241.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 14 graticule nodes",
+ "work_size": [
+  5000,
+  3791
+ ],
+ "source_bytes": 4150332,
+ "meta": {
+  "title": "Tan Hung Dong (NC 48-15)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "1962",
+  "dateNote": "edition 3, printed by the Army Map Service 8/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-15-3rd-ed.jpg"
+ }
+}

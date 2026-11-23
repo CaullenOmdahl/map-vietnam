@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_243_0ecb4zx3/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   3207.5,
+   4061.8,
+   106.017229,
+   9.18
+  ],
+  [
+   3201.6,
+   1703.1,
+   106.017229,
+   9.36
+  ],
+  [
+   7835.8,
+   1670.2,
+   106.377229,
+   9.36
+  ]
+ ],
+ "neatline": [
+  [
+   882.8,
+   992.9
+  ],
+  [
+   9659.5,
+   930.6
+  ],
+  [
+   9674.2,
+   6851.1
+  ],
+  [
+   897.4,
+   6913.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10518,
+  7740
+ ],
+ "source_bytes": 6842723,
+ "meta": {
+  "title": "Vinh-Chau (feuille 243)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1928",
+  "dateNote": "edition dated 1928-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.0ecb4zx3"
+ }
+}

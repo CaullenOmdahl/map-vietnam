@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_101w_c9a3npv3/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2408.8,
+   6809.4,
+   103.857229,
+   18.0
+  ],
+  [
+   2436.7,
+   4461.0,
+   103.857229,
+   18.18
+  ],
+  [
+   2468.3,
+   2113.0,
+   103.857229,
+   18.36
+  ],
+  [
+   4657.1,
+   6836.5,
+   104.037229,
+   18.0
+  ],
+  [
+   4680.1,
+   4489.1,
+   104.037229,
+   18.18
+  ],
+  [
+   4704.5,
+   2139.8,
+   104.037229,
+   18.36
+  ]
+ ],
+ "neatline": [
+  [
+   674.1,
+   952.3
+  ],
+  [
+   5088.1,
+   1006.1
+  ],
+  [
+   5020.6,
+   6936.2
+  ],
+  [
+   606.5,
+   6882.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5568,
+  7782
+ ],
+ "source_bytes": 4871745,
+ "meta": {
+  "title": "Ban-Sot ouest (feuille 101W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.c9a3npv3"
+ }
+}

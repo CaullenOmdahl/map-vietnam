@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_164_e590wr96/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   865.4,
+   3996.6,
+   107.457229,
+   13.68
+  ],
+  [
+   850.2,
+   1639.3,
+   107.457229,
+   13.86
+  ],
+  [
+   3156.7,
+   3972.9,
+   107.637229,
+   13.68
+  ],
+  [
+   3133.4,
+   1620.4,
+   107.637229,
+   13.86
+  ],
+  [
+   5468.3,
+   6305.4,
+   107.817229,
+   13.5
+  ],
+  [
+   5446.2,
+   3951.2,
+   107.817229,
+   13.68
+  ]
+ ],
+ "neatline": [
+  [
+   319.2,
+   730.4
+  ],
+  [
+   6721.6,
+   668.9
+  ],
+  [
+   6774.2,
+   6554.8
+  ],
+  [
+   371.9,
+   6616.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  7098,
+  7711
+ ],
+ "source_bytes": 11758232,
+ "meta": {
+  "title": "Bo-Kham (feuille 164)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1928",
+  "dateNote": "edition dated 1928-09; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.e590wr96"
+ }
+}

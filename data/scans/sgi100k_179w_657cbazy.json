@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_179w_657cbazy/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   535.4,
+   4100.5,
+   105.837229,
+   12.78
+  ],
+  [
+   541.8,
+   1767.3,
+   105.837229,
+   12.96
+  ],
+  [
+   2833.3,
+   6440.7,
+   106.017229,
+   12.6
+  ],
+  [
+   2836.7,
+   4100.7,
+   106.017229,
+   12.78
+  ],
+  [
+   2835.9,
+   1766.3,
+   106.017229,
+   12.96
+  ]
+ ],
+ "neatline": [
+  [
+   540.7,
+   823.4
+  ],
+  [
+   4946.9,
+   824.3
+  ],
+  [
+   4941.1,
+   6690.5
+  ],
+  [
+   534.9,
+   6689.6
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5382,
+  7386
+ ],
+ "source_bytes": 7485317,
+ "meta": {
+  "title": "Sambor ouest (feuille 179W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.657cbazy"
+ }
+}

@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_166e_2add0vqs/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2072.6,
+   6114.0,
+   109.077229,
+   13.5
+  ],
+  [
+   2062.6,
+   1391.2,
+   109.077229,
+   13.86
+  ],
+  [
+   4363.3,
+   3750.2,
+   109.257229,
+   13.68
+  ]
+ ],
+ "neatline": [
+  [
+   493.4,
+   799.5
+  ],
+  [
+   6084.7,
+   793.6
+  ],
+  [
+   6097.3,
+   6726.8
+  ],
+  [
+   505.9,
+   6732.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  6543,
+  7416
+ ],
+ "source_bytes": 10256693,
+ "meta": {
+  "title": "Qui Nhơn est (feuille 166E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.2add0vqs"
+ }
+}

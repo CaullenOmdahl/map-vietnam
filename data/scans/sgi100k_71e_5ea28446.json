@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_71e_5ea28446/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2930.5,
+   2179.9,
+   105.657229,
+   20.16
+  ],
+  [
+   5015.2,
+   6902.6,
+   105.837229,
+   19.8
+  ],
+  [
+   5033.0,
+   4547.0,
+   105.837229,
+   19.98
+  ],
+  [
+   5044.0,
+   2194.5,
+   105.837229,
+   20.16
+  ]
+ ],
+ "neatline": [
+  [
+   846.6,
+   840.0
+  ],
+  [
+   5053.3,
+   868.0
+  ],
+  [
+   5016.3,
+   6903.6
+  ],
+  [
+   809.7,
+   6875.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5550,
+  7761
+ ],
+ "source_bytes": 11023338,
+ "meta": {
+  "title": "Bái-Thương est (feuille 71E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.5ea28446"
+ }
+}

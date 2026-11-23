@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_87e_d86d6c91/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2550.4,
+   2122.8,
+   104.937229,
+   19.26
+  ],
+  [
+   4936.0,
+   4689.7,
+   105.117229,
+   19.08
+  ],
+  [
+   4932.3,
+   2123.9,
+   105.117229,
+   19.26
+  ]
+ ],
+ "neatline": [
+  [
+   330.3,
+   737.0
+  ],
+  [
+   5043.7,
+   739.2
+  ],
+  [
+   5053.0,
+   7177.7
+  ],
+  [
+   339.5,
+   7175.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5523,
+  7569
+ ],
+ "source_bytes": 10260467,
+ "meta": {
+  "title": "Cứa-Rào est (feuille 87E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.d86d6c91"
+ }
+}

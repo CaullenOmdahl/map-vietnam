@@ -230,6 +230,33 @@ with GDAL. Pixel positions refer to one exact image, so `download_maps.py` eithe
 archive's file as it is, or rebuilds the working image from the archive's JPEG 2000 file the same
 way every time (the catalogue entry records how, with the file's size and SHA-256).
 
+**Placing whole series automatically** (`sheet_lists.py`, `place_sheets.py`). Picking control
+points by hand takes an hour a map, which is fine for seven scans and not for hundreds. The
+French 1:100,000 sheets and the US L509 1:250,000 sheets print a regular graticule: a "+" (or two
+crossing lines) every 0.2 grad from the Paris meridian on the French sheets, every 15′ on the
+Indian 1960 datum on the US ones. `sheet_lists.py` lists each sheet with where its image is and
+roughly where it lies (from the archive's own record, or the sheet grid). `place_sheets.py` then,
+once per sheet, offline:
+
+1. scores every pixel of a medium-size copy for looking like a "+": ink along all four short arms
+   leaving it, and none in the quarters between them (so a canal corner, a letter or a colour fill
+   scores low). On sheets with a coloured grid over a black graticule, only dark ink counts;
+2. predicts where the graticule's nodes lie from the sheet's printed frame and rough extent, then
+   moves, scales and turns that lattice as a whole to where the most nodes land on a "+" (one stray
+   "+" cannot outvote the lattice), refining the two directions' scales apart;
+3. measures each node on the full-size image, drops any that do not fit the others, and fits the
+   sheet to the rest;
+4. refuses the sheet, rather than placing it badly, unless at least three nodes on two meridians
+   and two parallels fit within 4 px, the scale and squareness are plausible, and the sheet lands
+   within 8 km of where its archive says it is (a lattice paired one node off would move it a
+   whole graticule step, about 20 km).
+
+It writes the usual control file, so from there on a placed sheet is like any scan. On sheets
+already placed by hand, the automatic placement agrees within about 20–60 m. The sheets it
+refuses are listed with the reason (`--review`), for hand placing later. The British Admiralty
+charts come already georeferenced from the Wikimaps Warper, whose volunteers' control points are
+copied and scaled to the image the library downloads.
+
 Old surveys have errors of their own. The fit can only be as good as the map: an 1889 map at
 1:400,000 drawn from older surveys may put a river channel kilometres from where it was. Each
 map's date note in the viewer says what is known about its accuracy. Use

@@ -1,0 +1,129 @@
+{
+ "image": "data/raw/scans/l509_nc48-5_ed2/work.jpg",
+ "crs": "+proj=longlat +ellps=evrst30 +towgs84=198,881,317,0,0,0,0 +no_defs",
+ "gcps": [
+  [
+   1008.6,
+   2483.0,
+   103.0,
+   10.25
+  ],
+  [
+   1005.3,
+   1727.5,
+   103.0,
+   10.5
+  ],
+  [
+   1002.4,
+   971.6,
+   103.0,
+   10.75
+  ],
+  [
+   1757.8,
+   2484.5,
+   103.25,
+   10.25
+  ],
+  [
+   1754.2,
+   1729.8,
+   103.25,
+   10.5
+  ],
+  [
+   1749.7,
+   973.4,
+   103.25,
+   10.75
+  ],
+  [
+   2506.2,
+   2487.5,
+   103.5,
+   10.25
+  ],
+  [
+   2502.5,
+   1727.0,
+   103.5,
+   10.5
+  ],
+  [
+   2498.8,
+   973.1,
+   103.5,
+   10.75
+  ],
+  [
+   3257.1,
+   2488.5,
+   103.75,
+   10.25
+  ],
+  [
+   3252.7,
+   1730.4,
+   103.75,
+   10.5
+  ],
+  [
+   3248.5,
+   974.6,
+   103.75,
+   10.75
+  ],
+  [
+   4008.1,
+   2487.0,
+   104.0,
+   10.25
+  ],
+  [
+   4002.6,
+   1730.4,
+   104.0,
+   10.5
+  ],
+  [
+   3997.7,
+   972.4,
+   104.0,
+   10.75
+  ]
+ ],
+ "neatline": [
+  [
+   246.7,
+   113.3
+  ],
+  [
+   4842.8,
+   117.7
+  ],
+  [
+   4862.1,
+   3698.6
+  ],
+  [
+   266.0,
+   3694.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 15 graticule nodes",
+ "work_size": [
+  5000,
+  3792
+ ],
+ "source_bytes": 4390993,
+ "meta": {
+  "title": "Kampot (NC 48-5)",
+  "series": "US Army Map Service L509, Indochina and Thailand 1:250,000",
+  "scale": "1:250,000",
+  "date": "1962",
+  "dateNote": "edition 2, printed by the Army Map Service 9/1962; placed automatically from its printed 15-minute graticule on the Indian 1960 datum",
+  "source": "https://maps.lib.utexas.edu/maps/ams/indochina_and_thailand/txu-oclc-6535632-nc48-5-2nd-ed.jpg"
+ }
+}

@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_214_499bxsla/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2605.1,
+   5249.9,
+   108.717229,
+   11.34
+  ],
+  [
+   4920.2,
+   5219.4,
+   108.897229,
+   11.34
+  ],
+  [
+   7276.3,
+   7533.6,
+   109.077229,
+   11.16
+  ],
+  [
+   7209.9,
+   2832.5,
+   109.077229,
+   11.52
+  ],
+  [
+   9598.1,
+   7501.3,
+   109.257229,
+   11.16
+  ],
+  [
+   9525.2,
+   2799.8,
+   109.257229,
+   11.52
+  ]
+ ],
+ "neatline": [
+  [
+   819.8,
+   1274.8
+  ],
+  [
+   9752.2,
+   1145.9
+  ],
+  [
+   9847.5,
+   7580.1
+  ],
+  [
+   915.1,
+   7709.0
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10629,
+  8843
+ ],
+ "source_bytes": 16196781,
+ "meta": {
+  "title": "Phan-Rang (feuille 214)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1925",
+  "dateNote": "edition dated 1925-12; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.499bxsla"
+ }
+}

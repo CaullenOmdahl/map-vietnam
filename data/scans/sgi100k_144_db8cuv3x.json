@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_144_db8cuv3x/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1657.9,
+   5080.3,
+   108.717229,
+   14.94
+  ],
+  [
+   1644.0,
+   2734.1,
+   108.717229,
+   15.12
+  ],
+  [
+   3941.8,
+   5047.7,
+   108.897229,
+   14.94
+  ],
+  [
+   3914.3,
+   2703.1,
+   108.897229,
+   15.12
+  ]
+ ],
+ "neatline": [
+  [
+   437.8,
+   843.9
+  ],
+  [
+   5264.7,
+   776.4
+  ],
+  [
+   5316.6,
+   6651.9
+  ],
+  [
+   489.6,
+   6719.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5718,
+  7362
+ ],
+ "source_bytes": 9861486,
+ "meta": {
+  "title": "Quảng Ngãi (feuille 144)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-05; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.db8cuv3x"
+ }
+}

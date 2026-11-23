@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_27w_b2afwt5u/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   564.1,
+   4707.6,
+   105.837229,
+   21.78
+  ],
+  [
+   569.7,
+   2364.0,
+   105.837229,
+   21.96
+  ],
+  [
+   5067.1,
+   4709.2,
+   106.197229,
+   21.78
+  ],
+  [
+   5064.1,
+   2359.0,
+   106.197229,
+   21.96
+  ]
+ ],
+ "neatline": [
+  [
+   568.3,
+   945.3
+  ],
+  [
+   5091.4,
+   943.6
+  ],
+  [
+   5088.3,
+   6835.8
+  ],
+  [
+   565.1,
+   6837.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5577,
+  7719
+ ],
+ "source_bytes": 10846105,
+ "meta": {
+  "title": "Phố-Bình-Gia ouest (feuille 27W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.b2afwt5u"
+ }
+}

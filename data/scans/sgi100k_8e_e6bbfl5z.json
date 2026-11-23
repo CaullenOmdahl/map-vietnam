@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_8e_e6bbfl5z/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   687.5,
+   4707.6,
+   105.477229,
+   22.68
+  ],
+  [
+   690.7,
+   2398.3,
+   105.477229,
+   22.86
+  ],
+  [
+   2870.1,
+   4713.7,
+   105.657229,
+   22.68
+  ],
+  [
+   2869.1,
+   2406.7,
+   105.657229,
+   22.86
+  ],
+  [
+   5045.8,
+   4716.9,
+   105.837229,
+   22.68
+  ],
+  [
+   5045.1,
+   2411.4,
+   105.837229,
+   22.86
+  ]
+ ],
+ "neatline": [
+  [
+   626.0,
+   939.1
+  ],
+  [
+   5045.0,
+   950.5
+  ],
+  [
+   5043.8,
+   6764.0
+  ],
+  [
+   624.8,
+   6752.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5604,
+  7788
+ ],
+ "source_bytes": 10843693,
+ "meta": {
+  "title": "Bảo-Lac, est (feuille 8E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.e6bbfl5z"
+ }
+}

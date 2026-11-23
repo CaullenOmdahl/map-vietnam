@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_200e_aafc0jyy/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   786.0,
+   6402.0,
+   106.197229,
+   11.7
+  ],
+  [
+   788.8,
+   4056.2,
+   106.197229,
+   11.88
+  ],
+  [
+   3098.9,
+   4051.8,
+   106.377229,
+   11.88
+  ],
+  [
+   3093.4,
+   1704.3,
+   106.377229,
+   12.06
+  ]
+ ],
+ "neatline": [
+  [
+   571.7,
+   832.5
+  ],
+  [
+   4995.5,
+   824.2
+  ],
+  [
+   4998.8,
+   6714.4
+  ],
+  [
+   575.1,
+   6722.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5475,
+  7530
+ ],
+ "source_bytes": 7451465,
+ "meta": {
+  "title": "Mimot est (feuille 200E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.aafc0jyy"
+ }
+}

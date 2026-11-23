@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_242_fb4b3h1w/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2689.0,
+   6193.7,
+   105.297229,
+   9.0
+  ],
+  [
+   2686.4,
+   3844.9,
+   105.297229,
+   9.18
+  ],
+  [
+   5023.5,
+   6196.8,
+   105.477229,
+   9.0
+  ],
+  [
+   7355.4,
+   6195.4,
+   105.657229,
+   9.0
+  ],
+  [
+   7353.8,
+   3852.2,
+   105.657229,
+   9.18
+  ],
+  [
+   7354.8,
+   1505.0,
+   105.657229,
+   9.36
+  ]
+ ],
+ "neatline": [
+  [
+   849.1,
+   766.4
+  ],
+  [
+   9667.3,
+   775.1
+  ],
+  [
+   9670.2,
+   6673.9
+  ],
+  [
+   852.0,
+   6665.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10539,
+  7702
+ ],
+ "source_bytes": 12148719,
+ "meta": {
+  "title": "Bàc Liêu (feuille 242)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1934",
+  "dateNote": "edition dated 1934-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.fb4b3h1w"
+ }
+}

@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_182w_ec0ewz5m/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1507.4,
+   6237.3,
+   107.997229,
+   12.6
+  ],
+  [
+   1495.4,
+   3893.0,
+   107.997229,
+   12.78
+  ],
+  [
+   1480.4,
+   1548.5,
+   107.997229,
+   12.96
+  ],
+  [
+   3797.7,
+   6214.8,
+   108.177229,
+   12.6
+  ],
+  [
+   3788.4,
+   3865.0,
+   108.177229,
+   12.78
+  ],
+  [
+   3776.8,
+   1520.8,
+   108.177229,
+   12.96
+  ]
+ ],
+ "neatline": [
+  [
+   343.7,
+   801.9
+  ],
+  [
+   4741.1,
+   752.0
+  ],
+  [
+   4771.2,
+   6639.9
+  ],
+  [
+   373.8,
+   6689.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5262,
+  7647
+ ],
+ "source_bytes": 8733348,
+ "meta": {
+  "title": "Ban Mé Thuot ouest (feuille 182W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ec0ewz5m"
+ }
+}

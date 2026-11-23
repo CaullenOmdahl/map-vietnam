@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_167bis_ee6ax2qf/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1803.6,
+   5144.5,
+   103.857229,
+   13.14
+  ],
+  [
+   1824.8,
+   2789.0,
+   103.857229,
+   13.32
+  ],
+  [
+   4117.7,
+   5171.3,
+   104.037229,
+   13.14
+  ],
+  [
+   4134.2,
+   2814.8,
+   104.037229,
+   13.32
+  ],
+  [
+   6442.9,
+   2842.3,
+   104.217229,
+   13.32
+  ],
+  [
+   8748.8,
+   2862.2,
+   104.397229,
+   13.32
+  ]
+ ],
+ "neatline": [
+  [
+   650.9,
+   754.3
+  ],
+  [
+   9464.9,
+   849.4
+  ],
+  [
+   9418.6,
+   6778.4
+  ],
+  [
+   604.6,
+   6683.4
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10029,
+  7618
+ ],
+ "source_bytes": 15720497,
+ "meta": {
+  "title": "Angkor (feuille 167bis)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "",
+  "dateNote": "undated print; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ee6ax2qf"
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_241_91cf1282/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   539.3,
+   6063.6,
+   104.757229,
+   9.0
+  ],
+  [
+   2885.7,
+   6089.9,
+   104.937229,
+   9.0
+  ],
+  [
+   2905.6,
+   3748.1,
+   104.937229,
+   9.18
+  ],
+  [
+   2929.0,
+   1405.7,
+   104.937229,
+   9.36
+  ],
+  [
+   5224.5,
+   6109.3,
+   105.117229,
+   9.0
+  ]
+ ],
+ "neatline": [
+  [
+   437.8,
+   660.7
+  ],
+  [
+   5780.4,
+   712.8
+  ],
+  [
+   5723.0,
+   6600.3
+  ],
+  [
+   380.4,
+   6548.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  6084,
+  7326
+ ],
+ "source_bytes": 7339672,
+ "meta": {
+  "title": "Cà Mau (feuille 241)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.91cf1282"
+ }
+}

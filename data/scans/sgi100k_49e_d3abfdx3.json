@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_49e_d3abfdx3/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   600.9,
+   4475.8,
+   106.197229,
+   20.88
+  ],
+  [
+   2829.7,
+   2147.8,
+   106.377229,
+   21.06
+  ],
+  [
+   5009.4,
+   4518.8,
+   106.557229,
+   20.88
+  ],
+  [
+   5030.6,
+   2168.1,
+   106.557229,
+   21.06
+  ]
+ ],
+ "neatline": [
+  [
+   638.2,
+   768.0
+  ],
+  [
+   5045.3,
+   810.6
+  ],
+  [
+   4987.3,
+   6691.4
+  ],
+  [
+   580.1,
+   6648.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5568,
+  7902
+ ],
+ "source_bytes": 11726602,
+ "meta": {
+  "title": "Hanoi est (feuille 49E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-01; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.d3abfdx3"
+ }
+}

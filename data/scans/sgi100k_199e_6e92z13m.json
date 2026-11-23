@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_199e_6e92z13m/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2668.4,
+   6459.4,
+   105.657229,
+   11.7
+  ],
+  [
+   2656.6,
+   4115.5,
+   105.657229,
+   11.88
+  ],
+  [
+   4987.0,
+   6444.8,
+   105.837229,
+   11.7
+  ],
+  [
+   4954.9,
+   1765.2,
+   105.837229,
+   12.06
+  ]
+ ],
+ "neatline": [
+  [
+   529.9,
+   889.1
+  ],
+  [
+   4950.0,
+   865.9
+  ],
+  [
+   4988.1,
+   6749.6
+  ],
+  [
+   568.1,
+   6772.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5415,
+  7533
+ ],
+ "source_bytes": 8213423,
+ "meta": {
+  "title": "Kompong-Cham est (feuille 199E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1951",
+  "dateNote": "edition dated 1951-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.6e92z13m"
+ }
+}

@@ -1,0 +1,79 @@
+{
+ "image": "data/raw/scans/sgi100k_159_d2cfenq2/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1872.9,
+   6317.9,
+   103.137229,
+   13.5
+  ],
+  [
+   1900.8,
+   3964.7,
+   103.137229,
+   13.68
+  ],
+  [
+   1933.6,
+   1616.6,
+   103.137229,
+   13.86
+  ],
+  [
+   4176.5,
+   6350.7,
+   103.317229,
+   13.5
+  ],
+  [
+   4235.5,
+   1644.8,
+   103.317229,
+   13.86
+  ],
+  [
+   8839.4,
+   1695.0,
+   103.677229,
+   13.86
+  ]
+ ],
+ "neatline": [
+  [
+   1029.7,
+   737.3
+  ],
+  [
+   9859.7,
+   841.6
+  ],
+  [
+   9784.9,
+   6746.1
+  ],
+  [
+   954.9,
+   6641.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 6 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10833,
+  7701
+ ],
+ "source_bytes": 13704952,
+ "meta": {
+  "title": "Kralanh (feuille 159)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1926",
+  "dateNote": "edition dated 1926-01; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.d2cfenq2"
+ }
+}

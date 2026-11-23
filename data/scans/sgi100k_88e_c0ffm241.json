@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_88e_c0ffm241/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2810.2,
+   4538.8,
+   105.657229,
+   19.08
+  ],
+  [
+   2789.5,
+   2193.5,
+   105.657229,
+   19.26
+  ],
+  [
+   5040.6,
+   4519.6,
+   105.837229,
+   19.08
+  ],
+  [
+   5014.9,
+   2171.3,
+   105.837229,
+   19.26
+  ]
+ ],
+ "neatline": [
+  [
+   598.0,
+   921.1
+  ],
+  [
+   6248.5,
+   868.6
+  ],
+  [
+   6306.8,
+   6762.6
+  ],
+  [
+   656.3,
+   6815.1
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  6792,
+  7527
+ ],
+ "source_bytes": 9252494,
+ "meta": {
+  "title": "Phủ-Diễn-Châu est (feuille 88E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1950",
+  "dateNote": "edition dated 1950-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.c0ffm241"
+ }
+}

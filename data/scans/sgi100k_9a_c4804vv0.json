@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_9a_c4804vv0/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   3008.9,
+   4492.2,
+   105.297229,
+   20.88
+  ],
+  [
+   2988.6,
+   2156.6,
+   105.297229,
+   21.06
+  ],
+  [
+   5182.1,
+   2132.3,
+   105.477229,
+   21.06
+  ],
+  [
+   7389.6,
+   4440.4,
+   105.657229,
+   20.88
+  ],
+  [
+   7365.2,
+   2106.5,
+   105.657229,
+   21.06
+  ]
+ ],
+ "neatline": [
+  [
+   1011.4,
+   873.1
+  ],
+  [
+   9814.6,
+   770.6
+  ],
+  [
+   9866.0,
+   6592.6
+  ],
+  [
+   1062.8,
+   6695.2
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10584,
+  7479
+ ],
+ "source_bytes": 14763994,
+ "meta": {
+  "title": "Hanoï (feuille 9A)",
+  "series": "Carte provisoire du Tonkin",
+  "scale": "1:100,000",
+  "date": "1895",
+  "dateNote": "edition dated 1895-11; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.c4804vv0"
+ }
+}

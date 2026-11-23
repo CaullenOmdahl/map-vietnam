@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_158_ecbd2215/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2153.4,
+   5048.3,
+   108.717229,
+   14.04
+  ],
+  [
+   2125.9,
+   2698.4,
+   108.717229,
+   14.22
+  ],
+  [
+   6717.6,
+   2639.6,
+   109.077229,
+   14.22
+  ],
+  [
+   9050.6,
+   4956.3,
+   109.257229,
+   14.04
+  ]
+ ],
+ "neatline": [
+  [
+   772.8,
+   902.0
+  ],
+  [
+   9716.4,
+   784.3
+  ],
+  [
+   9793.0,
+   6548.6
+  ],
+  [
+   849.4,
+   6666.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10503,
+  7653
+ ],
+ "source_bytes": 14759035,
+ "meta": {
+  "title": "Phú-Mỹ (feuille 158)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1933",
+  "dateNote": "edition dated 1933-07; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.ecbd2215"
+ }
+}

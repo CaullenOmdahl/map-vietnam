@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_26e_2b383949/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   581.0,
+   4774.4,
+   105.477229,
+   21.78
+  ],
+  [
+   575.1,
+   2426.2,
+   105.477229,
+   21.96
+  ],
+  [
+   2828.6,
+   4768.9,
+   105.657229,
+   21.78
+  ],
+  [
+   5076.8,
+   2412.9,
+   105.837229,
+   21.96
+  ]
+ ],
+ "neatline": [
+  [
+   549.0,
+   1014.5
+  ],
+  [
+   5073.8,
+   1001.6
+  ],
+  [
+   5083.6,
+   6885.6
+  ],
+  [
+   558.9,
+   6898.5
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5532,
+  7785
+ ],
+ "source_bytes": 12289508,
+ "meta": {
+  "title": "Tuyên-Quang est (feuille 26E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-11; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.2b383949"
+ }
+}

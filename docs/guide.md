@@ -39,8 +39,11 @@ to wait with the list open, because the bar at the bottom shows progress.
 
 ![The Old maps list open beside the map, with outlines on the map showing where each old map lies](images/add-old-maps.jpg)
 
-The switch at the top of the list narrows it to the detailed 1:50,000 sheets, the 1:250,000
-overview sheets or the older scans.
+To find a map somewhere else, type a town, a sheet number or a year in the box at the top of the
+list ("Huế", "feuille 221", "1952"): it searches every map, not just the ones on screen. The
+chips under it narrow the list to one scale, from town plans to 1:250,000, and show how many maps
+each has; **Oldest** and **Newest** put the list in date order. When a sheet was printed more than
+once, its editions share one row: **Add** takes the newest, and opening the row lists the others.
 
 A detailed US Army sheet (1:50,000, roughly 27 km on a side) is about 10 MB to download and
 about 20 MB on disk, because the download is kept so the map can be rebuilt. All 498 of them come

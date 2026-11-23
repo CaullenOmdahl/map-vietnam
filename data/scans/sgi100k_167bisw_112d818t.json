@@ -1,0 +1,61 @@
+{
+ "image": "data/raw/scans/sgi100k_167bisw_112d818t/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1712.6,
+   5208.6,
+   103.857229,
+   13.14
+  ],
+  [
+   4007.9,
+   5243.9,
+   104.037229,
+   13.14
+  ],
+  [
+   4041.1,
+   2765.3,
+   104.037229,
+   13.32
+  ]
+ ],
+ "neatline": [
+  [
+   592.0,
+   533.5
+  ],
+  [
+   4993.2,
+   601.3
+  ],
+  [
+   4909.5,
+   6835.5
+  ],
+  [
+   508.4,
+   6767.7
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 3 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5346,
+  7530
+ ],
+ "source_bytes": 7096121,
+ "meta": {
+  "title": "Siem Réap ouest (feuille 167bisW)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-04; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.112d818t"
+ }
+}

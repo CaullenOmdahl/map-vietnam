@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_125w_f22d74ps/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   1130.7,
+   6636.5,
+   107.277229,
+   16.2
+  ],
+  [
+   1137.9,
+   1948.5,
+   107.277229,
+   16.56
+  ],
+  [
+   3396.7,
+   6632.0,
+   107.457229,
+   16.2
+  ],
+  [
+   3395.6,
+   4283.7,
+   107.457229,
+   16.38
+  ]
+ ],
+ "neatline": [
+  [
+   664.3,
+   895.2
+  ],
+  [
+   5083.9,
+   881.3
+  ],
+  [
+   5077.2,
+   6779.0
+  ],
+  [
+   657.5,
+   6792.8
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5532,
+  7659
+ ],
+ "source_bytes": 10122745,
+ "meta": {
+  "title": "Huế ouest (feuille 125W)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1952",
+  "dateNote": "edition dated 1952-02; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.f22d74ps"
+ }
+}

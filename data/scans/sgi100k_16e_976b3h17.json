@@ -1,0 +1,67 @@
+{
+ "image": "data/raw/scans/sgi100k_16e_976b3h17/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   605.6,
+   3563.1,
+   104.757229,
+   22.32
+  ],
+  [
+   609.0,
+   1214.7,
+   104.757229,
+   22.5
+  ],
+  [
+   2779.3,
+   5916.5,
+   104.937229,
+   22.14
+  ],
+  [
+   2778.7,
+   1223.1,
+   104.937229,
+   22.5
+  ]
+ ],
+ "neatline": [
+  [
+   490.2,
+   966.6
+  ],
+  [
+   4857.5,
+   981.6
+  ],
+  [
+   4856.4,
+   6869.8
+  ],
+  [
+   489.0,
+   6854.9
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 4 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  5532,
+  7788
+ ],
+ "source_bytes": 10199550,
+ "meta": {
+  "title": "Lục-An-Châu, est (feuille 16E)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1949",
+  "dateNote": "edition dated 1949-10; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.976b3h17"
+ }
+}

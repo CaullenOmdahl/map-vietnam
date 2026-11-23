@@ -1,0 +1,73 @@
+{
+ "image": "data/raw/scans/sgi100k_193_58b37se0/work.jpg",
+ "crs": "EPSG:4326",
+ "gcps": [
+  [
+   2004.5,
+   5153.2,
+   107.997229,
+   12.24
+  ],
+  [
+   1987.7,
+   2802.7,
+   107.997229,
+   12.42
+  ],
+  [
+   4318.3,
+   5124.4,
+   108.177229,
+   12.24
+  ],
+  [
+   6602.9,
+   2754.3,
+   108.357229,
+   12.42
+  ],
+  [
+   8937.5,
+   5077.3,
+   108.537229,
+   12.24
+  ]
+ ],
+ "neatline": [
+  [
+   771.9,
+   937.1
+  ],
+  [
+   9675.6,
+   841.6
+  ],
+  [
+   9728.8,
+   6657.8
+  ],
+  [
+   825.1,
+   6753.3
+  ]
+ ],
+ "order": 1,
+ "placed_by": "scripts/place_sheets.py from 5 graticule nodes",
+ "offset_deg": [
+  0.0045,
+  0.0
+ ],
+ "work_size": [
+  10527,
+  7688
+ ],
+ "source_bytes": 19726039,
+ "meta": {
+  "title": "Darlac (feuille 193)",
+  "series": "Service Géographique de l'Indochine, Carte de l'Indochine 1:100 000",
+  "scale": "1:100,000",
+  "date": "1935",
+  "dateNote": "edition dated 1935-01; placed automatically from its printed graticule (grads from Paris), shifted 0.0045 degrees east for the old Paris meridian value",
+  "source": "https://nakala.fr/10.34847/nkl.58b37se0"
+ }
+}
