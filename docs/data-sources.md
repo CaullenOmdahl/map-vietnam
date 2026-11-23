@@ -1,11 +1,12 @@
 # Data sources
 
 Map Vietnam ships no maps or record databases (only the catalogue of where to fetch them, and
-small excerpts for the tests). `python3 start.py` downloads each record source from its
-publisher onto your computer the first time it runs, and keeps the download in `data/raw/` so it
-is not fetched again unless you ask (most ingesters take `--refresh`). Old maps are downloaded only when you add one (the viewer's "Add old maps",
-or `python3 start.py maps add`), and removing a map deletes its download too. This page says, for each source, what it is, where it comes from, its licence, how
-its records are placed on the map, and what is left out.
+small excerpts for the tests). Each record source is downloaded from its publisher onto your
+computer when you add it (the viewer's Records card, or `python3 start.py setup`), and the
+download is kept in `data/raw/` so it is not fetched again unless you update it. Old maps are
+downloaded only when you add one (the viewer's "Add old maps", or `python3 start.py maps add`).
+Removing a source or a map deletes its download too. This page says, for each source, what it
+is, where it comes from, its licence, how its records are placed on the map, and what is left out.
 
 Every record keeps a link to its source. Where a source's licence asks for credit, the credit
 line is in [NOTICE](../NOTICE).
@@ -19,10 +20,11 @@ line is in [NOTICE](../NOTICE).
 | `wiki_mia` | English Wikipedia missing-in-action lists | CC BY-SA 4.0 | No | 1 MB |
 | `vn_relics` | Vietnamese Wikipedia national relic lists | CC BY-SA 4.0 (+ CC0, ODbL) | No | 30 MB |
 | `wikidata_osm` | Wikidata and OpenStreetMap | CC0; ODbL 1.0 | No | 10 MB |
-| `thor` | THOR air operations (Kaggle) | Public domain / CC0 | Free Kaggle key | 320 MB |
+| `thor` | THOR air operations (Kaggle), for an area you choose | Public domain / CC0 | Only if Kaggle asks | 320 MB |
 | `vhpa` | Vietnam Helicopter Pilots Association (optional) | Copyrighted | No | 20 MB, 3–4 hours |
 
-`python3 start.py setup --only <part>` runs one part again, plus anything unfinished it depends on.
+The first six are the standard set, which the viewer's first-run card and `python3 start.py setup`
+add. `python3 start.py setup --only <part>` adds one part, plus anything unfinished it depends on.
 
 ## Maps
 
@@ -234,26 +236,28 @@ through the public Overpass servers, which are often busy; if this part fails, r
 
 The US Air Force's Theater History of Operations database for Vietnam: one row per strike
 mission, 1965–1973, published on Kaggle (`usaf/vietnam-war-bombing-operations`). Public domain;
-the Kaggle copy is marked CC0. Kaggle needs a free account and API key (see the [user guide](guide.md#air-strike-records)); once the
-320 MB zip is downloaded, no key is needed again.
+the Kaggle copy is marked CC0. At the time of writing Kaggle serves the file without an account.
+If it asks for a key, the viewer says so and takes one (see the
+[user guide](guide.md#air-strike-records)). Once the 320 MB zip is downloaded it is not fetched
+again.
 
 Positions are re-derived from the original grid reference on Indian 1960 when there is one,
 because THOR's own WGS84 columns are off by up to about 300 m. A THOR point is the target, not
 where the bombs fell, so no strike has a radius under 300 m. Only strike missions are kept.
 
-By default only strikes in the Cao Lãnh area (105.35–105.95 E, 10.15–10.75 N) are loaded. To load
-another area, or the whole country (a much bigger database), run the ingester directly after
-setup:
+Strikes are loaded for one area at a time: the area on screen when you add them in the viewer,
+or `python3 start.py setup --only thor --area 106.0,10.5,107.0,11.5` (west,south,east,north in
+degrees; without `--area` it is the area around Cao Lãnh, 105.35–105.95 E, 10.15–10.75 N). Each
+run replaces the stored strikes with the ones inside the new area. An area can hold up to 150,000
+strikes, because more than that makes the map slow.
+
+The whole country is about three million strikes and a database of more than 5 GB, which the
+viewer cannot draw. The ingester will still load it if you run it by hand, with about 7 GB of
+memory:
 
 ```sh
-.venv/bin/python scripts/ingest/thor.py --bbox 106.0,10.5,107.0,11.5
 .venv/bin/python scripts/ingest/thor.py --all-vietnam
 ```
-
-On Windows, use `.venv\Scripts\python` instead of `.venv/bin/python`.
-
-`--bbox` takes west,south,east,north in degrees. Each run replaces the stored strikes with the
-ones inside the new area.
 
 ### Vietnam Helicopter Pilots Association (`vhpa`, optional)
 
@@ -261,11 +265,11 @@ The VHPA website's pages on helicopter losses: one incident page per aircraft lo
 the pilots. The site is copyrighted, so only short facts are stored (date, aircraft, unit, grid,
 outcome, status codes), for personal research; no narrative text is stored or quoted. The site
 has no `robots.txt`; the ingester reads one page every 3 seconds, so a full download takes 3 to 4
-hours. It needs the `gns`, `hes_gazetteer` and `wikidata_osm` parts first. Turn it on with
-`python3 start.py setup --only vhpa`.
+hours. It needs the `gns`, `hes_gazetteer` and `wikidata_osm` parts first, and adds them if they
+are missing. Add it from the viewer's Records card or with `python3 start.py setup --only vhpa`.
 
 ## Background maps
 
 Today's map under the old ones comes straight from the tile servers while you browse: the street
 map from OpenStreetMap (© OpenStreetMap contributors) and the satellite view from Esri World
-Imagery. These are not downloaded during setup.
+Imagery. These are never downloaded.

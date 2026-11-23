@@ -1,7 +1,8 @@
 #!/bin/sh
-# Double-click this file in Finder (macOS) to set up Map Vietnam and open it in your browser.
-# It finds a Python 3.12 or newer and runs start.py from this folder; the Terminal window that
-# opens shows progress, and closing it (or pressing Control-C) stops the map.
+# Double-click this file in Finder (macOS) to start Map Vietnam and open it in your browser.
+# It finds a Python 3.12 or newer and runs start.py from this folder. The Terminal window that
+# opens must stay open while the map is in use; "Quit Map Vietnam" in the map (or closing the
+# window, or Control-C) stops it.
 
 cd "$(dirname "$0")" || exit 1
 

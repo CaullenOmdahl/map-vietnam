@@ -30,16 +30,29 @@ Typing `python` on Windows can open the Microsoft Store instead of running Pytho
 `py` launcher that the python.org installer adds: `py start.py`. If that isn't found either,
 run the installer again and tick **Add python.exe to PATH**.
 
-## A download failed
+## Some records could not be added
 
-The archives are sometimes busy, OpenStreetMap's Overpass servers most of all. The summary at the
-end says what failed, and running `python3 start.py` again later redoes only that. The full log
-for each part is in `data/work/setup/logs/`.
+The archives are sometimes busy, OpenStreetMap's Overpass servers most of all. Open **Records**
+in the side panel. The source that failed is at the top with the reason, and **Retry** tries it
+again. What was already downloaded is kept. The full log for each source is in
+`data/work/setup/logs/`.
 
-## Kaggle says the key is wrong
+## The air strikes say the area holds too many
 
-Make a new key (see the [user guide](guide.md#air-strike-records)), then run
-`python3 start.py setup --only thor` again, or correct the two lines in `.env`.
+An area can hold up to 150,000 strikes, so that the map stays quick. Zoom in and add them for a
+smaller area. See the [user guide](guide.md#air-strike-records).
+
+## Kaggle asks for a key, or says the key is wrong
+
+Open **Records**, then **Air strikes**. The row shows how to get a free key and where to choose
+the `kaggle.json` file Kaggle gives you. If Kaggle refused a key you saved earlier, make a new
+one the same way and choose the new file.
+
+## The map says "Map Vietnam has stopped"
+
+The program behind the page isn't running any more, because you quit it or closed its terminal
+window. Start it again (double-click **Start Map Vietnam.command**, or run `python3 start.py`)
+and reload the page.
 
 ## The map is blank
 

@@ -520,10 +520,12 @@ def main(argv=None):
     ap.add_argument("--refresh", action="store_true", help="re-download the gazetteer files")
     args = ap.parse_args(argv)
     paths = fetch(refresh=args.refresh)
+    common.progress(None, "Reading the hamlet lists")
     raw_dir = paths["GZSF"].parent
     vintage = hgaz_date(read_records(paths["HGAZ"], FILES["HGAZ"][1]))
     by_usid = load_all(raw_dir)
     records, stats, located = build(by_usid)
+    common.progress(None, f"Saving {len(records):,} hamlets")
     n, deleted, withdrawn = save(store.connect(), records, vintage)
     OUT_PROVINCES.parent.mkdir(parents=True, exist_ok=True)
     OUT_PROVINCES.write_text(

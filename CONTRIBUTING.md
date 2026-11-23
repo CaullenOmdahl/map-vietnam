@@ -41,11 +41,14 @@ Style, in short:
 ## Where things are
 
 ```text
-start.py                    one-command setup and server (standard library only)
+start.py                    starts everything: makes .venv, runs the server, opens the browser
 Start Map Vietnam.command   macOS double-click launcher for start.py
 requirements.txt            pinned Python dependencies
 scripts/
+  records.py                the record sources: adds and removes them (the viewer's Records card,
+                            python3 start.py setup / records ...)
   library.py                the map library: adds and removes old maps (python3 start.py maps ...)
+  files.py                  the lock and JSON-file helpers those two share
   map_library_catalogue.py  builds data/sources/map_library.json, every map that can be added
   download_maps.py          fetches one map's file from the addresses in that catalogue
   l7014_meta.py             reads title, date and datum from a US GeoPDF (kept in its map's metadata)
@@ -68,7 +71,7 @@ docs/                       user guide, troubleshooting, how it works, data sour
 
 Downloads go to `data/raw/`, intermediate files to `data/work/`, records to
 `data/evidence.sqlite` and the maps a person added to `web/tiles/`. All of these are kept out of
-git: `start.py` rebuilds the records, and each map is rebuilt when it is added again.
+git: records and maps are downloaded again when someone adds them again.
 
 ## Adding a record source
 
@@ -84,7 +87,8 @@ Read [docs/how-it-works.md](docs/how-it-works.md) first. A new ingester:
 - leaves out formal burials (cemeteries, graves, grave registries);
 - has tests that run on small excerpts in `tests/fixtures/<source>/`, with the excerpt's origin
   and licence added to `tests/fixtures/README.md`;
-- is added as a step in `start.py` and described in [docs/data-sources.md](docs/data-sources.md).
+- is added to `SOURCES` in `scripts/records.py`, which is what lists it in the viewer, and is
+  described in [docs/data-sources.md](docs/data-sources.md).
 
 ## Adding a map
 

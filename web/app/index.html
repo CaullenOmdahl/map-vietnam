@@ -16,7 +16,7 @@
 <!-- MapLibre is pinned and checked with Subresource Integrity (hashes from unpkg's ?meta listing); Google Fonts
      serves different CSS per browser, so it cannot carry a fixed hash. -->
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" integrity="sha256-V2sIX92Uh6ZaGSFTKMHghsB85b9toJtmazgG09AI2uk=" crossorigin="anonymous">
-<link rel="stylesheet" href="/app/app.css?v=29">
+<link rel="stylesheet" href="/app/app.css?v=30">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" integrity="sha256-vpYzxNhw4m+zfxz+XFp3GBZnEUAD6hYgeseFDY2ordE=" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -109,7 +109,13 @@
   <button id="placingCancel" class="btn small">Cancel</button>
 </div>
 
+<!-- Shown once "Quit Map Vietnam" has stopped the local server: the page cannot do anything without it. -->
+<div id="gone" role="alertdialog" aria-labelledby="goneTitle" hidden>
+  <div><h1 id="goneTitle" tabindex="-1">Map Vietnam has stopped</h1>
+  <p>You can close this window. To use it again, start Map Vietnam the way you did before, then reload this page.</p></div>
+</div>
+
 <div id="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastUndo" class="linkish" hidden>Undo</button></div>
-<script src="/app/app.js?v=33"></script>
+<script src="/app/app.js?v=34"></script>
 </body>
 </html>

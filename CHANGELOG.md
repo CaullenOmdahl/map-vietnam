@@ -34,7 +34,10 @@ First public version.
 - Map library of 498 US Army 1:50,000 sheets, 32 overview sheets at 1:250,000 and 7 older
   scans, added and removed one at a time from the viewer or with `python3 start.py maps`
 - Records from the US National Archives, the NGA place-name server, Wikipedia, Wikidata and
-  OpenStreetMap, with optional air strikes (Kaggle) and helicopter losses (VHPA)
+  OpenStreetMap, with air strikes for an area you choose (Kaggle) and optional helicopter losses
+  (VHPA). Nothing is downloaded until you add it
 - Search by place name or wartime grid reference, on the Indian 1960 or WGS84 datum
 - Cases with GeoJSON, KML and GPX export
-- One-command setup with `python3 start.py`
+- One command, `python3 start.py`, to start it. Everything else is done in the viewer: adding
+  and removing record sources, choosing the area for air strikes, entering a Kaggle key if Kaggle
+  asks for one, and quitting

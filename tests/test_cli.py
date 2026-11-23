@@ -24,6 +24,7 @@ SCRIPTS = [
     "scripts/library.py",
     "scripts/map_library_catalogue.py",
     "scripts/place_sheets.py",
+    "scripts/records.py",
     "scripts/server.py",
     "scripts/sheet_lists.py",
     "scripts/ingest/caccf.py",

@@ -37,6 +37,11 @@ honours within a second or so: it stops, then deletes the map's files itself.
 Nothing is kept from a failed attempt: a download that fails or a build that fails deletes the
 map's files, so trying again always starts from a fresh download.
 
+Maps made by versions before the library (web/tiles/<id>/ folders of PNG tiles) still show, but
+take several times the space. The listing reports them as "legacy" (how many, how big), and they
+are converted to the current format, without downloading anything, when the person asks: the
+viewer's button (POST /api/library/migrate, in the background) or `start.py maps migrate`.
+
 Usage: .venv/bin/python scripts/library.py list [--area W,S,E,N | --region north|centre|south] [--installed]
        .venv/bin/python scripts/library.py add ID ... | --area W,S,E,N | --region R  [--yes]
        .venv/bin/python scripts/library.py remove ID ... | --all  [--yes]
@@ -50,9 +55,7 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import threading
-import time
 from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -64,14 +67,9 @@ import morecantile
 import numpy as np
 import tiling
 from datums import INDIAN_1960
+from files import delete, lock_file, path_bytes, unlock_file, write_json
 from PIL import Image
 from pyproj import Transformer
-
-try:
-    import fcntl  # macOS and Linux
-except ImportError:  # pragma: no cover - Windows
-    fcntl = None
-    import msvcrt
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = Path(__file__).resolve().parent
@@ -153,32 +151,6 @@ def overlaps(a, b):
     return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
 
 
-def path_bytes(path):
-    """Size on disk of a file or a folder's files; 0 if it does not exist."""
-    if path.is_file():
-        return path.stat().st_size
-    if path.is_dir():
-        return sum(p.stat().st_size for p in path.rglob("*") if p.is_file())
-    return 0
-
-
-def delete(path, attempts=10):
-    """Remove a file or folder if it is there. Windows refuses to delete a file that is open, and
-    the server opens a map's .mbtiles for each tile it serves, so a refused delete is retried
-    for a couple of seconds before giving up."""
-    if path.is_dir():
-        shutil.rmtree(path, ignore_errors=True)
-        return
-    for attempt in range(attempts):
-        try:
-            path.unlink(missing_ok=True)
-            return
-        except PermissionError:
-            if attempt == attempts - 1:
-                raise
-            time.sleep(0.2)
-
-
 def prune_empty(folder, stop):
     """Delete `folder` and then its parents while they are empty, stopping before `stop`."""
     folder, stop = Path(folder), Path(stop)
@@ -189,45 +161,6 @@ def prune_empty(folder, stop):
             if folder.exists():
                 return
         folder = folder.parent
-
-
-def write_json(path, data):
-    """Write JSON so a reader in another process sees the old file or the new one, never half."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(
-        "w", encoding="utf-8", dir=path.parent, prefix=path.name, suffix=".tmp", delete=False
-    ) as f:
-        json.dump(data, f)
-    os.replace(f.name, path)
-
-
-def lock_file(f, blocking=True):
-    """Take an exclusive lock on the open file `f`, shared by every process and thread on this
-    computer. Returns False instead of waiting when blocking is False and someone else has it."""
-    if fcntl:
-        try:
-            fcntl.flock(f, fcntl.LOCK_EX | (0 if blocking else fcntl.LOCK_NB))
-        except BlockingIOError:
-            return False
-        return True
-    f.seek(0)  # pragma: no cover - Windows: lock the first byte, retrying while it is taken
-    while True:
-        try:
-            msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
-            return True
-        except OSError:
-            if not blocking:
-                return False
-            time.sleep(0.2)
-
-
-def unlock_file(f):
-    """Release lock_file's lock."""
-    if fcntl:
-        fcntl.flock(f, fcntl.LOCK_UN)
-    else:  # pragma: no cover - Windows
-        f.seek(0)
-        msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
 
 
 def progress_of(line):
@@ -264,6 +197,9 @@ class Library:
         self._outlines = (None, {})  # (catalogue mtime, {id: WGS84 outline}) for maps not installed
         self._extents = {}  # id -> (MBTiles mtime, bounds) for installed maps
         self._catalog_lock = threading.Lock()  # one catalog.json rewrite at a time in this process
+        # The conversion of old map folders started from the viewer: state is idle, converting or failed.
+        self._migration = {"state": "idle", "error": None, "converted": 0}
+        self._legacy_sizes = {}  # folder name -> (folder mtime, bytes)
 
     # ---- the catalogue ---------------------------------------------------------------------
     def catalogue(self):
@@ -389,7 +325,8 @@ class Library:
         """What GET /api/library answers: every map with its state, plus the bytes still to
         download for the maps in the queue, and the catalogue's series (names and scales) so
         the viewer can describe each map in words. Each map also carries its outline on WGS84
-        (outline()) and the disk space it would take once added (disk_estimate)."""
+        (outline()) and the disk space it would take once added (disk_estimate). "legacy" tells
+        of map folders made by older versions that can be converted (legacy_status())."""
         elsewhere = self.other_worker()
         with self._lock:
             entries = self.entries()
@@ -444,7 +381,12 @@ class Library:
                         "disk_estimate": None,
                     }
                 )
-            return {"maps": maps, "queue_bytes": queue_bytes, "series": self.catalogue().get("series", {})}
+            return {
+                "maps": maps,
+                "queue_bytes": queue_bytes,
+                "series": self.catalogue().get("series", {}),
+                "legacy": self.legacy_status(),
+            }
 
     def state_of(self, map_id):
         """The state name of one map."""
@@ -590,6 +532,23 @@ class Library:
         """Block until nothing is queued or being added (for tests and the command line)."""
         with self._lock:
             return self._wake.wait_for(lambda: not self._queue and self._current is None, timeout)
+
+    def stop(self, timeout=10):
+        """Stop working, for quitting: forget the queue, end the download or build under way,
+        and wait (up to `timeout` seconds) for the worker to let go. What the stopped map left
+        behind is cleaned up, and the map shown as interrupted, when the server next starts
+        (recover_interrupted)."""
+        with self._lock:
+            for map_id in self._queue:
+                self._jobs.pop(map_id, None)
+            self._queue.clear()
+            job = self._jobs.get(self._current) if self._current else None
+            if job:
+                job.cancel.set()
+                proc = job.proc  # read once: the worker may clear it at any moment
+                if proc:
+                    proc.terminate()
+            return self._wake.wait_for(lambda: self._current is None, timeout)
 
     def _set(self, job, report, state=None, progress=None):
         with self._lock:
@@ -838,11 +797,49 @@ class Library:
             and any(z.is_dir() and z.name.isdigit() for z in p.iterdir())
         )
 
-    def migrate_legacy(self, say=print):
+    def legacy_status(self):
+        """{"count", "bytes", "state", "error", "converted"}: how many map folders made by older
+        versions wait to be converted and how much disk they take, and how the conversion
+        started with start_migration is going: state "idle", "converting" or "failed" (then
+        "error" says why, in plain words); "converted" counts the maps the last run converted."""
+        total = 0
+        folders = self.legacy_folders()
+        for folder in folders:
+            # Thousands of small files each: measured once, and again only if the folder changes.
+            mtime = folder.stat().st_mtime_ns
+            if self._legacy_sizes.get(folder.name, (None,))[0] != mtime:
+                self._legacy_sizes[folder.name] = (mtime, path_bytes(folder))
+            total += self._legacy_sizes[folder.name][1]
+        with self._lock:
+            return {"count": len(folders), "bytes": total, **self._migration}
+
+    def start_migration(self):
+        """Convert the old map folders in a background thread (one conversion at a time).
+        Returns at once; legacy_status() tells how it is going."""
+        with self._lock:
+            if self._migration["state"] == "converting":
+                return
+            self._migration = {"state": "converting", "error": None, "converted": 0}
+        threading.Thread(target=self._migrate, name="map-migration", daemon=True).start()
+
+    def _migrate(self):
+        problems = []
+        try:
+            done = self.migrate_legacy(say=lambda text: None, problems=problems)
+        except Exception as e:  # e.g. a full disk: say so in the listing, and keep serving
+            done, problems = [], [("the old maps", str(e))]
+        error = None
+        if problems:
+            names = ", ".join(f"{map_id} ({why})" for map_id, why in problems)
+            error = f"Could not convert {names}. Nothing was lost: the old folders are still there."
+        with self._lock:
+            self._migration = {"state": "failed" if error else "idle", "error": error, "converted": len(done)}
+
+    def migrate_legacy(self, say=print, problems=None):
         """Convert each old PNG tile folder into a WebP MBTiles file (no download, no rebuild:
         the tiles are re-encoded), then delete the folder and the old build intermediates.
-        A folder that cannot be converted is reported and left as it was; the others go on.
-        Returns the ids converted."""
+        A folder that cannot be converted is reported (and added to `problems` as (id, why)) and
+        left as it was; the others go on. Returns the ids converted."""
         done = []
         with self.exclusive():
             for folder in self.legacy_folders():
@@ -852,6 +849,8 @@ class Library:
                     convert_png_folder(folder, self.tiles_path(map_id), self._legacy_meta(map_id))
                 except (BuildError, OSError, ValueError) as e:
                     say(f"  could not convert {map_id} ({e}); its folder is left as it was")
+                    if problems is not None:
+                        problems.append((map_id, str(e)))
                     continue
                 shutil.rmtree(folder)
                 for sub in LEGACY_WORK:

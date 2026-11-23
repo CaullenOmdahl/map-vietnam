@@ -1,7 +1,7 @@
-"""Local server for the viewer: static files from web/, old-map tiles, the map library, and a
-small JSON API over the evidence store. Binds to 127.0.0.1 only: there is no authentication, and
-cases hold the user's own notes and candidate sites, so nothing here is meant to be reachable
-from outside.
+"""Local server for the viewer: static files from web/, old-map tiles, the map library, the
+record sources, and a small JSON API over the evidence store. Binds to 127.0.0.1 only: there is
+no authentication, and cases hold the user's own notes and candidate sites, so nothing here is
+meant to be reachable from outside.
 
 Because any web page the user visits could try to talk to this server through their browser,
 every /api/ request must name this server in its Host header (which defeats DNS rebinding), and
@@ -16,9 +16,31 @@ Bad input to the API gets a 400 with {"error": ...}; unknown routes a 404; a fai
 server itself a 500 with {"error": ...}, so the viewer can always say what happened.
 
   GET  /tiles/<map id>/<z>/<x>/<y>.webp                          a tile of an installed map
-  GET  /api/library     -> {maps: [catalogue entry + state, progress, error, disk_bytes], queue_bytes, series}
+  GET  /api/library     -> {maps: [catalogue entry + state, progress, error, disk_bytes], queue_bytes, series,
+                            legacy: {count, bytes, state, error, converted}}   (legacy: maps made by older versions)
   POST /api/library/add {"ids": [...]}      queue maps from the catalogue (never arbitrary URLs)
   POST /api/library/remove {"ids": [...]}   stop and delete maps (tiles and downloads)
+  POST /api/library/migrate {}              convert the legacy maps, in the background
+
+Record sources (scripts/records.py). Nothing is downloaded unless one of these asks for it, only
+the fixed ingester of a listed source is ever run, and no answer or log ever holds the Kaggle key.
+No key is needed up front: a source whose download Kaggle refused for want of one fails with
+"wants_key" true, and "key.needed" is true while any source does:
+  GET  /api/records     -> {sources: [{id, title, description, size_mb, time_text, licence, needs, also_adds,
+                            needed_by, opt_in, warning, standard, wants_key, state, removing, progress,
+                            status_text, error, error_detail, records, held_in_cases, added_at, disk_bytes,
+                            options, area_text}],
+                            key: {needed, present, source}, busy, first_run, revision}
+  POST /api/records/add {"ids": [...], "options": {"thor": {"area": [w,s,e,n]}}, "accept": [...], "refresh": bool}
+                                            queue sources (and what they need); opt-in ones must be in "accept"
+  POST /api/records/remove {"ids": [...], "cascade": bool}   delete records, markers and downloads; 409 with
+                                            "also_removes" when other added sources need them and cascade is not set
+  POST /api/records/cancel {"ids": [...]}   stop adding (a failed source forgets its failure)
+  POST /api/records/welcome {"dismissed": true}              the first-run welcome has been seen
+  POST /api/records/key {"username", "key"} save a Kaggle key in .env        DELETE /api/records/key  forget it
+  (each answers with the same object as GET /api/records)
+
+  POST /api/quit {}     -> {"quitting": true}; then stops the jobs under way and the server itself (exit status 0)
 
   GET  /api/sources
   GET  /api/evidence?bbox=w,s,e,n&from=YYYY&to=YYYY&kinds=a,b[&slim=1][&ids=1,2][&limit=N] -> GeoJSON
@@ -41,8 +63,10 @@ import argparse
 import json
 import math
 import re
+import signal
 import sqlite3
 import sys
+import threading
 import traceback
 import unicodedata
 from contextlib import closing
@@ -55,6 +79,7 @@ from urllib.parse import parse_qs, urlparse
 
 import gridref
 import library
+import records
 import store
 import tiling
 
@@ -66,6 +91,11 @@ MAX_TILE_ZOOM = 24
 # Sec-Fetch-Site values of requests made by this server's own pages (or typed by the user).
 OWN_FETCH_SITES = {"same-origin", "none"}
 MAX_BODY_BYTES = 1 << 20  # the API's JSON bodies are tiny; refuse anything bigger
+# How long a removal request waits for the removal to finish before it answers, so the answer
+# usually shows the source already gone; a removal queued behind a running job answers sooner.
+REMOVE_WAIT_S = 5
+# How long a stop request waits for the ingester to end before it answers (it ends at once).
+STOP_WAIT_S = 3
 # Carried in the title or metadata of every case export, so the warning travels with the file.
 HAZARD = (
     "Casualty, aircraft-loss and air-strike locations; records can be wrong. "
@@ -107,8 +137,13 @@ def query_evidence(db, q):
 
     `truncated` is true when more records matched than `limit` (default 20,000, capped at 50,000).
     Withdrawn records are left out unless asked for by `ids`, which is how cases show them.
+    With `slim`, only the columns the map draws are read: a record's raw_json is over a
+    kilobyte, kept on pages of its own, and a dense map cell holds tens of thousands of
+    records, so leaving it unread makes such a cell about ten times quicker.
     """
-    sql, args = "select * from evidence where 1=1", []
+    props = SLIM_PROPS if q.get("slim") else EVIDENCE_PROPS
+    columns = ", ".join(["lon", "lat", *props]) if q.get("slim") else "*"
+    sql, args = f"select {columns} from evidence where 1=1", []
     if q.get("bbox"):
         w, s, e, n = map(float, q["bbox"].split(","))
         sql += " and lon between ? and ? and lat between ? and ?"
@@ -133,7 +168,6 @@ def query_evidence(db, q):
     limit = bounded_int(q.get("limit"), 20000, 1, 50000)
     # One row past the limit tells us whether anything was cut off.
     rows = db.execute(sql + " limit ?", args + [limit + 1]).fetchall()
-    props = SLIM_PROPS if q.get("slim") else EVIDENCE_PROPS
     return {
         "type": "FeatureCollection",
         "truncated": len(rows) > limit,
@@ -261,9 +295,16 @@ def km_between(lon1, lat1, lon2, lat2):
     return 111.2 * math.hypot(x, lat2 - lat1)
 
 
-# (cache key, rows) for title_index, replaced in one assignment so request threads never see
-# a key paired with rows from another state of the store.
-_title_cache = (None, [])
+# (database file signature, cache key, rows) for title_index, replaced in one assignment so
+# request threads never see a key paired with rows from another state of the store.
+_title_cache = (None, None, [])
+
+
+def forget_caches():
+    """Drop what this module remembers about the records. scripts/records.py calls it after a
+    source was added, added again or removed, so a search never answers from the old records."""
+    global _title_cache
+    _title_cache = (None, None, [])
 
 
 def title_index(db):
@@ -271,15 +312,28 @@ def title_index(db):
 
     Rebuilt when the record count, the highest id, the latest withdrawal or the database file
     changes, which covers adding, deleting and withdrawing records. A title edited in place by a
-    re-ingest keeps its old folded form until one of those changes.
+    re-ingest keeps its old folded form until one of those changes (or forget_caches is called,
+    as scripts/records.py does after every change it makes).
+
+    Working out that key reads the whole table, seconds on a store with many air strikes, so it
+    is done only when the database file itself has changed (its modification time or size):
+    every write to the store changes one of them, and most searches come between writes.
     """
     global _title_cache
+    path = str(db.execute("pragma database_list").fetchone()[2])
+    try:
+        stat = Path(path).stat()
+        signature = (path, stat.st_mtime_ns, stat.st_size)
+    except OSError:  # an in-memory store: no file to watch, so check the key every time
+        signature = None
+    cached_signature, cached_key, rows = _title_cache
+    if signature is not None and cached_signature == signature:
+        return rows
     counts = db.execute("select count(*), max(id), max(withdrawn_at) from evidence").fetchone()
-    key = (tuple(counts), str(db.execute("pragma database_list").fetchone()[2]))
-    cached_key, rows = _title_cache
+    key = (tuple(counts), path)
     if cached_key != key:
         rows = [(i, fold(t)) for i, t in db.execute("select id, title from evidence where withdrawn_at is null")]
-        _title_cache = (key, rows)
+    _title_cache = (signature, key, rows)
     return rows
 
 
@@ -445,6 +499,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     db_path = store.DB_PATH
     library = None  # the map library (set by make_server)
+    records = None  # the record sources (set by make_server)
     # Fixed types for what the viewer loads: on Windows the defaults come from the registry, where
     # .js or .css is sometimes text/plain, and browsers then refuse the file.
     extensions_map = {
@@ -534,10 +589,18 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             if p == "library" or p.startswith("library/"):
                 self.library_api(method, p)
+            elif p == "records" or p.startswith("records/"):
+                self.records_api(method, p)
+            elif p == "quit" and method == "POST":
+                self.body()  # refuse a body that is not a JSON object, like every other POST
+                self.send_json({"quitting": True})
+                self.server.quit()
             else:
                 # closing() releases the connection; the inner `with` rolls back on an error.
                 with closing(self.db()) as db, db:
                     self.dispatch(method, p, q, db)
+        except records.RecordsError as e:  # plain words, sometimes with facts the viewer acts on
+            self.send_json({"error": str(e), **e.extra}, e.status)
         except (ValueError, KeyError, TypeError) as e:  # LibraryError is a ValueError
             self.send_json({"error": str(e)}, HTTPStatus.BAD_REQUEST)
         except sqlite3.IntegrityError as e:  # e.g. pinning a record id that does not exist
@@ -660,6 +723,50 @@ class Handler(SimpleHTTPRequestHandler):
             else:
                 lib.remove(ids)
             return self.send_json(lib.listing())
+        if method == "POST" and p == "library/migrate":
+            self.body()
+            lib.start_migration()
+            return self.send_json(lib.listing())
+        self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+
+    def records_api(self, method, p):
+        """The /api/records routes (see the module docstring). Every change answers with the
+        new listing. The Kaggle key is taken from the body and handed on; it is never echoed,
+        and nothing here prints a request body."""
+        rec = self.records
+        if method == "GET" and p == "records":
+            return self.send_json(rec.listing())
+        if method == "DELETE" and p == "records/key":
+            rec.forget_key()
+            return self.send_json(rec.listing())
+        if method != "POST":
+            return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+        b = self.body()
+        if p == "records/add":
+            if not isinstance(b.get("refresh", False), bool):
+                raise ValueError('"refresh" must be true or false')
+            queued = rec.add(b.get("ids"), b.get("options") or {}, b.get("accept") or [], b.get("refresh", False))
+            rec.start_worker()
+            return self.send_json({**rec.listing(), "queued": queued})
+        if p == "records/remove":
+            if not isinstance(b.get("cascade", False), bool):
+                raise ValueError('"cascade" must be true or false')
+            removing = rec.remove(b.get("ids"), cascade=b.get("cascade", False))
+            rec.start_worker()
+            rec.wait_removed(removing, REMOVE_WAIT_S)
+            return self.send_json({**rec.listing(), "removing": removing})
+        if p == "records/cancel":
+            stopped = rec.cancel(b.get("ids"))
+            rec.wait_stopped(stopped, STOP_WAIT_S)
+            return self.send_json({**rec.listing(), "stopped": stopped})
+        if p == "records/welcome":
+            if not isinstance(b.get("dismissed"), bool):
+                raise ValueError('send {"dismissed": true}')
+            rec.set_choices(welcome_dismissed=b["dismissed"])
+            return self.send_json(rec.listing())
+        if p == "records/key":
+            rec.save_key(b.get("username"), b.get("key"))
+            return self.send_json(rec.listing())
         self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
     def send_tile(self, map_id, z, x, y):
@@ -716,16 +823,54 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_error(HTTPStatus.METHOD_NOT_ALLOWED)
 
 
-def make_server(port=8765, db_path=store.DB_PATH, map_library=None, web=WEB):
+class MapServer(ThreadingHTTPServer):
+    """The viewer's server, which can be told to stop itself: by the viewer (POST /api/quit) or
+    by a signal (start.py stopping it, or Control-C when it is run by hand)."""
+
+    library = None  # set by make_server
+    records = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._quit_lock = threading.Lock()
+        self._quitting = False
+
+    def quit(self):
+        """Stop cleanly, from any thread, and return at once: the jobs under way are ended
+        first (no ingester or map builder is left running without a server), then
+        serve_forever returns. Asking twice does nothing more."""
+        with self._quit_lock:
+            if self._quitting:
+                return
+            self._quitting = True
+        # shutdown() waits for serve_forever, so it must not run on the thread that serves
+        # (a signal handler does); a thread of its own is right from anywhere.
+        threading.Thread(target=self._stop, name="quit", daemon=True).start()
+
+    def _stop(self):
+        try:
+            self.records.stop()
+            self.library.stop()
+        finally:
+            self.shutdown()
+
+
+def make_server(port=8765, db_path=store.DB_PATH, map_library=None, web=WEB, record_sources=None):
     """A threaded server on 127.0.0.1:`port` (0 picks a free port) over the store at `db_path`,
-    serving the files in `web` and the maps of `map_library` (default: this repository's)."""
+    serving the files in `web`, the maps of `map_library` and the record sources of
+    `record_sources` (default: this repository's)."""
     lib = map_library or library.Library()
-    handler = type("BoundHandler", (Handler,), {"db_path": Path(db_path), "library": lib})
-    return ThreadingHTTPServer(("127.0.0.1", port), partial(handler, directory=str(web)))
+    rec = record_sources or records.Records(db_path=db_path)
+    rec.on_change = forget_caches
+    handler = type("BoundHandler", (Handler,), {"db_path": Path(db_path), "library": lib, "records": rec})
+    srv = MapServer(("127.0.0.1", port), partial(handler, directory=str(web)))
+    srv.library, srv.records = lib, rec
+    return srv
 
 
 def main():
-    """Serve the viewer and its API on 127.0.0.1 until interrupted."""
+    """Serve the viewer and its API on 127.0.0.1 until told to stop (POST /api/quit, SIGTERM,
+    SIGHUP or Control-C); then exit with status 0."""
     ap = argparse.ArgumentParser(description="Serve the Map Vietnam viewer and its JSON API on 127.0.0.1.")
     ap.add_argument("--port", type=int, default=8765, help="port on 127.0.0.1 (default 8765)")
     ap.add_argument("--db", default=str(store.DB_PATH), help="evidence database (default data/evidence.sqlite)")
@@ -736,8 +881,12 @@ def main():
     # The command line may have added or removed maps while no server ran: start from the truth.
     lib.write_catalog()
     srv = make_server(args.port, args.db, lib)
+    for name in ("SIGTERM", "SIGINT", "SIGHUP"):
+        if hasattr(signal, name):
+            signal.signal(getattr(signal, name), lambda signum, frame: srv.quit())
     print(f"http://127.0.0.1:{args.port}", flush=True)
     srv.serve_forever()
+    srv.server_close()
 
 
 if __name__ == "__main__":

@@ -2,9 +2,34 @@
 
 How to use Map Vietnam once it's running. To get it running, see the [README](../README.md#install).
 
+## Adding records
+
+Map Vietnam starts empty. The first time it opens, a card in the side panel offers the standard
+records: place names, wartime hamlets, bases, battles and casualty records. Click **Add the
+standard records**. It's about 70 MB from public archives and takes about 15 minutes. You can
+use the map meanwhile, and the records appear on it as each source finishes.
+
+![The Records card listing the sources on this computer with their record counts, and the ones that can still be added](images/add-records.jpg)
+
+**Records** in the side panel lists every source. Click a source to read what it is, how big it
+is and its licence. **Add** downloads it, the ring that replaces the button stops it, and
+**Retry** tries again if a download failed. What was already downloaded is kept, so a retry
+picks up where it left off.
+
+Two sources aren't in the standard set, because each needs a choice from you.
+[Air strikes](#air-strike-records) are added for an area you pick, and
+[helicopter losses](#helicopter-losses) take hours.
+
+## Removing records
+
+Open **Records**, click the source, choose **Remove** and confirm. Its records leave the map and
+its downloads are deleted. Records you've put in a case stay in the case, marked as withdrawn.
+**Update** downloads a source again, for corrections its publisher has made since.
+
 ## Adding old maps
 
-Setup doesn't download any old maps. You add the ones you want, for the places you care about.
+No old map is downloaded until you add it. You add the ones you want, for the places you care
+about.
 
 Go to a place and click **Add old maps** at the bottom of the screen. Once you have some maps,
 the same list is under **Old maps** in the side panel. You get every map that covers what's on
@@ -31,9 +56,15 @@ deleted. You can add it again later.
 
 ## Doing it from a terminal
 
-Run these in the Map Vietnam folder. On Windows, type `py` instead of `python3`.
+None of this is needed, but everything above can be scripted. Run these in the Map Vietnam
+folder. On Windows, type `py` instead of `python3`.
 
 ```sh
+python3 start.py setup                                    # add the standard records
+python3 start.py setup --only thor --area 105.4,10.2,105.9,10.6   # air strikes for an area
+python3 start.py setup --only vhpa                        # helicopter losses
+python3 start.py records list                             # the sources and what's added
+python3 start.py records remove gns                       # remove one source
 python3 start.py maps list --area 105.4,10.2,105.9,10.6   # maps of an area (west,south,east,north)
 python3 start.py maps list --region south                 # north, centre or south
 python3 start.py maps list --installed                    # the maps you have added
@@ -43,7 +74,8 @@ python3 start.py maps remove L701461294                   # remove one map
 python3 start.py maps remove --all                        # remove every map you added
 ```
 
-`maps add` shows the count and download size and asks before it starts.
+`maps add` shows the count and download size and asks before it starts. The terminal and the map
+share everything, so a source added one way shows up the other way.
 
 ## Choosing which map is shown
 
@@ -91,26 +123,45 @@ map app does it.
 
 ## Air-strike records
 
-The US Air Force strike records (THOR) are hosted on Kaggle, which wants a free account before it
-lets you download anything. Everything else works without one.
+The US Air Force strike records (THOR) cover the whole war, about three million strikes, which
+is far more than a map can draw. So you add them for one area at a time.
 
-1. Sign in or register at [kaggle.com](https://www.kaggle.com).
+Move and zoom the map until it shows the area you want. Open **Records**, click **Add** next to
+**Air strikes**, then **Add strikes for this area**. The first time, it downloads one 320 MB
+file, which takes about ten minutes. After that, changing the area takes a minute or two: open
+**Air strikes** and click **Change area**. The new area's strikes replace the old ones.
+
+An area can hold up to 150,000 strikes. If yours holds more, nothing is changed and you're asked
+to pick a smaller one. Around the former Demilitarized Zone that can mean zooming in to a single
+district.
+
+The file comes from Kaggle. At the time of writing Kaggle hands it over without an account. If
+it ever asks for a key, the **Air strikes** row says so and shows what to do:
+
+1. Sign in or register at [kaggle.com](https://www.kaggle.com). It's free.
 2. Click your picture at the top right, then **Settings**.
 3. Under **API**, click **Create Legacy API Key**. Older versions of the page call it **Create New
-   Token**. Your browser downloads a file called `kaggle.json` with a username and a key in it.
-4. Run `python3 start.py setup --only thor` and paste the two values in when it asks.
+   Token**. Your browser downloads a file called `kaggle.json`.
+4. Back in Map Vietnam, click **Choose kaggle.json** and pick that file.
 
-If you'd rather not paste, copy `.env.example` to `.env` and fill in the two lines, or put
-`kaggle.json` in a `.kaggle` folder in your home folder. Whichever you pick, the key stays on
-your computer. The download is about 320 MB, and only the strikes around Cao Lãnh are loaded
-unless you ask for more. [data-sources.md](data-sources.md) says how.
+The key is saved on your computer, in a file called `.env` in the Map Vietnam folder, and is
+only ever sent to Kaggle. **Forget it** on the same row deletes it.
 
 ## Helicopter losses
 
-These are off by default. They come from the Vietnam Helicopter Pilots Association website,
-which is copyrighted, so Map Vietnam keeps only short facts from it, for personal research. It
-also reads the site slowly so as not to be a nuisance: one page every three seconds, about four
-hours in all. Turn it on with `python3 start.py setup --only vhpa`.
+These aren't in the standard set. They come from the Vietnam Helicopter Pilots Association
+website, which is copyrighted, so Map Vietnam keeps only short facts from it, for personal
+research. It also reads the site slowly so as not to be a nuisance: one page every three
+seconds, about four hours in all.
+
+Open **Records** and click **Add** next to **Helicopter losses**. It tells you the above and
+asks you to confirm. You can stop it and carry on another day. The pages it has read are kept.
+
+## Quitting
+
+Click **Quit Map Vietnam** at the bottom of the side panel, then **Quit**. Anything still being
+added stops, and what was already downloaded is kept. Closing the terminal window does the same.
+To start again, double-click **Start Map Vietnam.command** or run `python3 start.py`.
 
 ## Disk space, backups and starting over
 
@@ -149,7 +200,7 @@ The map is served to your own machine only (`127.0.0.1`), so nobody else on your
 open it. Your cases and notes live in `data/evidence.sqlite`. They are never sent anywhere, and
 neither are your searches.
 
-Setup downloads the records from their publishers, and each old map is downloaded from its
-archive when you add it. While you use the map, the page also loads background tiles for today's
+Each record source is downloaded from its publisher when you add it, and each old map from its
+archive. While you use the map, the page also loads background tiles for today's
 map (OpenStreetMap and Esri), the MapLibre map library (unpkg.com), and fonts (Google Fonts, and
 Protomaps on GitHub). Those sites see your IP address, as any website you visit does.

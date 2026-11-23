@@ -70,7 +70,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # scripts/ingest: common
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # scripts: store
 import store  # noqa: E402
-from common import AREA_OF_INTEREST, cached_get, in_bbox  # noqa: E402
+from common import AREA_OF_INTEREST, cached_get, in_bbox, progress  # noqa: E402
 
 SOURCE = "vn_relics"
 WORK = store.ROOT / "data" / "work"
@@ -2309,6 +2309,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--refresh", action="store_true", help="re-download instead of using the cache")
     args = ap.parse_args(argv)
+    progress(None, "Downloading the lists of historic sites")
     main_r, special_r = load(args.refresh)
     gaz = Gazetteer(
         json.loads(GNS_INDEX.read_text(encoding="utf-8")),
@@ -2317,7 +2318,9 @@ def main(argv=None):
     )
     wiki_coords = fetch_coords(wanted_titles(main_r, special_r), refresh=args.refresh)
     db = store.connect()
+    progress(None, "Working out where each site is")
     records, stats = build(main_r, special_r, gaz, wiki_coords, previous=stored_ids(db))
+    progress(None, f"Saving {len(records):,} historic sites")
     kept, deleted, withdrawn = write(db, records)
     aoi = [e for e in records if in_bbox(e.lon, e.lat, AREA_OF_INTEREST)]
     report = {

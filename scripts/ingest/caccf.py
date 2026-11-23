@@ -416,11 +416,13 @@ def main(argv=None):
     ap.add_argument("--refresh", action="store_true", help="re-download the CACCF file")
     args = ap.parse_args(argv)
     path = fetch(args.refresh)
+    common.progress(None, "Reading the casualty records")
     lines = read_lines(path.read_bytes())
     places = load_places()
     records, skipped, burials, stats = build(lines, places)
     ids = [r.source_record_id for r in records]
     assert len(ids) == len(set(ids)), "duplicate source_record_id"
+    common.progress(None, f"Saving {len(records):,} casualty records")
     n, deleted, withdrawn = save(store.connect(), records)
     aoi = [r for r in records if common.in_bbox(r.lon, r.lat)]
     summary = {
