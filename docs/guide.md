@@ -24,7 +24,8 @@ Two sources aren't in the standard set, because each needs a choice from you.
 
 Open **Records**, click the source, choose **Remove** and confirm. Its records leave the map and
 its downloads are deleted. Records you've put in a case stay in the case, marked as withdrawn.
-**Update** downloads a source again, for corrections its publisher has made since.
+**Update**, on the standard sources, downloads one again for corrections its publisher has made
+since.
 
 ## Adding old maps
 
@@ -32,7 +33,8 @@ No old map is downloaded until you add it. You add the ones you want, for the pl
 about.
 
 Go to a place and click **Add old maps** at the bottom of the screen. Once you have some maps,
-the same list is under **Old maps** in the side panel. You get every map that covers what's on
+the bar shows the one you are viewing, and the same list is under **Old maps** in the side panel
+(or **Add old maps of this area** in the bar's map picker). You get every map that covers what's on
 screen, with its size, and outlines on the map showing where each one sits. Click **Add** on the
 ones you want. A map takes about a minute and appears on its own when it's ready. You don't have
 to wait with the list open, because the bar at the bottom shows progress.
@@ -42,12 +44,14 @@ to wait with the list open, because the bar at the bottom shows progress.
 To find a map somewhere else, type a town, a sheet number or a year in the box at the top of the
 list ("Huế", "feuille 221", "1952"): it searches every map, not just the ones on screen. The
 chips under it narrow the list to one scale, from town plans to 1:250,000, and show how many maps
-each has; **Oldest** and **Newest** put the list in date order. When a sheet was printed more than
+each has. The list starts with the best match for the place on screen; **Oldest** and **Newest**
+put it in date order. When a sheet was printed more than
 once, its editions share one row: **Add** takes the newest, and opening the row lists the others.
 
 A detailed US Army sheet (1:50,000, roughly 27 km on a side) is about 10 MB to download and
 about 20 MB on disk, because the download is kept so the map can be rebuilt. All 498 of them come
-to about 5 GB of downloads and 11 GB on disk.
+to about 5 GB of downloads and 11 GB on disk. The whole library, 895 maps, is about 9 GB of
+downloads and 21 GB on disk. Nobody needs all of it.
 
 ## Removing maps
 
@@ -57,14 +61,15 @@ deleted. You can add it again later.
 ## Doing it from a terminal
 
 None of this is needed, but everything above can be scripted. Run these in the Map Vietnam
-folder. On Windows, type `py` instead of `python3`.
+folder. On Windows, type `py` instead of `python3`. `setup` and `maps add` ask before they
+download; add `--yes` to skip the question.
 
 ```sh
 python3 start.py setup                                    # add the standard records
 python3 start.py setup --only thor --area 105.4,10.2,105.9,10.6   # air strikes for an area
 python3 start.py setup --only vhpa                        # helicopter losses
 python3 start.py records list                             # the sources and what's added
-python3 start.py records remove gns                       # remove one source
+python3 start.py records remove vhpa                      # remove one source
 python3 start.py maps list --area 105.4,10.2,105.9,10.6   # maps of an area (west,south,east,north)
 python3 start.py maps list --region south                 # north, centre or south
 python3 start.py maps list --installed                    # the maps you have added
@@ -74,8 +79,8 @@ python3 start.py maps remove L701461294                   # remove one map
 python3 start.py maps remove --all                        # remove every map you added
 ```
 
-`maps add` shows the count and download size and asks before it starts. The terminal and the map
-share everything, so a source added one way shows up the other way.
+`maps add` shows the count and download size before it starts. The terminal and the map share
+everything, so a source or map added one way shows up the other way.
 
 ## Choosing which map is shown
 
@@ -145,7 +150,7 @@ it ever asks for a key, the **Air strikes** row says so and shows what to do:
 4. Back in Map Vietnam, click **Choose kaggle.json** and pick that file.
 
 The key is saved on your computer, in a file called `.env` in the Map Vietnam folder, and is
-only ever sent to Kaggle. **Forget it** on the same row deletes it.
+only ever sent to Kaggle. **Forget the saved key** on the same row deletes it.
 
 ## Helicopter losses
 
@@ -166,8 +171,8 @@ To start again, double-click **Start Map Vietnam.command** or run `python3 start
 ## Disk space, backups and starting over
 
 Setup needs about 1 GB, plus about 200 MB for its private Python in `.venv/`. The air-strike
-records add about 0.5 GB. Each old map adds about 20 MB (a 1:250,000 sheet about 30 MB), and all
-of them together come to about 12 GB.
+records add about 0.5 GB. Each old map adds about 20 to 30 MB, and all
+895 of them together come to about 21 GB.
 
 Your cases, sites and notes are kept only in `data/evidence.sqlite`, next to the records. To back
 them up, stop the map (Control-C) and copy that file. Export a case as GeoJSON, KML or GPX to keep
@@ -179,20 +184,20 @@ Everything Map Vietnam downloads or makes stays inside its folder:
 | --- | --- |
 | `.venv/` | its private Python and add-ons |
 | `data/raw/` | the downloaded records and old-map files |
-| `data/work/` | intermediate files, setup logs and your first-run answers |
+| `data/work/` | intermediate files, setup logs and small settings such as the first-run card |
 | `data/evidence.sqlite` | the records, and your cases and notes |
 | `web/tiles/`, `web/catalog.json` | the old maps you have added |
 | `.env` | your Kaggle key, if you saved one |
 
-To ask the first-run questions again, delete `data/work/setup/choices.json`. To uninstall, delete
+`data/work/setup/choices.json` remembers that you dismissed the first-run card; delete it, with no
+records added, to see the card again. To uninstall, delete
 the folder (and `~/.kaggle/kaggle.json` if you put a Kaggle key there and no longer want it).
 
-## Running without questions
+## Other options
 
-`python3 start.py --yes` sets up without asking anything, leaving the optional parts off.
-`--no-browser` doesn't open a browser window, `--port` picks another port, and
-`python3 start.py serve` opens the map without checking setup. `python3 start.py --help` lists
-everything.
+`python3 start.py` never asks a question. `--no-browser` doesn't open a browser window and `--port`
+picks another port. `python3 start.py serve` does the same as no command. `python3 start.py --help`
+lists everything.
 
 ## What goes over the internet
 

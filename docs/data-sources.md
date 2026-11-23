@@ -4,7 +4,7 @@ Map Vietnam ships no maps or record databases (only the catalogue of where to fe
 small excerpts for the tests). Each record source is downloaded from its publisher onto your
 computer when you add it (the viewer's Records card, or `python3 start.py setup`), and the
 download is kept in `data/raw/` so it is not fetched again unless you update it. Old maps are
-downloaded only when you add one (the viewer's "Add old maps", or `python3 start.py maps add`).
+downloaded only when you add one (the viewer's Old maps card, or `python3 start.py maps add`).
 Removing a source or a map deletes its download too. This page says, for each source, what it
 is, where it comes from, its licence, how its records are placed on the map, and what is left out.
 
@@ -23,8 +23,9 @@ line is in [NOTICE](../NOTICE).
 | `thor` | THOR air operations (Kaggle), for an area you choose | Public domain / CC0 | Only if Kaggle asks | 320 MB |
 | `vhpa` | Vietnam Helicopter Pilots Association (optional) | Copyrighted | No | 20 MB, 3–4 hours |
 
-The first six are the standard set, which the viewer's first-run card and `python3 start.py setup`
-add. `python3 start.py setup --only <part>` adds one part, plus anything unfinished it depends on.
+The first seven are the standard set (about 70 MB), which the viewer's first-run card and
+`python3 start.py setup` add. Air strikes and helicopter losses are left out of it, because each
+needs a choice from you. `python3 start.py setup --only <part>` adds one part, plus anything unfinished it depends on.
 
 ## Maps
 
@@ -44,7 +45,8 @@ downloaded until someone adds that map.
 
 "On disk" counts the map's tiles and its downloaded file, which is kept so the map can be rebuilt
 without downloading it again. Removing a map deletes both. The sizes the viewer and
-`python3 start.py maps list` show come from the same catalogue.
+`python3 start.py maps list` show come from the same catalogue. The whole library, 895 maps, is
+about 9 GB to download and 21 GB on disk.
 
 ### Coverage
 
@@ -90,7 +92,7 @@ wrong country) and the Laos border sheet 5949 IV (no georeferencing in the PDF).
 ### Joint Operations Graphic (Air) 1501, 1:250,000 (about 1966–2000)
 
 An overview series: each sheet covers 1.5° of longitude by 1° of latitude (about 160 by 110 km),
-so 32 sheets cover nearly the whole country, including most places the 1:50,000 sheets miss.
+so 34 sheets cover nearly the whole country, including most places the 1:50,000 sheets miss.
 They are drawn for pilots, with less detail than the 1:50,000 sheets; expect them to sit
 about 100–200 m from today's map. GeoPDFs from the USGS Store; the University of Texas Libraries host the
 same files and are tried when the Store fails (credit them when a file comes from there; see

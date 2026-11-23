@@ -28,7 +28,7 @@ Four rules follow from that:
 
 ```text
  data/sources/map_library.json (every map that can be added)
-        │  a person adds a map: the viewer's "Add old maps", or python3 start.py maps add
+        │  a person adds a map: the viewer's Old maps card, or python3 start.py maps add
         ▼
  scripts/library.py ──► download_maps.py ──► data/raw/ ──► build_tiles.py / georef_scan.py ──► web/tiles/<id>.mbtiles
                                                                                                   │
@@ -181,7 +181,7 @@ measures which datum they agree with. The answer was Indian 1960.
 
 ## The map library
 
-No old map is downloaded unless a person adds it: from the viewer's "Add old maps" card (the
+No old map is downloaded unless a person adds it: from the viewer's Old maps card (the
 server's `/api/library` routes) or with `python3 start.py maps add`. Maps made by versions before
 the library (folders of PNG tiles) are reported by the same listing and converted, without
 downloading anything, when the person asks (`POST /api/library/migrate`, or
@@ -284,8 +284,9 @@ only while something is being added, and fetches the evidence on screen again wh
 ## Area covered
 
 Work started around Cao Lãnh (Đồng Tháp province) in the Mekong Delta, and the older scanned maps
-and the default THOR area are there. The map library now reaches the whole country: 498 sheets at
-1:50,000 and 32 at 1:250,000, with gaps listed in [data-sources.md](data-sources.md#coverage).
+and the default THOR area are there. The map library now reaches the whole country: 895 maps,
+among them 498 sheets at 1:50,000 and 66 at 1:250,000, with gaps listed in
+[data-sources.md](data-sources.md#coverage).
 Most record sources cover all of Vietnam; THOR air strikes are loaded for one chosen area at a
 time. Nothing in the design depends on the area: adding maps and choosing
 the air-strike area is all it takes to look somewhere else.

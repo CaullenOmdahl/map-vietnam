@@ -11,9 +11,10 @@ passages of copyrighted text.
 
 ## Working on the code
 
-1. Set up once: `python3 start.py setup` (add `--skip vhpa,thor` for a quicker start), then
-   `.venv/bin/python -m pip install ruff`. No old map is needed for the tests; add one with
-   `python3 start.py maps add <id>` when you want to see one.
+1. Set up once: `python3 start.py setup --yes` (it makes `.venv/` and adds the standard records;
+   `python3 start.py` makes `.venv/` alone), then `.venv/bin/python -m pip install ruff`. The
+   tests need no records and no old map. Add them from the viewer, or add a map with
+   `python3 start.py maps add <id>`, when you want to see them.
 2. Make your change on a branch.
 3. Before you open a pull request, run:
 
@@ -41,7 +42,7 @@ Style, in short:
 ## Where things are
 
 ```text
-start.py                    starts everything: makes .venv, runs the server, opens the browser
+start.py                    makes .venv, runs the server, opens the browser; also setup, maps, records
 Start Map Vietnam.command   macOS double-click launcher for start.py
 requirements.txt            pinned Python dependencies
 scripts/
@@ -95,14 +96,19 @@ Read [docs/how-it-works.md](docs/how-it-works.md) first. A new ingester:
 Every map that can be added is listed in `data/sources/map_library.json`, which
 `scripts/map_library_catalogue.py` generates (do not edit it by hand):
 
-- **US GeoPDF sheets** (1:50,000 and 1:250,000) come from a probe of the USGS store and the PDFs'
-  own metadata; see the script's docstring. Each sheet is placed by the georeferencing inside
-  its GeoPDF and cut at its frame.
-- **A scanned map:** add an entry to the `scans` list in `data/sources/maps.json` (the script copies
+- **US GeoPDF sheets** (1:50,000 and 1:250,000 sheets and 1:12,500 city plans) come from a probe
+  of the USGS store and the PDFs' own metadata; see the script's docstring. Each sheet is placed
+  by the georeferencing inside its GeoPDF and cut at its frame.
+- **A regular scanned series** (the French 1:100,000 sheets, the US L509 sheets, the Admiralty
+  charts): `scripts/sheet_lists.py` lists the sheets in `data/sources/sheets.json`, and
+  `scripts/place_sheets.py` places each from its printed graticule and writes
+  `data/scans/<id>.json`. The catalogue includes only sheets that have such a file.
+- **A single scanned map:** add an entry to the `scans` list in `data/sources/maps.json` (the script copies
   it into the catalogue), write `data/scans/<id>.json` with at least three control points (pixel
-  to longitude and latitude) and the map's title, date and source, then regenerate the catalogue.
+  to longitude and latitude) and the map's title, date and source.
 
-Then add the map with `python3 start.py maps add <id>`. To rebuild a map that is already added,
+Then regenerate the catalogue with `.venv/bin/python scripts/map_library_catalogue.py` and add the
+map with `python3 start.py maps add <id>`. To rebuild a map that is already added,
 remove it and add it again (`python3 start.py maps remove <id>`).
 [docs/how-it-works.md](docs/how-it-works.md) explains both pipelines.
 
@@ -112,9 +118,8 @@ Only add maps that their holder lets anyone download.
 ## What not to commit
 
 Downloads, intermediate files, the record database and added maps (`data/raw/`, `data/work/`,
-`data/evidence.sqlite`, `web/tiles/`) are made on each computer (the records by `start.py`, the
-maps when someone adds them) and are ignored by git. Never
-commit `.env`, API keys, or personal details about anyone.
+`data/evidence.sqlite`, `web/tiles/`) are made on each computer, when someone adds records or a
+map, and are ignored by git. Never commit `.env`, API keys, or personal details about anyone.
 
 ## Licence
 

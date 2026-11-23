@@ -117,7 +117,8 @@ Hamlet Evaluation System gazetteers (RG 472) and Combat Area Casualties Current 
 
 THOR, Theater History of Operations, Vietnam air operations
   US Air Force data, published on Kaggle as usaf/vietnam-war-bombing-operations. US Government
-  work, public domain; the Kaggle dataset is marked CC0. Downloading it needs a free Kaggle account.
+  work, public domain; the Kaggle dataset is marked CC0. Kaggle serves it without an account at the
+  time of writing; if it asks for a key, a free account supplies one.
 
 Wikipedia
   English Wikipedia "List of United States servicemembers and civilians missing in action during

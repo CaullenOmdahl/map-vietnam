@@ -4,27 +4,43 @@ Notable changes to Map Vietnam. Versions follow [semantic versioning](https://se
 
 ## Unreleased
 
-- The map library grows from 537 to 895 maps: 298 French Indochina 1:100,000 sheets and editions
-  (1895–1952, CNRS/NAKALA), 32 US Army L509 1:250,000 sheets (1950s–1960s, University of Texas),
-  18 US Army city plans at 1:12,500 (1963–1971), two more Joint Operations Graphics, and 8
-  British Admiralty charts of the coast (1855–1964)
+Everything is done from the map
+- `python3 start.py` now asks nothing and downloads nothing except its private Python add-ons.
+  The first visit offers the standard records in one click, and a new **Records** card in the
+  side panel lists every source with Add, Stop, Retry, Update and Remove. Air strikes are added
+  for the area on screen, helicopter losses after their warning, and a Kaggle key is taken from
+  the `kaggle.json` file if Kaggle ever asks for one. **Quit Map Vietnam** stops the app
+- Records and old maps added from a terminal (`start.py setup`, `maps`, `records`) and from the
+  map share their state; the terminal route stays for people who script it
+
+A bigger map library
+- The library grows from 537 to 895 maps: 498 US Army L7014 sheets at 1:50,000, 298 French
+  Indochina 1:100,000 sheets and editions (1895–1952, CNRS/NAKALA), 34 Joint Operations Graphics
+  at 1:250,000, 32 US Army L509 sheets at 1:250,000 (1950s–1960s, University of Texas), 18 US Army
+  city plans at 1:12,500 (1963–1971), 8 British Admiralty charts of the coast (1855–1964) and 7
+  older scans
 - The French and L509 sheets are placed automatically from their printed graticule
   (`scripts/sheet_lists.py`, `scripts/place_sheets.py`); sheets it cannot place reliably are left
   out rather than shown wrong
-- The Old maps card has a filter (place, sheet number or year, across every map), scale chips
-  with counts, Oldest / Newest order, and one row per sheet with its editions inside
+- The **Old maps** card has a filter (place, sheet number or year, across every map), scale
+  chips with counts, Best here / Oldest / Newest order, and one row per sheet with its editions
+  inside
 - Downloads name the project's page in their User-Agent, as Wikimedia and others ask
 
-- Windows: every text file is now read and written as UTF-8, so setup and the map server no longer
+Windows and hardening
+- Windows: every text file is read and written as UTF-8, so setup and the map server no longer
   fail on Vietnamese names; Control-C stops the map; removing a map that is being viewed retries
-  instead of failing; CI now runs on Windows too
-- The map now credits each old map on screen, and the OpenStreetMap and Esri credits follow their
+  instead of failing; CI runs on Windows too
+- The map credits each old map on screen, and the OpenStreetMap and Esri credits follow their
   providers' wording
-- The viewer explains when MapLibre can't be loaded (offline or blocked) instead of showing a blank
-  page, and ignores a damaged saved view
+- The viewer explains when MapLibre can't be loaded (offline or blocked) instead of showing a
+  blank page, and ignores a damaged saved view
 - The server refuses non-finite or out-of-range site positions, wrongly typed fields and negative
   limits with a 400, and checks the Host header for every file it serves
-- Docs: macOS 15 Gatekeeper steps, `py` on Windows, disk space, backups and uninstalling
+
+Docs
+- macOS 15 Gatekeeper steps, `py` on Windows, disk space, backups, uninstalling, and a pass to
+  make the README, guide and sources pages agree with the code and the catalogue
 
 ## 0.1.0 (2026-11-05)
 
@@ -35,9 +51,7 @@ First public version.
   scans, added and removed one at a time from the viewer or with `python3 start.py maps`
 - Records from the US National Archives, the NGA place-name server, Wikipedia, Wikidata and
   OpenStreetMap, with air strikes for an area you choose (Kaggle) and optional helicopter losses
-  (VHPA). Nothing is downloaded until you add it
+  (VHPA). Old maps are downloaded only when you add them
 - Search by place name or wartime grid reference, on the Indian 1960 or WGS84 datum
 - Cases with GeoJSON, KML and GPX export
-- One command, `python3 start.py`, to start it. Everything else is done in the viewer: adding
-  and removing record sources, choosing the area for air strikes, entering a Kaggle key if Kaggle
-  asks for one, and quitting
+- One command, `python3 start.py`, to set up and start it
