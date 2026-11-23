@@ -3253,6 +3253,9 @@ document.addEventListener("keydown", e => {
   else if (e.key === "Escape") {
     const open = ["popStyle", "popLayers", "popMaps"].find(id => !$("#" + id).hidden);
     if (open) { const a = $("#" + open)._anchor; closePopovers(); a?.focus(); return; }
+    // An open confirm box ("Remove this map?") closes first, like its Cancel button.
+    const cancel = e.target.closest?.(".confirm-box")?.querySelector('[data-act$="Cancel"], #delNo');
+    if (cancel) { e.preventDefault(); cancel.click(); return; }
     if (typing) return;
     if (S.placing) endPlacing(); else if (S.view.name !== "home") back();
   }
