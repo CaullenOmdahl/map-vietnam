@@ -130,6 +130,12 @@ const shortScale = s => (s || "").replace(/\s/g, "").replace(/^1:([\d,]+)$/, (_,
 const M_PER_PX_Z0 = 40075016.686 / 512;
 const r0Of = (m, lat) => (m || 0) / (M_PER_PX_Z0 * Math.cos(lat * Math.PI / 180));
 const ringPx = () => ["interpolate", ["exponential", 2], ["zoom"], 0, ["get", "r0"], 24, ["*", ["get", "r0"], 2 ** 24]];
+// A ring wider than RING_MAX_PX across says nothing at that zoom (a record placed only "somewhere in this province"
+// would wash the whole screen in its colour): it fades out, and the record's card states its uncertainty. `op` is
+// the ring's opacity while it is small enough to read.
+const RING_MAX_PX = 300;
+const ringFade = op => ["interpolate", ["linear"], ["zoom"],
+  ...Array.from({ length: 23 }, (_, z) => [z, ["case", [">", ["*", ["get", "r0"], 2 ** z], RING_MAX_PX / 2], 0, op]]).flat()];
 // Circle helpers on a local spherical approximation (111,320 m per degree of latitude): plenty for rings of a
 // few km. Inputs are WGS84 degrees and metres.
 function circleBounds(lon, lat, m) {
@@ -375,7 +381,7 @@ function addOverlays(m) {
   // and old map sheets (halo colour follows the base map, see applyBase).
   const halo = (id, filter, minzoom = 0, op = 0.55) => m.addLayer({ id, type: "circle", source: "ev", minzoom, filter,
     paint: { "circle-radius": ringPx(), "circle-color": "rgba(0,0,0,0)", "circle-pitch-alignment": "map",
-      "circle-stroke-color": "#fff", "circle-stroke-width": 3.25, "circle-stroke-opacity": op } });
+      "circle-stroke-color": "#fff", "circle-stroke-width": 3.25, "circle-stroke-opacity": ringFade(op) } });
   halo("strike-ring-halo", isStrike, 13, 0.22);
   m.addLayer({ id: "strike-ring", type: "circle", source: "ev", minzoom: 13, filter: isStrike,
     paint: { "circle-radius": ringPx(), "circle-color": "rgba(0,0,0,0)", "circle-pitch-alignment": "map",
@@ -384,8 +390,8 @@ function addOverlays(m) {
       "circle-stroke-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0.25, 15, 0.5] } });
   halo("ev-ring-halo", ["!", isStrike]);
   m.addLayer({ id: "ev-ring", type: "circle", source: "ev", filter: ["!", isStrike],
-    paint: { "circle-radius": ringPx(), "circle-color": color, "circle-opacity": 0.08, "circle-pitch-alignment": "map",
-      "circle-stroke-color": color, "circle-stroke-width": 1.75, "circle-stroke-opacity": 0.75 } });
+    paint: { "circle-radius": ringPx(), "circle-color": color, "circle-opacity": ringFade(0.08), "circle-pitch-alignment": "map",
+      "circle-stroke-color": color, "circle-stroke-width": 1.75, "circle-stroke-opacity": ringFade(0.75) } });
   m.addLayer({ id: "strike-dot", type: "circle", source: "ev", minzoom: 11.5, filter: isStrike,
     paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 12, 3.5, 16, 7], "circle-color": KINDS.air_strike.color,
       "circle-stroke-color": "#fff", "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 12, 0.8, 15, 1.5],
@@ -3223,8 +3229,8 @@ function applyBase() {
     m.setPaintProperty("strike-ring", "circle-stroke-color", lit ? "#fdba74" : KINDS.air_strike.color);
     m.setPaintProperty("strike-ring", "circle-stroke-width", lit ? 1.6 : 1.25);
     m.setPaintProperty("strike-ring", "circle-stroke-opacity", ["interpolate", ["linear"], ["zoom"], 13, lit ? 0.45 : 0.25, 15, lit ? 0.75 : 0.5]);
-    m.setPaintProperty("strike-ring-halo", "circle-stroke-opacity", lit ? 0.35 : 0.22);
-    m.setPaintProperty("ev-ring", "circle-stroke-opacity", lit ? 0.95 : 0.75);
+    m.setPaintProperty("strike-ring-halo", "circle-stroke-opacity", ringFade(lit ? 0.35 : 0.22));
+    m.setPaintProperty("ev-ring", "circle-stroke-opacity", ringFade(lit ? 0.95 : 0.75));
     m.setPaintProperty("strike-dot", "circle-color", lit ? "#fb923c" : KINDS.air_strike.color);
     m.setPaintProperty("pn-label", "text-color", dark && !sat ? "#e9e6dd" : "#2b2925");
     m.setPaintProperty("pn-label", "text-halo-color", dark && !sat ? "rgba(20,20,18,.9)" : "rgba(255,255,255,.92)");
