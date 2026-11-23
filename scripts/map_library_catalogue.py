@@ -478,7 +478,7 @@ def scan_entries(scans, scans_dir=SCANS):
     """data/sources/maps.json's scans, every field kept, as catalogue entries."""
     entries = []
     for scan in scans:
-        control = json.loads((scans_dir / f"{scan['id']}.json").read_text())
+        control = json.loads((scans_dir / f"{scan['id']}.json").read_text(encoding="utf-8"))
         bounds = scan_bounds(control)
         extra = {k: v for k, v in scan.items() if k not in ("id", "title", "url", "bytes", "sha256")}
         entries.append(
@@ -539,18 +539,18 @@ def main(argv=None):
         common.RAW = args.cache
 
     if args.probe:
-        probe = json.loads(args.probe.read_text())
+        probe = json.loads(args.probe.read_text(encoding="utf-8"))
     elif OUT.exists():
-        probe = probe_from_catalogue(json.loads(OUT.read_text()))
+        probe = probe_from_catalogue(json.loads(OUT.read_text(encoding="utf-8")))
     else:
         raise SystemExit("no catalogue yet: pass --probe")
     gns_zip = args.gns or common.cached_get(gns.URL, gns.SOURCE, name=gns.ZIP_NAME, timeout=600)
     gazetteer = Gazetteer(gns.load_zip(gns_zip))
-    legacy = json.loads(LEGACY.read_text())
+    legacy = json.loads(LEGACY.read_text(encoding="utf-8"))
     jog_pdfs = {s: fetch_jog(s) for s in JOG_SHEETS}
 
     catalogue = build(probe, legacy, jog_pdfs, gazetteer)
-    args.out.write_text(json.dumps(catalogue, ensure_ascii=False, indent=1) + "\n")
+    args.out.write_text(json.dumps(catalogue, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     counts = {}
     for e in catalogue["maps"]:
         counts[e["series"]] = counts.get(e["series"], 0) + 1

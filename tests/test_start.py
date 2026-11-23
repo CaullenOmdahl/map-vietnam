@@ -45,7 +45,9 @@ def test_start_py_needs_nothing_outside_the_standard_library():
         "heavy = {'numpy', 'PIL', 'rasterio', 'pyproj', 'morecantile', 'pypdf', 'pypdfium2', 'certifi'}; "
         "sys.exit(', '.join(sorted(heavy & set(sys.modules))) or 0)"
     )
-    done = subprocess.run([sys.executable, "-c", code], cwd=start.ROOT, capture_output=True, text=True)
+    done = subprocess.run(
+        [sys.executable, "-c", code], cwd=start.ROOT, capture_output=True, text=True, encoding="utf-8"
+    )
     assert done.returncode == 0, done.stderr
 
 
@@ -171,7 +173,9 @@ def test_requirements_are_not_reinstalled_when_unchanged(tmp_path, monkeypatch):
     monkeypatch.setattr(start, "VENV", venv)
     monkeypatch.setattr(start, "REQUIREMENTS_STAMP", venv / "requirements.sha256")
     venv.mkdir()
-    (venv / "requirements.sha256").write_text(start.hashlib.sha256(start.REQUIREMENTS.read_bytes()).hexdigest())
+    (venv / "requirements.sha256").write_text(
+        start.hashlib.sha256(start.REQUIREMENTS.read_bytes()).hexdigest(), encoding="utf-8"
+    )
     monkeypatch.setattr(start, "runs", lambda cmd: True)
 
     def no_install(*a, **k):

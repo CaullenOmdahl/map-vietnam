@@ -1097,7 +1097,7 @@ def main(argv=None):
         "by_province": dict(Counter(e.raw["province"] for e in recs).most_common()),
         "stats": dict(stats),
     }
-    (WORK / "wiki_mia_summary.json").write_text(json.dumps(summary, indent=1, ensure_ascii=False))
+    (WORK / "wiki_mia_summary.json").write_text(json.dumps(summary, indent=1, ensure_ascii=False), encoding="utf-8")
     print(json.dumps(summary, indent=1, ensure_ascii=False))
     return summary
 

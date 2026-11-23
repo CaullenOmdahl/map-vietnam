@@ -29,20 +29,31 @@ def path_bytes(path):
     return 0
 
 
-def delete(path):
-    """Remove a file or folder if it is there."""
+def delete(path, attempts=10):
+    """Remove a file or folder if it is there. Windows refuses to delete a file that is open, and
+    the server opens a map's .mbtiles for each tile it serves, so a refused delete is retried
+    for a couple of seconds before giving up."""
     path = Path(path)
     if path.is_dir():
         shutil.rmtree(path, ignore_errors=True)
-    else:
-        path.unlink(missing_ok=True)
+        return
+    for attempt in range(attempts):
+        try:
+            path.unlink(missing_ok=True)
+            return
+        except PermissionError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(0.2)
 
 
 def write_json(path, data):
     """Write JSON so a reader in another process sees the old file or the new one, never half."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile("w", dir=path.parent, prefix=path.name, suffix=".tmp", delete=False) as f:
+    with tempfile.NamedTemporaryFile(
+        "w", encoding="utf-8", dir=path.parent, prefix=path.name, suffix=".tmp", delete=False
+    ) as f:
         json.dump(data, f)
     os.replace(f.name, path)
 
@@ -50,7 +61,7 @@ def write_json(path, data):
 def read_json(path, default=None):
     """The parsed JSON file at `path`, or `default` when it is missing or not JSON."""
     try:
-        return json.loads(Path(path).read_text())
+        return json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return default
 

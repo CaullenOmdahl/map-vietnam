@@ -1,7 +1,8 @@
 # Lint and test on every push and pull request.
 # Python 3.12 is the oldest version the pinned requirements install on (rasterio 1.5.2, numpy 2.5.4
 # and pyproj 3.8.0 need it); 3.13 checks the next release. macos-latest is Apple silicon on macOS 15,
-# the oldest macOS the pinned rasterio wheels support.
+# the oldest macOS the pinned rasterio wheels support. windows-latest runs with Windows' own default
+# text encoding (cp1252), which catches any file read or written without encoding="utf-8".
 name: CI
 
 on:
@@ -18,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4

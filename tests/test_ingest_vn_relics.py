@@ -15,25 +15,27 @@ FIX = Path(__file__).parent / "fixtures" / "vn_relics"
 
 @pytest.fixture(scope="module")
 def main():
-    return v.main_rows((FIX / "main_excerpt.wikitext").read_text())
+    return v.main_rows((FIX / "main_excerpt.wikitext").read_text(encoding="utf-8"))
 
 
 @pytest.fixture(scope="module")
 def special():
-    return v.special_rows((FIX / "special_excerpt.wikitext").read_text())
+    return v.special_rows((FIX / "special_excerpt.wikitext").read_text(encoding="utf-8"))
 
 
 @pytest.fixture(scope="module")
 def gaz():
     return v.Gazetteer(
-        json.loads((FIX / "gns_index_excerpt.json").read_text()),
-        districts=v.parse_district_members(json.loads((FIX / "wdqs_district_communes.json").read_text())),
+        json.loads((FIX / "gns_index_excerpt.json").read_text(encoding="utf-8")),
+        districts=v.parse_district_members(
+            json.loads((FIX / "wdqs_district_communes.json").read_text(encoding="utf-8"))
+        ),
     )
 
 
 @pytest.fixture(scope="module")
 def coords():
-    return v.parse_coords(json.loads((FIX / "coords_api.json").read_text()))
+    return v.parse_coords(json.loads((FIX / "coords_api.json").read_text(encoding="utf-8")))
 
 
 @pytest.fixture(scope="module")
@@ -304,7 +306,7 @@ def test_ids_are_stable_slugs_with_province(main, special, gaz, coords, built):
 
 
 def test_same_name_in_one_province_is_disambiguated_by_place_not_row_order(gaz, coords):
-    rows = v.main_rows((FIX / "main_excerpt.wikitext").read_text())
+    rows = v.main_rows((FIX / "main_excerpt.wikitext").read_text(encoding="utf-8"))
     r = by_name(rows, "Xẻo Quít")
     twin = dict(r, place_wt="Xã [[Bình Thành, Đồng Tháp|Bình Thành]]")
     a, _ = v.build([r, twin], [], gaz, coords)
@@ -542,7 +544,7 @@ def test_row_continued_on_a_double_pipe_line(main, built):
 
 def test_failed_coordinate_batch_aborts_the_run(tmp_path, monkeypatch):
     bad = tmp_path / "coords_x.json"
-    bad.write_text('{"error": {"code": "maxlag", "info": "Waiting for a database server"}}')
+    bad.write_text('{"error": {"code": "maxlag", "info": "Waiting for a database server"}}', encoding="utf-8")
     monkeypatch.setattr(v, "cached_get", lambda *a, **k: bad)
     with pytest.raises(RuntimeError, match="maxlag"):
         v.fetch_coords(["Thành cổ Quảng Trị"])
@@ -550,7 +552,7 @@ def test_failed_coordinate_batch_aborts_the_run(tmp_path, monkeypatch):
 
 # ---- ids ------------------------------------------------------------------------------------------
 def test_new_same_name_row_does_not_rename_the_stored_record(gaz, coords):
-    rows = v.main_rows((FIX / "main_excerpt.wikitext").read_text())
+    rows = v.main_rows((FIX / "main_excerpt.wikitext").read_text(encoding="utf-8"))
     r = by_name(rows, "Xẻo Quít")
     (old,), _ = v.build([r], [], gaz, coords)
     stored = {old.source_record_id: {"title": old.title, "dia_ban": old.raw["dia_ban"]}}
@@ -693,7 +695,7 @@ def test_wikidata_member_outliers_are_dropped():
 
 def test_failed_district_query_aborts_the_run(monkeypatch, tmp_path):
     bad = tmp_path / "x.json"
-    bad.write_text('{"error": "timeout"}')
+    bad.write_text('{"error": "timeout"}', encoding="utf-8")
     monkeypatch.setattr(v, "cached_get", lambda *a, **k: bad)
     with pytest.raises(RuntimeError):
         v.fetch_district_members()
@@ -739,7 +741,7 @@ def test_run_uses_the_wikidata_districts(monkeypatch):
 # ---- round 3: degraded Wikidata answers, province radius, far namesakes ---------------------
 def _serve(monkeypatch, tmp_path, payload):
     path = tmp_path / "answer.json"
-    path.write_text(payload)
+    path.write_text(payload, encoding="utf-8")
     monkeypatch.setattr(v, "cached_get", lambda *a, **k: path)
     return path
 
@@ -755,7 +757,7 @@ def test_empty_district_answer_aborts_the_run(monkeypatch, tmp_path):
 
 def test_truncated_district_answer_aborts_the_run(monkeypatch, tmp_path):
     # a real but partial answer (the test excerpt: a few districts) is not a full country answer
-    path = _serve(monkeypatch, tmp_path, (FIX / "wdqs_district_communes.json").read_text())
+    path = _serve(monkeypatch, tmp_path, (FIX / "wdqs_district_communes.json").read_text(encoding="utf-8"))
     with pytest.raises(RuntimeError, match="districts"):
         v.fetch_district_members()
     assert not path.exists()
@@ -763,14 +765,16 @@ def test_truncated_district_answer_aborts_the_run(monkeypatch, tmp_path):
 
 @pytest.fixture(scope="module")
 def borders():
-    return v.parse_province_borders(json.loads((FIX / "osm_province_borders.json").read_text()))
+    return v.parse_province_borders(json.loads((FIX / "osm_province_borders.json").read_text(encoding="utf-8")))
 
 
 @pytest.fixture(scope="module")
 def gaz_b(borders):
     return v.Gazetteer(
-        json.loads((FIX / "gns_index_excerpt.json").read_text()),
-        districts=v.parse_district_members(json.loads((FIX / "wdqs_district_communes.json").read_text())),
+        json.loads((FIX / "gns_index_excerpt.json").read_text(encoding="utf-8")),
+        districts=v.parse_district_members(
+            json.loads((FIX / "wdqs_district_communes.json").read_text(encoding="utf-8"))
+        ),
         borders=borders,
     )
 
@@ -798,7 +802,7 @@ def test_failed_or_incomplete_province_border_answer_aborts_the_run(monkeypatch,
         v.parse_province_borders({"elements": []})
     with pytest.raises(RuntimeError, match="VN-"):
         v.check_province_borders(borders)  # only Phú Yên: every pre-2025 province is needed
-    path = _serve(monkeypatch, tmp_path, (FIX / "osm_province_borders.json").read_text())
+    path = _serve(monkeypatch, tmp_path, (FIX / "osm_province_borders.json").read_text(encoding="utf-8"))
     with pytest.raises(RuntimeError):
         v.fetch_province_borders()
     assert not path.exists()

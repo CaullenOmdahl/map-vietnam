@@ -93,7 +93,8 @@ An ingester never deletes records itself, and a sync touches only its own source
 An ingester is a module with a `main()` that:
 
 1. fetches the raw data with `common.cached_get`, which stores each file under
-   `data/raw/<source>/` and never fetches it again unless asked to (usually with `--refresh`). It sends a descriptive User-Agent and waits between requests; respect each site's
+   `data/raw/<source>/` and never fetches it again unless asked to (with `--refresh` in most ingesters; `vhpa.py` has
+   `--refresh-index` and `--retry-failed`). It sends a descriptive User-Agent and waits between requests; respect each site's
    terms and `robots.txt`;
 2. builds `store.Evidence` records, keeping the original coordinate and datum and setting an
    honest radius;

@@ -23,11 +23,15 @@ passages of copyrighted text.
    .venv/bin/ruff format --check .
    ```
 
-   CI runs the same three checks on Linux and macOS.
+   On Windows the venv's programs are in `.venv\Scripts\` instead of `.venv/bin/`
+   (`.venv\Scripts\python -m pytest -q`). CI runs the same three checks on Linux, macOS and
+   Windows.
 
 Style, in short:
 
 - Python 3.12 or newer, formatted with `ruff format` (line length 120).
+- Read and write text files with `encoding="utf-8"`. Windows' default encoding can't hold
+  Vietnamese, and the Windows CI job fails without it.
 - Each module starts with a docstring saying what it is for, what it reads and writes, and how to
   run it. Public functions have docstrings.
 - Comments explain intent, units, datums and trade-offs, not what the next line does.
@@ -59,7 +63,7 @@ scripts/
   ingest/<source>.py        one ingester per record source; common.py holds shared helpers
 web/app/                    the viewer: index.html, app.js, app.css (MapLibre GL, no build step)
 tests/                      pytest suite; tests/fixtures/ holds small source excerpts
-docs/                       how it works, data sources, known limits
+docs/                       user guide, troubleshooting, how it works, data sources, known limits
 ```
 
 Downloads go to `data/raw/`, intermediate files to `data/work/`, records to

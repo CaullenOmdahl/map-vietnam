@@ -35,7 +35,7 @@ def states(lib):
 
 
 def layers(lib):
-    return json.loads((lib.root / "web" / "catalog.json").read_text())["layers"]
+    return json.loads((lib.root / "web" / "catalog.json").read_text(encoding="utf-8"))["layers"]
 
 
 def test_nothing_is_downloaded_or_installed_until_asked(lib, archive):
@@ -120,9 +120,9 @@ def test_an_error_page_instead_of_a_pdf_fails_cleanly(lib, archive):
 def test_a_changed_archive_file_is_noted_but_used(lib, archive):
     lib.entries()["L7014A"]  # load
     path = lib.catalogue_path
-    cat = json.loads(path.read_text())
+    cat = json.loads(path.read_text(encoding="utf-8"))
     cat["maps"][0]["sha256"] = "0" * 64
-    path.write_text(json.dumps(cat))
+    path.write_text(json.dumps(cat), encoding="utf-8")
     lib.add(["L7014A"])
     notes = []
     lib.run_pending(lambda job: notes.extend(job.notes))
@@ -149,9 +149,9 @@ def test_scans_are_placed_by_their_control_points(lib):
 
 
 def test_a_scan_on_the_wrong_pixel_grid_is_refused(lib):
-    cat = json.loads(lib.catalogue_path.read_text())
+    cat = json.loads(lib.catalogue_path.read_text(encoding="utf-8"))
     cat["maps"][3]["work_size"] = [601, 400]
-    lib.catalogue_path.write_text(json.dumps(cat))
+    lib.catalogue_path.write_text(json.dumps(cat), encoding="utf-8")
     lib.add(["scan_test"])
     lib.run_pending()
     entry = next(m for m in lib.listing()["maps"] if m["id"] == "scan_test")
@@ -294,7 +294,9 @@ def test_old_png_tile_folders_are_converted_in_place(lib):
     Image.new("RGBA", (256, 256), (0, 0, 0, 0)).save(folder / "9" / "407" / "241.png")
     old_work = lib.root / "data" / "work" / "l7014"
     old_work.mkdir(parents=True)
-    (old_work / "L7014A.bounds.json").write_text(json.dumps({"bounds": [105.75, 10.0, 106.0, 10.25], "maxzoom": 9}))
+    (old_work / "L7014A.bounds.json").write_text(
+        json.dumps({"bounds": [105.75, 10.0, 106.0, 10.25], "maxzoom": 9}), encoding="utf-8"
+    )
     (old_work / "L7014A.tif").write_bytes(b"big intermediate")
 
     assert lib.migrate_legacy(say=lambda text: None) == ["L7014A"]
@@ -321,7 +323,7 @@ REAL_CATALOGUE = ROOT / "data" / "sources" / "map_library.json"
 
 
 def test_the_real_catalogue_has_the_shape_the_library_needs():
-    cat = json.loads(REAL_CATALOGUE.read_text())
+    cat = json.loads(REAL_CATALOGUE.read_text(encoding="utf-8"))
     ids = [m["id"] for m in cat["maps"]]
     assert len(ids) == len(set(ids))
     for m in cat["maps"]:
@@ -510,7 +512,10 @@ class OtherProcess:
         )
         lib.work.mkdir(parents=True, exist_ok=True)
         self.proc = subprocess.Popen(
-            [sys.executable, "-c", code, str(lib.work / "worker.lock")], stdout=subprocess.PIPE, text=True
+            [sys.executable, "-c", code, str(lib.work / "worker.lock")],
+            stdout=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
         )
         assert self.proc.stdout.readline().strip() == "locked"
         library.write_json(lib.work / "current.json", {"id": map_id, "pid": self.proc.pid, "state": state})
@@ -558,7 +563,7 @@ def test_a_removal_asked_for_by_another_process_stops_this_one(lib, monkeypatch)
     worker = threading.Thread(target=lib.run_pending, args=(report,))
     worker.start()
     assert building.wait(20)
-    current = json.loads((lib.work / "current.json").read_text())
+    current = json.loads((lib.work / "current.json").read_text(encoding="utf-8"))
     assert current["id"] == "L7014A" and current["state"] == "building"
     lib.request_cancel("L7014A")  # what remove() in the viewer's server does
     worker.join(10)
@@ -575,3 +580,21 @@ def test_a_map_another_process_added_meanwhile_is_not_added_twice(lib, archive):
         w.metadata = tiling.standard_metadata("A", [105.5, 10.4, 105.6, 10.44], 8, 12)
     lib.run_pending()
     assert states(lib)["L7014A"] == "installed" and archive.requests == []
+
+
+def test_a_delete_refused_while_the_file_is_open_is_retried(tmp_path, monkeypatch):
+    # Windows will not delete a file the server has open for a tile; the delete waits and tries again.
+    path = tmp_path / "m.mbtiles"
+    path.write_bytes(b"x")
+    real_unlink, refusals = type(path).unlink, []
+
+    def unlink(self, missing_ok=False):
+        if len(refusals) < 2:
+            refusals.append(self)
+            raise PermissionError("in use")
+        real_unlink(self, missing_ok=missing_ok)
+
+    monkeypatch.setattr(type(path), "unlink", unlink)
+    monkeypatch.setattr(files.time, "sleep", lambda s: None)
+    files.delete(path)
+    assert len(refusals) == 2 and not path.exists()

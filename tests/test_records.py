@@ -126,7 +126,9 @@ def test_adding_a_source_adds_what_it_needs_first(rec, home):
     assert time.strptime(base["added_at"][:19], "%Y-%m-%dT%H:%M:%S")
     listing = rec.listing()
     assert not listing["busy"] and not listing["first_run"] and listing["revision"] > 0
-    assert "progress" not in rec.log_path(rec.by_id["base"]).read_text()  # the log keeps what was said, not the ticks
+    assert "progress" not in rec.log_path(rec.by_id["base"]).read_text(
+        encoding="utf-8"
+    )  # the log keeps what was said, not the ticks
 
 
 def test_a_source_already_added_or_on_its_way_is_left_alone_unless_refreshed(rec, home):
@@ -199,7 +201,7 @@ def test_a_crash_is_explained_without_the_traceback(rec, home, crash, expected):
     base = entry(rec, "base")
     assert base["state"] == "failed" and base["error"].startswith(expected)
     assert "Traceback" not in base["error"] and crash in base["error_detail"]
-    assert "Traceback" in rec.log_path(rec.by_id["base"]).read_text()  # the whole story is in the log
+    assert "Traceback" in rec.log_path(rec.by_id["base"]).read_text(encoding="utf-8")  # the whole story is in the log
 
 
 def test_a_source_that_finishes_without_its_files_is_not_marked_added(rec, home):
@@ -429,13 +431,13 @@ def test_a_saved_key_is_found_in_the_env_file_the_environment_or_kaggle_json(rec
     (home / "data" / "raw" / "thor" / thor.ZIP_NAME).write_bytes(b"")
     assert rec.key_status() == {"present": False, "source": None}  # a download kept is not a key
     (home / "kaggle").mkdir()
-    (home / "kaggle" / "kaggle.json").write_text(json.dumps({"username": USER, "key": KEY}))
+    (home / "kaggle" / "kaggle.json").write_text(json.dumps({"username": USER, "key": KEY}), encoding="utf-8")
     assert rec.key_status()["source"] == "kaggle.json"
     os.environ.update(KAGGLE_USERNAME=USER, KAGGLE_KEY=KEY)
     assert rec.key_status()["source"] == "environment"
-    (home / ".env").write_text(f'KAGGLE_USERNAME="{USER}"\nexport KAGGLE_KEY={KEY}\n')
+    (home / ".env").write_text(f'KAGGLE_USERNAME="{USER}"\nexport KAGGLE_KEY={KEY}\n', encoding="utf-8")
     assert rec.key_status() == {"present": True, "source": "env file"}
-    (home / ".env").write_text(f"KAGGLE_USERNAME={USER}\nKAGGLE_KEY=\n")  # half a key is no key
+    (home / ".env").write_text(f"KAGGLE_USERNAME={USER}\nKAGGLE_KEY=\n", encoding="utf-8")  # half a key is no key
     del os.environ["KAGGLE_KEY"]
     assert rec.key_status()["source"] == "kaggle.json"
     assert rec.listing()["key"] == {"needed": False, "present": True, "source": "kaggle.json"}
@@ -443,13 +445,15 @@ def test_a_saved_key_is_found_in_the_env_file_the_environment_or_kaggle_json(rec
 
 def test_saving_the_key_is_private_and_keeps_other_settings(rec, home):
     (home / ".env").write_text(
-        "# my settings\nMAPVIETNAM_CONTACT=me@example.org\nKAGGLE_KEY=old-old-old-old-old\nKAGGLE_USERNAME=\n"
+        "# my settings\nMAPVIETNAM_CONTACT=me@example.org\nKAGGLE_KEY=old-old-old-old-old\nKAGGLE_USERNAME=\n",
+        encoding="utf-8",
     )
     rec.save_key(f"  {USER} ", f"{KEY}\n")
-    assert (home / ".env").read_text() == (
+    assert (home / ".env").read_text(encoding="utf-8") == (
         f"# my settings\nMAPVIETNAM_CONTACT=me@example.org\nKAGGLE_USERNAME={USER}\nKAGGLE_KEY={KEY}\n"
     )
-    assert stat.S_IMODE((home / ".env").stat().st_mode) == 0o600
+    if os.name != "nt":  # Windows has no owner-only mode bits
+        assert stat.S_IMODE((home / ".env").stat().st_mode) == 0o600
     assert rec.key_status()["source"] == "env file"
     # The ingesters this process starts get the new key, not one loaded from the old file.
     assert os.environ["KAGGLE_KEY"] == KEY and rec.child_env()["KAGGLE_USERNAME"] == USER
@@ -457,14 +461,14 @@ def test_saving_the_key_is_private_and_keeps_other_settings(rec, home):
 
 def test_forgetting_the_key_removes_only_its_two_lines(rec, home):
     (home / "kaggle").mkdir()
-    (home / "kaggle" / "kaggle.json").write_text(json.dumps({"username": "other", "key": "k" * 32}))
-    (home / ".env").write_text("MAPVIETNAM_CONTACT=me@example.org\n")
+    (home / "kaggle" / "kaggle.json").write_text(json.dumps({"username": "other", "key": "k" * 32}), encoding="utf-8")
+    (home / ".env").write_text("MAPVIETNAM_CONTACT=me@example.org\n", encoding="utf-8")
     rec.save_key(USER, KEY)
     rec.forget_key()
-    assert (home / ".env").read_text() == "MAPVIETNAM_CONTACT=me@example.org\n"
+    assert (home / ".env").read_text(encoding="utf-8") == "MAPVIETNAM_CONTACT=me@example.org\n"
     assert "KAGGLE_KEY" not in os.environ and "KAGGLE_USERNAME" not in os.environ
     assert rec.key_status()["source"] == "kaggle.json"  # Kaggle's own file is never touched
-    assert json.loads((home / "kaggle" / "kaggle.json").read_text())["username"] == "other"
+    assert json.loads((home / "kaggle" / "kaggle.json").read_text(encoding="utf-8"))["username"] == "other"
     rec.forget_key()  # forgetting twice, or with no .env at all, is fine
     (home / ".env").unlink()
     rec.forget_key()
@@ -473,7 +477,7 @@ def test_forgetting_the_key_removes_only_its_two_lines(rec, home):
 
 def test_forgetting_the_key_leaves_one_set_outside_the_env_file(rec, home):
     os.environ.update(KAGGLE_USERNAME="shell-user", KAGGLE_KEY="s" * 32)
-    (home / ".env").write_text(f"KAGGLE_USERNAME={USER}\nKAGGLE_KEY={KEY}\n")
+    (home / ".env").write_text(f"KAGGLE_USERNAME={USER}\nKAGGLE_KEY={KEY}\n", encoding="utf-8")
     rec.forget_key()
     assert os.environ["KAGGLE_KEY"] == "s" * 32 and rec.key_status()["source"] == "environment"
 
@@ -563,7 +567,7 @@ def test_the_key_never_reaches_a_log_or_an_error(rec, home):
     thor_entry = entry(rec, "thor")
     assert thor_entry["state"] == "failed" and thor_entry["error"] == "Kaggle did not accept this key ([hidden])."
     assert KEY not in json.dumps(rec.listing())
-    log = rec.log_path(rec.by_id["thor"]).read_text()
+    log = rec.log_path(rec.by_id["thor"]).read_text(encoding="utf-8")
     assert KEY not in log and "[hidden]" in log
 
 
@@ -634,7 +638,9 @@ def test_the_air_strike_area_is_checked_stored_and_reported(rec, home):
     assert entry(rec, "thor")["options"] == {"area": [106.0, 16.0, 107.0, 17.0]}  # what is on its way
     rec.run_pending()
     assert ran(home)[-1].startswith("thor --bbox 106.0,16.0,107.0,17.0")
-    assert json.loads(rec.stamp(rec.by_id["thor"]).read_text())["options"] == {"area": [106.0, 16.0, 107.0, 17.0]}
+    assert json.loads(rec.stamp(rec.by_id["thor"]).read_text(encoding="utf-8"))["options"] == {
+        "area": [106.0, 16.0, 107.0, 17.0]
+    }
     assert rec.add(["thor"], refresh=True) == ["thor"] and rec._jobs["thor"].options == {
         "area": [106.0, 16.0, 107.0, 17.0]
     }
@@ -664,7 +670,7 @@ def test_air_strikes_added_by_an_older_version_report_where_they_lie(rec, home):
     rec.save_key(USER, KEY)
     rec.add(["thor"])
     rec.run_pending()
-    rec.stamp(rec.by_id["thor"]).write_text("2026-01-02T03:04:05\n")  # an old marker: just the time
+    rec.stamp(rec.by_id["thor"]).write_text("2026-01-02T03:04:05\n", encoding="utf-8")  # an old marker: just the time
     old = entry(rec, "thor")
     assert old["state"] == "added" and old["added_at"] == "2026-01-02T03:04:05"
     assert old["options"] == {"area": list(records.DEFAULT_AREA)} and old["area_recorded"] is False
@@ -687,7 +693,10 @@ class OtherProcess:
         )
         rec.state_dir.mkdir(parents=True, exist_ok=True)
         self.proc = subprocess.Popen(
-            [sys.executable, "-c", code, str(rec.state_dir / "worker.lock")], stdout=subprocess.PIPE, text=True
+            [sys.executable, "-c", code, str(rec.state_dir / "worker.lock")],
+            stdout=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
         )
         assert self.proc.stdout.readline().strip() == "locked"
         files.write_json(rec.state_dir / "current.json", {"id": source_id, "pid": self.proc.pid, "action": action})
@@ -725,7 +734,7 @@ def test_a_stop_asked_for_by_another_process_ends_this_ones_job(rec, home):
     worker = threading.Thread(target=rec.run_pending)
     worker.start()
     wait_for((home / "base.started").exists)
-    assert json.loads((rec.state_dir / "current.json").read_text())["id"] == "base"
+    assert json.loads((rec.state_dir / "current.json").read_text(encoding="utf-8"))["id"] == "base"
     rec.request_cancel("base")  # what cancel() or remove() in another process does
     worker.join(20)
     assert not worker.is_alive() and states(rec)["base"] == "available"
@@ -742,7 +751,7 @@ def test_first_run_ends_when_the_welcome_is_dismissed_or_something_was_added(rec
     rec.add(["optional"], accept=["optional"])
     rec.run_pending()
     assert not rec.first_run() and rec.choices()["ever_added"] is True
-    (home / "data" / "work" / "setup" / "choices.json").write_text(json.dumps({"agreed": True}))
+    (home / "data" / "work" / "setup" / "choices.json").write_text(json.dumps({"agreed": True}), encoding="utf-8")
     rec.stamp(rec.by_id["optional"]).unlink()
     assert not rec.first_run()  # someone who said yes on the terminal, in an older version, is not new
 
@@ -762,7 +771,7 @@ def test_the_server_is_told_whenever_the_records_changed(home):
 # ---- .env --------------------------------------------------------------------------------------
 def test_env_files_are_read_the_way_the_ingesters_read_them(tmp_path):
     path = tmp_path / ".env"
-    path.write_text("# comment\n\nA=1\nexport B = 'two'\nC=\nnot a setting\nD=\"x=y\"\n")
+    path.write_text("# comment\n\nA=1\nexport B = 'two'\nC=\nnot a setting\nD=\"x=y\"\n", encoding="utf-8")
     assert records.read_env(path) == {"A": "1", "B": "two", "D": "x=y"}
     assert records.read_env(tmp_path / "missing") == {}
     os.environ.pop("A", None)

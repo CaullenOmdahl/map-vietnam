@@ -18,7 +18,7 @@ FIX = Path(__file__).parent / "fixtures" / "wikidata_osm"
 
 
 def load(name):
-    return json.loads((FIX / name).read_text())
+    return json.loads((FIX / name).read_text(encoding="utf-8"))
 
 
 @pytest.fixture(scope="module")

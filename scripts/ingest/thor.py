@@ -89,7 +89,7 @@ def kaggle_credentials():
     if user and key:
         return user, key
     try:
-        cfg = json.loads(kaggle_config_file().read_text())
+        cfg = json.loads(kaggle_config_file().read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
     if isinstance(cfg, dict) and cfg.get("username") and cfg.get("key"):

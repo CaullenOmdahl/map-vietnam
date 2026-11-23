@@ -87,7 +87,7 @@ def make_home(root, monkeypatch):
     """Make `root` a project folder with the fake ingester and its plan, and take every Kaggle
     setting out of the environment (kaggle.json is looked for under root/kaggle). Returns root."""
     root.mkdir(parents=True, exist_ok=True)
-    (root / "fake_ingest.py").write_text(FAKE_INGESTER.format(scripts=str(SCRIPTS)))
+    (root / "fake_ingest.py").write_text(FAKE_INGESTER.format(scripts=str(SCRIPTS)), encoding="utf-8")
     set_plan(root, base={"makes": ["data/work/base_index.json", "data/work/base_summary.json"]})
     env = {k: v for k, v in os.environ.items() if not k.startswith("KAGGLE_")}
     monkeypatch.setattr(os, "environ", {**env, "KAGGLE_CONFIG_DIR": str(root / "kaggle")})
@@ -97,14 +97,14 @@ def make_home(root, monkeypatch):
 def set_plan(root, **plans):
     """Merge per-source instructions for the fake ingester into plan.json."""
     path = root / "plan.json"
-    plan = json.loads(path.read_text()) if path.exists() else {}
-    path.write_text(json.dumps({**plan, **plans}))
+    plan = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    path.write_text(json.dumps({**plan, **plans}), encoding="utf-8")
 
 
 def ran(root):
     """What the fake ingesters ran, in order: one "name arg ..." line each."""
     log = root / "ran.log"
-    return log.read_text().splitlines() if log.exists() else []
+    return log.read_text(encoding="utf-8").splitlines() if log.exists() else []
 
 
 def wait_for(condition, timeout=20):

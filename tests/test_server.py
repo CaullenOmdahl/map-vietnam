@@ -1,6 +1,7 @@
 """The local API, exercised over HTTP against a temporary store."""
 
 import json
+import os
 import stat
 import threading
 import urllib.error
@@ -503,13 +504,14 @@ def test_the_kaggle_key_is_saved_and_forgotten_and_never_comes_back_out(recs, ca
     assert source_of(listing, "thor")["wants_key"] is True and source_of(listing, "thor")["error"] == wanted
     assert listing["key"] == {"needed": True, "present": False, "source": None}
 
-    (rec.root / ".env").write_text("MAPVIETNAM_CONTACT=me@example.org\n")
+    (rec.root / ".env").write_text("MAPVIETNAM_CONTACT=me@example.org\n", encoding="utf-8")
     status, answer = ask("POST", "/api/records/key", {"username": USER, "key": KEY})
     assert status == 200 and answer["key"] == {"needed": True, "present": True, "source": "env file"}
-    assert (
-        rec.root / ".env"
-    ).read_text() == f"MAPVIETNAM_CONTACT=me@example.org\nKAGGLE_USERNAME={USER}\nKAGGLE_KEY={KEY}\n"
-    assert stat.S_IMODE((rec.root / ".env").stat().st_mode) == 0o600
+    assert (rec.root / ".env").read_text(
+        encoding="utf-8"
+    ) == f"MAPVIETNAM_CONTACT=me@example.org\nKAGGLE_USERNAME={USER}\nKAGGLE_KEY={KEY}\n"
+    if os.name != "nt":  # Windows has no owner-only mode bits
+        assert stat.S_IMODE((rec.root / ".env").stat().st_mode) == 0o600
 
     # Used: an ingester that is refused says so in plain words, and even one that printed the key is scrubbed.
     set_plan(
@@ -529,10 +531,12 @@ def test_the_kaggle_key_is_saved_and_forgotten_and_never_comes_back_out(recs, ca
 
     status, answer = ask("DELETE", "/api/records/key")
     assert status == 200 and answer["key"] == {"needed": False, "present": False, "source": None}
-    assert (rec.root / ".env").read_text() == "MAPVIETNAM_CONTACT=me@example.org\n"
+    assert (rec.root / ".env").read_text(encoding="utf-8") == "MAPVIETNAM_CONTACT=me@example.org\n"
 
     printed = capfd.readouterr()
-    logs = "".join(p.read_text() for p in (rec.root / "data" / "work" / "setup").rglob("*") if p.is_file())
+    logs = "".join(
+        p.read_text(encoding="utf-8") for p in (rec.root / "data" / "work" / "setup").rglob("*") if p.is_file()
+    )
     for where in (*said, printed.out, printed.err, logs):
         assert KEY not in where and USER not in where
     assert "[hidden]" in logs  # the ingester's slip was caught on its way into the log
@@ -657,3 +661,47 @@ def test_search_follows_changes_to_the_store_made_behind_its_back(base):
     store.sync_source(db, "t", [])  # another process (the command line) removes every record
     db.close()
     assert call(f"{base}/api/search?q=saigon") == []
+
+
+def status_of(url, method="GET", body=None, headers=None):
+    """The HTTP status a request gets, error or not."""
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(
+        url, data=data, method=method, headers={"Content-Type": "application/json", **(headers or {})}
+    )
+    try:
+        with urllib.request.urlopen(req) as r:
+            return r.status
+    except urllib.error.HTTPError as e:
+        return e.code
+
+
+def test_sites_with_infinite_or_out_of_range_numbers_are_refused(base):
+    cid = call(f"{base}/api/cases", "POST", {"name": "c"})["id"]
+    site = {"name": "s", "lon": 105.6, "lat": 10.4, "uncertainty_m": 100}
+    for bad in ({"uncertainty_m": "inf"}, {"uncertainty_m": "nan"}, {"lon": "nan"}, {"lon": 1e308}, {"lat": 95}):
+        assert status_of(f"{base}/api/cases/{cid}/sites", "POST", {**site, **bad}) == 400, bad
+    assert call(f"{base}/api/cases/{cid}/sites", "POST", site)["sites"]
+    # The case still reads back as valid JSON.
+    assert call(f"{base}/api/cases/{cid}")["sites"][0]["uncertainty_m"] == 100
+
+
+def test_wrong_field_types_and_unknown_records_get_a_400(base):
+    assert status_of(f"{base}/api/cases", "POST", {"name": 5}) == 400
+    cid = call(f"{base}/api/cases", "POST", {"name": "c"})["id"]
+    assert status_of(f"{base}/api/cases/{cid}/items", "POST", {"evidence_id": 999999}) == 400
+    assert status_of(f"{base}/api/cases/{cid}/notes", "POST", {"body": ["x"]}) == 400
+
+
+def test_a_negative_limit_does_not_lift_the_cap(base):
+    # SQLite treats a negative LIMIT as none at all; the server clamps it to at least one row.
+    for limit in (-1, -2, -1000):
+        got = call(f"{base}/api/evidence?limit={limit}")
+        assert len(got["features"]) == 1 and got["truncated"], limit
+    assert len(call(f"{base}/api/search?q=hamlet&limit=-5")) <= 1
+
+
+def test_static_files_also_check_the_host(base):
+    port = base.rsplit(":", 1)[1]
+    assert status_of(f"{base}/app/index.html") in (200, 404)  # the temporary web root may be empty
+    assert status_of(f"{base}/app/index.html", headers={"Host": f"evil.example:{port}"}) == 403

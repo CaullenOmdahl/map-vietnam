@@ -38,8 +38,8 @@
 // ================================================================ constants
 // Today's base maps (raster XYZ tiles, Web Mercator).
 const BASES = {
-  osm: { name: "Street map", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], attribution: "© OpenStreetMap contributors", maxzoom: 19 },
-  sat: { name: "Satellite", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], attribution: "Imagery © Esri", maxzoom: 19 },
+  osm: { name: "Street map", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors', maxzoom: 19 },
+  sat: { name: "Satellite", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], attribution: "Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community", maxzoom: 19 },
 };
 // Each evidence kind gets its own colour and shape (shape paths are in a 24×24 box).
 const SHAPES = {
@@ -79,6 +79,8 @@ const coarse = matchMedia("(pointer: coarse)").matches;
 const $ = s => document.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+// Only web links become clickable: a record's url comes from outside sources, and "javascript:" must never be one.
+const safeUrl = u => typeof u === "string" && /^https?:\/\//i.test(u);
 const fmtInt = n => Number(n || 0).toLocaleString("en-US");
 // JSON in localStorage under "mvapp.<key>"; falls back to the default when storage is blocked or the value is bad.
 const store = {
@@ -300,8 +302,14 @@ function makeStyle() {
 }
 // Creates a map in the given container. The primary map restores the saved view and carries the attribution and
 // scale; the comparison map starts from the primary's view.
+// A saved view from localStorage, used only if it is still a valid [lon, lat] and zoom.
+function savedView() {
+  const c = store.get("center", CENTER), z = store.get("zoom", 11);
+  const ok = Array.isArray(c) && c.length === 2 && c.every(Number.isFinite) && Math.abs(c[0]) <= 180 && Math.abs(c[1]) <= 90;
+  return { center: ok ? c : CENTER, zoom: Number.isFinite(z) && z >= 0 && z <= 22 ? z : 11 };
+}
 function createMap(container, isPrimary) {
-  const view = isPrimary ? { center: store.get("center", CENTER), zoom: store.get("zoom", 11) } : { center: primary().getCenter(), zoom: primary().getZoom(), bearing: primary().getBearing() };
+  const view = isPrimary ? savedView() : { center: primary().getCenter(), zoom: primary().getZoom(), bearing: primary().getBearing() };
   // (padding is copied after creation so both halves of a comparison line up exactly)
   const m = new maplibregl.Map({
     container, style: makeStyle(), ...view, attributionControl: false, pitchWithRotate: false, maxPitch: 0, fadeDuration: reduceMotion ? 0 : 300,
@@ -309,7 +317,7 @@ function createMap(container, isPrimary) {
   m.touchZoomRotate.disableRotation();
   m.keyboard.disableRotation?.();
   if (isPrimary) {
-    m.addControl(new maplibregl.AttributionControl({ compact: true }), isDesk() ? "bottom-right" : "top-left");
+    setAttribution(m, []);
     m.addControl(new maplibregl.ScaleControl({ unit: "metric", maxWidth: 110 }), "bottom-left");
   }
   if (!isPrimary) m.setPadding(primary().getPadding());
@@ -435,6 +443,7 @@ function addEraLayer(m, l) {
   const id = `ov-${l.id}`;
   if (m.getLayer(id)) return;
   m.addSource(id, { type: "raster", tiles: ["/" + l.tiles.replace(/^\//, "")], tileSize: 256, bounds: l.bounds || undefined,
+    attribution: l.attribution ? esc(l.attribution) : undefined,
     minzoom: l.minzoom || 0, maxzoom: l.maxzoom || 15 });
   m.addLayer({ id, type: "raster", source: id, layout: { visibility: "none" }, paint: { "raster-opacity": S.opacity, "raster-fade-duration": 0 } },
     m.getLayer("libfp-fill") ? "libfp-fill" : undefined);
@@ -560,8 +569,22 @@ function defaultEra() {
   return (best(S.eras.filter(e => e.dated && eraCovers(e, lon, lat))) || best(S.eras.filter(e => e.dated && eraInView(e))))?.id || null;
 }
 
+// The primary map's credits. Its control sits above the comparison map, so while comparing it also carries the
+// right-hand old map's credit (MapLibre only lists the sources of its own map). Rebuilt only when that text changes.
+let attribCtrl = null, attribExtra = null;
+function setAttribution(m, extra) {
+  const key = extra.join("|");
+  if (attribCtrl && key === attribExtra) return;
+  if (attribCtrl) m.removeControl(attribCtrl);
+  attribCtrl = new maplibregl.AttributionControl({ compact: true, customAttribution: extra.length ? extra : undefined });
+  attribExtra = key;
+  m.addControl(attribCtrl, isDesk() ? "bottom-right" : "top-left");
+}
 // Shows the chosen old map on each map (and hides the rest), with the shared opacity.
 function applyEra() {
+  const right = S.compare && S.eraB !== "today" ? eraById(S.eraB) : null;
+  const extra = right && eraInYears(right) ? [...new Set(right.layers.map(l => l.attribution).filter(Boolean))].map(esc) : [];
+  if (maps[0]) setAttribution(maps[0], extra);
   maps.forEach((m, i) => {
     if (!m?.loadedOverlays) return;
     const want = i === 0 ? S.eraA : (S.eraB === "today" ? null : S.eraB);
@@ -1466,7 +1489,7 @@ VIEWS.evidence = v => {
         data-why="Near ${esc(srcShort(p.source))} record ${esc(p.source_record_id || "")} (${esc(kindOne(p))}${p.date_start ? ", " + esc(fmtDay(p.date_start)) : ""})"><span class="ci">${icon.pin}</span><span>Place site</span></button>
       <button class="act" data-act="toNearby"><span class="ci">${icon.near}</span><span>Nearby</span></button>
       <button class="act" data-act="copyGrid" ${loading ? "disabled" : ""}><span class="ci">${icon.grid}</span><span>Copy grid ref</span></button>
-      ${p.url ? `<a class="act" href="${esc(p.url)}" target="_blank" rel="noopener"><span class="ci">${icon.ext}</span><span>Source</span></a>`
+      ${safeUrl(p.url) ? `<a class="act" href="${esc(p.url)}" target="_blank" rel="noopener"><span class="ci">${icon.ext}</span><span>Source</span></a>`
         : `<button class="act" data-act="toSource" ${loading ? "disabled" : ""}><span class="ci">${icon.doc}</span><span>Source</span></button>`}
     </div>
     <div id="caseSlot"></div>
@@ -1482,7 +1505,7 @@ VIEWS.evidence = v => {
       <div class="kv-row"><span class="k">Date</span><span class="v">${esc(fmtDate(p.date_start, p.date_end))}</span></div>
       <div class="kv-row" id="srcRow"><span class="k">Source</span><span class="v">${esc(S.sources[p.source]?.name || srcShort(p.source))}</span>
         <span class="v2">Record <span class="mono">${esc(p.source_record_id)}</span>${S.sources[p.source]?.retrieved_at ? ` · retrieved ${esc(fmtDay(S.sources[p.source].retrieved_at.slice(0, 10)))}` : ""}</span>
-        ${p.url ? `<span class="inline-btns"><a class="small-t" href="${esc(p.url)}" target="_blank" rel="noopener">Open source record</a></span>` : ""}</div>`}
+        ${safeUrl(p.url) ? `<span class="inline-btns"><a class="small-t" href="${esc(p.url)}" target="_blank" rel="noopener">Open source record</a></span>` : ""}</div>`}
     </div>
     ${p.description ? `<h3 class="section-title">Description</h3><div class="group"><div class="inner" style="padding-top:12px">${descHTML(p.description)}</div></div>` : ""}
     ${strike ? `<p class="quiet-note">${icon.warn}<span>Strike target: unexploded ordnance may remain within about ${fmtM(p.uncertainty_m || 1000)}. Don’t dig without UXO clearance.</span></p>` : ""}
@@ -1792,7 +1815,7 @@ VIEWS.era = v => {
     <div class="group"><ul class="list">${e.layers.map(l => `<li style="display:block;padding:10px 14px"><div class="t" style="white-space:normal;font-weight:500">${esc(l.title)}</div>
       <div class="small-t muted">${esc(l.date || "Date unknown")} · ${esc(l.scale)}</div>
       ${l.dateNote ? `<details style="margin-top:4px"><summary class="small-t" style="cursor:pointer;color:var(--accent)">Dating &amp; accuracy note</summary><p class="small-t muted" style="margin:4px 0 0">${esc(l.dateNote)}</p></details>` : ""}
-      ${l.source ? `<a class="small-t" href="${esc(l.source.split(" ")[0])}" target="_blank" rel="noopener">Original scan</a>` : ""}</li>`).join("")}</ul></div>`;
+      ${safeUrl(l.source) ? `<a class="small-t" href="${esc(l.source.split(" ")[0])}" target="_blank" rel="noopener">Original scan</a>` : ""}</li>`).join("")}</ul></div>`;
 };
 
 // ================================================================ map library (adding and removing old maps)
@@ -3117,6 +3140,12 @@ function checkEmptyKinds() {
 
 // ================================================================ boot
 (async function boot() {
+  // MapLibre comes from unpkg; offline, blocked or failing its integrity check, say so instead of a blank page.
+  if (!window.maplibregl) {
+    document.body.insertAdjacentHTML("afterbegin", `<div role="alert" style="position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;background:#fff;color:#111;font:16px/1.5 system-ui,sans-serif;text-align:center">
+      <div><p><b>The map library could not be loaded.</b></p><p>Map Vietnam loads MapLibre from unpkg.com, so it needs an internet connection.<br>Check your connection (or any content blocker), then reload this page.</p></div></div>`);
+    return;
+  }
   setSheet(isDesk() ? "half" : "peek"); // before any await, so the sheet's first paint is already in place
   // Until the catalogue arrives, the picker shows the label saved with the last map chosen.
   { const [t, sub] = store.get("eraLabel", [null, null]); if (t) { $("#pickAtitle").textContent = t; $("#pickAsub").textContent = sub || ""; } }

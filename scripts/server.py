@@ -165,7 +165,7 @@ def query_evidence(db, q):
         args += ids
     else:
         sql += " and withdrawn_at is null"  # withdrawn records live on only in the cases that hold them
-    limit = min(int(q.get("limit", 20000)), 50000)
+    limit = bounded_int(q.get("limit"), 20000, 1, 50000)
     # One row past the limit tells us whether anything was cut off.
     rows = db.execute(sql + " limit ?", args + [limit + 1]).fetchall()
     return {
@@ -173,6 +173,31 @@ def query_evidence(db, q):
         "truncated": len(rows) > limit,
         "features": [feature(r, props) for r in rows[:limit]],
     }
+
+
+def bounded_int(value, default, low, high):
+    """`value` (a query-string number, or None for `default`) as an int clamped to [low, high].
+    SQLite reads a negative LIMIT as "no limit", so the clamp is what keeps the caps real."""
+    return max(low, min(int(value if value is not None else default), high))
+
+
+def text_field(body, key, required=True):
+    """String field `key` of a JSON body; a missing optional field gives None."""
+    value = body[key] if required else body.get(key)
+    if value is None and not required:
+        return None
+    if not isinstance(value, str):
+        raise ValueError(f"{key} must be a string")
+    return value
+
+
+def finite_number(body, key, low=-math.inf, high=math.inf):
+    """Number field `key` of a JSON body, finite and within [low, high]. Infinity or NaN would be
+    stored and then written back out as invalid JSON, breaking the case page and its exports."""
+    value = float(body[key])
+    if not math.isfinite(value) or not low <= value <= high:
+        raise ValueError(f"{key} must be a finite number between {low} and {high}")
+    return value
 
 
 def fold(s):
@@ -475,6 +500,18 @@ class Handler(SimpleHTTPRequestHandler):
     db_path = store.DB_PATH
     library = None  # the map library (set by make_server)
     records = None  # the record sources (set by make_server)
+    # Fixed types for what the viewer loads: on Windows the defaults come from the registry, where
+    # .js or .css is sometimes text/plain, and browsers then refuse the file.
+    extensions_map = {
+        **SimpleHTTPRequestHandler.extensions_map,
+        ".html": "text/html",
+        ".js": "text/javascript",
+        ".css": "text/css",
+        ".json": "application/json",
+        ".webp": "image/webp",
+        ".png": "image/png",
+        ".svg": "image/svg+xml",
+    }
 
     def log_message(self, *args):
         pass  # keep the console quiet: the viewer fetches hundreds of tiles per pan
@@ -566,6 +603,8 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json({"error": str(e), **e.extra}, e.status)
         except (ValueError, KeyError, TypeError) as e:  # LibraryError is a ValueError
             self.send_json({"error": str(e)}, HTTPStatus.BAD_REQUEST)
+        except sqlite3.IntegrityError as e:  # e.g. pinning a record id that does not exist
+            self.send_json({"error": f"refused by the database: {e}"}, HTTPStatus.BAD_REQUEST)
         except Exception as e:  # never drop the connection without an answer
             self.send_failure(e)
         return True
@@ -601,7 +640,7 @@ class Handler(SimpleHTTPRequestHandler):
             )
         if method == "GET" and p == "search":
             near = tuple(map(float, q["near"].split(","))) if q.get("near") else None
-            return self.send_json(search(db, q.get("q", ""), int(q.get("limit", 20)), near))
+            return self.send_json(search(db, q.get("q", ""), bounded_int(q.get("limit"), 20, 1, 200), near))
         if method == "GET" and p == "lonlat":
             lon, lat = float(q["lon"]), float(q["lat"])
             return self.send_json(
@@ -618,7 +657,7 @@ class Handler(SimpleHTTPRequestHandler):
             b = self.body()
             cur = db.execute(
                 "insert into cases (name, summary, created_at) values (?,?,?)",
-                (b["name"].strip(), b.get("summary", ""), store.now()),
+                (text_field(b, "name").strip(), text_field(b, "summary", False) or "", store.now()),
             )
             return self.send_json({"id": cur.lastrowid}, HTTPStatus.CREATED)
         if not m:
@@ -640,25 +679,27 @@ class Handler(SimpleHTTPRequestHandler):
             b = self.body()
             db.execute(
                 "insert or replace into case_items (case_id, evidence_id, note) values (?,?,?)",
-                (cid, int(b["evidence_id"]), b.get("note")),
+                (cid, int(b["evidence_id"]), text_field(b, "note", False)),
             )
         elif method == "DELETE" and sub == "items" and sub_id:
             db.execute("delete from case_items where case_id = ? and evidence_id = ?", (cid, int(sub_id)))
         elif method == "POST" and sub == "sites":
             b = self.body()
-            r = float(b["uncertainty_m"])
+            r = finite_number(b, "uncertainty_m")
             if r <= 0:
                 raise ValueError("uncertainty_m must be > 0")
+            lon, lat = finite_number(b, "lon", -180, 180), finite_number(b, "lat", -90, 90)
             db.execute(
                 "insert into sites (case_id, name, lon, lat, uncertainty_m, rationale, created_at) "
                 "values (?,?,?,?,?,?,?)",
-                (cid, b["name"], float(b["lon"]), float(b["lat"]), r, b.get("rationale"), store.now()),
+                (cid, text_field(b, "name"), lon, lat, r, text_field(b, "rationale", False), store.now()),
             )
         elif method == "DELETE" and sub == "sites" and sub_id:
             db.execute("delete from sites where case_id = ? and id = ?", (cid, int(sub_id)))
         elif method == "POST" and sub == "notes":
             db.execute(
-                "insert into notes (case_id, body, created_at) values (?,?,?)", (cid, self.body()["body"], store.now())
+                "insert into notes (case_id, body, created_at) values (?,?,?)",
+                (cid, text_field(self.body(), "body"), store.now()),
             )
         elif method == "DELETE" and sub == "notes" and sub_id:
             db.execute("delete from notes where case_id = ? and id = ?", (cid, int(sub_id)))
@@ -764,6 +805,10 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.route("GET"):
             return
+        # Static files and tiles get the same Host check as the API, so a DNS-rebinding page
+        # cannot read which maps are installed.
+        if self.headers.get("Host") not in self.own_hosts():
+            return self.send_error(HTTPStatus.FORBIDDEN, "this server only answers requests addressed to itself")
         m = TILE_PATH.fullmatch(urlparse(self.path).path)
         if m:
             return self.send_tile(m[1], int(m[2]), int(m[3]), int(m[4]))

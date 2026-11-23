@@ -146,9 +146,11 @@ BASIC_U_K = "Basic dTpr"  # base64 of "u:k"
 def test_credentials_come_from_env_file_then_kaggle_json(no_key):
     assert thor.kaggle_credentials() is None
     (no_key / "kaggle").mkdir()
-    (no_key / "kaggle" / "kaggle.json").write_text(json.dumps({"username": "jsonuser", "key": "jsonkey"}))
+    (no_key / "kaggle" / "kaggle.json").write_text(
+        json.dumps({"username": "jsonuser", "key": "jsonkey"}), encoding="utf-8"
+    )
     assert thor.kaggle_credentials() == ("jsonuser", "jsonkey")
-    (no_key / ".env").write_text("KAGGLE_USERNAME=envuser\nKAGGLE_KEY=envkey\n")
+    (no_key / ".env").write_text("KAGGLE_USERNAME=envuser\nKAGGLE_KEY=envkey\n", encoding="utf-8")
     assert thor.kaggle_credentials() == ("envuser", "envkey")
 
 
@@ -167,7 +169,7 @@ def test_without_a_key_the_file_is_asked_for_without_one(no_key, monkeypatch):
 
 
 def test_a_saved_key_is_sent(no_key, monkeypatch):
-    (no_key / ".env").write_text("KAGGLE_USERNAME=u\nKAGGLE_KEY=k\n")
+    (no_key / ".env").write_text("KAGGLE_USERNAME=u\nKAGGLE_KEY=k\n", encoding="utf-8")
     attempts = fake_kaggle(monkeypatch, ZIP_BYTES)
     assert thor.download().read_bytes() == ZIP_BYTES
     assert attempts == [BASIC_U_K]
@@ -175,7 +177,7 @@ def test_a_saved_key_is_sent(no_key, monkeypatch):
 
 @pytest.mark.parametrize("status", [401, 403])
 def test_a_refused_key_does_not_stand_in_the_way_of_a_file_anyone_may_have(no_key, monkeypatch, status):
-    (no_key / ".env").write_text("KAGGLE_USERNAME=u\nKAGGLE_KEY=k\n")
+    (no_key / ".env").write_text("KAGGLE_USERNAME=u\nKAGGLE_KEY=k\n", encoding="utf-8")
     attempts = fake_kaggle(monkeypatch, status, ZIP_BYTES)
     assert thor.download().read_bytes() == ZIP_BYTES
     assert attempts == [BASIC_U_K, None]  # tried once more, without the key
@@ -194,7 +196,7 @@ def test_kaggle_asking_for_a_key_when_none_is_saved_ends_with_the_key_status(no_
 
 
 def test_a_key_refused_and_no_luck_without_it_says_the_key_was_refused(no_key, monkeypatch, capsys):
-    (no_key / ".env").write_text("KAGGLE_USERNAME=secret-user\nKAGGLE_KEY=secret-key-value\n")
+    (no_key / ".env").write_text("KAGGLE_USERNAME=secret-user\nKAGGLE_KEY=secret-key-value\n", encoding="utf-8")
     attempts = fake_kaggle(monkeypatch, 403, 401)
     with pytest.raises(SystemExit) as e:
         thor.download()
@@ -232,7 +234,7 @@ def write_csv(path, rows):
     import csv
 
     fields = sorted({k for row in rows for k in row})
-    with open(path, "w", newline="") as f:
+    with open(path, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)

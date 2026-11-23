@@ -376,7 +376,7 @@ def read_env(path):
     and one pair of quotes are dropped."""
     values = {}
     try:
-        lines = Path(path).read_text().splitlines()
+        lines = Path(path).read_text(encoding="utf-8").splitlines()
     except OSError:
         return values
     for line in lines:
@@ -403,12 +403,12 @@ def write_env(path, updates):
     """Set (value) or delete (None) names in a .env file, leaving every other line as it is, and
     make the file readable by its owner only."""
     path = Path(path)
-    lines = path.read_text().splitlines() if path.exists() else []
+    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
     kept = [ln for ln in lines if env_line(ln)[0] not in updates]
     kept += [f"{name}={value}" for name, value in updates.items() if value is not None]
     # Created private from the start, so the key is never readable by others, even briefly.
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w") as f:
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
         f.write("\n".join(kept) + "\n" if kept else "")
     os.chmod(path, 0o600)
 
@@ -527,7 +527,7 @@ class Records:
         """{"added_at", "options"} from a source's marker; {} when it has none. Markers written
         by older versions hold only the time."""
         try:
-            text = self.stamp(source).read_text().strip()
+            text = self.stamp(source).read_text(encoding="utf-8").strip()
         except OSError:
             return {}
         try:
@@ -1054,7 +1054,7 @@ class Records:
         """Hold data/work/setup/worker.lock: only one process adds or removes records at a time.
         on_wait() is called once if another process holds it."""
         self.state_dir.mkdir(parents=True, exist_ok=True)
-        with open(self.state_dir / "worker.lock", "a+") as f:
+        with open(self.state_dir / "worker.lock", "a+", encoding="utf-8") as f:
             if not lock_file(f, blocking=False):
                 if on_wait:
                     on_wait()
@@ -1069,7 +1069,7 @@ class Records:
         """Like exclusive(), but never waits: yields True holding the lock, or False when
         someone else (another process, or this process's worker) holds it."""
         self.state_dir.mkdir(parents=True, exist_ok=True)
-        with open(self.state_dir / "worker.lock", "a+") as f:
+        with open(self.state_dir / "worker.lock", "a+", encoding="utf-8") as f:
             free = lock_file(f, blocking=False)
             try:
                 yield free
@@ -1265,7 +1265,7 @@ class Records:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         secrets = self._secrets() if source.uses_key else []
         lines = []
-        with open(log_path, "w") as log:
+        with open(log_path, "w", encoding="utf-8") as log:
             log.write(f"{source.id} started {local_now()}\n")
             with self._lock:
                 if job.cancel.is_set() or job.aside:
@@ -1278,6 +1278,7 @@ class Records:
                     stderr=subprocess.STDOUT,
                     text=True,
                     errors="replace",
+                    encoding="utf-8",
                 )
             try:
                 for line in proc.stdout:
@@ -1376,7 +1377,7 @@ def sheet_sizes():
     disk for all of them: from the map library catalogue, so the text never drifts from it.
     None if the catalogue cannot be read."""
     try:
-        catalogue = json.loads(MAP_LIBRARY.read_text())
+        catalogue = json.loads(MAP_LIBRARY.read_text(encoding="utf-8"))
         sheets = [m["bytes"] for m in catalogue["maps"] if m["series"] == "l7014"]
         ratio = catalogue["series"]["l7014"]["disk_per_download_byte"]
     except (OSError, ValueError, KeyError, TypeError):

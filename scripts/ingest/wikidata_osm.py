@@ -504,7 +504,7 @@ def wdqs(query, name, refresh=False):
         data=urllib.parse.urlencode({"query": query}),
         headers={"Accept": "application/sparql-results+json", "Content-Type": "application/x-www-form-urlencoded"},
     )
-    return json.loads(path.read_text())["results"]["bindings"]
+    return json.loads(path.read_text(encoding="utf-8"))["results"]["bindings"]
 
 
 def wd_value(binding, key):
@@ -590,7 +590,7 @@ def load_gazetteer(path=GNS_INDEX):
     """The GNS name index; a missing index aborts the run (records would be built without the check)."""
     if not path.exists():
         raise SystemExit(f"{path} is missing: run scripts/ingest/gns.py first")
-    return json.loads(path.read_text())["names"]
+    return json.loads(path.read_text(encoding="utf-8"))["names"]
 
 
 def named_place_check(lon, lat, unc, names, gazetteer):
@@ -1497,7 +1497,7 @@ def overpass(name, body, refresh=False, attempts=3, out="tags bb"):
             if (code is not None and code not in (429, 502, 503, 504)) or attempt == attempts - 1:
                 raise
             time.sleep(30 * (attempt + 1))
-    data = json.loads(path.read_text())
+    data = json.loads(path.read_text(encoding="utf-8"))
     if data.get("remark") and "error" in data["remark"].lower():
         raise RuntimeError(f"overpass {name}: {data['remark']}")
     return data["elements"]
@@ -2152,7 +2152,7 @@ def main(argv=None):
         in_aoi = report[sid]["in_area_of_interest"]
         print(f"{sid}: {len(records)} records, {in_aoi} in the area of interest; {dict(stats)}")
     WORK.mkdir(parents=True, exist_ok=True)
-    REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=1))
+    REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
     return report
 
 

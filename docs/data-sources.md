@@ -1,11 +1,12 @@
 # Data sources
 
-Map Vietnam ships no maps or records. Each record source is downloaded from its publisher onto
-your computer when you add it (the viewer's Records card, or `python3 start.py setup`), and the
-download is kept in `data/raw/` so it is never fetched twice. Old maps are downloaded only when
-you add one (the viewer's "Add old maps", or `python3 start.py maps add`). Removing a source or a
-map deletes its download too. This page says, for each source, what it is, where it comes from,
-its licence, how its records are placed on the map, and what is left out.
+Map Vietnam ships no maps or record databases (only the catalogue of where to fetch them, and
+small excerpts for the tests). Each record source is downloaded from its publisher onto your
+computer when you add it (the viewer's Records card, or `python3 start.py setup`), and the
+download is kept in `data/raw/` so it is not fetched again unless you update it. Old maps are
+downloaded only when you add one (the viewer's "Add old maps", or `python3 start.py maps add`).
+Removing a source or a map deletes its download too. This page says, for each source, what it
+is, where it comes from, its licence, how its records are placed on the map, and what is left out.
 
 Every record keeps a link to its source. Where a source's licence asks for credit, the credit
 line is in [NOTICE](../NOTICE).

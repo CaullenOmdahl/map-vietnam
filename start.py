@@ -109,7 +109,7 @@ def ensure_venv():
     if not runs([str(py), "-m", "pip", "--version"]) and not runs([str(py), "-m", "ensurepip", "--upgrade"]):
         sys.exit("The Python environment in .venv has no pip. Delete the .venv folder and run this again.")
     wanted = hashlib.sha256(REQUIREMENTS.read_bytes()).hexdigest()
-    have = REQUIREMENTS_STAMP.read_text().strip() if REQUIREMENTS_STAMP.exists() else ""
+    have = REQUIREMENTS_STAMP.read_text(encoding="utf-8").strip() if REQUIREMENTS_STAMP.exists() else ""
     if have == wanted:
         return py
     say("Installing the Python add-ons (a few minutes the first time) ...")
@@ -121,7 +121,7 @@ def ensure_venv():
             "Installing the Python add-ons failed (see the messages above). Check the internet connection "
             "and run this again."
         )
-    REQUIREMENTS_STAMP.write_text(wanted + "\n")
+    REQUIREMENTS_STAMP.write_text(wanted + "\n", encoding="utf-8")
     return py
 
 
@@ -129,9 +129,16 @@ def ensure_venv():
 def script_env():
     """Environment for running a project script in .venv's Python: the same import path the tests
     use (pytest.ini), scripts/ and scripts/ingest/, so a script finds store, common, gridref...
-    whatever order its own sys.path setup and imports are in; and unbuffered output."""
+    whatever order its own sys.path setup and imports are in; unbuffered output; and Python's UTF-8
+    mode, so Vietnamese text is read, written and printed as UTF-8 on Windows too (whose default
+    text encoding, cp1252, cannot hold it)."""
     paths = [str(ROOT / "scripts"), str(ROOT / "scripts" / "ingest"), os.environ.get("PYTHONPATH", "")]
-    return {**os.environ, "PYTHONUNBUFFERED": "1", "PYTHONPATH": os.pathsep.join(p for p in paths if p)}
+    return {
+        **os.environ,
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONUTF8": "1",
+        "PYTHONPATH": os.pathsep.join(p for p in paths if p),
+    }
 
 
 def run_script(script, argv):
@@ -208,7 +215,7 @@ def serve(args):
     # Own process group: Control-C reaches only this script, which then stops the server
     # quietly instead of both printing tracebacks.
     group = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
-    proc = subprocess.Popen([str(py), "scripts/server.py", "--port", str(port)], cwd=ROOT, **group)
+    proc = subprocess.Popen([str(py), "scripts/server.py", "--port", str(port)], cwd=ROOT, env=script_env(), **group)
     # Closing the Terminal window sends SIGHUP; treat it (and SIGTERM) like Control-C, so the
     # server, which is in its own session and would not get the signal, is not left running.
     # SIGINT is reset too: a shell that starts this in the background has it ignored.
@@ -226,7 +233,10 @@ def serve(args):
         say('To stop, choose "Quit Map Vietnam" in the map, or press Control-C here (or close the window).')
         if not args.no_browser:
             webbrowser.open(url)
-        if proc.wait() != 0:
+        # Poll rather than wait(): on Windows a bare wait() blocks Control-C until the server exits.
+        while proc.poll() is None:
+            time.sleep(0.5)
+        if proc.returncode != 0:
             say("The map server stopped unexpectedly (see the messages above).")
             return False
         say()
@@ -341,6 +351,10 @@ def main(argv=None):
     """Open the map, or run the setup, maps or records command. Returns the exit status:
     0 all well, 1 something failed, 130 stopped."""
     argv = sys.argv[1:] if argv is None else argv
+    # A console or log that cannot show a character (a cp1252 pipe on Windows) gets "?" instead of a crash.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
     if argv[:1] == ["maps"]:
         # Everything after "maps" belongs to the map library's own command line.
         return maps_command(argv[1:])

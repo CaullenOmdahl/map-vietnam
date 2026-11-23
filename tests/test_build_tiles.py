@@ -99,6 +99,7 @@ def test_command_line_reports_progress_then_the_result(tmp_path):
         capture_output=True,
         text=True,
         check=True,
+        encoding="utf-8",
     )
     lines = done.stdout.splitlines()
     fractions = [float(line.split()[1]) for line in lines if line.startswith("progress ")]

@@ -121,9 +121,12 @@ MapLibre GL JS (loaded from unpkg.com at run time, not included here)
 Background maps shown under the old maps (fetched at run time)
   Street map: tiles from tile.openstreetmap.org, (C) OpenStreetMap contributors, used under the
   OpenStreetMap Foundation's tile usage policy.
-  Satellite: Esri World Imagery, "Imagery (C) Esri" and its data providers.
+  Satellite: Esri World Imagery. Credit: "Source: Esri, Maxar, Earthstar Geographics, and the GIS
+  User Community". Esri's terms of use apply (https://www.esri.com/en-us/legal/terms/full-master-agreement).
   Map label fonts: from the Protomaps basemaps-assets repository (https://github.com/protomaps/basemaps-assets),
   under the fonts' own open licences.
+  Interface fonts: Be Vietnam Pro and JetBrains Mono, loaded from Google Fonts at run time, under the
+  SIL Open Font License 1.1.
 
 
 Screenshots
