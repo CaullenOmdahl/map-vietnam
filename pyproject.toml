@@ -1,6 +1,6 @@
 [project]
 name = "map-vietnam"
-version = "0.1.0"
+version = "0.1.1"
 description = "Dated historical maps of Vietnam over today's map, with war-era records you can search, filter, pin and export."
 readme = "README.md"
 license = "Apache-2.0"

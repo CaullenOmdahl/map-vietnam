@@ -17,7 +17,7 @@
 <!-- MapLibre is pinned and checked with Subresource Integrity (hashes from unpkg's ?meta listing); Google Fonts
      serves different CSS per browser, so it cannot carry a fixed hash. -->
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" integrity="sha256-V2sIX92Uh6ZaGSFTKMHghsB85b9toJtmazgG09AI2uk=" crossorigin="anonymous">
-<link rel="stylesheet" href="/app/app.css?v=33">
+<link rel="stylesheet" href="/app/app.css?v=37">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" integrity="sha256-vpYzxNhw4m+zfxz+XFp3GBZnEUAD6hYgeseFDY2ordE=" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -65,6 +65,8 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4L3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4z"/><path d="M9 4v13M15 6.5v13"/></svg></button>
     <button id="layersBtn" class="ctl" aria-haspopup="dialog" aria-expanded="false" aria-controls="popLayers" aria-label="Evidence layers" title="Evidence layers">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
+    <button id="settingsBtn" class="ctl" aria-pressed="false" aria-label="Settings" title="Settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.4" stroke-width="2.6" stroke-dasharray="2.6 3.28"/><circle cx="12" cy="12" r="6.2"/><circle cx="12" cy="12" r="2.4"/></svg></button>
   </div>
   <div class="ctl-group">
     <button id="locBtn" class="ctl" aria-pressed="false" aria-label="Show my position" title="Show my position">
@@ -118,6 +120,6 @@
 
 <div id="srLive" class="sr-only" role="status" aria-live="polite"></div>
 <div id="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastUndo" class="linkish" hidden>Undo</button></div>
-<script src="/app/app.js?v=40"></script>
+<script src="/app/app.js?v=42"></script>
 </body>
 </html>

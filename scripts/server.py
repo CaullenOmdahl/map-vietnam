@@ -22,6 +22,18 @@ server itself a 500 with {"error": ...}, so the viewer can always say what happe
   POST /api/library/remove {"ids": [...]}   stop and delete maps (tiles and downloads)
   POST /api/library/migrate {}              convert the legacy maps, in the background
 
+The user's own maps (scripts/custom_maps.py); the first four answer with the same object as
+GET /api/library, and GET /api/settings reports where the data is kept and how much space it takes:
+  POST /api/library/custom?filename=<name>&title=<title>&year=<YYYY or empty>
+        body: the file's raw bytes (application/octet-stream, Content-Length required, at most 2 GiB,
+        streamed to disk) -> {"map": <listing entry>, "library": <listing>}. A GeoTIFF or GeoPDF is
+        queued to build at once; a picture waits in state "needs_points". Not a map: 400 {"error"}.
+  GET  /api/library/custom/<id>/preview     the scan's working image as JPEG, at most 4096 px a side
+  POST /api/library/custom/<id>/points {"points": [[col, row, lon, lat], ...], "title", "year"}
+        col/row are pixels of the full-size working image; 3 or more points; queues the build
+  POST /api/library/custom/<id>/edit {"title", "year"}                    rename / re-date a map
+  GET  /api/settings -> {"data_folder", "disk": {"maps", "records", "downloads", "total"}} (bytes)
+
 Record sources (scripts/records.py). Nothing is downloaded unless one of these asks for it, only
 the fixed ingester of a listed source is ever run, and no answer or log ever holds the Kaggle key.
 No key is needed up front: a source whose download Kaggle refused for want of one fails with
@@ -77,6 +89,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+import custom_maps
 import gridref
 import library
 import paths
@@ -92,6 +105,9 @@ MAX_TILE_ZOOM = 24
 # Sec-Fetch-Site values of requests made by this server's own pages (or typed by the user).
 OWN_FETCH_SITES = {"same-origin", "none"}
 MAX_BODY_BYTES = 1 << 20  # the API's JSON bodies are tiny; refuse anything bigger
+UPLOAD_PATH = "/api/library/custom"  # the one route whose body is a raw file, not JSON
+UPLOAD_BLOCK = 1 << 20
+CUSTOM_PATH = re.compile(r"library/custom/(custom_[0-9a-f]{10})/(preview|points|edit)")
 # How long a removal request waits for the removal to finish before it answers, so the answer
 # usually shows the source already gone; a removal queued behind a running job answers sooner.
 REMOVE_WAIT_S = 5
@@ -609,6 +625,10 @@ class Handler(SimpleHTTPRequestHandler):
         if site is not None and site not in OWN_FETCH_SITES:
             return HTTPStatus.FORBIDDEN, "requests from other web sites are refused"
         ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+        # A file upload is raw bytes. Like JSON, that type cannot be sent by a plain cross-site
+        # form, and a script on another site needs a CORS preflight this server never grants.
+        if method == "POST" and urlparse(self.path).path == UPLOAD_PATH and ctype == "application/octet-stream":
+            return None
         if method == "POST" and ctype != "application/json":
             return HTTPStatus.UNSUPPORTED_MEDIA_TYPE, "send the request body as application/json"
         return None
@@ -629,6 +649,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.library_api(method, p)
             elif p == "records" or p.startswith("records/"):
                 self.records_api(method, p)
+            elif p == "settings" and method == "GET":
+                self.settings()
             elif p == "quit" and method == "POST":
                 self.body()  # refuse a body that is not a JSON object, like every other POST
                 self.send_json({"quitting": True})
@@ -637,6 +659,8 @@ class Handler(SimpleHTTPRequestHandler):
                 # closing() releases the connection; the inner `with` rolls back on an error.
                 with closing(self.db()) as db, db:
                     self.dispatch(method, p, q, db)
+        except custom_maps.NoSuchMap as e:
+            self.send_json({"error": str(e)}, HTTPStatus.NOT_FOUND)
         except records.RecordsError as e:  # plain words, sometimes with facts the viewer acts on
             self.send_json({"error": str(e), **e.extra}, e.status)
         except KeyError as e:  # a field or query value the request left out
@@ -773,7 +797,80 @@ class Handler(SimpleHTTPRequestHandler):
             self.body()
             lib.start_migration()
             return self.send_json(lib.listing())
+        if method == "POST" and p == "library/custom":
+            return self.upload_custom_map()
+        m = CUSTOM_PATH.fullmatch(p)
+        if m and (method, m[2]) in (("GET", "preview"), ("POST", "points"), ("POST", "edit")):
+            return self.custom_map_api(m[1], m[2])
         self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+
+    def upload_custom_map(self):
+        """POST /api/library/custom: stream the body to disk, then let custom_maps decide what it is."""
+        q = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+        lib = self.library
+        try:
+            size = int(self.headers.get("Content-Length") or "")
+        except ValueError:
+            size = -1
+        if size <= 0:
+            self.close_connection = True  # the body, if any, is left unread
+            return self.send_json({"error": "Send the file's contents with a Content-Length."}, HTTPStatus.BAD_REQUEST)
+        if size > custom_maps.MAX_UPLOAD_BYTES:
+            self.close_connection = True
+            return self.send_json(
+                {"error": "That file is over 2 GB, which is more than Map Vietnam can add."},
+                HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+            )
+        part = lib.custom.incoming_path()
+        try:
+            with open(part, "wb") as f:
+                left = size
+                while left:
+                    block = self.rfile.read(min(UPLOAD_BLOCK, left))
+                    if not block:
+                        raise custom_maps.CustomMapError("The upload was cut short. Please try adding the file again.")
+                    f.write(block)
+                    left -= len(block)
+            entry = lib.custom.ingest(part, q.get("filename", ""), q.get("title", ""), q.get("year", ""))
+        except BaseException:
+            part.unlink(missing_ok=True)
+            self.close_connection = True
+            raise
+        if lib.custom.buildable(entry):
+            lib.add([entry["id"]])
+            lib.start_worker()
+        listing = lib.listing()
+        self.send_json({"map": next(m for m in listing["maps"] if m["id"] == entry["id"]), "library": listing})
+
+    def custom_map_api(self, map_id, action):
+        """The routes of one of the user's own maps: preview, points, edit."""
+        lib = self.library
+        entry = lib.custom.get(map_id)  # NoSuchMap -> 404
+        if action == "preview":
+            path = lib.custom.preview_path(map_id)
+            if entry["kind"] != "scan" or not path.exists():
+                raise custom_maps.NoSuchMap()
+            body = path.read_bytes()
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "image/jpeg")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        b = self.body()
+        if action == "points":
+            lib.place_custom(map_id, b.get("points"), b.get("title"), b.get("year"))
+            lib.start_worker()
+        else:
+            lib.custom.edit(map_id, b.get("title"), b.get("year"))
+            lib.write_catalog()
+        self.send_json(lib.listing())
+
+    def settings(self):
+        """GET /api/settings: where the data is kept and how much space each kind takes."""
+        lib = self.library
+        self.send_json({"data_folder": str(lib.root), "disk": lib.disk_usage(self.records.db_path)})
 
     def records_api(self, method, p):
         """The /api/records routes (see the module docstring). Every change answers with the

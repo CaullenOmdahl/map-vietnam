@@ -16,6 +16,8 @@ on your own computer and opens in its own window.
   ones you want and nothing else is downloaded
 - Find maps by place, sheet number or year, sort them by date, and see every edition of a sheet
 - Swipe between any two maps side by side
+- Add your own old maps: a GeoTIFF or GeoPDF is placed for you, and a scan or photo is placed by
+  clicking matching spots on it and on today's map
 - Search by place name or by a wartime grid reference such as `WS683427`
 - Public war-era records: air strikes, aircraft losses, casualty records, hamlets, bases, battles
 - Every record shows the coordinate as its source wrote it, how far off it could be, and a link
