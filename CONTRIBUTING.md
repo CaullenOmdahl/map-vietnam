@@ -123,7 +123,8 @@ gh release create v0.1.0 dist/release/* --generate-notes
 
 The Mac app has to be built on a Mac: `mac` copies the source to `MAC_HOST` (any Mac you can
 `ssh` to without a password prompt, with macOS 15+ and [uv](https://docs.astral.sh/uv/)), builds
-and smoke-tests it in a temporary folder there and brings back the zip. Nothing is code-signed;
+and smoke-tests it in a temporary folder there, packs it in a `.dmg`, tests the app from the
+mounted image and brings the `.dmg` back. Nothing is code-signed;
 users get the steps in [docs/troubleshooting.md](docs/troubleshooting.md).
 
 Every build copies the licence files of the bundled packages into the app's `licenses/` folder

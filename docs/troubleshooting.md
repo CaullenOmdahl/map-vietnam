@@ -11,7 +11,7 @@ installer, the program and its source are all in the open at
 ## macOS won't open the downloaded Map Vietnam app
 
 The app is not signed with an Apple developer account, so macOS blocks it the first time.
-Unzip it, drag **Map Vietnam** to Applications, then right-click (or Control-click) it and choose
+Open the `.dmg`, drag **Map Vietnam** onto the Applications folder beside it, then right-click (or Control-click) it and choose
 **Open**, then **Open** again. If the dialog only offers to move it to the Bin, close it, open
 **System Settings > Privacy & Security**, scroll down, click **Open Anyway** next to Map Vietnam
 and confirm. You only do this once. If macOS says the app is damaged, run
