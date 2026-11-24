@@ -46,7 +46,8 @@ start.py                    makes .venv, opens the map's window; also setup, map
 Start Map Vietnam.bat       Windows double-click launcher for start.py
 Start Map Vietnam.command   macOS double-click launcher for start.py
 requirements.txt            pinned Python dependencies
-requirements-qt.txt         optional Linux window toolkit (installed best-effort; pywebview itself pulls
+requirements-qt.txt         optional Linux window toolkit, PySide6 (LGPL; never PyQt, which is GPL). Installed
+                            best-effort; pywebview itself pulls
                             in proxy-tools, a pure-Python sdist, so a wheels-only install cannot work)
 scripts/
   records.py                the record sources: adds and removes them (the viewer's Records card,
@@ -115,6 +116,12 @@ Windows installer, a Linux `.tar.gz` and an unsigned macOS `.zip` to the GitHub 
 must equal `v` plus the version in `pyproject.toml`. Run the workflow by hand (Actions > Release >
 Run workflow) to build without releasing. Nothing is code-signed; users get the steps in
 [docs/troubleshooting.md](docs/troubleshooting.md).
+
+Every build copies the licence files of the bundled packages into the app's `licenses/` folder
+(`licence_files()` in the spec fails the build if a main package has none). When you add a
+dependency that ends up in the app, add it to `ROOT_DISTRIBUTIONS` in the spec if one of those does
+not already pull it in, and list it under "Bundled in the installers" in [NOTICE](NOTICE). Keep
+Linux's Qt on PySide6 (LGPL); PyQt is GPL and must not be bundled.
 
 ## Adding a record source
 

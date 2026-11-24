@@ -32,6 +32,7 @@ cheap: the packaged app relaunches itself that way for every child job.
 
 import argparse
 import importlib
+import os
 import re
 import signal
 import sys
@@ -252,6 +253,14 @@ def window_toolkit(frozen=None, platform=None):
     return "qt" if frozen and platform.startswith("linux") else None
 
 
+def use_pyside():
+    """Ask QtPy (which pywebview's Qt window goes through) for PySide6, the LGPL binding this app is
+    allowed to ship. Without this, a machine that also has PyQt installed could win. An explicit
+    QT_API from the person running the app is left alone. Only Linux uses the Qt window."""
+    if sys.platform.startswith("linux"):
+        os.environ.setdefault("QT_API", "pyside6")
+
+
 def check_window():
     """Load the window toolkit without opening a window. Returns the exit status: 0 if it loaded.
     The release build runs this on the packaged app, so a toolkit missing from the bundle (a hidden
@@ -259,6 +268,7 @@ def check_window():
     try:
         guilib = importlib.import_module("webview.guilib")  # the package attribute of that name is a placeholder
 
+        use_pyside()
         guilib.initialize(window_toolkit())
     except Exception as error:
         print(f"The window toolkit could not be loaded: {error!r}", flush=True)
@@ -287,6 +297,7 @@ def open_window(url, srv, thread):
             pass
 
     threading.Thread(target=close_when_server_stops, name="close-window", daemon=True).start()
+    use_pyside()
     webview.start(gui=window_toolkit())  # returns when the window has closed
     return True
 

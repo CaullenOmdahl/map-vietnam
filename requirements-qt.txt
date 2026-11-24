@@ -1,5 +1,12 @@
 # The Linux window toolkit for scripts/desktop.py. Optional: start.py installs it separately and
 # carries on if it cannot (its wheels need glibc 2.34 or newer; without it the map opens in the browser).
+#
+# PySide6 is Qt's own binding and is LGPL v3, so it can ship inside the Linux app (see NOTICE).
+# Do not use PyQt6 here: it is GPL v3 (or commercial) and cannot be bundled with Apache-2.0 code.
+# pywebview's Qt backend reaches it through QtPy, which uses PySide6 when it is the only binding installed.
+# Since Qt 6.12 the web engine is its own wheel, so it is pinned beside Essentials and Addons.
 QtPy==2.4.3; sys_platform == "linux" and platform_machine == "x86_64"
-PyQt6==6.12.1; sys_platform == "linux" and platform_machine == "x86_64"
-PyQt6-WebEngine==6.140.1; sys_platform == "linux" and platform_machine == "x86_64"
+PySide6-Essentials==6.12.0; sys_platform == "linux" and platform_machine == "x86_64"
+PySide6-Addons==6.12.0; sys_platform == "linux" and platform_machine == "x86_64"
+PySide6-WebEngine==6.12.0.140; sys_platform == "linux" and platform_machine == "x86_64"
+shiboken6==6.12.0; sys_platform == "linux" and platform_machine == "x86_64"

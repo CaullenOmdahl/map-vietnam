@@ -13,14 +13,19 @@
 #     everything those scripts import is listed here as hidden imports, found by reading them;
 #   * the viewer (web/app) and the data that ships with it (data/sources, data/scans, data/maps.json);
 #   * what the native libraries read at run time: GDAL's and PROJ's data folders, pypdfium2's
-#     library, certifi's certificate bundle (records are fetched over HTTPS).
+#     library, certifi's certificate bundle (records are fetched over HTTPS);
+#   * the licence files of every bundled Python package, under licenses/ (see licence_files below),
+#     and on Linux the LGPL v3 and GPL v3 texts that Qt's licence refers to. NOTICE lists the rest.
 #
 # paths.py finds all of this under sys._MEIPASS (APP_ROOT) and keeps what the app writes in the
 # per-user data folder, so the installed folder is never written to.
 
 import ast
+import re
 import sys
+import sysconfig
 import tomllib
+from importlib import metadata
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs, collect_submodules
@@ -46,6 +51,46 @@ def script_modules():
     return sorted(n for n in names if n not in {"webview", "msvcrt", "fcntl"})
 
 
+ROOT_DISTRIBUTIONS = [
+    "rasterio", "pypdf", "pypdfium2", "pillow", "numpy", "morecantile", "pyproj", "certifi", "pywebview",
+    "pythonnet", "clr_loader", "pyobjc-core", "pyobjc-framework-Cocoa", "pyobjc-framework-WebKit",
+    "QtPy", "PySide6-Essentials", "PySide6-Addons", "PySide6-WebEngine", "shiboken6",
+]  # fmt: skip  (what the app imports; the ones not installed on this platform are skipped)
+LICENCE_FILE = re.compile(r"licen[cs]e|copying|notice|authors", re.IGNORECASE)
+
+
+def licence_files():
+    """The licence, notice and authors files of the packages above and of everything they need, as
+    PyInstaller data: (source file, folder inside the app). They land in licenses/<package>/ so that
+    the installers carry the licences the packages ask to be kept with their binaries."""
+    from packaging.requirements import Requirement
+
+    seen, queue, found = set(), list(ROOT_DISTRIBUTIONS), []
+    while queue:
+        name = re.sub(r"[-_.]+", "-", queue.pop()).lower()
+        if name in seen:
+            continue
+        seen.add(name)
+        try:
+            dist = metadata.distribution(name)
+        except metadata.PackageNotFoundError:
+            continue
+        for line in dist.requires or []:
+            req = Requirement(line)
+            if req.marker is None or req.marker.evaluate({"extra": ""}):
+                queue.append(req.name)
+        for file in dist.files or []:
+            parts = file.parts
+            if parts[0].endswith(".dist-info") and LICENCE_FILE.search("/".join(parts[1:])):
+                inner = "/".join(parts[1:-1]).removeprefix("licenses").strip("/")  # keeps a LICENSES/ subfolder
+                found.append((str(dist.locate_file(file)), "/".join(["licenses", name, inner]).rstrip("/")))
+    for folder in (Path(sys.base_prefix), Path(sysconfig.get_paths()["stdlib"])):  # CPython's, where it ships
+        if (folder / "LICENSE.txt").is_file():
+            found.append((str(folder / "LICENSE.txt"), "licenses/python"))
+            break
+    return found
+
+
 hiddenimports = script_modules()
 hiddenimports += ["webview", "certifi", "ssl", "sqlite3", "zipfile", "csv"]
 # rasterio's compiled modules import each other by name, which tracing cannot see.
@@ -58,10 +103,19 @@ elif sys.platform == "darwin":
 else:
     hiddenimports += ["fcntl"]
     # The Qt window is optional on Linux (requirements-qt.txt); with it, bundle that backend.
+    # PySide6 (LGPL v3) is the only Qt binding this app may ship: PyQt is GPL v3 (see excludes).
     try:
+        import PySide6  # noqa: F401
         import qtpy  # noqa: F401
 
-        hiddenimports += collect_submodules("webview.platforms.qt") + ["qtpy", "PyQt6.QtWebEngineCore"]
+        hiddenimports += collect_submodules("webview.platforms.qt") + [
+            "qtpy", "PySide6.QtCore", "PySide6.QtGui", "PySide6.QtWidgets", "PySide6.QtNetwork",
+            "PySide6.QtWebChannel", "PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets",
+        ]  # fmt: skip
+        QT_LICENCES = [
+            (str(ROOT / "packaging" / "licenses" / "LGPL-3.0.txt"), "licenses/qt"),
+            (str(ROOT / "packaging" / "licenses" / "GPL-3.0.txt"), "licenses/qt"),  # the LGPL is written on top of it
+        ]
     except ImportError:
         pass
 
@@ -74,6 +128,13 @@ datas = [
     (str(ROOT / "LICENSE"), "."),
     (str(ROOT / "NOTICE"), "."),
 ]
+LICENCES = licence_files() + globals().get("QT_LICENCES", [])
+missing = {"rasterio", "numpy", "pillow", "pypdf", "pypdfium2", "pyproj", "certifi", "pywebview"} - {
+    dest.split("/")[1] for _, dest in LICENCES
+}
+if missing:  # a package without its licence file must fail the build, not ship
+    raise SystemExit(f"No licence files found for: {', '.join(sorted(missing))}")
+datas += LICENCES
 datas += collect_data_files("certifi")
 datas += collect_data_files("rasterio")  # gdal_data, proj_data
 datas += collect_data_files("pyproj")  # proj_dir: proj.db and grids
@@ -83,7 +144,18 @@ binaries = collect_dynamic_libs("pypdfium2_raw") + collect_dynamic_libs("pypdfiu
 
 # The one-folder copy is already large; leave out what the app never imports.
 excludes = ["webview.platforms.gtk"] if sys.platform.startswith("linux") else []  # desktop.py asks for Qt
-excludes += ["tkinter", "matplotlib", "pytest", "IPython", "scipy", "pandas", "PyQt6.QtQml", "PyQt6.QtQuick"]
+excludes += ["tkinter", "matplotlib", "pytest", "IPython", "scipy", "pandas"]
+# Never bundle a GPL Qt binding, even if one is installed in the build environment: PyQt is GPL v3
+# (or commercial), which cannot ship inside this Apache-2.0 app. PySide6 is the one to use.
+excludes += ["PyQt5", "PyQt6", "PyQt6_Qt6", "PySide2"]
+# The web view needs Qt's core, gui, widgets, network, web channel and web engine; the other
+# PySide6 modules (QML, Quick, 3D, charts, multimedia) are only dead weight.
+excludes += [f"PySide6.{m}" for m in ("QtQml", "QtQuick", "QtQuickWidgets", "QtQuick3D", "QtCharts", "QtDataVisualization",
+                                       "Qt3DCore", "Qt3DRender", "Qt3DInput", "Qt3DLogic", "Qt3DAnimation", "Qt3DExtras",
+                                       "QtMultimedia", "QtMultimediaWidgets", "QtPositioning", "QtSensors", "QtSql",
+                                       "QtTest", "QtDesigner", "QtHelp", "QtSvg", "QtSvgWidgets", "QtPdf", "QtPdfWidgets",
+                                       "QtWebEngineQuick", "QtWebView", "QtWebSockets", "QtTextToSpeech", "QtSerialPort",
+                                       "QtRemoteObjects", "QtScxml", "QtStateMachine", "QtLocation", "QtGraphs")]  # fmt: skip
 
 ICON = {
     "win32": ROOT / "packaging" / "icons" / "map-vietnam.ico",
@@ -99,6 +171,11 @@ a = Analysis(
     excludes=excludes,
     noarchive=False,
 )
+# PySide6-Addons also carries Qt Virtual Keyboard, which Qt licenses under GPL v3 or commercial only,
+# not the LGPL. Nothing here uses it, so drop its libraries and input-context plugin from the bundle.
+GPL_ONLY_QT = ("virtualkeyboard",)
+a.binaries = [b for b in a.binaries if not any(w in b[0].lower() for w in GPL_ONLY_QT)]
+a.datas = [d for d in a.datas if not any(w in d[0].lower() for w in GPL_ONLY_QT)]
 pyz = PYZ(a.pure)
 
 exe = EXE(
