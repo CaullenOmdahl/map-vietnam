@@ -41,10 +41,35 @@ The maps and records you add are kept in `%LOCALAPPDATA%\Map Vietnam`, apart fro
 updating is just running a newer installer. Uninstalling (Settings > Apps) asks whether to delete
 them too.
 
-**Mac and Linux.** The same Releases page has a Mac download (Apple silicon, macOS 15 or newer):
-open the `.dmg`, drag **Map Vietnam** onto the Applications folder beside it and open it; the first time, macOS asks you to
-allow it in **System Settings > Privacy & Security** ([how](docs/troubleshooting.md)). The Linux
-download is a `.tar.gz`: unpack it and run `Map Vietnam/Map Vietnam`.
+### Download Map Vietnam for Mac
+
+You need a Mac with Apple silicon (M1 or newer) and macOS 15 Sequoia or newer.
+
+1. Go to the [Releases page](https://github.com/CaullenOmdahl/map-vietnam/releases/latest) and
+   download **Map-Vietnam-...-macos-arm64.dmg**.
+2. Double-click the `.dmg`. In the window that opens, drag **Map Vietnam** onto the
+   **Applications** folder beside it. You can then eject the disk image (the ⏏ next to it in the
+   Finder sidebar) and delete the `.dmg`.
+3. Open **Map Vietnam** from Applications (or Launchpad, or Spotlight).
+
+The first time, macOS says **"Map Vietnam" Not Opened**, because the app is not signed with a paid
+Apple developer account. This happens once:
+
+4. Click **Done** (not **Move to Bin**).
+5. Open **System Settings > Privacy & Security** and scroll down to **Security**. Next to
+   *"Map Vietnam" was blocked to protect your Mac*, click **Open Anyway**.
+6. Click **Open Anyway** again and enter your Mac password (or use Touch ID).
+
+From then on it opens like any other app. Right-click > **Open** no longer skips this check on
+macOS 15 and newer; [troubleshooting](docs/troubleshooting.md#macos-wont-open-the-downloaded-map-vietnam-app)
+has a one-line Terminal alternative. Your maps and records are kept in
+`~/Library/Application Support/Map Vietnam`.
+
+### Download Map Vietnam for Linux
+
+Download **Map-Vietnam-...-linux-x86_64.tar.gz** from the same
+[Releases page](https://github.com/CaullenOmdahl/map-vietnam/releases/latest), unpack it and run
+`Map Vietnam/Map Vietnam`.
 
 ### Or run it from source
 
