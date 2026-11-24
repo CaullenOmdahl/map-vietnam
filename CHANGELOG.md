@@ -14,11 +14,12 @@ Everything is done from the map
   map share their state; the terminal route stays for people who script it
 
 Installers
-- A Windows installer (per user, no administrator needed), a Linux `.tar.gz` and an unsigned macOS
-  `.zip` are built by `.github/workflows/release.yml` for every version tag, from `packaging/`. The
-  installed app keeps what it downloads in a per-user data folder, kept when you update and asked
-  about when you uninstall; `MAPVIETNAM_HOME` moves it. None is code-signed; docs/troubleshooting.md
-  explains SmartScreen and macOS' first-open step
+- A Windows installer (per user, no administrator needed) and a Linux `.tar.gz`, both built on
+  one Linux machine with `packaging/build.sh` (Docker; Windows under Wine, the installer with
+  NSIS) and smoke-tested there, installer included. A Mac app builds on a Mac from the same
+  PyInstaller spec. The installed app keeps what it downloads in a per-user data folder, kept when
+  you update and asked about when you uninstall; `MAPVIETNAM_HOME` moves it. Nothing is
+  code-signed; docs/troubleshooting.md explains SmartScreen and macOS' first-open step
 
 Its own window
 - Map Vietnam now opens in its own window instead of a browser tab (`scripts/desktop.py`, using
@@ -43,7 +44,7 @@ A bigger map library
 Windows and hardening
 - Windows: every text file is read and written as UTF-8, so setup and the map server no longer
   fail on Vietnamese names; Control-C stops the map; removing a map that is being viewed retries
-  instead of failing; CI runs on Windows too
+  instead of failing
 - The map credits each old map on screen, and the OpenStreetMap and Esri credits follow their
   providers' wording
 - The viewer explains when MapLibre can't be loaded (offline or blocked) instead of showing a

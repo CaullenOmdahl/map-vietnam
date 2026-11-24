@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """Smoke test of a built (frozen) Map Vietnam: does the packaged app start and answer?
 
-    python packaging/smoke_test.py "dist/Map Vietnam/Map Vietnam.exe"
+    python packaging/smoke_test.py [--no-window-check] "dist/Map Vietnam/Map Vietnam.exe"
 
 It starts the executable with --no-window on a free port and a throw-away data folder
 (MAPVIETNAM_HOME), then checks that
   * the viewer page (/app/) and the map library (/api/library) are served,
   * a child job runs the way the app starts them: `<exe> --run-script catalog.py --help`,
-  * the window toolkit loads (`<exe> --check-window`; no window is opened),
+  * the window toolkit loads (`<exe> --check-window`; no window is opened). --no-window-check
+    skips this one, for builds tested under Wine, which has no WebView2,
   * POST /api/quit stops the app, and the process exits.
 It exits 0 when all of that held, and 1 with a plain message otherwise. Standard library only, so
-the release workflow can run it on every platform without installing anything.
+packaging/build.sh can run it inside each build container without installing anything.
 """
 
 import json
@@ -50,10 +51,13 @@ def first_line(process, timeout):
 
 
 def main(argv):
-    if len(argv) != 2:
+    args = argv[1:]
+    check_window = "--no-window-check" not in args
+    args = [a for a in args if a != "--no-window-check"]
+    if len(args) != 1:
         print(__doc__, file=sys.stderr)
         return 2
-    exe = os.path.abspath(argv[1])
+    exe = os.path.abspath(args[0])
     with tempfile.TemporaryDirectory(prefix="map-vietnam-smoke-") as home:
         env = {**os.environ, "MAPVIETNAM_HOME": home}
 
@@ -71,18 +75,25 @@ def main(argv):
         print("child script ok:", child.stdout.splitlines()[0])
 
         # The window toolkit is the part --no-window never touches: load it, without opening a window.
-        toolkit = subprocess.run(
-            [exe, "--check-window"],
-            env=env,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=START_TIMEOUT_S,
+        toolkit = (
+            None
+            if not check_window
+            else subprocess.run(
+                [exe, "--check-window"],
+                env=env,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=START_TIMEOUT_S,
+            )
         )
-        if toolkit.returncode != 0:
+        if toolkit is None:
+            print("window toolkit not checked (--no-window-check)")
+        elif toolkit.returncode != 0:
             return fail(f"--check-window exited {toolkit.returncode}: {toolkit.stdout} {toolkit.stderr}")
-        print("window toolkit ok")
+        else:
+            print("window toolkit ok")
 
         app = subprocess.Popen(
             [exe, "--no-window"],

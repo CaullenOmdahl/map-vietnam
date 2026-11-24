@@ -1,6 +1,5 @@
 # Map Vietnam
 
-[![CI](https://github.com/CaullenOmdahl/map-vietnam/actions/workflows/ci.yml/badge.svg)](https://github.com/CaullenOmdahl/map-vietnam/actions/workflows/ci.yml)
 [![Licence: Apache 2.0](https://img.shields.io/badge/licence-Apache%202.0-blue.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 
@@ -42,9 +41,9 @@ The maps and records you add are kept in `%LOCALAPPDATA%\Map Vietnam`, apart fro
 updating is just running a newer installer. Uninstalling (Settings > Apps) asks whether to delete
 them too.
 
-**Mac and Linux.** The same Releases page has a macOS download (Apple silicon, macOS 15 or newer;
-unzip it and drag **Map Vietnam** to Applications; the first time, right-click it and choose
-**Open**) and a Linux download (unpack the `.tar.gz` and run `Map Vietnam/Map Vietnam`).
+**Linux.** The same Releases page has a Linux download: unpack the `.tar.gz` and run
+`Map Vietnam/Map Vietnam`. **Mac:** there is no ready-made Mac download yet; run it from source
+as below (double-click `Start Map Vietnam.command`).
 
 ### Or run it from source
 

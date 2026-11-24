@@ -25,14 +25,14 @@ passages of copyrighted text.
    ```
 
    On Windows the venv's programs are in `.venv\Scripts\` instead of `.venv/bin/`
-   (`.venv\Scripts\python -m pytest -q`). CI runs the same three checks on Linux, macOS and
-   Windows.
+   (`.venv\Scripts\python -m pytest -q`). There is no CI: run the three checks before you open
+   a pull request.
 
 Style, in short:
 
 - Python 3.12 or newer, formatted with `ruff format` (line length 120).
 - Read and write text files with `encoding="utf-8"`. Windows' default encoding can't hold
-  Vietnamese, and the Windows CI job fails without it.
+  Vietnamese, so a file opened without it breaks there.
 - Each module starts with a docstring saying what it is for, what it reads and writes, and how to
   run it. Public functions have docstrings.
 - Comments explain intent, units, datums and trade-offs, not what the next line does.
@@ -99,23 +99,29 @@ Locally, on the platform you want to build for, from the repository root:
 ```
 
 That makes `dist/Map Vietnam/` (`dist/Map Vietnam.app` on a Mac) and checks it starts, serves the
-viewer and the library, runs a child script and quits. On Windows the program is
-`dist\Map Vietnam\Map Vietnam.exe` and the installer is then
-`iscc /DAppVersion=<version> packaging\windows\map-vietnam.iss` (Inno Setup 6), written to
-`dist\installer\`. `build/` and `dist/` are ignored by git. The icon is drawn by
-`packaging/make_icons.py`; run it and commit `packaging/icons/` when the design changes.
+viewer and the library, runs a child script and quits. `build/` and `dist/` are ignored by git.
+The icon is drawn by `packaging/make_icons.py`; run it and commit `packaging/icons/` when the
+design changes.
 
-To release: change `version` in `pyproject.toml` (the one place it is written), merge, then
+The downloads on the Releases page are built on one Linux machine with Docker, no CI involved:
 
 ```sh
-git tag v0.1.0 && git push origin v0.1.0
+packaging/build.sh            # or: packaging/build.sh windows / packaging/build.sh linux
 ```
 
-`.github/workflows/release.yml` builds Windows, Linux and macOS, smoke-tests each and attaches the
-Windows installer, a Linux `.tar.gz` and an unsigned macOS `.zip` to the GitHub Release. The tag
-must equal `v` plus the version in `pyproject.toml`. Run the workflow by hand (Actions > Release >
-Run workflow) to build without releasing. Nothing is code-signed; users get the steps in
-[docs/troubleshooting.md](docs/troubleshooting.md).
+It builds the Windows app under Wine with the Windows build of Python, makes the installer with
+NSIS (`packaging/windows/map-vietnam.nsi`), and builds the Linux app on Ubuntu 22.04 so it runs on
+older systems too. Each is smoke-tested in its container; the Windows installer is installed, the
+installed copy tested and uninstalled. Wine has no WebView2, so open the app once on a real Windows
+PC before publishing. The files land in `dist/release/`. To release: change `version` in
+`pyproject.toml` (the one place it is written), merge, build, then
+
+```sh
+gh release create v0.1.0 dist/release/* --generate-notes
+```
+
+A Mac app has to be built on a Mac, with the PyInstaller commands above. Nothing is code-signed;
+users get the steps in [docs/troubleshooting.md](docs/troubleshooting.md).
 
 Every build copies the licence files of the bundled packages into the app's `licenses/` folder
 (`licence_files()` in the spec fails the build if a main package has none). When you add a

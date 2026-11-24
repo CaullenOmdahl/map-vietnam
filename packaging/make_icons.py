@@ -8,9 +8,9 @@ no binary has to be edited by hand.
     python packaging/make_icons.py
 
 writes into packaging/icons/:
-  map-vietnam.png   1024 px: the Linux icon, and the source the macOS CI job turns into .icns
+  map-vietnam.png   1024 px: the Linux icon, and the source of the .icns
   map-vietnam.ico   Windows, 16 to 256 px in one file
-  map-vietnam.icns  macOS, only if Pillow can write it here (otherwise iconutil does it in CI)
+  map-vietnam.icns  macOS, only if Pillow can write it here (otherwise make it with iconutil on a Mac)
 
 Run it again and commit the result whenever the design changes.
 """
@@ -97,7 +97,7 @@ def main():
     icon.save(OUT / "map-vietnam.ico", sizes=[(n, n) for n in (16, 24, 32, 48, 64, 128, 256)])
     try:
         icon.save(OUT / "map-vietnam.icns")
-    except Exception as error:  # this Pillow cannot write .icns: macOS CI converts the PNG instead
+    except Exception as error:  # this Pillow cannot write .icns: iconutil on a Mac can
         print(f"no .icns written ({error}); build it from the PNG with iconutil")
     for path in sorted(OUT.iterdir()):
         print(path.name, path.stat().st_size, "bytes")
