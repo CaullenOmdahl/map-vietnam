@@ -4,7 +4,7 @@
 #   packaging/build.sh                      the Windows installer and the Linux download
 #   packaging/build.sh windows              Map-Vietnam-<version>-Setup.exe
 #   packaging/build.sh linux                Map-Vietnam-<version>-linux-x86_64.tar.gz
-#   MAC_HOST=my-mac packaging/build.sh mac  Map-Vietnam-<version>-macos-<arch>.zip, built over SSH
+#   MAC_HOST=my-mac packaging/build.sh mac  Map-Vietnam-<version>-macos-<arch>.dmg, built over SSH
 #   MAC_HOST=my-mac packaging/build.sh all  all three
 #
 # Run it from anywhere on a Linux machine with Docker; nothing else needs installing. The first run
@@ -25,8 +25,9 @@
 #
 # The Mac app has to be built on a Mac. With MAC_HOST set to a Mac this machine can reach with
 # `ssh MAC_HOST` (no password prompt) that has uv (https://docs.astral.sh/uv/) and macOS 15 or newer,
-# "mac" copies the source there, builds and smoke-tests the .app in a temporary folder, zips it and
-# brings the zip back. It is not signed or notarized (docs/troubleshooting.md tells users what to do).
+# "mac" copies the source there, builds and smoke-tests the .app in a temporary folder, packs it in a
+# disk image (with an Applications shortcut to drag it onto), tests it again from the mounted image
+# and brings the .dmg back. It is not signed or notarized (docs/troubleshooting.md tells users what to do).
 
 set -euo pipefail
 
@@ -88,13 +89,13 @@ build_mac() {
     exit 2
   fi
   echo "== macOS $VERSION (on $MAC_HOST)"
-  local remote arch zip
+  local remote arch dmg
   remote="$(ssh "$MAC_HOST" 'mktemp -d /tmp/map-vietnam-build.XXXXXX')"
   # shellcheck disable=SC2064  # expand now: the folder name is known here
-  trap "ssh '$MAC_HOST' 'rm -rf $remote' >/dev/null 2>&1 || true" RETURN
+  trap "ssh '$MAC_HOST' 'hdiutil detach -quiet $remote/mnt 2>/dev/null; rm -rf $remote' >/dev/null 2>&1 || true" RETURN
   tar -C "$ROOT" "${EXCLUDES[@]}" -cf - . | ssh "$MAC_HOST" "tar -xf - -C $remote"
   arch="$(ssh "$MAC_HOST" 'uname -m')"
-  zip="Map-Vietnam-$VERSION-macos-$arch.zip"
+  dmg="Map-Vietnam-$VERSION-macos-$arch.dmg"
   ssh "$MAC_HOST" "set -euo pipefail; export PATH=/opt/homebrew/bin:/usr/local/bin:\$HOME/.local/bin:\$PATH
     cd $remote
     command -v uv >/dev/null || { echo 'uv is needed on the Mac: brew install uv' >&2; exit 1; }
@@ -103,8 +104,19 @@ build_mac() {
     .build-venv/bin/pyinstaller packaging/map-vietnam.spec --noconfirm --log-level WARN
     codesign --verify --deep --strict 'dist/Map Vietnam.app'
     .build-venv/bin/python packaging/smoke_test.py 'dist/Map Vietnam.app/Contents/MacOS/Map Vietnam'
-    ditto -c -k --keepParent 'dist/Map Vietnam.app' '$zip'"
-  scp -q "$MAC_HOST:$remote/$zip" "$OUT/$zip"
+    # A disk image people open and drag the app from onto the Applications shortcut beside it.
+    mkdir dmg-root
+    ditto 'dist/Map Vietnam.app' 'dmg-root/Map Vietnam.app'
+    ln -s /Applications dmg-root/Applications
+    hdiutil create -quiet -volname 'Map Vietnam' -srcfolder dmg-root -fs HFS+ -format UDZO -ov '$dmg'
+    hdiutil verify -quiet '$dmg'
+    # Test the app as it comes off the image, the way a downloader first meets it.
+    mkdir mnt
+    hdiutil attach -quiet -nobrowse -readonly -mountpoint mnt '$dmg'
+    codesign --verify --deep --strict 'mnt/Map Vietnam.app'
+    .build-venv/bin/python packaging/smoke_test.py 'mnt/Map Vietnam.app/Contents/MacOS/Map Vietnam'
+    hdiutil detach -quiet mnt"
+  scp -q "$MAC_HOST:$remote/$dmg" "$OUT/$dmg"
 }
 
 mkdir -p "$OUT"

@@ -14,7 +14,7 @@ Everything is done from the map
   map share their state; the terminal route stays for people who script it
 
 Installers
-- A Windows installer (per user, no administrator needed), a Linux `.tar.gz` and a Mac `.zip`,
+- A Windows installer (per user, no administrator needed), a Linux `.tar.gz` and a Mac `.dmg`,
   all built from one Linux machine with `packaging/build.sh` (Docker; Windows under Wine, the
   installer with NSIS; the Mac app over ssh on a Mac) and smoke-tested, installer included. The installed app keeps what it downloads in a per-user data folder, kept when
   you update and asked about when you uninstall; `MAPVIETNAM_HOME` moves it. Nothing is

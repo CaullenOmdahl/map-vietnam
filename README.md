@@ -42,7 +42,7 @@ updating is just running a newer installer. Uninstalling (Settings > Apps) asks 
 them too.
 
 **Mac and Linux.** The same Releases page has a Mac download (Apple silicon, macOS 15 or newer):
-unzip it, drag **Map Vietnam** to Applications and open it; the first time, macOS asks you to
+open the `.dmg`, drag **Map Vietnam** onto the Applications folder beside it and open it; the first time, macOS asks you to
 allow it in **System Settings > Privacy & Security** ([how](docs/troubleshooting.md)). The Linux
 download is a `.tar.gz`: unpack it and run `Map Vietnam/Map Vietnam`.
 
