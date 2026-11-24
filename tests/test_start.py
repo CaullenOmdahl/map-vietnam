@@ -209,6 +209,9 @@ def test_the_window_toolkit_is_optional_and_never_stops_setup(tmp_path, monkeypa
     assert start.ensure_venv() == start.venv_python()  # the toolkit failing to install is tolerated
     assert str(start.REQUIREMENTS_QT) in calls[-1] and "--only-binary" in calls[-1]
     assert "PyQt6" not in start.REQUIREMENTS.read_text(encoding="utf-8")
+    pins = [ln for ln in start.REQUIREMENTS_QT.read_text(encoding="utf-8").splitlines() if not ln.startswith("#")]
+    assert any(ln.startswith("PySide6") for ln in pins)  # LGPL, can ship in the app
+    assert not any("pyqt" in ln.lower() for ln in pins)  # PyQt is GPL v3
     assert (start.VENV / "requirements.sha256").exists()
 
 

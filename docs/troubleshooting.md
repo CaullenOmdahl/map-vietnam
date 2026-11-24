@@ -74,7 +74,7 @@ read the message.
 ## The map opens in my browser instead of its own window
 
 The map shows in its own window when the computer has a web view for it (built into Windows and
-macOS; on Linux the Qt one that `start.py` installs on x86-64, or GTK's). If it can't open a window it says so and
+macOS; on Linux the Qt one (PySide6) that `start.py` installs on x86-64, or GTK's). If it can't open a window it says so and
 opens your browser instead; everything works the same there. If neither opens, open the address
 `start.py` prints (normally `http://127.0.0.1:8765/app/`) yourself.
 
