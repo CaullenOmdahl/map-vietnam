@@ -43,6 +43,7 @@ Style, in short:
 
 ```text
 start.py                    makes .venv, opens the map's window; also setup, maps, records
+Start Map Vietnam.bat       Windows double-click launcher for start.py
 Start Map Vietnam.command   macOS double-click launcher for start.py
 requirements.txt            pinned Python dependencies
 requirements-qt.txt         optional Linux window toolkit (installed best-effort; pywebview itself pulls
@@ -65,7 +66,9 @@ scripts/
   gridref.py                wartime MGRS grid references on Indian 1960 or WGS84
   store.py                  the SQLite evidence store, data/evidence.sqlite
   server.py                 local web server and JSON API
-  desktop.py                the server plus the map's own window (pywebview); start.py runs it
+  desktop.py                the server plus the map's own window (pywebview); start.py runs it, and
+                            it is the packaged app's entry point
+  paths.py                  APP_ROOT and DATA_ROOT, and how child scripts are started (see below)
   compare_overlay.py        side-by-side image to check how well a map lines up
   ingest/<source>.py        one ingester per record source; common.py holds shared helpers
 packaging/                  PyInstaller spec, icons and generator, smoke test, Windows installer script
@@ -74,8 +77,13 @@ tests/                      pytest suite; tests/fixtures/ holds small source exc
 docs/                       user guide, troubleshooting, how it works, data sources, known limits
 ```
 
-Downloads go to `data/raw/`, intermediate files to `data/work/`, records to
-`data/evidence.sqlite` and the maps a person added to `web/tiles/`. All of these are kept out of
+`scripts/paths.py` keeps the program's own files (`APP_ROOT`) apart from what the app writes
+(`DATA_ROOT`). `DATA_ROOT` is `MAPVIETNAM_HOME` if set; otherwise the per-user data folder in a
+packaged app (see [docs/guide.md](docs/guide.md#disk-space-backups-and-starting-over)); otherwise
+the checkout. Use these, not paths relative to the working folder.
+
+Downloads go to `data/raw/`, intermediate files to `data/work/`, records to `data/evidence.sqlite`
+and the maps a person added to `web/tiles/` (all under `DATA_ROOT`). All of these are kept out of
 git: records and maps are downloaded again when someone adds them again.
 
 ## Building the desktop app
@@ -137,9 +145,9 @@ Every map that can be added is listed in `data/sources/map_library.json`, which
   charts): `scripts/sheet_lists.py` lists the sheets in `data/sources/sheets.json`, and
   `scripts/place_sheets.py` places each from its printed graticule and writes
   `data/scans/<id>.json`. The catalogue includes only sheets that have such a file.
-- **A single scanned map:** add an entry to the `scans` list in `data/sources/maps.json` (the script copies
-  it into the catalogue), write `data/scans/<id>.json` with at least three control points (pixel
-  to longitude and latitude) and the map's title, date and source.
+- **A single scanned map:** add an entry to the `scans` list in `data/sources/maps.json` (the script
+  copies it into the catalogue), write `data/scans/<id>.json` with at least three control points
+  (pixel to longitude and latitude) and the map's title, date and source.
 
 Then regenerate the catalogue with `.venv/bin/python scripts/map_library_catalogue.py` and add the
 map with `python3 start.py maps add <id>`. To rebuild a map that is already added,

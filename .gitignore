@@ -10,6 +10,9 @@ web/catalog.json
 .venv/
 .env
 
+# Local agent worktrees and settings.
+.claude/
+
 # Tool caches.
 __pycache__/
 .pytest_cache/

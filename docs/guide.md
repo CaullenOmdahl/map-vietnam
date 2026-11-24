@@ -60,9 +60,9 @@ deleted. You can add it again later.
 
 ## Doing it from a terminal
 
-None of this is needed, but everything above can be scripted. Run these in the Map Vietnam
-folder. On Windows, type `py` instead of `python3`. `setup` and `maps add` ask before they
-download; add `--yes` to skip the question.
+None of this is needed, but everything above can be scripted. This is for running from source: the
+installed app has no `start.py`. Run these in the source folder. On Windows, type `py` instead of
+`python3`. `setup` and `maps add` ask before they download; add `--yes` to skip the question.
 
 ```sh
 python3 start.py setup                                    # add the standard records
@@ -149,7 +149,8 @@ it ever asks for a key, the **Air strikes** row says so and shows what to do:
    Token**. Your browser downloads a file called `kaggle.json`.
 4. Back in Map Vietnam, click **Choose kaggle.json** and pick that file.
 
-The key is saved on your computer, in a file called `.env` in the Map Vietnam folder, and is
+The key is saved on your computer, in a file called `.env` in Map Vietnam's data folder (see
+[Disk space, backups and starting over](#disk-space-backups-and-starting-over)), and is
 only ever sent to Kaggle. **Forget the saved key** on the same row deletes it.
 
 ## Helicopter losses
@@ -164,25 +165,40 @@ asks you to confirm. You can stop it and carry on another day. The pages it has 
 
 ## Quitting
 
-Click **Quit Map Vietnam** at the bottom of the side panel, then **Quit**. Anything still being
-added stops, and what was already downloaded is kept. Closing the terminal window does the same.
-To start again, double-click **Start Map Vietnam.command** or run `python3 start.py`.
+Close the window, or click **Quit Map Vietnam** at the bottom of the side panel, then **Quit**.
+Anything still being added stops, and what was already downloaded is kept. To start again, open
+Map Vietnam from the Start menu (Windows), Applications (macOS) or the program you unpacked
+(Linux).
+
+From source, closing the terminal window does the same. To start again, double-click **Start Map
+Vietnam.bat** (Windows) or **Start Map Vietnam.command** (macOS), or run `python3 start.py`.
 
 ## Disk space, backups and starting over
 
-Setup needs about 1 GB, plus about 200 MB for its private Python in `.venv/`. The air-strike
-records add about 0.5 GB. Each old map adds about 20 to 30 MB, and all
-895 of them together come to about 21 GB.
+Setup from source needs about 1 GB, plus about 200 MB for its private Python in `.venv/`.
+The air-strike records add about 0.5 GB. Each old map adds
+about 20 to 30 MB, and all 895 of them together come to about 21 GB.
 
-Your cases, sites and notes are kept only in `data/evidence.sqlite`, next to the records. To back
-them up, stop the map (Control-C) and copy that file. Export a case as GeoJSON, KML or GPX to keep
-it in a form other tools can read.
+### The installed app
 
-Everything Map Vietnam downloads or makes stays inside its folder:
+Everything Map Vietnam downloads or makes goes in a data folder of your own, apart from the
+program:
 
-| Path | Holds |
+| Platform | Data folder |
 | --- | --- |
-| `.venv/` | its private Python and add-ons |
+| Windows | `%LOCALAPPDATA%\Map Vietnam` |
+| macOS | `~/Library/Application Support/Map Vietnam` |
+| Linux | `$XDG_DATA_HOME/map-vietnam`, or `~/.local/share/map-vietnam` |
+
+Updating the app leaves it alone. Set `MAPVIETNAM_HOME` to a folder to keep the data there
+instead.
+
+Your cases, sites and notes are kept only in `data/evidence.sqlite` in that folder, next to the
+records. To back them up, quit Map Vietnam and copy that file. Export a case as GeoJSON, KML or
+GPX to keep it in a form other tools can read.
+
+| Path in the data folder | Holds |
+| --- | --- |
 | `data/raw/` | the downloaded records and old-map files |
 | `data/work/` | intermediate files, setup logs and small settings such as the first-run card |
 | `data/evidence.sqlite` | the records, and your cases and notes |
@@ -190,20 +206,48 @@ Everything Map Vietnam downloads or makes stays inside its folder:
 | `.env` | your Kaggle key, if you saved one |
 
 `data/work/setup/choices.json` remembers that you dismissed the first-run card; delete it, with no
-records added, to see the card again. To uninstall, delete
-the folder (and `~/.kaggle/kaggle.json` if you put a Kaggle key there and no longer want it).
+records added, to see the card again.
 
-## Other options
+To uninstall:
 
-`python3 start.py` never asks a question. `--no-window` (or `--no-browser`) doesn't open the map's window: it only serves the map and prints its address, for a browser or a script. `--port`
-picks another port. `python3 start.py serve` does the same as no command. `python3 start.py --help`
-lists everything. Options for adding records (`--yes`, `--only`, `--skip`, `--area`, `--refresh`) given without a command run `setup`.
+- Windows: **Settings > Apps > Map Vietnam > Uninstall**. It asks whether to delete your maps and
+  records too (the data folder); answer No to keep them for a later install.
+- macOS: delete **Map Vietnam** from Applications, then the data folder.
+- Linux: delete the folder you unpacked, then the data folder.
+
+If you saved a Kaggle key with Kaggle's own tools, it is in `~/.kaggle/kaggle.json`, outside the
+data folder. Delete it too if you no longer want it.
+
+### Running from source
+
+The same files live inside the checkout, and the program adds `.venv/`, its private Python and
+add-ons. Set `MAPVIETNAM_HOME` to keep the data somewhere else.
+
+| Path | Holds |
+| --- | --- |
+| `.venv/` | its private Python and add-ons |
+| `data/raw/`, `data/work/`, `data/evidence.sqlite` | as above |
+| `web/tiles/`, `web/catalog.json` | the old maps you have added |
+| `.env` | your Kaggle key, if you saved one |
+
+To back up your cases, stop the map (Control-C, or **Quit Map Vietnam**) and copy
+`data/evidence.sqlite`. To uninstall, delete the folder (and `~/.kaggle/kaggle.json` if you put a
+Kaggle key there and no longer want it).
+
+## Other options (from source)
+
+`python3 start.py` never asks a question. `--no-window` (or `--no-browser`) doesn't open the map's
+window: it only serves the map and prints its address, for a browser or a script. `--port` picks
+another port. `python3 start.py serve` does the same as no command. `python3 start.py --help` lists
+everything. Options for adding records (`--yes`, `--only`, `--skip`, `--area`, `--refresh`) given
+without a command run `setup`.
 
 ## What goes over the internet
 
-The map is served to your own machine only (`127.0.0.1`), so nobody else on your network can
-open it. Your cases and notes live in `data/evidence.sqlite`. They are never sent anywhere, and
-neither are your searches.
+The map is served to your own machine only (`127.0.0.1`), so nobody else on your network can open
+it. Your cases and notes live in `data/evidence.sqlite` in your
+[data folder](#disk-space-backups-and-starting-over). They are never sent anywhere, and neither
+are your searches.
 
 Each record source is downloaded from its publisher when you add it, and each old map from its
 archive. While you use the map, the page also loads background tiles for today's
