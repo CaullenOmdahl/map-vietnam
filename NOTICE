@@ -157,6 +157,95 @@ Background maps shown under the old maps (fetched at run time)
   SIL Open Font License 1.1.
 
 
+Bundled in the installers
+=========================
+
+The installers and the Linux archive (built by .github/workflows/release.yml from
+packaging/map-vietnam.spec) carry third-party software next to the app, in the program folder
+(for example "Map Vietnam/_internal" on Linux). Running from a source checkout installs the same
+packages with pip instead, from requirements.txt and requirements-qt.txt. The licence files of the
+bundled Python packages are copied into the app's licenses/ folder at build time, one folder per
+package; the licence texts for Qt are in licenses/qt/ and CPython's is in licenses/python/. Each
+package's source is on PyPI and at the address given.
+
+Python, windowing
+  CPython 3.12 (the interpreter and standard library): Python Software Foundation License
+  (https://docs.python.org/3/license.html). Source: https://www.python.org/downloads/source/
+  pywebview: BSD 3-Clause. Source: https://github.com/r0x0r/pywebview
+  bottle (pywebview's helper): MIT. Source: https://github.com/bottlepy/bottle
+  proxy_tools (pywebview's helper, by Jonathan Tushman): MIT, as its package metadata states; the
+  package carries no licence file. Source: https://github.com/jtushman/proxy_tools
+  pythonnet and clr_loader (Windows only, pywebview's link to the .NET window): MIT.
+  Source: https://github.com/pythonnet/pythonnet, https://github.com/pythonnet/clr-loader
+  (The Windows app shows its page in Microsoft's WebView2 runtime, which is part of Windows or
+  installed by Microsoft; it is not included.)
+  PyObjC (macOS only, pywebview's link to WKWebView): MIT. Source: https://github.com/ronaldoussoren/pyobjc
+
+Qt (Linux only)
+  PySide6, Shiboken6 and the Qt libraries inside them (QtCore, QtGui, QtWidgets, QtNetwork,
+  QtWebChannel, QtWebEngine): GNU Lesser General Public License v3 (texts in licenses/qt/; the
+  LGPL is written as additions to the GPL v3, so both are given). Qt WebEngine is built on Chromium
+  and bundles its own third-party parts, each under its licence, listed by The Qt Company at
+  https://doc.qt.io/qt-6/qtwebengine-attribution.html. The PySide6 and Shiboken6 packages
+  (copyright The Qt Company Ltd.) carry no licence file of their own, only the licence name
+  (LGPL v3, GPL v2 or GPL v3, at the user's choice; this app uses the LGPL v3). Qt's modules that
+  are GPL v3 or commercial only, such as Qt Virtual Keyboard, are removed from the build by the spec.
+  QtPy (the layer between pywebview and Qt): MIT.
+  Source: Qt and PySide6 source code is at https://download.qt.io/official_releases/ (PySide6 at
+  https://code.qt.io/cgit/pyside/pyside-setup.git/) and https://github.com/qtproject.
+  Replacing or relinking Qt: the Linux app is a folder, not a single file, and Qt is kept as
+  separate shared libraries (PySide6/Qt/lib/*.so, libpyside6*.so and libshiboken6*.so in
+  "_internal"). To use a modified Qt or PySide6, build it from the source above and put the
+  libraries in their place, or install the matching PySide6 wheels (requirements-qt.txt) and run
+  the app from source with "python3 start.py". Map Vietnam does not modify Qt. PyQt is not used or
+  included, because its licence (GPL v3 or commercial) does not allow it here.
+
+Maps and imagery
+  rasterio: BSD 3-Clause. Source: https://github.com/rasterio/rasterio
+  GDAL (inside rasterio's wheels): MIT/X. Source: https://github.com/OSGeo/gdal
+  PROJ (inside the rasterio and pyproj wheels): MIT. Source: https://github.com/OSGeo/PROJ
+  pyproj: MIT. Source: https://github.com/pyproj4/pyproj
+  GEOS (inside rasterio's wheels): GNU Lesser General Public License v2.1, a separate shared
+  library that can be replaced. Source: https://github.com/libgeos/geos
+  morecantile: MIT. Source: https://github.com/developmentseed/morecantile
+  pydantic, pydantic-core, annotated-types, attrs, pyparsing, affine, click (morecantile's and
+  rasterio's helpers): MIT or BSD. Sources on PyPI.
+  numpy: BSD 3-Clause, with OpenBLAS (BSD 3-Clause) and, on Linux, the GCC runtime libraries
+  libgfortran and libquadmath (GPL v3 with the GCC Runtime Library Exception; libquadmath is
+  LGPL). Source: https://github.com/numpy/numpy
+  Pillow: MIT-CMU (HPND). Source: https://github.com/python-pillow/Pillow
+  pypdf: BSD 3-Clause. Source: https://github.com/py-pdf/pypdf
+  pypdfium2: Apache-2.0 or BSD 3-Clause, with PDFium (BSD 3-Clause, Apache-2.0 for parts; the
+  Chromium authors and Foxit). Source: https://github.com/pypdfium2-team/pypdfium2 and
+  https://pdfium.googlesource.com/pdfium/
+  certifi: Mozilla Public License 2.0, the CA bundle unchanged. Source: https://github.com/certifi/python-certifi
+  typing_extensions: PSF License. Source: https://github.com/python/typing_extensions
+
+Native libraries inside those wheels (and, on Linux, copied from the build machine), listed so
+the licences are not a surprise. Each is a separate file in the program folder and carries its own
+licence, kept with the package that brought it:
+  libtiff (libtiff licence, BSD-like), libpng (libpng licence), libjpeg-turbo (BSD-3 and IJG),
+  libwebp and libsharpyuv (BSD 3-Clause), libavif (BSD 2-Clause), OpenJPEG (BSD 2-Clause), giflib
+  (MIT), Little CMS (MIT), FreeType (FreeType licence or GPL v2), HarfBuzz (MIT), zlib (zlib
+  licence), zstd (BSD 3-Clause), liblzma (public domain), libdeflate (MIT), Blosc (BSD 3-Clause),
+  libaec (BSD 2-Clause), LERC (Apache-2.0), HDF5 and netCDF (BSD-style), json-c (MIT), PCRE2
+  (BSD 3-Clause), SQLite (public domain), OpenSSL 3 (Apache-2.0), libcurl (curl licence), nghttp2
+  (MIT), libxcb and the other X11 libraries (MIT). On Linux, PyInstaller also copies the shared
+  libraries Qt links to from the build image (for example GLib, GTK, Cairo, Pango, libxkbcommon,
+  ALSA, NSS/NSPR, Kerberos, GnuTLS); most are LGPL, and the system's own copies are the source.
+
+Building
+  PyInstaller (GPL v2 or later, with an exception that allows bundling programs under any licence;
+  its bootloader is included in the app): https://github.com/pyinstaller/pyinstaller
+  Inno Setup (the Windows installer's tool; its setup programs may be distributed freely):
+  https://jrsoftware.org/isinfo.php
+
+Icons
+  The app icons in packaging/icons (map-vietnam.png, .ico and .icns, made by
+  packaging/make_icons.py) are original to this project and are licensed under Apache-2.0 like the
+  rest of this repository.
+
+
 Screenshots
 ===========
 

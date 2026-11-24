@@ -62,10 +62,22 @@ jobs:
       - name: Build the installer
         run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=${{ steps.version.outputs.version }}" packaging\windows\map-vietnam.iss'
       - name: Smoke test the installed app
-        shell: bash
+        # PowerShell, not bash: Git Bash rewrites arguments that look like Unix paths, which turns
+        # /VERYSILENT and /DIR=... into something Inno Setup does not understand.
+        shell: pwsh
         run: |
-          "dist/installer/Map-Vietnam-${{ steps.version.outputs.version }}-Setup.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /DIR="$RUNNER_TEMP/mv-installed"
-          python packaging/smoke_test.py "$RUNNER_TEMP/mv-installed/Map Vietnam.exe"
+          $installer = Join-Path $PWD "dist\installer\Map-Vietnam-${{ steps.version.outputs.version }}-Setup.exe"
+          $target = Join-Path $env:RUNNER_TEMP "mv-installed"
+          $log = Join-Path $env:RUNNER_TEMP "mv-setup.log"
+          $setup = Start-Process -FilePath $installer -Wait -PassThru -ArgumentList @(
+            "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=`"$target`"", "/LOG=`"$log`""
+          )
+          if ($setup.ExitCode -ne 0) {
+            if (Test-Path $log) { Get-Content $log -Tail 40 }
+            throw "The installer exited with status $($setup.ExitCode)"
+          }
+          python packaging/smoke_test.py (Join-Path $target "Map Vietnam.exe")
+          if ($LASTEXITCODE -ne 0) { throw "The installed app failed its smoke test" }
       - uses: actions/upload-artifact@v4
         with:
           name: windows
@@ -82,7 +94,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: |
+            requirements.txt
+            requirements-qt.txt
       - name: Read the version, and check it against the tag
         id: version
         run: |

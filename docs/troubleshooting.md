@@ -77,14 +77,14 @@ Python; the `.bat` file avoids that by using the `py` launcher that the installe
 
 This happens when no window can be opened: there is no window toolkit (mostly Linux without the
 Qt or GTK web view libraries, or a session with no display). Windows and macOS have one built in.
-The installed Linux app carries Qt; if it still fails, install the libraries listed in
+The installed Linux app carries Qt (PySide6); if it still fails, install the libraries listed in
 [the Linux entry](#the-linux-app-does-not-open-a-window). The app opens your browser at its own
 address, and everything works the same there. There is no window to close, so click **Quit Map
 Vietnam** in the side panel when you are done.
 
-From source, the Qt toolkit that `start.py` installs on x86-64 (or GTK's) is used. `start.py` prints
-a one-line explanation, and the address if the browser could not be opened (normally
-`http://127.0.0.1:8765/app/`, or the next free port).
+From source, the Qt toolkit (PySide6) that `start.py` installs on x86-64, or GTK's, is used.
+`start.py` prints a one-line explanation, and the address if the browser could not be opened
+(normally `http://127.0.0.1:8765/app/`, or the next free port).
 
 ## Some records could not be added
 

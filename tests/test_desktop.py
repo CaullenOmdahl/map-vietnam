@@ -4,6 +4,7 @@ browser when no window can be opened. None of it needs a GUI toolkit."""
 
 import importlib
 import json
+import os
 import sys
 import threading
 import urllib.request
@@ -402,6 +403,16 @@ def test_window_is_titled_and_sized_for_phones_and_desktops(monkeypatch):
 )
 def test_the_packaged_linux_app_asks_for_qt_by_name(frozen, platform, expected):
     assert desktop.window_toolkit(frozen=frozen, platform=platform) == expected
+
+
+def test_qt_is_asked_for_pyside6_unless_the_person_chose(monkeypatch):
+    monkeypatch.setattr(desktop.sys, "platform", "linux")
+    monkeypatch.delenv("QT_API", raising=False)
+    desktop.use_pyside()
+    assert os.environ["QT_API"] == "pyside6"
+    monkeypatch.setenv("QT_API", "pyqt6")
+    desktop.use_pyside()
+    assert os.environ["QT_API"] == "pyqt6"
 
 
 def test_the_window_is_started_with_the_chosen_toolkit(monkeypatch):
