@@ -10,12 +10,36 @@ installer, the program and its source are all in the open at
 
 ## macOS won't open the downloaded Map Vietnam app
 
-The app is not signed with an Apple developer account, so macOS blocks it the first time.
-Open the `.dmg`, drag **Map Vietnam** onto the Applications folder beside it, then right-click (or Control-click) it and choose
-**Open**, then **Open** again. If the dialog only offers to move it to the Bin, close it, open
-**System Settings > Privacy & Security**, scroll down, click **Open Anyway** next to Map Vietnam
-and confirm. You only do this once. If macOS says the app is damaged, run
-`xattr -dr com.apple.quarantine "/Applications/Map Vietnam.app"` in Terminal and open it again.
+The app is not signed with a paid Apple developer account, so the first time you open it macOS
+says **"Map Vietnam" Not Opened** ("Apple could not verify..."). It is safe to allow; you only do
+it once.
+
+1. Click **Done** (not **Move to Bin**).
+2. Open **System Settings > Privacy & Security** and scroll down to **Security**. Next to
+   *"Map Vietnam" was blocked to protect your Mac*, click **Open Anyway**. (The button stays there
+   for about an hour after the blocked attempt; if it is gone, open the app again first.)
+3. Click **Open Anyway** again and enter your Mac password or use Touch ID.
+
+On macOS 15 Sequoia and newer, right-click > **Open** no longer gets past this check, so older
+instructions that say to do that will not work.
+
+**If you prefer Terminal**, or macOS says the app "is damaged and can't be opened", remove the
+download flag and open it normally:
+
+```
+xattr -dr com.apple.quarantine "/Applications/Map Vietnam.app"
+```
+
+**Run it from Applications.** Drag it out of the `.dmg` window onto **Applications** first. Run
+from inside the disk image, it works but is slower to start, and it is gone once the image is
+ejected.
+
+**Nothing happens when you open it.** The very first launch can take a little longer while
+macOS checks the app. If it still does not appear, look for Map Vietnam in the Dock, or open it
+from Terminal to see any error: `"/Applications/Map Vietnam.app/Contents/MacOS/Map Vietnam"`.
+
+**Intel Macs** are not supported by the download (it is built for Apple silicon). Run it from
+source instead: see the README.
 
 ## The Linux app does not open a window
 
