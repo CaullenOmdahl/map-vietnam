@@ -4,6 +4,13 @@ Notable changes to Map Vietnam. Versions follow [semantic versioning](https://se
 
 ## Unreleased
 
+Fixes after 0.1.0
+- Adding maps no longer tints the whole area amber: sheets are outlined, and only the one pointed
+  at or chosen is shaded. The outlines can be hidden (**Outlines: Hide** in the Old maps card)
+- The map style button is now **Map style and settings**: base map, appearance, the outline
+  setting, and the Kaggle key, which can be added or forgotten at any time (the air strikes row
+  offers it too) instead of only after Kaggle refuses a download
+
 Everything is done from the map
 - `python3 start.py` now asks nothing and downloads nothing except its private Python add-ons.
   The first visit offers the standard records in one click, and a new **Records** card in the
