@@ -15,6 +15,8 @@
      /api/library             -> S.lib (every map that can be added, with its state); polled only while maps are on
                                  their way. /api/library/add and /remove queue or delete maps: nothing downloads
                                  unless the person taps Add
+     /api/library/custom…     -> your own maps: POST uploads a file, /points places a scan, /edit renames; they are
+                                 library entries (series "custom"). /api/settings -> where data is kept, space used
      /api/records             -> S.rec (every record source that can be added, with its state); polled only while
                                  one is on its way. /api/records/add, /remove and /cancel queue, delete or stop
                                  sources; /api/records/key saves a Kaggle key if Kaggle asks for one; /api/quit
@@ -268,6 +270,7 @@ const icon = {
   trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
   note: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
   map: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4L3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4z"/><path d="M9 4v13M15 6.5v13"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.4" stroke-width="2.6" stroke-dasharray="2.6 3.28"/><circle cx="12" cy="12" r="6.2"/><circle cx="12" cy="12" r="2.4"/></svg>',
   chevR: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
 };
 
@@ -542,7 +545,7 @@ function buildEras(layers) {
 const eraById = id => S.eras.find(e => e.id === id);
 // What a map is, in the same few words wherever it is named (the map bar, the library card): "US Army 1:50,000",
 // "US overview 1:250,000", "French 1:100,000". seriesId is the catalogue's series key, seriesName its full name.
-const SERIES_WORDS = { l7014: "US Army", jog1501: "US overview", l909: "US city plan", l509: "US Army", sgi100k: "French", warper: "British chart" };
+const SERIES_WORDS = { l7014: "US Army", jog1501: "US overview", l909: "US city plan", l509: "US Army", sgi100k: "French", warper: "British chart", custom: "Your map" };
 function kindWords(seriesId, seriesName, scale) {
   // US series: Army Map Service sheets and the Defense Mapping Agency's Joint Operations Graphics.
   const who = SERIES_WORDS[seriesId] || (/AMS|Army Map Service|US |Joint Operations Graphic/.test(seriesName || "") ? "US" : "French");
@@ -1337,6 +1340,7 @@ function render() {
   updateCounts();
   showFootprints(v.name === "library");
   document.body.classList.toggle("lib-open", v.name === "library");
+  $("#settingsBtn")?.setAttribute("aria-pressed", v.name === "settings");
   renderMapbar(); // its hints depend on whether the library card is open
   if (!isDesk()) requestAnimationFrame(() => setSheet(S.sheet));
 }
@@ -1428,7 +1432,7 @@ VIEWS.home = v => {
     ${v.quit ? `<div class="confirm-box calm quit-box" role="alertdialog" aria-label="Quit Map Vietnam">
         <span>Quit Map Vietnam? The map stops working in this window until you start it again.${S.rec.busy || libBusyMaps().length ? " What is being added now stops; what was already downloaded is kept." : ""}</span>
         <div class="row"><button class="btn small primary" data-act="quit">Quit</button><button class="btn small" data-act="quitCancel">Cancel</button></div></div>`
-      : `<button class="linkish quit-link" data-act="quitAsk">Quit Map Vietnam</button>`}`;
+      : `<div class="home-links"><button class="linkish quit-link" data-act="openSettings">Settings</button><button class="linkish quit-link" data-act="quitAsk">Quit Map Vietnam</button></div>`}`;
 };
 VIEWS.home.after = () => {
   $("#newCase")?.addEventListener("submit", async e => {
@@ -1896,7 +1900,7 @@ function libMatches(m, words) {
 function libYear(m) {
   const e = eraById(m.id);
   if (e?.dated) return e.years;
-  return yearOf(m.date) ? String(yearOf(m.date)) : "";
+  return yearOf(m.date) ? String(yearOf(m.date)) : m.year ? String(m.year) : "";
 }
 // A footprint's label: the place name alone ("Giàng Mưng Pho (5453 I)" -> "Giàng Mưng Pho"); of a long scan title
 // only its last part ("Carte de l'Indochine 1:100 000, feuille 228 Long-Xuyên" -> "feuille 228 Long-Xuyên").
@@ -1970,7 +1974,7 @@ function applyLibrary(r) {
   if (!first && nowBusy && !libWasBusy && !libBatchToasted) announce(`Adding ${nowBusy} map${nowBusy === 1 ? "" : "s"}. You can keep using the map.`);
   if (!first && !wasConverting && S.lib.legacy?.state === "converting") announce("Converting maps from an older version. You can keep using the map.");
   libWasBusy = nowBusy > 0;
-  drawFootprints(); renderMapbar(); libRefreshView(); scheduleLibraryPoll();
+  drawFootprints(); renderMapbar(); libRefreshView(); settingsRefresh(); scheduleLibraryPoll();
   if (S.view.name === "home") render();
 }
 async function libAdd(ids) {
@@ -1985,7 +1989,7 @@ async function libAdd(ids) {
 async function libRemove(ids, stopping = false) {
   const list = ids.map(id => S.lib.byId.get(id)).filter(Boolean);
   const freed = list.reduce((a, m) => a + (m.disk_bytes || 0), 0);
-  if (S.view.name === "library") S.view.confirm = null;
+  if (S.view.name === "library" || S.view.name === "settings") S.view.confirm = null;
   try { applyLibrary(await api("/api/library/remove", { method: "POST", body: { ids } })); }
   catch (e) { toast("Could not remove: " + e.message, 5000); return; }
   const what = list.length === 1 ? list[0].title : `${list.length} maps`;
@@ -2135,6 +2139,7 @@ function setOutlines(on) {
   store.set("outlines", on);
   applyFootprintFilter();
   if (S.view.name === "library") libRefreshView(true);
+  settingsRefresh(true);
   if (!$("#popStyle").hidden) { renderStylePop(); $(`#popStyle [data-act="outlines"][data-on="${on ? 1 : 0}"]`)?.focus(); }
 }
 const fpState = { sel: null, hover: null };
@@ -2239,7 +2244,7 @@ function libRefreshView(force = false) {
 function rerenderKeepingFocus() {
   const a = document.activeElement, sc = $("#panelScroll"), top = sc.scrollTop;
   const mine = $("#view").contains(a) && a.dataset.act;
-  const sel = mine ? `[data-act="${a.dataset.act}"]${a.dataset.id ? `[data-id="${CSS.escape(a.dataset.id)}"]` : ""}${a.dataset.s ? `[data-s="${a.dataset.s}"]` : ""}` : null;
+  const sel = mine ? `[data-act="${a.dataset.act}"]${a.dataset.id ? `[data-id="${CSS.escape(a.dataset.id)}"]` : ""}${a.dataset.s ? `[data-s="${a.dataset.s}"]` : ""}${a.dataset.theme ? `[data-theme="${a.dataset.theme}"]` : ""}${a.dataset.on ? `[data-on="${a.dataset.on}"]` : ""}` : null;
   const anchorId = S.view.sel || (mine && a.dataset.id) || null;
   const rowOf = id => id && $(`#view [data-lib-row="${CSS.escape(id)}"]`);
   const anchorTop = rowOf(anchorId)?.getBoundingClientRect().top;
@@ -2284,13 +2289,14 @@ function libDetail(m) {
   const ser = S.lib.series[m.series] || {}, t = esc(m.title), id = esc(m.id), year = libYear(m);
   const years = year || (ser.years ? ser.years[0].toUpperCase() + ser.years.slice(1).replace(/(\d)-(\d)/g, "$1–$2") : "");
   // Who made it, in words: the publisher's first name for the US series, the scan's own series otherwise.
-  const maker = m.series === "scans" ? m.series_name : (ser.publisher || "").split(";")[0];
+  const maker = m.custom ? "Your own map, added from this computer" : m.series === "scans" ? m.series_name : (ser.publisher || "").split(";")[0];
   const size = m.state === "installed" ? `Uses ${fmtMB(m.disk_bytes)} on this computer`
     : m.bytes ? `Downloads ${fmtMB(m.bytes)}, then takes about ${fmtMB(estDisk([m]))} on this computer` : "";
   const licence = m.licence || ser.licence;
   // The row's own control (Add, Retry, Show / Hide, or the progress ring that stops it) is the main action; the
   // opened row adds only what the row cannot do.
-  const acts = m.state === "installed" ? `<button class="btn small danger" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button>` : "";
+  const acts = (m.custom ? `<button class="btn small" data-act="cmManage" data-id="${id}">Edit or place again</button>` : "")
+    + (m.state === "installed" ? `<button class="btn small danger" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button>` : "");
   const confirm = S.view.confirm === "remove:" + m.id ? `<div class="confirm-box" role="alertdialog" aria-label="Remove ${t}">
       <span>Remove <b>${t}</b> from this computer? This frees ${fmtMB(m.disk_bytes) || "its space"}. You can add it again later.</span>
       <div class="row"><button class="btn small danger solid" data-act="libRemove" data-id="${id}">Remove</button>
@@ -2457,8 +2463,14 @@ function fitFootprintIfHidden(id, always = false) {
 ACTIONS.openLibrary = () => openLibrary();
 ACTIONS.libSel = el => libSelect(el.dataset.id);
 ACTIONS.libAdd = el => libAdd([el.dataset.id]);
-ACTIONS.libStop = el => libRemove([el.dataset.id], true);
-ACTIONS.libStopAll = () => libRemove(libBusyMaps().map(m => m.id), true);
+// Stopping a map of your own deletes the only copy of the file you added, so that asks first.
+function stopMaps(ids) {
+  const own = ids.map(id => S.lib.byId.get(id)).filter(m => m?.custom);
+  if (own.length && !window.confirm(`Stop adding ${own.length === 1 ? own[0].title : "your own maps"}? Your original file is deleted too, so keep a copy if you want to add it again.`)) return;
+  libRemove(ids, true);
+}
+ACTIONS.libStop = el => stopMaps([el.dataset.id]);
+ACTIONS.libStopAll = () => stopMaps(libBusyMaps().map(m => m.id));
 ACTIONS.libShow = el => setEra(S.eraA === el.dataset.id ? "today" : el.dataset.id);
 ACTIONS.libFit = el => { if (!isDesk()) setSheet("peek"); fitFootprintIfHidden(el.dataset.id, true); };
 ACTIONS.libKind = el => { S.view.kind = el.dataset.s; S.view.sel = null; S.view.open = null; S.view.confirm = null; setFpState("sel", null); rerenderKeepingFocus(); };
@@ -2752,7 +2764,7 @@ VIEWS.records = () => {
     ${available.length ? `<h3 class="sub-head">Available</h3>${bulk}${rows(available)}` : ""}
     <p class="foot-note">Records come from public archives and stay on this computer. Nothing downloads until you add it. Records can be wrong: check each source.</p>`;
 };
-VIEWS.records.after = () => {
+function wireKeyBox() {
   // The key, from the file Kaggle hands out or typed in. Neither is kept in the page afterwards.
   const err = msg => { const e = $("#keyErr"); if (e) e.textContent = msg; };
   $("#keyFile")?.addEventListener("change", async e => {
@@ -2768,7 +2780,8 @@ VIEWS.records.after = () => {
     e.preventDefault();
     const f = e.target; saveKey(f.username.value.trim(), f.key.value.trim(), err);
   });
-};
+}
+VIEWS.records.after = wireKeyBox; // (the same key box also appears in settings)
 // Saves the key on this computer, then tries the air strikes again for the area that was asked for.
 async function saveKey(username, key, err) {
   try { applyRecords(await api("/api/records/key", { method: "POST", body: { username, key } })); }
@@ -2776,6 +2789,7 @@ async function saveKey(username, key, err) {
   const thor = S.rec.byId.get("thor");
   toast("Key saved on this computer");
   if (S.view.name === "records" && S.view.ask === "key:thor") { S.view.ask = null; rerenderKeepingFocus(); }
+  if (S.view.name === "settings") { S.view.keyOpen = false; settingsRefresh(true); }
   if (thor && thor.state === "failed") recAdd(["thor"], thor.options ? { options: { thor: thor.options } } : {});
 }
 function recSelect(id) {
@@ -2814,7 +2828,7 @@ ACTIONS.recAddArea = el => { const area = strikeArea(); if (area) recAdd([el.dat
 ACTIONS.recAccept = el => recAdd([el.dataset.id], { accept: [el.dataset.id] });
 ACTIONS.recAskArea = el => recAsk(el.dataset.id, "area");
 ACTIONS.recAskRemove = el => recAsk(el.dataset.id, "remove");
-ACTIONS.recAskCancel = () => { S.view.ask = null; rerenderKeepingFocus(); };
+ACTIONS.recAskCancel = () => { S.view.ask = null; S.view.keyOpen = false; rerenderKeepingFocus(); };
 ACTIONS.recRemove = el => recRemove(el.dataset.id);
 ACTIONS.recUpdate = el => { const s = S.rec.byId.get(el.dataset.id); if (s) recAdd([s.id], { refresh: true, ...(s.opt_in ? { accept: [s.id] } : {}) }); };
 ACTIONS.recStop = el => recCancel([el.dataset.id]);
@@ -2831,7 +2845,7 @@ ACTIONS.recKeyPick = () => $("#keyFile")?.click();
 ACTIONS.recAskKey = () => { closePopovers(); recAsk("thor", "key"); };
 ACTIONS.outlines = el => setOutlines(el.dataset.on === "1");
 ACTIONS.recKeyForget = async () => {
-  try { applyRecords(await api("/api/records/key", { method: "DELETE" })); toast("The key was removed from this computer"); if (!$("#popStyle").hidden) renderStylePop(); }
+  try { applyRecords(await api("/api/records/key", { method: "DELETE" })); toast("The key was removed from this computer"); if (!$("#popStyle").hidden) renderStylePop(); settingsRefresh(true); }
   catch (e) { toast("Could not remove the key: " + e.message, 5000); }
 };
 
@@ -3252,7 +3266,8 @@ function renderStylePop() {
     <div class="sec"><h3>Appearance</h3><div class="seg" role="group" aria-label="Appearance">
       ${["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${t === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join("")}</div></div>
     <div class="sec"><h3>Old map outlines</h3><p class="small-t muted">The sheet edges drawn while the Old maps card is open.</p>${outlinesSeg("seg")}</div>
-    <div class="sec"><h3>Kaggle key</h3>${keySettingsHTML()}</div>`;
+    <div class="sec"><h3>Kaggle key</h3>${keySettingsHTML()}</div>
+    <div class="sec"><button class="linkish" data-act="openSettings">All settings</button></div>`;
   $$("[data-base]", $("#popStyle")).forEach(b => b.addEventListener("click", () => { setBase(b.dataset.base); renderStylePop(); $(`#popStyle [data-base="${b.dataset.base}"]`).focus(); }));
   wire($("#popStyle"));
 }
@@ -3285,23 +3300,445 @@ document.addEventListener("focusin", e => {
   if (!["popStyle", "popLayers", "popMaps"].some(id => { const p = $("#" + id); return !p.hidden && (p.contains(e.target) || p._anchor?.contains(e.target)); })) closePopovers();
 });
 
+// ================================================================ settings and your own maps
+// The Settings card (preferences, the Kaggle key, your own maps, storage) and the Placement screen, a full-window
+// overlay where a plain scan is matched to today's map. The server does the work: /api/library/custom takes the file,
+// /api/library/custom/<id>/points saves the matched spots and queues the build, /edit renames, /api/settings reports
+// where data is kept and how much space it uses. Your own maps are library entries with series "custom" (S.lib), so
+// they show in the Old maps card and on the map like any other installed map.
+const CUSTOM_KIND_WORDS = { geotiff: "GeoTIFF", geopdf: "GeoPDF", scan: "Scan" };
+const UPLOAD_MAX = 2 * 1024 ** 3; // the server's limit
+const customMaps = () => S.lib.maps.filter(m => m.custom);
+const sizeText = b => fmtMB(b) || "0 MB";
+// up: the upload in flight ({ name, loaded, total, xhr }); err: why the last one failed; disk: GET /api/settings.
+S.cm = { up: null, err: "", disk: null, diskErr: "" };
+
+function openSettings(sel = null) {
+  const from = document.activeElement;
+  closePopovers();
+  show("settings", { sel, confirm: null, keyOpen: false });
+  if (from && from !== document.body && !$("#panel").contains(from)) S.opener = from;
+  focusCard();
+  loadLibrary(); loadSettings();
+  if (sel) reveal($(`#view [data-lib-row="${CSS.escape(sel)}"]`));
+}
+async function loadSettings() {
+  try { S.cm.disk = await api("/api/settings"); S.cm.diskErr = ""; }
+  catch (e) { S.cm.diskErr = e.message; }
+  const el = $("#setDisk");
+  if (el && S.view.name === "settings") el.innerHTML = storageHTML();
+}
+function storageHTML() {
+  const s = S.cm.disk;
+  if (!s) return `<p class="small-t muted">${S.cm.diskErr ? "Could not check the space used: " + esc(S.cm.diskErr) : "Checking…"}</p>`;
+  const d = s.disk || {}, row = (k, v, cls = "") => `<div class="set-row"><span class="set-k">${k}</span><span class="${cls}">${v}</span></div>`;
+  return `<div class="group">${row("Kept in", esc(s.data_folder), "mono set-path")}${row("Old maps", sizeText(d.maps))}${row("Records", sizeText(d.records))}
+    ${row("Downloads", sizeText(d.downloads))}${row("<b>Total</b>", `<b>${sizeText(d.total)}</b>`)}</div>
+    <p class="small-t muted">Downloads are the files maps were built from. Removing a map frees its space.</p>`;
+}
+
+const settingsSig = () => JSON.stringify([S.lib.loaded, S.lib.err, customMaps().map(m => [m.id, m.state, m.title, m.year, m.kind, !!m.bounds, m.error]),
+  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, S.base, store.get("theme", "auto"), outlinesOn(), S.rec.key, S.eraA]);
+let settingsLastSig = "";
+// Redraws the card when something it shows changed; otherwise only moves the progress rings. A field being typed in is
+// never torn out from under the caret.
+function settingsRefresh(force = false) {
+  if (S.view.name !== "settings") return;
+  const typing = $("#view").contains(document.activeElement) && document.activeElement.matches("input");
+  // Unsaved text in a Name or Year box also holds the redraw back, whether or not it has focus.
+  const dirty = [...document.querySelectorAll("#view .cm-edit input")].some(i => i.value !== i.defaultValue);
+  if ((force || settingsSig() !== settingsLastSig) && !typing && !dirty) { rerenderKeepingFocus(); loadSettings(); }
+  else { if (force) cmPatchUpload(); libPatchProgress(); }
+}
+// The upload button / progress and its error line, swapped on their own so a finished or failed upload shows up even
+// while someone is typing elsewhere in the view.
+function cmPatchUpload() {
+  const up = $("#cmUp"), err = $("#cmErr");
+  if (up) up.innerHTML = uploadHTML();
+  if (err) err.textContent = S.cm.err;
+}
+
+function cmMeta(m) {
+  if (m.state === "needs_points") return "Needs placing on today’s map";
+  if (m.state === "failed") return m.error ? `Could not be built: ${m.error}` : "Could not be built";
+  if (m.state === "queued") return "Waiting to be built";
+  if (m.state === "building") return libMeta(m);
+  return [libYear(m) || "Undated", CUSTOM_KIND_WORDS[m.kind] || "Your map", fmtMB(m.disk_bytes)].filter(Boolean).join(" · ");
+}
+function cmControl(m) {
+  const t = esc(m.title), id = esc(m.id);
+  if (m.state === "needs_points") return `<button class="lib-pill on" data-act="cmPlace" data-id="${id}" aria-label="Place ${t} on today’s map">Place</button>`;
+  if (m.state === "failed") return `<button class="lib-pill" data-act="libAskRemove" data-id="${id}" aria-label="Remove ${t}">Remove</button>`;
+  return libControl(m); // a progress ring while it is built, Show / Hide once it is ready
+}
+function cmDetail(m) {
+  const t = esc(m.title), id = esc(m.id), ready = m.state === "installed";
+  const confirm = S.view.confirm === "remove:" + m.id ? `<div class="confirm-box" role="alertdialog" aria-label="Remove ${t}">
+      <span>Remove <b>${t}</b> from this computer? Your original file is deleted too, so keep a copy if you want to add it again.</span>
+      <div class="row"><button class="btn small danger solid" data-act="libRemove" data-id="${id}">Remove</button>
+      <button class="btn small" data-act="libCancel">Keep it</button></div></div>` : "";
+  return `<div class="lib-detail" id="libd-${id}">
+    <p>${esc(CUSTOM_KIND_WORDS[m.kind] || "Map")}${ready ? ` · uses ${esc(sizeText(m.disk_bytes))}` : ""}</p>
+    ${m.state === "needs_points" ? `<p class="muted">Match three or more spots on it to today’s map to place it.</p>` : ""}
+    <form class="cm-edit stack" data-id="${id}" autocomplete="off">
+      <label class="field"><span>Name</span><input type="text" name="mtitle" required maxlength="120" value="${esc(m.title)}"></label>
+      <label class="field"><span>Year (optional)</span><input type="number" name="myear" min="1800" max="2100" inputmode="numeric" placeholder="e.g. 1968" value="${m.year ? esc(m.year) : ""}"></label>
+      <div class="row"><button class="btn small primary" type="submit">Save</button></div>
+      <div class="err" role="alert"></div></form>
+    <div class="row">${m.state === "needs_points" ? "" : m.kind === "scan" ? `<button class="btn small" data-act="cmPlace" data-id="${id}">Place again</button>` : ""}
+      ${ready && m.bounds ? `<button class="btn small" data-act="cmFit" data-id="${id}">Zoom to map</button>` : ""}
+      <button class="btn small danger" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button></div>
+    ${confirm}</div>`;
+}
+function cmRow(m) {
+  const sel = S.view.sel === m.id, id = esc(m.id);
+  return `<li class="lib-row${sel ? " sel" : ""}" data-lib-row="${id}">
+    <button class="main" data-act="cmSel" data-id="${id}" aria-expanded="${sel}"${sel ? ` aria-controls="libd-${id}"` : ""}>
+      <span class="t">${esc(m.title)}</span><span class="m${m.state === "failed" ? " bad" : ""}" data-prog-t="${id}">${esc(cmMeta(m))}</span></button>
+    ${cmControl(m)}${sel ? cmDetail(m) : ""}</li>`;
+}
+function uploadHTML() {
+  const u = S.cm.up;
+  if (!u) return `<button class="btn" data-act="cmPick">${icon.plus}<span>Add your own map</span></button>
+    <input type="file" id="cmFile" hidden accept=".tif,.tiff,.jpg,.jpeg,.png,.pdf,image/tiff,image/jpeg,image/png,application/pdf">`;
+  return `<div class="lib-status" role="group" aria-label="Uploading ${esc(u.name)}"><span class="spin" aria-hidden="true"></span>
+    <span class="grow"><b>Adding ${esc(u.name)}</b><span class="small-t muted" data-up-t>${esc(uploadText(u))}</span>
+    <progress class="up-bar" max="100" value="${uploadPct(u)}" data-up-bar aria-label="Upload progress"></progress></span>
+    <button class="linkish small-t" data-act="cmUpCancel">Cancel</button></div>`;
+}
+const uploadPct = u => u.total ? Math.round(100 * u.loaded / u.total) : 0;
+const uploadText = u => u.loaded >= u.total ? "Checking the file…" : `${fmtMB(u.loaded) || "0 MB"} of ${fmtMB(u.total)} · ${uploadPct(u)}%`;
+function keySectionHTML() {
+  const k = S.rec.key || {};
+  if (S.view.keyOpen) return keyBox(false);
+  const status = k.present ? `A Kaggle key is saved${k.source && k.source !== "env file" ? ` (from ${esc(k.source)})` : " on this computer"}. It is only ever sent to Kaggle.`
+    : "No key saved. Kaggle may ask for a free one when you add the air strikes.";
+  return `<p class="small-t muted">${status}</p>
+    <div class="row"><button class="btn small" data-act="setKeyAdd">${k.present ? "Replace the key" : "Add a Kaggle key"}</button>
+    ${k.present && k.source === "env file" ? `<button class="btn small" data-act="recKeyForget">Forget the key</button>` : ""}</div>`;
+}
+VIEWS.settings = v => {
+  settingsLastSig = settingsSig();
+  const theme = store.get("theme", "auto"), mine = customMaps();
+  const seg = (label, inner) => `<div class="set-row"><span class="set-k">${label}</span><div class="seg" role="group" aria-label="${label}">${inner}</div></div>`;
+  return `${headHTML("Settings", "Preferences, your own maps and storage")}
+    <h3 class="sub-head">Preferences</h3>
+    <div class="group">
+      ${seg("Today’s map", Object.entries(BASES).map(([k, b]) => `<button data-act="setBase" data-s="${k}" aria-pressed="${S.base === k}">${esc(b.name)}</button>`).join(""))}
+      ${seg("Appearance", ["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${theme === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join(""))}
+      <div class="set-row"><span class="set-k">Old map outlines</span>${outlinesSeg("seg")}</div>
+    </div>
+    <h3 class="sub-head">Kaggle key</h3>
+    <div class="set-block">${keySectionHTML()}</div>
+    <h3 class="sub-head">My maps</h3>
+    <div class="set-block">
+      <p class="small-t muted">Add a map from your computer. A GeoTIFF or GeoPDF is placed for you. A photo or scan (JPG, PNG or PDF) is placed by matching three or more spots on it to today’s map.</p>
+      <div id="cmUp">${uploadHTML()}</div>
+      <div class="err" id="cmErr" role="alert">${esc(S.cm.err)}</div>
+      ${mine.length ? `<div class="group"><ul class="list lib-list" aria-label="Your own maps">${mine.map(cmRow).join("")}</ul></div>`
+        : S.lib.loaded ? `<p class="small-t muted">You have not added a map of your own yet.</p>` : ""}
+    </div>
+    <h3 class="sub-head">Storage</h3>
+    <div id="setDisk">${storageHTML()}</div>
+    <p class="foot-note">Everything stays on this computer.</p>`;
+};
+VIEWS.settings.after = () => {
+  $("#cmFile")?.addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) cmUpload(f); });
+  $$("#view .cm-edit").forEach(f => f.addEventListener("submit", cmSaveEdit));
+  wireKeyBox();
+};
+ACTIONS.openSettings = () => openSettings();
+ACTIONS.setBase = el => setBase(el.dataset.s);
+ACTIONS.setKeyAdd = () => { S.view.keyOpen = true; rerenderKeepingFocus(); $('#view [data-act="recKeyPick"]')?.focus({ preventScroll: true }); };
+ACTIONS.cmPick = () => $("#cmFile")?.click();
+ACTIONS.cmUpCancel = () => S.cm.up?.xhr.abort();
+ACTIONS.cmSel = el => {
+  const id = el.dataset.id;
+  S.view.sel = S.view.sel === id ? null : id; S.view.confirm = null;
+  rerenderKeepingFocus();
+  if (S.view.sel) reveal($(`#view [data-lib-row="${CSS.escape(id)}"]`));
+};
+ACTIONS.cmFit = el => {
+  const b = S.lib.byId.get(el.dataset.id)?.bounds;
+  if (!b) return;
+  if (!isDesk()) setSheet("peek");
+  primary().fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: mapPadding(), maxZoom: 15, duration: reduceMotion ? 0 : 600 });
+};
+ACTIONS.cmPlace = el => { const m = S.lib.byId.get(el.dataset.id); if (m) openPlacement(m, el); };
+ACTIONS.cmManage = el => openSettings(el.dataset.id);
+
+async function cmSaveEdit(e) {
+  e.preventDefault();
+  const f = e.target, err = f.querySelector(".err"), id = f.dataset.id;
+  const title = f.mtitle.value.trim(), y = f.myear.value.trim(), year = y ? +y : null;
+  if (!title) { err.textContent = "Give the map a name."; return; }
+  if (y && !(year >= 1800 && year <= 2100)) { err.textContent = "The year should be between 1800 and 2100, or empty."; return; }
+  try { applyLibrary(await api(`/api/library/custom/${encodeURIComponent(id)}/edit`, { method: "POST", body: { title, year } })); }
+  catch (x) { err.textContent = x.message; return; }
+  refreshCatalog();
+  toast("Saved");
+}
+
+// ---- adding a file
+// Sent as the raw file with XMLHttpRequest, which (unlike fetch) reports upload progress. A big scan is never held in
+// memory by the page: the browser streams it from disk.
+function cmUpload(file) {
+  if (S.cm.up) return;
+  S.cm.err = "";
+  if (file.size > UPLOAD_MAX) { S.cm.err = "That file is larger than 2 GB, which is the most Map Vietnam can take."; settingsRefresh(true); return; }
+  const title = file.name.replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim() || "My map";
+  const y = file.name.match(/(?:^|\D)(1[89]\d\d|20[0-2]\d)(?:\D|$)/);
+  const qs = new URLSearchParams({ filename: file.name, title, year: y ? y[1] : "" });
+  const xhr = new XMLHttpRequest(), up = { name: file.name, loaded: 0, total: file.size, xhr };
+  const done = msg => { S.cm.up = null; if (msg) S.cm.err = msg; settingsRefresh(true); };
+  S.cm.up = up;
+  xhr.open("POST", "/api/library/custom?" + qs);
+  xhr.setRequestHeader("Content-Type", "application/octet-stream");
+  xhr.upload.onprogress = e => {
+    up.loaded = e.loaded;
+    const bar = $("#view [data-up-bar]"), t = $("#view [data-up-t]");
+    if (bar) bar.value = uploadPct(up);
+    if (t) t.textContent = uploadText(up);
+  };
+  xhr.onload = () => {
+    let r = null;
+    try { r = JSON.parse(xhr.responseText); } catch { /* not JSON: reported below */ }
+    if (xhr.status !== 200 || !r?.map) return done((r && r.error) || "The map could not be added.");
+    S.cm.up = null;
+    applyLibrary(r.library);
+    settingsRefresh(true);
+    if (r.map.state === "needs_points") { toast("Now place it: match three spots on it to today’s map", 5000); openPlacement(S.lib.byId.get(r.map.id) || r.map); }
+    else toast("Added. Your map is being prepared and will appear in Old maps.", 5000);
+  };
+  xhr.onerror = () => done("The upload was interrupted. Check that Map Vietnam is still running, then try again.");
+  xhr.onabort = () => { done(""); toast("Stopped adding the file"); };
+  xhr.send(file);
+  settingsRefresh(true);
+}
+
+// ---- the Placement screen
+// The scan is drawn by a MapLibre map in "pixel space": a flat rectangle laid out near the equator, so a click converts
+// back to a pixel of the scan exactly (MapLibre draws the image linearly in Mercator space; PL_SCALE is its size in
+// Mercator units). Today's map beside it is a second map with the same base style as the main one. Spots are numbered
+// pairs; from three on, a least-squares affine fit (the same model the server fits) lays the scan over today's map.
+const PL_SCALE = 2 ** -10;
+let pl = null; // the open placement, or null
+const placeOpen = () => !!pl;
+const PL_HIDE = ["maps", "panel", "controls", "mapbar", "filterPill", "loading", "placing"];
+
+function plToLL(col, row) { return new maplibregl.MercatorCoordinate(0.5 + (col - pl.w / 2) * pl.k, 0.5 + (row - pl.h / 2) * pl.k, 0).toLngLat(); }
+function plFromLL(ll) { const c = maplibregl.MercatorCoordinate.fromLngLat(ll); return [(c.x - 0.5) / pl.k + pl.w / 2, (c.y - 0.5) / pl.k + pl.h / 2]; }
+
+// Solves the 3x3 system A x = b by Cramer's rule; null when the points are in a line (or too close together).
+function solve3(A, b) {
+  const det = M => M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) - M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) + M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
+  const d = det(A);
+  if (!Number.isFinite(d) || Math.abs(d) < 1e-5) return null;
+  return [0, 1, 2].map(i => det(A.map((row, r) => row.map((v, c) => c === i ? b[r] : v))) / d);
+}
+// lon = a·col + b·row + c, and the same for lat, fitted to the pairs by least squares. Columns and rows are scaled to
+// 0..1 first, so the system is well conditioned. Returns { at(col, row) -> [lon, lat], rms (metres) } or null.
+function fitAffine(pairs, w, h) {
+  if (pairs.length < 3) return null;
+  const rows = pairs.map(p => [p.col / w, p.row / h, 1]);
+  const solve = ys => {
+    const A = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], b = [0, 0, 0];
+    rows.forEach((r, i) => { for (let a = 0; a < 3; a++) { b[a] += r[a] * ys[i]; for (let c = 0; c < 3; c++) A[a][c] += r[a] * r[c]; } });
+    return solve3(A, b);
+  };
+  const lon = solve(pairs.map(p => p.lon)), lat = solve(pairs.map(p => p.lat));
+  if (!lon || !lat) return null;
+  const at = (col, row) => [lon[0] * col / w + lon[1] * row / h + lon[2], lat[0] * col / w + lat[1] * row / h + lat[2]];
+  const sq = pairs.reduce((a, p) => { const [x, y] = at(p.col, p.row); return a + ((x - p.lon) * 111320 * Math.cos(p.lat * Math.PI / 180)) ** 2 + ((y - p.lat) * 110540) ** 2; }, 0);
+  return { at, rms: Math.sqrt(sq / pairs.length) };
+}
+
+function openPlacement(entry, opener = document.activeElement) {
+  if (pl || !entry?.image) { if (!entry?.image) toast("This map has no picture to place."); return; }
+  closePopovers();
+  const w = entry.image.width, h = entry.image.height;
+  pl = { entry, w, h, k: PL_SCALE / Math.max(w, h), url: `/api/library/custom/${encodeURIComponent(entry.id)}/preview`,
+    pairs: (entry.points || []).map(([col, row, lon, lat]) => ({ col, row, lon, lat })), pending: null, opacity: 0.6, marks: [], todayReady: false, opener, discard: false };
+  const dark = isDark();
+  document.body.insertAdjacentHTML("beforeend", `<div id="place" role="dialog" aria-modal="true" aria-labelledby="plTitle">
+    <header class="pl-bar"><div class="pl-head"><h2 id="plTitle" tabindex="-1">Place ${esc(entry.title)}</h2><p id="plStep" class="pl-step" role="status"></p></div>
+      <div class="pl-btns"><button class="btn" id="plUndo">Undo last</button><button class="btn" id="plClear">Clear</button>
+        <button class="btn" id="plCancel">Cancel</button><button class="btn primary" id="plSave" disabled>Place map</button></div></header>
+    <div class="pl-panes">
+      <section class="pl-pane" id="plScanPane" aria-label="Your map"><span class="pl-tag">Your map</span><div class="pl-map" id="plScan"></div>
+        <svg class="pl-cross" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
+        <button class="btn small pl-mark" data-pl="scan" aria-label="Mark the middle of your map (the + sign)">Mark the +</button></section>
+      <section class="pl-pane" id="plTodayPane" aria-label="Today’s map"><span class="pl-tag">Today’s map</span><div class="pl-map" id="plToday"></div>
+        <svg class="pl-cross" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
+        <button class="btn small pl-mark" data-pl="today" aria-label="Mark the middle of today’s map (the + sign)">Mark the +</button></section>
+    </div>
+    <div class="pl-tray">
+      <ol id="plPairs" class="pl-pairs" aria-label="Matched spots"></ol>
+      <div class="pl-fields">
+        <label class="field"><span>Name</span><input type="text" id="plName" maxlength="120" value="${esc(entry.title)}"></label>
+        <label class="field"><span>Year (optional)</span><input type="number" id="plYear" min="1800" max="2100" inputmode="numeric" placeholder="e.g. 1968" value="${entry.year ? esc(entry.year) : ""}"></label>
+        <label class="field pl-op"><span>See-through <span id="plOpVal" class="mono">60%</span></span><input type="range" id="plOp" min="10" max="100" value="60" disabled aria-label="Opacity of your map over today’s map"></label>
+      </div>
+      <div class="err" id="plErr" role="alert"></div>
+      <div class="confirm-box" id="plDiscard" role="alertdialog" aria-label="Discard your matched spots" hidden>
+        <span>Throw away the spots you have matched so far?</span>
+        <div class="row"><button class="btn small danger solid" id="plYes">Discard</button><button class="btn small" id="plNo">Keep working</button></div></div>
+    </div></div>`);
+  PL_HIDE.forEach(id => { const el = document.getElementById(id); if (el) el.inert = true; });
+  const bg = dark ? "#161715" : "#d9d5c8", ctl = () => new maplibregl.NavigationControl({ showCompass: false });
+  const corners = [[0, 0], [w, 0], [w, h], [0, h]].map(([c, r]) => plToLL(c, r)), arr = corners.map(c => c.toArray());
+  const D = Math.max(w, h), common = { attributionControl: false, dragRotate: false, pitchWithRotate: false, doubleClickZoom: false, fadeDuration: 0 };
+  pl.scan = new maplibregl.Map({ ...common, container: "plScan", maxZoom: Math.max(13, 10 + Math.log2(D / 128)), renderWorldCopies: false,
+    style: { version: 8, sources: { scan: { type: "image", url: pl.url, coordinates: arr } },
+      layers: [{ id: "bg", type: "background", paint: { "background-color": bg } }, { id: "scan", type: "raster", source: "scan", paint: { "raster-fade-duration": 0 } }] } });
+  pl.scan.fitBounds([arr[3], arr[1]], { padding: 24, duration: 0 });
+  pl.scan.setMinZoom(pl.scan.getZoom() - 1.5);
+  pl.scan.addControl(ctl(), "top-right");
+  pl.scan.on("click", e => plClickScan(e.lngLat));
+  pl.scan.on("error", e => { if (/image|Failed|404|decode/i.test(String(e?.error?.message || ""))) $("#plErr").textContent = "The picture of your map could not be loaded."; });
+  const c = primary().getCenter();
+  pl.today = new maplibregl.Map({ ...common, container: "plToday", style: makeStyle(), center: c, zoom: primary().getZoom() });
+  pl.today.addControl(ctl(), "top-right");
+  pl.today.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
+  pl.today.on("click", e => plClickToday(e.lngLat));
+  pl.today.on("load", () => { pl.todayReady = true; setBasePaint(pl.today); plDraw(); });
+  [pl.scan, pl.today].forEach(m => { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation?.(); });
+  const b = entry.bounds || (pl.pairs.length ? pl.pairs.reduce((a, p) => [Math.min(a[0], p.lon), Math.min(a[1], p.lat), Math.max(a[2], p.lon), Math.max(a[3], p.lat)], [180, 90, -180, -90]) : null);
+  if (b && b[2] > b[0] && b[3] > b[1]) pl.today.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, duration: 0, maxZoom: 15 });
+  $("#plUndo").onclick = () => { if (pl.pending) pl.pending = null; else pl.pairs.pop(); plRender(); };
+  $("#plClear").onclick = () => { pl.pairs = []; pl.pending = null; plRender(); };
+  $("#plCancel").onclick = plAskCancel;
+  $("#plYes").onclick = () => closePlacement();
+  $("#plNo").onclick = () => { $("#plDiscard").hidden = true; pl.discard = false; $("#plCancel").focus(); };
+  $("#plSave").onclick = plSave;
+  $("#plOp").oninput = e => { pl.opacity = +e.target.value / 100; $("#plOpVal").textContent = e.target.value + "%"; if (pl.todayReady && pl.today.getLayer("pl-scan")) pl.today.setPaintProperty("pl-scan", "raster-opacity", pl.opacity); };
+  $$("#place .pl-mark").forEach(btn => btn.onclick = () => btn.dataset.pl === "scan" ? plClickScan(pl.scan.getCenter()) : plClickToday(pl.today.getCenter()));
+  $("#plPairs").onclick = e => { const x = e.target.closest("[data-del]"); if (x) { pl.pairs.splice(+x.dataset.del, 1); plRender(); } };
+  pl.keys = e => { if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); plAskCancel(); } };
+  document.addEventListener("keydown", pl.keys, true);
+  pl.resize = () => { pl.scan.resize(); pl.today.resize(); };
+  addEventListener("resize", pl.resize);
+  plRender();
+  $("#plTitle").focus({ preventScroll: true });
+}
+function plAskCancel() {
+  if (!pl) return;
+  // Esc while the question is up means "keep working"
+  if (pl.discard) { $("#plNo").click(); return; }
+  if (!pl.pairs.length && !pl.pending) { closePlacement(); return; }
+  pl.discard = true; $("#plDiscard").hidden = false; $("#plNo").focus();
+}
+function closePlacement() {
+  if (!pl) return;
+  document.removeEventListener("keydown", pl.keys, true);
+  removeEventListener("resize", pl.resize);
+  pl.marks.forEach(m => m.remove());
+  pl.scan.remove(); pl.today.remove();
+  $("#place").remove();
+  PL_HIDE.forEach(id => { const el = document.getElementById(id); if (el) el.inert = false; });
+  const back = pl.opener;
+  pl = null;
+  if (back?.isConnected && !back.closest("[hidden]")) back.focus({ preventScroll: true }); else focusCard();
+}
+function plClickScan(ll) {
+  const [col, row] = plFromLL(ll);
+  if (col < 0 || row < 0 || col > pl.w || row > pl.h) { toast("That spot is off your map. Click on the map itself."); return; }
+  pl.pending = { col, row };
+  plRender();
+}
+function plClickToday(ll) {
+  if (!pl.pending) { toast("First click a spot on your map (left or top), then the same spot on today’s map."); return; }
+  pl.pairs.push({ col: pl.pending.col, row: pl.pending.row, lon: ll.lng, lat: ll.lat });
+  pl.pending = null;
+  plRender();
+}
+// A numbered pin; each pair has its own colour so the two halves of a pair are easy to match by eye.
+function plPin(n, pending = false) {
+  const el = document.createElement("div");
+  el.className = "pl-pin" + (pending ? " pending" : "");
+  el.style.setProperty("--pc", `hsl(${(n * 67) % 360} 65% 36%)`);
+  el.textContent = n;
+  return el;
+}
+function plFit() { return fitAffine(pl.pairs, pl.w, pl.h); }
+function plRender() {
+  const n = pl.pairs.length, fit = plFit();
+  pl.marks.forEach(m => m.remove()); pl.marks = [];
+  pl.pairs.forEach((p, i) => {
+    pl.marks.push(new maplibregl.Marker({ element: plPin(i + 1) }).setLngLat(plToLL(p.col, p.row)).addTo(pl.scan));
+    pl.marks.push(new maplibregl.Marker({ element: plPin(i + 1) }).setLngLat([p.lon, p.lat]).addTo(pl.today));
+  });
+  if (pl.pending) pl.marks.push(new maplibregl.Marker({ element: plPin(n + 1, true) }).setLngLat(plToLL(pl.pending.col, pl.pending.row)).addTo(pl.scan));
+  let step;
+  if (pl.pending) step = `<b>Spot ${n + 1}, step 2.</b> Now click the same spot on today’s map.`;
+  else if (n < 3) step = `<b>1.</b> Click a spot on your map. <b>2.</b> Click the same spot on today’s map. ${n ? `${n} matched, at least 3 needed. Spread them out.` : "Use corners, road crossings or bridges."}`;
+  else if (!fit) step = "Those spots are in a line or very close together. Add one further away from the others.";
+  else step = `Your map now lies over today’s map. Check the roads and rivers line up; drag the slider to compare. ${n >= 4 ? `Spots are off by about ${fit.rms < 10 ? "under 10" : Math.round(fit.rms)} m on average. ` : ""}Add more spots to improve it, then place the map.`;
+  $("#plStep").innerHTML = step;
+  $("#plScanPane").classList.toggle("want", !pl.pending);
+  $("#plTodayPane").classList.toggle("want", !!pl.pending);
+  $("#plPairs").innerHTML = pl.pairs.map((p, i) => `<li><span class="pl-pin sm" style="--pc:hsl(${((i + 1) * 67) % 360} 65% 36%)">${i + 1}</span>
+    <span class="mono">${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}</span>
+    <button class="round flat small" data-del="${i}" aria-label="Delete spot ${i + 1}">${icon.close}</button></li>`).join("");
+  $("#plUndo").disabled = !n && !pl.pending;
+  $("#plClear").disabled = !n && !pl.pending;
+  $("#plSave").disabled = !fit;
+  $("#plOp").disabled = !fit;
+  $("#plErr").textContent = "";
+  plDraw();
+}
+// The live preview: the scan's four corners at the fitted places, as an image layer over today's map.
+function plDraw() {
+  if (!pl?.todayReady) return;
+  const m = pl.today, fit = plFit();
+  if (!fit) { if (m.getLayer("pl-scan")) m.setLayoutProperty("pl-scan", "visibility", "none"); return; }
+  const coordinates = [fit.at(0, 0), fit.at(pl.w, 0), fit.at(pl.w, pl.h), fit.at(0, pl.h)];
+  if (!m.getSource("pl-scan")) {
+    m.addSource("pl-scan", { type: "image", url: pl.url, coordinates });
+    m.addLayer({ id: "pl-scan", type: "raster", source: "pl-scan", paint: { "raster-opacity": pl.opacity, "raster-fade-duration": 0 } });
+  } else { m.getSource("pl-scan").setCoordinates(coordinates); m.setLayoutProperty("pl-scan", "visibility", "visible"); }
+}
+async function plSave() {
+  const name = $("#plName").value.trim(), y = $("#plYear").value.trim(), year = y ? +y : null, err = $("#plErr");
+  if (!name) { err.textContent = "Give the map a name."; $("#plName").focus(); return; }
+  if (y && !(year >= 1800 && year <= 2100)) { err.textContent = "The year should be between 1800 and 2100, or empty."; $("#plYear").focus(); return; }
+  const cur = pl, btn = $("#plSave"), id = pl.entry.id;
+  btn.disabled = true; btn.textContent = "Placing…";
+  // col / row are pixels of the full-size picture, which is what the scan is laid out in here.
+  const points = pl.pairs.map(p => [Math.round(p.col * 10) / 10, Math.round(p.row * 10) / 10, +p.lon.toFixed(7), +p.lat.toFixed(7)]);
+  let lib;
+  try { lib = await api(`/api/library/custom/${encodeURIComponent(id)}/points`, { method: "POST", body: { points, title: name, year } }); }
+  catch (e) { if (pl === cur) { err.textContent = e.message; btn.textContent = "Place map"; btn.disabled = false; } return; }
+  applyLibrary(lib);
+  // The placement may have been closed (or another opened) while this was in flight; only close our own.
+  if (pl === cur) closePlacement();
+  toast(`${name} is being prepared. It will appear in Old maps.`, 5000);
+  if (pl) return; // another placement is open now; leave it alone
+  if (S.view.name !== "settings") openSettings(id); else { S.view.sel = id; settingsRefresh(true); }
+}
+
 // ================================================================ base map, theme
-function setBase(k) { S.base = k; store.set("base", k); applyBase(); renderMapbar(); }
+function setBase(k) { S.base = k; store.set("base", k); applyBase(); renderMapbar(); settingsRefresh(true); }
+// Shows the chosen base map on one map, tuned for the theme. Also used by the Placement screen's map of today.
+function setBasePaint(m) {
+  const dark = isDark();
+  for (const b of Object.keys(BASES)) {
+    m.setLayoutProperty(`base-${b}`, "visibility", b === S.base ? "visible" : "none");
+    // Dark street map: invert lightness and rotate hue back, so land is dark and water stays blue (like Apple Maps).
+    // Land ends up dark grey, not black, so the "Today" half of a comparison still reads.
+    const inv = dark && b === "osm";
+    m.setPaintProperty(`base-${b}`, "raster-brightness-min", inv ? 0.92 : 0);
+    m.setPaintProperty(`base-${b}`, "raster-brightness-max", inv ? 0.22 : dark ? 0.9 : 1);
+    m.setPaintProperty(`base-${b}`, "raster-hue-rotate", inv ? 180 : 0);
+    m.setPaintProperty(`base-${b}`, "raster-saturation", inv ? -0.55 : 0);
+    m.setPaintProperty(`base-${b}`, "raster-contrast", inv ? -0.1 : 0);
+  }
+}
 // Shows the chosen base map and retunes overlay colours for it and for the theme.
 function applyBase() {
   const dark = isDark(), sat = S.base === "sat";
   eachMap(m => {
-    for (const b of Object.keys(BASES)) {
-      m.setLayoutProperty(`base-${b}`, "visibility", b === S.base ? "visible" : "none");
-      // Dark street map: invert lightness and rotate hue back, so land is dark and water stays blue (like Apple Maps).
-      // Land ends up dark grey, not black, so the "Today" half of a comparison still reads.
-      const inv = dark && b === "osm";
-      m.setPaintProperty(`base-${b}`, "raster-brightness-min", inv ? 0.92 : 0);
-      m.setPaintProperty(`base-${b}`, "raster-brightness-max", inv ? 0.22 : dark ? 0.9 : 1);
-      m.setPaintProperty(`base-${b}`, "raster-hue-rotate", inv ? 180 : 0);
-      m.setPaintProperty(`base-${b}`, "raster-saturation", inv ? -0.55 : 0);
-      m.setPaintProperty(`base-${b}`, "raster-contrast", inv ? -0.1 : 0);
-    }
+    setBasePaint(m);
     // Ring halos: dark on imagery and in dark mode, light on the street map.
     const haloC = sat || dark ? "#000" : "#fff";
     for (const id of ["strike-ring-halo", "ev-ring-halo", "site-ring-halo"]) m.setPaintProperty(id, "circle-stroke-color", haloC);
@@ -3327,7 +3764,7 @@ function applyBase() {
 function setTheme(t) {
   store.set("theme", t);
   if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
-  applyBase(); applyEra();
+  applyBase(); applyEra(); settingsRefresh(true);
   if (!$("#popStyle").hidden) { renderStylePop(); $(`#popStyle [data-theme="${t}"]`)?.focus(); }
 }
 (function initTheme() { const t = store.get("theme", "auto"); if (t !== "auto") document.documentElement.dataset.theme = t; })();
@@ -3335,6 +3772,7 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { ap
 
 // ================================================================ keyboard
 document.addEventListener("keydown", e => {
+  if (placeOpen()) return; // the Placement screen has its own keys
   const typing = e.target.closest?.("input, textarea, select");
   if (e.key === "/" && !typing) { e.preventDefault(); q.focus(); q.select(); }
   else if (e.key === "Escape") {
@@ -3396,6 +3834,7 @@ function checkEmptyKinds() {
   $("#panelBtn").addEventListener("click", () => setPanelHidden(!S.panelHidden));
   $("#styleBtn").addEventListener("click", () => togglePopover("popStyle", $("#styleBtn")));
   $("#layersBtn").addEventListener("click", () => togglePopover("popLayers", $("#layersBtn")));
+  $("#settingsBtn").addEventListener("click", () => S.view.name === "settings" ? show("home") : openSettings());
   $("#mbCmp").addEventListener("click", () => setCompare(!S.compare));
   // With no old map on this computer, the picker button is the invitation to add some.
   $("#pickA").addEventListener("click", () => S.catalogLoaded && !S.eras.length ? openLibrary()

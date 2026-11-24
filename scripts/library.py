@@ -61,6 +61,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import catalog
+import custom_maps
 import download_maps
 import l7014_meta
 import morecantile
@@ -73,7 +74,7 @@ from PIL import Image
 from pyproj import Transformer
 
 REGIONS = ("north", "centre", "south")
-STATES = ("available", "queued", "downloading", "building", "installed", "failed")
+STATES = ("available", "queued", "downloading", "building", "installed", "failed", "needs_points")
 # Render resolution for each GeoPDF series (see build_tiles.py); others use its default.
 SERIES_DPI = {"jog1501": 300}
 # Disk space a map takes once installed, per byte downloaded, when its series in the catalogue
@@ -116,6 +117,7 @@ class Job:
     cancel: threading.Event = field(default_factory=threading.Event)
     proc: subprocess.Popen | None = None
     remove: bool = False
+    rebuild: bool = False  # build although tiles exist (a custom map placed again)
 
 
 def human_bytes(n):
@@ -192,6 +194,7 @@ class Library:
         self.raw = self.root / "data" / "raw"
         self.work = self.root / "data" / "work" / "maps"
         self.scans = self.app_root / "data" / "scans"
+        self.custom = custom_maps.CustomMaps(self.root)  # the user's own maps
         self.python = python or sys.executable
         self._python_given = python is not None
         self._lock = threading.RLock()
@@ -223,9 +226,14 @@ class Library:
             self._catalogue = (mtime, parsed)
         return self._catalogue[1]
 
-    def entries(self):
-        """{id: catalogue entry} for every map in the catalogue."""
+    def catalogue_entries(self):
+        """{id: entry} for the maps in the catalogue only."""
         return {m["id"]: m for m in self.catalogue().get("maps", [])}
+
+    def entries(self):
+        """{id: entry} for every map that can be listed: the catalogue's, then the user's own
+        (custom_maps.py), whose entries carry "custom": true."""
+        return {**self.catalogue_entries(), **{m["id"]: m for m in self.custom.entries()}}
 
     def entries_for(self, ids):
         """Catalogue entries for `ids`, in order; LibraryError naming any that are not listed."""
@@ -241,7 +249,7 @@ class Library:
             raise LibraryError(f"region must be one of {', '.join(REGIONS)}")
         return [
             m
-            for m in self.entries().values()
+            for m in self.catalogue_entries().values()
             if (area is None or overlaps(m["bounds"], area)) and (region is None or m.get("region") == region)
         ]
 
@@ -254,12 +262,29 @@ class Library:
         """Ids of every installed map, listed in the catalogue or not."""
         return catalog.installed_ids(self.tiles)
 
+    def raw_paths(self, entry):
+        """(the file the builder reads, [paths to delete when the map is removed]) for an entry:
+        a download of the catalogue's, or the folder of the user's own map."""
+        if entry.get("custom"):
+            return self.custom.build_input(entry), [self.custom.folder(entry["id"])]
+        return download_maps.raw_paths(entry, self.raw)
+
     def disk_bytes(self, map_id, entry=None):
         """Bytes a map takes on disk (tiles plus download), or None when it takes none."""
         n = path_bytes(self.tiles_path(map_id))
         if entry:
-            n += sum(path_bytes(p) for p in download_maps.raw_paths(entry, self.raw)[1])
+            n += sum(path_bytes(p) for p in self.raw_paths(entry)[1])
         return n or None
+
+    def disk_usage(self, records_db=None):
+        """{"maps", "records", "downloads", "total"} in bytes: installed maps (tiles and the
+        user's own uploads), the record database and what the record sources downloaded, and the
+        old maps' downloads kept for rebuilding."""
+        folders = {m["series"] for m in self.catalogue().get("maps", [])} | {"scans"}
+        downloads = sum(path_bytes(self.raw / name) for name in folders)
+        maps = path_bytes(self.tiles) + self.custom.disk_bytes()
+        records = path_bytes(records_db) + max(path_bytes(self.raw) - downloads, 0) if records_db else 0
+        return {"maps": maps, "records": records, "downloads": downloads, "total": maps + records + downloads}
 
     def log_path(self, map_id):
         """Where the last build of a map wrote what it printed."""
@@ -282,10 +307,11 @@ class Library:
         if not keep_log:
             attempt(self.log_path(map_id))
         if entry:
-            for p in download_maps.raw_paths(entry, self.raw)[1]:
+            for p in self.raw_paths(entry)[1]:
                 attempt(p)
                 attempt(p.with_name(p.name + ".part"))
-                prune_empty(p.parent, self.raw)
+                if not entry.get("custom"):
+                    prune_empty(p.parent, self.raw)
         if stuck:
             raise StillInUse() from stuck[0]
 
@@ -321,6 +347,7 @@ class Library:
                     tiles_dir=self.tiles,
                     catalogue=self.catalogue(),
                     scans_dir=self.scans,
+                    custom_dir=self.custom.root,
                     corrections=catalog.read_json(self.app_root / "data" / "maps.json", {}),
                 )
             finally:
@@ -347,8 +374,8 @@ class Library:
                 self._extents[map_id] = (mtime, catalog.parse_bounds(tiling.read_metadata(path).get("bounds")))
             if self._extents[map_id][1]:
                 return self._extents[map_id][1]
-        if entry.get("kind") != "geopdf" or not entry.get("bounds"):
-            return entry.get("bounds")  # scan bounds are fitted on WGS84 already
+        if entry.get("custom") or entry.get("kind") != "geopdf" or not entry.get("bounds"):
+            return entry.get("bounds")  # scan and own-map bounds are on WGS84 already
         mtime = self._catalogue[0]
         if self._outlines[0] != mtime:
             self._outlines = (mtime, {})
@@ -374,7 +401,9 @@ class Library:
                 job = self._jobs.get(map_id)
                 if job:
                     state, progress, error = job.state, job.progress, job.error
-                    if state == "queued":
+                    if entry.get("custom"):
+                        pass  # uploaded already: nothing to download
+                    elif state == "queued":
                         queue_bytes += entry.get("bytes") or 0
                     elif state == "downloading":
                         queue_bytes += round((entry.get("bytes") or 0) * (1 - (progress or 0)))
@@ -382,6 +411,8 @@ class Library:
                     state, progress, error = elsewhere["state"], None, None  # added from the command line
                 else:
                     state, progress, error = ("installed" if map_id in installed else "available"), None, None
+                    if entry.get("custom") and map_id not in installed:
+                        state, error = self.idle_custom_state(entry)
                 maps.append(
                     {
                         **entry,
@@ -421,9 +452,17 @@ class Library:
             return {
                 "maps": maps,
                 "queue_bytes": queue_bytes,
-                "series": self.catalogue().get("series", {}),
+                "series": {**self.catalogue().get("series", {}), custom_maps.SERIES: custom_maps.SERIES_INFO},
                 "legacy": self.legacy_status(),
             }
+
+    def idle_custom_state(self, entry):
+        """(state, error) of one of the user's own maps that is not installed and has no job: a
+        scan waits for its points; a map whose build never finished (the program was stopped
+        meanwhile) is shown as failed, so it can be tried again or removed."""
+        if not self.custom.buildable(entry):
+            return "needs_points", None
+        return "failed", "Making this map did not finish. Try again, or remove it and add it once more."
 
     def state_of(self, map_id):
         """The state name of one map."""
@@ -431,7 +470,10 @@ class Library:
             job = self._jobs.get(map_id)
             if job:
                 return job.state
-            return "installed" if self.tiles_path(map_id).exists() else "available"
+            if self.tiles_path(map_id).exists():
+                return "installed"
+            entry = self.custom.entry_path(map_id).exists() and self.custom.get(map_id)
+            return self.idle_custom_state(entry)[0] if entry else "available"
 
     # ---- changing it -----------------------------------------------------------------------
     def add(self, ids):
@@ -442,6 +484,8 @@ class Library:
         with self._lock:
             for entry in entries:
                 map_id = entry["id"]
+                if entry.get("custom") and not self.custom.buildable(entry):
+                    continue  # a scan that still needs its points
                 # Asking for a map again overrules an earlier removal of it.
                 self.cancel_path(map_id).unlink(missing_ok=True)
                 job = self._jobs.get(map_id)
@@ -452,6 +496,20 @@ class Library:
                 queued.append(map_id)
             self._wake.notify_all()
         return queued
+
+    def place_custom(self, map_id, points, title, year):
+        """Save the control points of one of the user's scans (custom_maps.save_points) and queue
+        its build, even if it is built already (placing it again rebuilds it). LibraryError if it
+        is being made right now; nothing is saved then."""
+        with self._lock:
+            job = self._jobs.get(map_id)
+            if job and job.state != "failed":
+                raise LibraryError("This map is being made right now. Wait until it is ready, then place it again.")
+            entry = self.custom.save_points(map_id, points, title, year)
+            self.cancel_path(map_id).unlink(missing_ok=True)
+            self._jobs[map_id] = Job(entry, rebuild=True)
+            self._queue.append(map_id)
+            self._wake.notify_all()
 
     def remove(self, ids):
         """Remove maps: stop them if queued or being added, delete their tiles and downloads,
@@ -625,7 +683,7 @@ class Library:
                     job.cancel.set()
                 if job.cancel.is_set():
                     raise download_maps.Cancelled()
-                if not self.tiles_path(map_id).exists():  # another process may have added it meanwhile
+                if job.rebuild or not self.tiles_path(map_id).exists():  # another process may have added it meanwhile
                     self.clean_leftovers()
                     finished = threading.Event()
                     threading.Thread(target=self._watch, args=(job, finished), daemon=True).start()
@@ -634,12 +692,21 @@ class Library:
                     except Exception:
                         if not job.cancel.is_set():
                             # Keep nothing but the log: trying again starts from a fresh download.
+                            # The user's own upload cannot be fetched again, so it stays.
                             with contextlib.suppress(StillInUse):  # the build's own error is the news
-                                self.delete_files(map_id, entry, keep_log=True)
+                                if entry.get("custom"):
+                                    tiles = self.tiles_path(map_id)
+                                    delete(tiles.with_name(tiles.name + tiling.PARTIAL_SUFFIX))
+                                else:
+                                    self.delete_files(map_id, entry, keep_log=True)
                         raise
                     finally:
                         finished.set()
                         self._mark_current(None)
+                    if entry.get("custom"):
+                        self.custom.record_built(
+                            map_id, catalog.parse_bounds(tiling.read_metadata(self.tiles_path(map_id)).get("bounds"))
+                        )
                     # The viewer reloads catalog.json as soon as it sees "installed": list the map first.
                     self.write_catalog()
             with self._lock:
@@ -675,6 +742,9 @@ class Library:
     def _download_and_build(self, job, report):
         """The two steps of adding a map; call only while holding exclusive()."""
         entry = job.entry
+        if entry.get("custom"):  # uploaded already: only the build is left
+            self._set(job, report, "building", 0.0)
+            return self._build(job, self.custom.build_input(entry), report)
         self._set(job, report, "downloading", 0.0)
         path, job.notes = download_maps.fetch_map(
             entry,
@@ -704,6 +774,8 @@ class Library:
 
     def build_command(self, entry, path, out):
         """The child process that builds `entry`'s tiles from its download `path` into `out`."""
+        if entry.get("custom"):
+            return self.custom_build_command(entry, path, out)
         if entry["kind"] == "scan":
             control = self.scans / f"{entry['id']}.json"
             if not control.exists():
@@ -718,6 +790,20 @@ class Library:
                 cmd += ["--frame-datum", FRAME_DATUM[entry["series"]]]
         dpi = SERIES_DPI.get(entry["series"])
         return cmd + (["--dpi", str(dpi)] if dpi else [])
+
+    def custom_build_command(self, entry, path, out):
+        """The child process that builds one of the user's own maps: a GeoTIFF with
+        build_geotiff.py, a GeoPDF with build_tiles.py, a placed scan with georef_scan.py."""
+        if entry["kind"] == "geotiff":
+            return self.script_command(
+                "build_geotiff.py", str(path), str(out), "--title", entry["title"], "--date", entry.get("date", "")
+            )
+        if entry["kind"] == "geopdf":
+            return self.script_command("build_tiles.py", str(path), str(out))
+        control = self.custom.control_path(entry["id"])
+        if not control.exists():
+            raise BuildError("This picture has not been placed on the map yet")
+        return self.script_command("georef_scan.py", str(control), str(out), "--image", str(path))
 
     def _build(self, job, path, report):
         """Run the builder for a job, following its progress lines; raise BuildError on failure.
@@ -824,6 +910,7 @@ class Library:
             if not free:
                 return []
             ids = self.clean_leftovers()
+            self.custom.clean_incoming()
         entries = self.entries()
         interrupted = sorted(i for i in ids if i in entries and not self.tiles_path(i).exists())
         with self._lock:

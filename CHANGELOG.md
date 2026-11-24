@@ -2,14 +2,30 @@
 
 Notable changes to Map Vietnam. Versions follow [semantic versioning](https://semver.org).
 
-## Unreleased
+## 0.1.1 - 2026-11-24
 
-Fixes after 0.1.0
+Your own maps
+- **Settings › My maps › Add your own map** takes a file from your computer. A GeoTIFF or a
+  georeferenced PDF is placed for you; a scan or photo (JPG, PNG, TIFF or PDF) is placed on a
+  new screen where you click a spot on your map, then the same spot on today's map. From three
+  pairs it previews your map over today's, with how far off the spots are and a see-through slider.
+  Your maps show, swipe and fade like the library's, labelled "Your map", and can be renamed,
+  placed again or removed. The uploaded file is kept on this computer only
+
+Settings
+- A **Settings** panel (the gear button, or Settings at the foot of the side panel): today's map,
+  appearance, old map outlines, the Kaggle key, your own maps, and where your data is kept and how
+  much space it takes
 - Adding maps no longer tints the whole area amber: sheets are outlined, and only the one pointed
   at or chosen is shaded. The outlines can be hidden (**Outlines: Hide** in the Old maps card)
-- The map style button is now **Map style and settings**: base map, appearance, the outline
-  setting, and the Kaggle key, which can be added or forgotten at any time (the air strikes row
-  offers it too) instead of only after Kaggle refuses a download
+- The Kaggle key can be added or forgotten at any time (Settings, or the air strikes row) instead
+  of only after Kaggle refuses a download
+
+Downloads
+- The Mac download is a `.dmg`: open it and drag Map Vietnam onto Applications. The README has
+  step-by-step first-open instructions for macOS 15 and newer
+
+## 0.1.0 - 2026-11-24
 
 Everything is done from the map
 - `python3 start.py` now asks nothing and downloads nothing except its private Python add-ons.

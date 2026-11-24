@@ -15,6 +15,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = [
+    "scripts/build_geotiff.py",
     "scripts/build_tiles.py",
     "scripts/catalog.py",
     "scripts/compare_overlay.py",

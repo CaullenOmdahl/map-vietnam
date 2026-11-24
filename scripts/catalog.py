@@ -6,7 +6,9 @@ are never listed). The facts shown for it come from, later sources winning:
   2. the MBTiles metadata written when the map was built: extent, zoom range, and for GeoPDF
      sheets the edition date and datum printed in the PDF;
   3. for scans, the hand-written "meta" block of data/scans/<id>.json;
-  4. hand corrections in data/maps.json: {"<id>": {"overrides": {"date": "1966", ...}}}.
+  4. for the user's own maps (ids custom_*), their map.json under data/custom_maps/<id>/: title,
+     year and the credit "Your own map";
+  5. hand corrections in data/maps.json: {"<id>": {"overrides": {"date": "1966", ...}}}.
 Layers are sorted oldest first, undated last. scripts/library.py rewrites the file after every
 install and removal; run this by hand only after editing one of the inputs.
 
@@ -110,8 +112,24 @@ def layer(layer_id, meta, entry, series, scan_meta, corrections):
     return out
 
 
-def build_catalog(tiles_dir=None, catalogue=None, scans_dir=None, corrections=None):
-    """{"layers": [...]} for every installed map. `catalogue` is the parsed map library file."""
+def custom_layer(layer, own):
+    """`layer` with the facts the user gave their own map (its map.json entry `own`)."""
+    layer.update(
+        title=own.get("title") or layer["title"],
+        series="Your own maps",
+        seriesId="custom",
+        scale="",
+        date=str(own.get("year") or ""),
+        dateNote="",
+        source="",
+        attribution="Your own map",
+    )
+    return layer
+
+
+def build_catalog(tiles_dir=None, catalogue=None, scans_dir=None, corrections=None, custom_dir=None):
+    """{"layers": [...]} for every installed map. `catalogue` is the parsed map library file;
+    `custom_dir` holds the user's own maps (data/custom_maps), if the caller has any."""
     tiles_dir = tiles_dir or TILES
     catalogue = catalogue if catalogue is not None else read_json(CATALOGUE, {})
     scans_dir = scans_dir or SCANS
@@ -123,7 +141,13 @@ def build_catalog(tiles_dir=None, catalogue=None, scans_dir=None, corrections=No
         entry = entries.get(layer_id, {})
         scan_meta = read_json(scans_dir / f"{layer_id}.json", {}).get("meta", {})
         meta = read_metadata(tiles_dir / f"{layer_id}{MBTILES}")
-        layers.append(layer(layer_id, meta, entry, series.get(entry.get("series"), {}), scan_meta, corrections))
+        built = layer(layer_id, meta, entry, series.get(entry.get("series"), {}), scan_meta, corrections)
+        own = (
+            read_json(custom_dir / layer_id / "map.json", None)
+            if custom_dir and layer_id.startswith("custom_")
+            else None
+        )
+        layers.append(custom_layer(built, own) if own else built)
     layers.sort(key=lambda layer: (layer["date"] == "", layer["date"], layer["id"]))
     return {"layers": layers}
 
