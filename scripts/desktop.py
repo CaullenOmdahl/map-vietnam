@@ -4,7 +4,7 @@
 Nobody sees a browser, a terminal or an address bar.
 
     python scripts/desktop.py                  open the window (start.py does this for you)
-    python scripts/desktop.py --no-window      only serve, and print the address (tests, CI smoke checks)
+    python scripts/desktop.py --no-window      only serve, and print the address (tests, smoke checks)
     python scripts/desktop.py --port 9000      choose the port on 127.0.0.1 (default: any free one)
     python scripts/desktop.py --run-script S   run scripts/S as `python S` would; the packaged app
                                                starts its child jobs this way (see paths.py)

@@ -160,7 +160,7 @@ Background maps shown under the old maps (fetched at run time)
 Bundled in the installers
 =========================
 
-The installers and the Linux archive (built by .github/workflows/release.yml from
+The installers and the Linux archive (built by packaging/build.sh from
 packaging/map-vietnam.spec) carry third-party software next to the app, in the program folder
 (for example "Map Vietnam/_internal" on Linux). Running from a source checkout installs the same
 packages with pip instead, from requirements.txt and requirements-qt.txt. The licence files of the
@@ -231,14 +231,15 @@ licence, kept with the package that brought it:
   libaec (BSD 2-Clause), LERC (Apache-2.0), HDF5 and netCDF (BSD-style), json-c (MIT), PCRE2
   (BSD 3-Clause), SQLite (public domain), OpenSSL 3 (Apache-2.0), libcurl (curl licence), nghttp2
   (MIT), libxcb and the other X11 libraries (MIT). On Linux, PyInstaller also copies the shared
-  libraries Qt links to from the build image (for example GLib, GTK, Cairo, Pango, libxkbcommon,
-  ALSA, NSS/NSPR, Kerberos, GnuTLS); most are LGPL, and the system's own copies are the source.
+  libraries Qt links to from the build image, Ubuntu 22.04 (GLib and GIO, libxkbcommon, libxkbfile,
+  ALSA, NSS, Kerberos); GLib and ALSA's library are LGPL, the others MIT, MPL 2.0 or MIT-style,
+  and Ubuntu's source packages are their source.
 
 Building
   PyInstaller (GPL v2 or later, with an exception that allows bundling programs under any licence;
   its bootloader is included in the app): https://github.com/pyinstaller/pyinstaller
-  Inno Setup (the Windows installer's tool; its setup programs may be distributed freely):
-  https://jrsoftware.org/isinfo.php
+  NSIS, the Nullsoft Scriptable Install System (zlib/libpng licence; its installer code is part of
+  the Windows Setup.exe and Uninstall.exe): https://nsis.sourceforge.io
 
 Icons
   The app icons in packaging/icons (map-vietnam.png, .ico and .icns, made by

@@ -42,10 +42,17 @@ def test_the_icon_generator_is_reproducible(tmp_path, monkeypatch):
 
 
 def test_the_installer_wants_its_version_from_the_caller():
-    script = (PACKAGING / "windows" / "map-vietnam.iss").read_text(encoding="utf-8")
-    assert "#ifndef AppVersion" in script and "{#AppVersion}" in script
-    assert "PrivilegesRequired=lowest" in script
-    assert "{localappdata}\\Programs" in script
+    script = (PACKAGING / "windows" / "map-vietnam.nsi").read_text(encoding="utf-8")
+    assert "!ifndef VERSION" in script and "${VERSION}" in script
+    assert "RequestExecutionLevel user" in script
+    assert "$LOCALAPPDATA\\Programs" in script
+
+
+def test_the_uninstaller_removes_only_its_own_files():
+    script = (PACKAGING / "windows" / "map-vietnam.nsi").read_text(encoding="utf-8")
+    uninstall = script[script.index('Section "Uninstall"') :]
+    assert 'RMDir /r "$INSTDIR"' not in uninstall  # never the whole chosen folder
+    assert "/SD IDNO" in uninstall  # a silent uninstall keeps the person's maps and records
 
 
 @pytest.mark.parametrize("name", ["map-vietnam.png", "map-vietnam.ico", "map-vietnam.icns"])
