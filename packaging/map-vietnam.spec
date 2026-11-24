@@ -171,6 +171,11 @@ a = Analysis(
     excludes=excludes,
     noarchive=False,
 )
+# PySide6-Addons also carries Qt Virtual Keyboard, which Qt licenses under GPL v3 or commercial only,
+# not the LGPL. Nothing here uses it, so drop its libraries and input-context plugin from the bundle.
+GPL_ONLY_QT = ("virtualkeyboard",)
+a.binaries = [b for b in a.binaries if not any(w in b[0].lower() for w in GPL_ONLY_QT)]
+a.datas = [d for d in a.datas if not any(w in d[0].lower() for w in GPL_ONLY_QT)]
 pyz = PYZ(a.pure)
 
 exe = EXE(

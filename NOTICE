@@ -172,8 +172,9 @@ Python, windowing
   CPython 3.12 (the interpreter and standard library): Python Software Foundation License
   (https://docs.python.org/3/license.html). Source: https://www.python.org/downloads/source/
   pywebview: BSD 3-Clause. Source: https://github.com/r0x0r/pywebview
-  bottle and proxy_tools (pywebview's helpers): MIT and BSD. Sources: https://github.com/bottlepy/bottle,
-  https://pypi.org/project/proxy_tools/
+  bottle (pywebview's helper): MIT. Source: https://github.com/bottlepy/bottle
+  proxy_tools (pywebview's helper, by Jonathan Tushman): MIT, as its package metadata states; the
+  package carries no licence file. Source: https://github.com/jtushman/proxy_tools
   pythonnet and clr_loader (Windows only, pywebview's link to the .NET window): MIT.
   Source: https://github.com/pythonnet/pythonnet, https://github.com/pythonnet/clr-loader
   (The Windows app shows its page in Microsoft's WebView2 runtime, which is part of Windows or
@@ -185,7 +186,10 @@ Qt (Linux only)
   QtWebChannel, QtWebEngine): GNU Lesser General Public License v3 (texts in licenses/qt/; the
   LGPL is written as additions to the GPL v3, so both are given). Qt WebEngine is built on Chromium
   and bundles its own third-party parts, each under its licence, listed by The Qt Company at
-  https://doc.qt.io/qt-6/qtwebengine-attribution.html.
+  https://doc.qt.io/qt-6/qtwebengine-attribution.html. The PySide6 and Shiboken6 packages
+  (copyright The Qt Company Ltd.) carry no licence file of their own, only the licence name
+  (LGPL v3, GPL v2 or GPL v3, at the user's choice; this app uses the LGPL v3). Qt's modules that
+  are GPL v3 or commercial only, such as Qt Virtual Keyboard, are removed from the build by the spec.
   QtPy (the layer between pywebview and Qt): MIT.
   Source: Qt and PySide6 source code is at https://download.qt.io/official_releases/ (PySide6 at
   https://code.qt.io/cgit/pyside/pyside-setup.git/) and https://github.com/qtproject.
