@@ -20,10 +20,10 @@ and confirm. You only do this once. If macOS says the app is damaged, run
 ## The Linux app does not open a window
 
 Unpack the `.tar.gz` and run `Map Vietnam/Map Vietnam`. It is built on Ubuntu 22.04, so it needs
-glibc 2.35 or newer (Ubuntu 22.04, Debian 12 and later; older systems will not start it). It needs a desktop session and the usual
-graphics libraries (on Debian or Ubuntu: `sudo apt install libxcb-cursor0 libnss3 libxkbcommon-x11-0`).
-Without a window it opens the map in your browser instead (see
-[below](#the-map-opens-in-my-browser-instead-of-its-own-window)).
+glibc 2.35 or newer (Ubuntu 22.04, Debian 12 and later; older systems will not start it). It needs a
+desktop session and the usual graphics libraries (on Debian or Ubuntu:
+`sudo apt install libxcb-cursor0 libnss3 libxkbcommon-x11-0`). Without a window it opens the map in your browser
+instead (see [below](#the-map-opens-in-my-browser-instead-of-its-own-window)).
 
 ## "Port 8765 is in use"
 
@@ -33,45 +33,45 @@ prints the address to open. To choose one yourself, run `python3 start.py serve 
 
 ## "Map Vietnam needs Python … or newer"
 
-This is for running from source; the installed app carries its own Python. Install the latest
-Python from [python.org/downloads](https://www.python.org/downloads/) and start again. To see which version you have, type `python3 --version` in a terminal. On a Mac, the
-`.command` file uses the newest Python it finds, and on Windows the `.bat` file looks for the `py`
-launcher first, then `python`.
+This is for running from source; the installed app carries its own Python. Install the latest Python
+from [python.org/downloads](https://www.python.org/downloads/) and start again. To see which version
+you have, type `python3 --version` in a terminal. On a Mac, the `.command` file uses the newest
+Python it finds, and on Windows the `.bat` file looks for the `py` launcher first, then `python`.
 
 ## "Installing the Python add-ons failed"
 
-From source only; the installed app has its add-ons built in. Check your internet connection and start again; what was already downloaded is kept. Behind a
-proxy, set the `HTTPS_PROXY` environment variable (for example `https://proxy.example:8080`)
-before starting. On a Mac older than macOS 15 the map tools won't
-install, so update macOS first.
+From source only; the installed app has its add-ons built in. Check your internet connection and
+start again; what was already downloaded is kept. Behind a proxy, set the `HTTPS_PROXY` environment
+variable (for example `https://proxy.example:8080`) before starting. On a Mac older than macOS 15
+the map tools won't install, so update macOS first.
 
 ## macOS won't open the .command file
 
-From source only. It came from the internet, so macOS wants you to say it's all right. When it says "Apple could
-not verify...", click **Done**, open **System Settings > Privacy & Security**, scroll down and
-click **Open Anyway** next to the file's name, then confirm. You only have to do this once. (On
-macOS 14 and older, right-clicking the file and choosing **Open** did the same, but the map tools
-need macOS 15.) Or skip the file: open Terminal in the folder and run `python3 start.py`.
+From source only. It came from the internet, so macOS wants you to say it's all right. When it says
+"Apple could not verify...", click **Done**, open **System Settings > Privacy & Security**, scroll
+down and click **Open Anyway** next to the file's name, then confirm. You only have to do this once.
+(On macOS 14 and older, right-clicking the file and choosing **Open** did the same, but the map
+tools need macOS 15.) Or skip the file: open Terminal in the folder and run `python3 start.py`.
 
 ## "Could not make the Python environment" (Linux)
 
-From source only. Debian and Ubuntu ship Python without its environment maker. Run `sudo apt install python3-venv`
-(or `python3.12-venv` if you installed Python 3.12 separately) and start again.
+From source only. Debian and Ubuntu ship Python without its environment maker. Run
+`sudo apt install python3-venv` (or `python3.12-venv` if you installed Python 3.12 separately) and start again.
 
 ## "The Python environment in .venv was not finished"
 
-From source only. An earlier start was stopped part-way. The half-made folder has been removed; start again and it
-is made afresh.
+From source only. An earlier start was stopped part-way. The half-made folder has been removed;
+start again and it is made afresh.
 
 ## Windows: the `.bat` file says Python was not found, or the window closes
 
-From source only; the installed app needs no Python. Double-click **Start Map Vietnam.bat**. If it says no Python 3.12 or newer was found, install it
-from [python.org/downloads](https://www.python.org/downloads/) and tick **Add python.exe to
-PATH**, then double-click it again. Typing `python` in a terminal can open the Microsoft Store
-instead of running Python; the `.bat` file avoids that by using the `py` launcher that the
-installer adds (`py start.py` in a terminal). If Windows says "Windows protected your PC", click
-**More info**, then **Run anyway**. The window stays open when something goes wrong, so you can
-read the message.
+From source only; the installed app needs no Python. Double-click **Start Map Vietnam.bat**. If it
+says no Python 3.12 or newer was found, install it from
+[python.org/downloads](https://www.python.org/downloads/) and tick **Add python.exe to PATH**, then
+double-click it again. Typing `python` in a terminal can open the Microsoft Store instead of running
+Python; the `.bat` file avoids that by using the `py` launcher that the installer adds
+(`py start.py` in a terminal). If Windows says "Windows protected your PC", click **More info**, then
+**Run anyway**. The window stays open when something goes wrong, so you can read the message.
 
 ## The map opens in my browser instead of its own window
 

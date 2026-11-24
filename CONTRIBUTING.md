@@ -82,8 +82,8 @@ docs/                       user guide, troubleshooting, how it works, data sour
 packaged app (see [docs/guide.md](docs/guide.md#disk-space-backups-and-starting-over)); otherwise
 the checkout. Use these, not paths relative to the working folder.
 
-Downloads go to `data/raw/`, intermediate files to `data/work/`, records to
-`data/evidence.sqlite` and the maps a person added to `web/tiles/` (all under `DATA_ROOT`). All of these are kept out of
+Downloads go to `data/raw/`, intermediate files to `data/work/`, records to `data/evidence.sqlite`
+and the maps a person added to `web/tiles/` (all under `DATA_ROOT`). All of these are kept out of
 git: records and maps are downloaded again when someone adds them again.
 
 ## Building the desktop app
@@ -145,9 +145,9 @@ Every map that can be added is listed in `data/sources/map_library.json`, which
   charts): `scripts/sheet_lists.py` lists the sheets in `data/sources/sheets.json`, and
   `scripts/place_sheets.py` places each from its printed graticule and writes
   `data/scans/<id>.json`. The catalogue includes only sheets that have such a file.
-- **A single scanned map:** add an entry to the `scans` list in `data/sources/maps.json` (the script copies
-  it into the catalogue), write `data/scans/<id>.json` with at least three control points (pixel
-  to longitude and latitude) and the map's title, date and source.
+- **A single scanned map:** add an entry to the `scans` list in `data/sources/maps.json` (the script
+  copies it into the catalogue), write `data/scans/<id>.json` with at least three control points
+  (pixel to longitude and latitude) and the map's title, date and source.
 
 Then regenerate the catalogue with `.venv/bin/python scripts/map_library_catalogue.py` and add the
 map with `python3 start.py maps add <id>`. To rebuild a map that is already added,

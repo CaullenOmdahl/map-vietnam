@@ -15,9 +15,10 @@ Everything is done from the map
 
 Installers
 - A Windows installer (per user, no administrator needed), a Linux `.tar.gz` and an unsigned macOS
-  `.zip` are built by `.github/workflows/release.yml` for every version tag, from `packaging/`.
-  The installed app keeps what it downloads in a per-user data folder, kept when you update and
-  asked about when you uninstall; `MAPVIETNAM_HOME` moves it. None is code-signed; docs/troubleshooting.md explains SmartScreen and macOS' first-open step
+  `.zip` are built by `.github/workflows/release.yml` for every version tag, from `packaging/`. The
+  installed app keeps what it downloads in a per-user data folder, kept when you update and asked
+  about when you uninstall; `MAPVIETNAM_HOME` moves it. None is code-signed; docs/troubleshooting.md
+  explains SmartScreen and macOS' first-open step
 
 Its own window
 - Map Vietnam now opens in its own window instead of a browser tab (`scripts/desktop.py`, using

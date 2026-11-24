@@ -60,9 +60,9 @@ deleted. You can add it again later.
 
 ## Doing it from a terminal
 
-None of this is needed, but everything above can be scripted. Run these in the Map Vietnam
-folder. On Windows, type `py` instead of `python3`. `setup` and `maps add` ask before they
-download; add `--yes` to skip the question.
+None of this is needed, but everything above can be scripted. This is for running from source: the
+installed app has no `start.py`. Run these in the source folder. On Windows, type `py` instead of
+`python3`. `setup` and `maps add` ask before they download; add `--yes` to skip the question.
 
 ```sh
 python3 start.py setup                                    # add the standard records
@@ -215,6 +215,9 @@ To uninstall:
 - macOS: delete **Map Vietnam** from Applications, then the data folder.
 - Linux: delete the folder you unpacked, then the data folder.
 
+If you saved a Kaggle key with Kaggle's own tools, it is in `~/.kaggle/kaggle.json`, outside the
+data folder. Delete it too if you no longer want it.
+
 ### Running from source
 
 The same files live inside the checkout, and the program adds `.venv/`, its private Python and
@@ -231,17 +234,20 @@ To back up your cases, stop the map (Control-C, or **Quit Map Vietnam**) and cop
 `data/evidence.sqlite`. To uninstall, delete the folder (and `~/.kaggle/kaggle.json` if you put a
 Kaggle key there and no longer want it).
 
-## Other options
+## Other options (from source)
 
-`python3 start.py` never asks a question. `--no-window` (or `--no-browser`) doesn't open the map's window: it only serves the map and prints its address, for a browser or a script. `--port`
-picks another port. `python3 start.py serve` does the same as no command. `python3 start.py --help`
-lists everything. Options for adding records (`--yes`, `--only`, `--skip`, `--area`, `--refresh`) given without a command run `setup`.
+`python3 start.py` never asks a question. `--no-window` (or `--no-browser`) doesn't open the map's
+window: it only serves the map and prints its address, for a browser or a script. `--port` picks
+another port. `python3 start.py serve` does the same as no command. `python3 start.py --help` lists
+everything. Options for adding records (`--yes`, `--only`, `--skip`, `--area`, `--refresh`) given
+without a command run `setup`.
 
 ## What goes over the internet
 
-The map is served to your own machine only (`127.0.0.1`), so nobody else on your network can
-open it. Your cases and notes live in `data/evidence.sqlite`. They are never sent anywhere, and
-neither are your searches.
+The map is served to your own machine only (`127.0.0.1`), so nobody else on your network can open
+it. Your cases and notes live in `data/evidence.sqlite` in your
+[data folder](#disk-space-backups-and-starting-over). They are never sent anywhere, and neither
+are your searches.
 
 Each record source is downloaded from its publisher when you add it, and each old map from its
 archive. While you use the map, the page also loads background tiles for today's
