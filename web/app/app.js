@@ -2049,8 +2049,10 @@ function addFootprintLayers(m) {
   const isOn = k => ["boolean", ["feature-state", k], false];
   m.addLayer({ id: "libfp-fill", type: "fill", source: "libfp", layout: none, paint: {
     "fill-color": ["match", ["get", "st"], "installed", c.installed, "busy", c.busy, c.available],
-    // Fills stay faint so the map under them reads; available sheets get just enough to be tappable-looking.
-    "fill-opacity": ["case", isOn("sel"), 0.22, isOn("hover"), 0.14, ["match", ["get", "st"], "installed", 0.1, "busy", 0.12, 0.03]] } });
+    // Only the sheet pointed at or chosen is tinted: tinting every added or adding sheet turned a whole area
+    // amber while it downloaded. The outlines say which are added and which are adding. The fill stays (at 0)
+    // because it is what a click or hover hits (footprintAt).
+    "fill-opacity": ["case", isOn("sel"), 0.22, isOn("hover"), 0.14, 0] } });
   m.addLayer({ id: "libfp-halo", type: "line", source: "libfp", layout: none, paint: { "line-color": c.halo, "line-width": 3, "line-opacity": 0.4 } });
   // Overview (1:250,000) sheets get a heavier dash than the 1:50,000 ones, so the two series read apart.
   m.addLayer({ id: "libfp-line-av", type: "line", source: "libfp", layout: none, filter: ["in", ["get", "st"], ["literal", ["available", "failed"]]],
@@ -2108,7 +2110,7 @@ const libOutlinesShown = (md = libModel()) => md.shown.filter(m => m.state !== "
 // The scale chips and the filter field filter the footprints as well as the list.
 function applyFootprintFilter() {
   const lib = S.view.name === "library";
-  const few = lib && libOutlinesShown();
+  const few = lib && libOutlinesShown(), lines = outlinesOn();
   const kind = lib && S.view.kind && S.view.kind !== "all" ? S.view.kind : null;
   const words = lib ? fold(S.view.q || "").split(/\s+/).filter(Boolean) : [];
   const parts = [];
@@ -2118,12 +2120,22 @@ function applyFootprintFilter() {
   eachMap(m => {
     if (!m.getLayer("libfp-fill")) return;
     const mine = ["in", ["get", "st"], ["literal", ["installed", "busy"]]];
-    const shown = few ? sf : ["all", sf, mine];
-    for (const id of ["libfp-fill", "libfp-halo", "libfp-label"]) m.setFilter(id, shown);
+    const shown = few ? sf : ["all", sf, mine], nothing = ["==", ["get", "st"], "none"];
+    m.setFilter("libfp-fill", shown);
+    for (const id of ["libfp-halo", "libfp-label"]) m.setFilter(id, lines ? shown : nothing);
     m.setFilter("libfp-sel", sf);
-    m.setFilter("libfp-line-av", few ? ["all", ["in", ["get", "st"], ["literal", ["available", "failed"]]], sf] : ["==", ["get", "st"], "none"]);
-    m.setFilter("libfp-line-in", ["all", ["in", ["get", "st"], ["literal", ["installed", "busy"]]], sf]);
+    m.setFilter("libfp-line-av", lines && few ? ["all", ["in", ["get", "st"], ["literal", ["available", "failed"]]], sf] : nothing);
+    m.setFilter("libfp-line-in", lines ? ["all", ["in", ["get", "st"], ["literal", ["installed", "busy"]]], sf] : nothing);
   });
+}
+// Settings: whether the sheet outlines are drawn while the Old maps card is open (the sheet pointed at or chosen is
+// outlined either way, so the map and the list still match).
+const outlinesOn = () => store.get("outlines", true) !== false;
+function setOutlines(on) {
+  store.set("outlines", on);
+  applyFootprintFilter();
+  if (S.view.name === "library") libRefreshView(true);
+  if (!$("#popStyle").hidden) { renderStylePop(); $(`#popStyle [data-act="outlines"][data-on="${on ? 1 : 0}"]`)?.focus(); }
 }
 const fpState = { sel: null, hover: null };
 function setFpState(key, id, force = false) {
@@ -2373,6 +2385,7 @@ VIEWS.library = v => {
       ${md.kinds.length > 1 ? `<div class="seg lib-seg" role="group" aria-label="Show maps of one scale">${chip("all", "All", null)}${md.kinds.map(x => chip(x.k, x.label, x.n)).join("")}</div>` : ""}
       ${n > 1 ? `<div class="lib-sort" role="group" aria-label="Order of the list"><span class="small-t muted">Order</span>
         ${LIB_SORTS.map(([k, label]) => `<button class="linkish small-t" data-act="libSort" data-s="${k}" aria-pressed="${md.sort === k}">${k === "here" && typed ? "Nearest" : label}</button>`).join("")}</div>` : ""}
+      ${outlinesSeg("lib-sort")}
     </div>
     ${busy.length ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span>
       <span class="grow"><b>Adding ${busy.length} map${busy.length === 1 ? "" : "s"}</b><span class="small-t muted" data-lib-left>${esc(leftText())}</span></span>
@@ -2651,8 +2664,8 @@ function recControl(s) {
 }
 // How to get a Kaggle key and where to put it. The file is read here in the browser; only the user name and key
 // in it are sent on to the local server, which saves them on this computer.
-const keyBox = () => `<div class="confirm-box calm key-box">
-    <b>${keyAskWords()}</b>
+const keyBox = (asked = true) => `<div class="confirm-box calm key-box">
+    <b>${asked ? keyAskWords() : "Add your Kaggle key"}</b>
     <ol class="steps"><li>Sign in at <a href="https://www.kaggle.com/settings" target="_blank" rel="noopener">kaggle.com</a>. An account is free.</li>
       <li>Open Settings and, under API, click “Create Legacy API Key”. A file called kaggle.json is downloaded.</li>
       <li>Choose that file here.</li></ol>
@@ -2661,9 +2674,10 @@ const keyBox = () => `<div class="confirm-box calm key-box">
       <form id="keyForm" class="stack" autocomplete="off">
         <label class="field"><span>Kaggle user name</span><input type="text" name="username" required autocapitalize="none" spellcheck="false"></label>
         <label class="field"><span>Key</span><input type="password" class="txt" name="key" required autocomplete="off"></label>
-        <div class="row"><button class="btn small primary" type="submit">Save and add the air strikes</button></div></form></details>
+        <div class="row"><button class="btn small primary" type="submit">${asked ? "Save and add the air strikes" : "Save the key"}</button></div></form></details>
     <div class="err" id="keyErr" role="alert"></div>
-    <p class="muted small-t">The key is saved on this computer and is only ever sent to Kaggle.${S.rec.key.present && S.rec.key.source === "env file" ? ` <button class="linkish" data-act="recKeyForget">Forget the saved key</button>` : ""}</p></div>`;
+    <p class="muted small-t">The key is saved on this computer and is only ever sent to Kaggle.${S.rec.key.present && S.rec.key.source === "env file" ? ` <button class="linkish" data-act="recKeyForget">Forget the saved key</button>` : ""}</p>
+    ${asked ? "" : `<div class="row"><button class="btn small" data-act="recAskCancel">Cancel</button></div>`}</div>`;
 // The opened row: what the source is, what it costs or holds, and every action on it.
 function recDetail(s) {
   const t = esc(s.title), id = esc(s.id), ask = S.view.ask, busy = REC_BUSY.has(s.state);
@@ -2673,6 +2687,7 @@ function recDetail(s) {
   const also = s.state !== "added" && s.also_adds.length ? `Adding it also adds ${listWords(s.also_adds.map(x => `“${esc(x.title)}”`))}, which it is made from.` : "";
   let box = "";
   if (s.id === "thor" && s.wants_key && s.state === "failed") box = keyBox();
+  else if (ask === "key:" + s.id) box = keyBox(false);
   else if (ask === "area:" + s.id) box = `<div class="confirm-box calm" role="group" aria-label="Choose the area for the air strikes">
       <span>Air strikes are added for one area at a time, up to ${fmtInt(s.area_choice.max_records)} strikes. Move and zoom the map until it shows the area you want.</span>
       <span class="muted" data-rec-area>${esc(strikeAreaWords())}</span>
@@ -2695,7 +2710,9 @@ function recDetail(s) {
       <button class="btn small danger" data-act="recAskRemove" data-id="${id}">${icon.trash}Remove</button>`;
   else if (s.state === "failed") acts = `<button class="btn small" data-act="recDismiss" data-id="${id}">${s.wants_key ? "Not now" : "Dismiss"}</button>`;
   const savedKey = s.id === "thor" && S.rec.key.present && S.rec.key.source === "env file" && !(s.wants_key && s.state === "failed")
-    ? `<p class="muted">A Kaggle key is saved on this computer. <button class="linkish" data-act="recKeyForget">Forget it</button></p>` : "";
+    ? `<p class="muted">A Kaggle key is saved on this computer. <button class="linkish" data-act="recKeyForget">Forget it</button></p>`
+    : s.id === "thor" && !S.rec.key.present && !s.wants_key && ask !== "key:thor"
+      ? `<p class="muted">Kaggle may ask for a free key. <button class="linkish" data-act="recAskKey">Add a Kaggle key</button></p>` : "";
   return `<div class="lib-detail" id="recd-${id}">
     <p>${esc(s.description)}</p>
     ${area}
@@ -2758,6 +2775,7 @@ async function saveKey(username, key, err) {
   catch (e) { return err(e.message); }
   const thor = S.rec.byId.get("thor");
   toast("Key saved on this computer");
+  if (S.view.name === "records" && S.view.ask === "key:thor") { S.view.ask = null; rerenderKeepingFocus(); }
   if (thor && thor.state === "failed") recAdd(["thor"], thor.options ? { options: { thor: thor.options } } : {});
 }
 function recSelect(id) {
@@ -2810,8 +2828,10 @@ ACTIONS.recFitArea = () => {
   primary().fitBounds([[a[0], a[1]], [a[2], a[3]]], { padding: mapPadding(), duration: reduceMotion ? 0 : 600 });
 };
 ACTIONS.recKeyPick = () => $("#keyFile")?.click();
+ACTIONS.recAskKey = () => { closePopovers(); recAsk("thor", "key"); };
+ACTIONS.outlines = el => setOutlines(el.dataset.on === "1");
 ACTIONS.recKeyForget = async () => {
-  try { applyRecords(await api("/api/records/key", { method: "DELETE" })); toast("The key was removed from this computer"); }
+  try { applyRecords(await api("/api/records/key", { method: "DELETE" })); toast("The key was removed from this computer"); if (!$("#popStyle").hidden) renderStylePop(); }
   catch (e) { toast("Could not remove the key: " + e.message, 5000); }
 };
 
@@ -3212,12 +3232,27 @@ function togglePopover(id, anchor) {
   if (id === "popLayers") renderLayersPop();
   openPopover(id, anchor);
 }
+// The Show/Hide pair for the sheet outlines, in the Old maps card and in settings.
+function outlinesSeg(cls) {
+  const on = outlinesOn(), b = (v, label) => `<button class="${cls === "lib-sort" ? "linkish small-t" : ""}" data-act="outlines" data-on="${v}" aria-pressed="${on === !!v}">${label}</button>`;
+  return `<div class="${cls}" role="group" aria-label="Sheet outlines on the map">${cls === "lib-sort" ? '<span class="small-t muted">Outlines</span>' : ""}${b(1, "Show")}${b(0, "Hide")}</div>`;
+}
+// The Kaggle key, in settings: whether one is saved, and the way to add or forget it.
+function keySettingsHTML() {
+  const k = S.rec.key || {};
+  if (k.present) return `<p class="small-t muted">A Kaggle key is saved${k.source && k.source !== "env file" ? ` (from ${esc(k.source)})` : " on this computer"}. It is only ever sent to Kaggle.</p>
+    ${k.source === "env file" ? `<div class="row"><button class="btn small" data-act="recKeyForget">Forget the key</button></div>` : ""}`;
+  return `<p class="small-t muted">Kaggle may ask for a free key when you add the air strikes.</p>
+    <div class="row"><button class="btn small" data-act="recAskKey">Add a Kaggle key</button></div>`;
+}
 function renderStylePop() {
   const t = store.get("theme", "auto");
   $("#popStyle").innerHTML = `<div class="sec"><h3>Today’s map</h3><div class="style-cards">
       ${Object.entries(BASES).map(([k, b]) => `<button class="style-card" data-base="${k}" aria-pressed="${S.base === k}"><span class="thumb ${k}"></span><span>${b.name}</span></button>`).join("")}</div></div>
     <div class="sec"><h3>Appearance</h3><div class="seg" role="group" aria-label="Appearance">
-      ${["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${t === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join("")}</div></div>`;
+      ${["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${t === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join("")}</div></div>
+    <div class="sec"><h3>Old map outlines</h3><p class="small-t muted">The sheet edges drawn while the Old maps card is open.</p>${outlinesSeg("seg")}</div>
+    <div class="sec"><h3>Kaggle key</h3>${keySettingsHTML()}</div>`;
   $$("[data-base]", $("#popStyle")).forEach(b => b.addEventListener("click", () => { setBase(b.dataset.base); renderStylePop(); $(`#popStyle [data-base="${b.dataset.base}"]`).focus(); }));
   wire($("#popStyle"));
 }
