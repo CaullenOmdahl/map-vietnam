@@ -1,4 +1,4 @@
-"""place_sheets: synthetic sheets with a known graticule are placed on it; sgi_sheets turns NAKALA items into specs."""
+"""place_sheets: synthetic sheets with a known graticule are placed on it; sheet_lists.sgi_spec turns NAKALA items into specs."""
 
 import json
 import math
