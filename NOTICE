@@ -243,8 +243,10 @@ Building
 
 Icons
   The app icons in packaging/icons (map-vietnam.png, .ico and .icns, made by
-  packaging/make_icons.py) are original to this project and are licensed under Apache-2.0 like the
-  rest of this repository.
+  packaging/make_icons.py, and the viewer's favicon drawn from them) are original to this project
+  and are licensed under Apache-2.0 like the rest of this repository. The outline of Vietnam in
+  them is simplified from Natural Earth's 1:50m country boundaries, which are in the public domain
+  (https://www.naturalearthdata.com).
 
 
 Screenshots

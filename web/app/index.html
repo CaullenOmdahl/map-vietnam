@@ -8,15 +8,16 @@
 <meta name="color-scheme" content="light dark">
 <meta name="description" content="Dated historical maps of Vietnam laid over today's map, with war-era records to search, filter, pin and export.">
 <title>Map Vietnam</title>
-<!-- A folded map sheet, inline so the page asks the server for no favicon file. -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 7l8-3 10 3 8-3v21l-8 3-10-3-8 3z' fill='%230e5a4b'/%3E%3Cpath d='M11 4v21M21 7v21' stroke='%23fff' stroke-width='1.6'/%3E%3C/svg%3E">
+<!-- The app icon (packaging/make_icons.py) in small: old map left, today right. Inline, so the page asks the
+     server for no favicon file. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3CclipPath id='t'%3E%3Crect width='32' height='32' rx='7'/%3E%3C/clipPath%3E%3CclipPath id='l'%3E%3Crect width='17.0' height='32'/%3E%3C/clipPath%3E%3Cg clip-path='url(%23t)'%3E%3Crect width='32' height='32' fill='%231a4a52'/%3E%3Cpath d='M19.7 6.3 18.7 6.7 18.6 7.1 18.3 7.2 17.5 7.2 17.6 7.6 17.2 8.4 16.3 9.0 15.7 10.7 16.2 11.5 17.2 12.5 17.1 12.9 17.0 12.8 19.4 15.4 19.8 15.3 21.1 17.0 21.9 19.7 21.8 20.7 22.1 21.9 22.0 21.6 21.8 21.8 21.9 22.2 21.7 22.2 21.7 23.4 21.4 24.1 18.5 25.7 18.0 25.3 17.1 27.2 15.5 28.0 14.8 28.8 14.3 28.9 14.5 28.6 14.4 27.1 14.8 26.4 13.7 25.7 14.4 25.5 14.7 25.2 14.7 24.8 15.2 24.9 15.9 24.7 16.6 25.0 16.6 24.6 16.1 24.2 16.1 23.5 16.4 23.3 17.0 23.5 17.0 23.0 18.9 22.3 18.8 21.1 19.0 20.4 18.6 19.2 18.9 18.3 18.8 17.7 19.1 17.2 18.3 16.3 18.7 15.8 17.8 15.0 17.4 15.1 17.2 14.2 14.8 11.7 14.9 11.3 12.8 10.1 13.1 9.8 13.0 9.5 14.0 9.6 14.5 8.9 14.4 8.6 13.6 8.1 13.9 7.8 13.1 7.2 12.4 7.7 11.5 7.4 11.0 6.7 11.2 6.0 11.0 5.7 10.7 6.0 9.8 4.7 10.4 4.1 11.3 4.6 11.8 4.1 12.1 4.4 12.3 4.0 12.9 4.5 13.2 4.0 13.6 4.2 14.1 4.0 14.4 3.4 15.1 3.0 16.1 3.8 16.6 3.7 17.6 4.0 17.3 4.5 17.4 5.4 18.0 5.6 18.6 6.1 19.3 6.0z' fill='%23bdeedc'/%3E%3Cg clip-path='url(%23l)'%3E%3Crect width='32' height='32' fill='%23f0e2be'/%3E%3Cpath d='M19.7 6.3 18.7 6.7 18.6 7.1 18.3 7.2 17.5 7.2 17.6 7.6 17.2 8.4 16.3 9.0 15.7 10.7 16.2 11.5 17.2 12.5 17.1 12.9 17.0 12.8 19.4 15.4 19.8 15.3 21.1 17.0 21.9 19.7 21.8 20.7 22.1 21.9 22.0 21.6 21.8 21.8 21.9 22.2 21.7 22.2 21.7 23.4 21.4 24.1 18.5 25.7 18.0 25.3 17.1 27.2 15.5 28.0 14.8 28.8 14.3 28.9 14.5 28.6 14.4 27.1 14.8 26.4 13.7 25.7 14.4 25.5 14.7 25.2 14.7 24.8 15.2 24.9 15.9 24.7 16.6 25.0 16.6 24.6 16.1 24.2 16.1 23.5 16.4 23.3 17.0 23.5 17.0 23.0 18.9 22.3 18.8 21.1 19.0 20.4 18.6 19.2 18.9 18.3 18.8 17.7 19.1 17.2 18.3 16.3 18.7 15.8 17.8 15.0 17.4 15.1 17.2 14.2 14.8 11.7 14.9 11.3 12.8 10.1 13.1 9.8 13.0 9.5 14.0 9.6 14.5 8.9 14.4 8.6 13.6 8.1 13.9 7.8 13.1 7.2 12.4 7.7 11.5 7.4 11.0 6.7 11.2 6.0 11.0 5.7 10.7 6.0 9.8 4.7 10.4 4.1 11.3 4.6 11.8 4.1 12.1 4.4 12.3 4.0 12.9 4.5 13.2 4.0 13.6 4.2 14.1 4.0 14.4 3.4 15.1 3.0 16.1 3.8 16.6 3.7 17.6 4.0 17.3 4.5 17.4 5.4 18.0 5.6 18.6 6.1 19.3 6.0z' fill='%23704e2a'/%3E%3C/g%3E%3Crect x='16.3' width='1.4' height='32' fill='%23faf8f2'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap&subset=vietnamese">
 <!-- MapLibre is pinned and checked with Subresource Integrity (hashes from unpkg's ?meta listing); Google Fonts
      serves different CSS per browser, so it cannot carry a fixed hash. -->
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" integrity="sha256-V2sIX92Uh6ZaGSFTKMHghsB85b9toJtmazgG09AI2uk=" crossorigin="anonymous">
-<link rel="stylesheet" href="/app/app.css?v=32">
+<link rel="stylesheet" href="/app/app.css?v=33">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" integrity="sha256-vpYzxNhw4m+zfxz+XFp3GBZnEUAD6hYgeseFDY2ordE=" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -117,6 +118,6 @@
 
 <div id="srLive" class="sr-only" role="status" aria-live="polite"></div>
 <div id="toast" role="status" aria-live="polite"><span id="toastText"></span><button id="toastUndo" class="linkish" hidden>Undo</button></div>
-<script src="/app/app.js?v=37"></script>
+<script src="/app/app.js?v=38"></script>
 </body>
 </html>

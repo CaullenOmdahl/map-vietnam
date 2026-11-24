@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Builds the desktop app on this machine, in Docker, and puts the files to publish in dist/release/.
 #
-#   packaging/build.sh              both: the Windows installer and the Linux download
-#   packaging/build.sh windows      Map-Vietnam-<version>-Setup.exe
-#   packaging/build.sh linux        Map-Vietnam-<version>-linux-x86_64.tar.gz
+#   packaging/build.sh                      the Windows installer and the Linux download
+#   packaging/build.sh windows              Map-Vietnam-<version>-Setup.exe
+#   packaging/build.sh linux                Map-Vietnam-<version>-linux-x86_64.tar.gz
+#   MAC_HOST=my-mac packaging/build.sh mac  Map-Vietnam-<version>-macos-<arch>.zip, built over SSH
+#   MAC_HOST=my-mac packaging/build.sh all  all three
 #
 # Run it from anywhere on a Linux machine with Docker; nothing else needs installing. The first run
 # builds the two build images (a few minutes, about 3 GB); later runs reuse them.
@@ -21,7 +23,10 @@
 # The version is [project].version in pyproject.toml. To publish, with the GitHub CLI:
 #   gh release create v<version> dist/release/* --generate-notes
 #
-# The Mac app has to be built on a Mac: pyinstaller packaging/map-vietnam.spec (see CONTRIBUTING.md).
+# The Mac app has to be built on a Mac. With MAC_HOST set to a Mac this machine can reach with
+# `ssh MAC_HOST` (no password prompt) that has uv (https://docs.astral.sh/uv/) and macOS 15 or newer,
+# "mac" copies the source there, builds and smoke-tests the .app in a temporary folder, zips it and
+# brings the zip back. It is not signed or notarized (docs/troubleshooting.md tells users what to do).
 
 set -euo pipefail
 
@@ -33,12 +38,13 @@ VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT/pyproject.toml" | head -1)
 VIVERSION="$(echo "$VERSION" | grep -oE '^[0-9]+(\.[0-9]+)*' | awk -F. '{print $1"."($2+0)"."($3+0)"."($4+0)}')"
 TARGETS=("${@:-windows linux}")
 read -r -a TARGETS <<<"${TARGETS[*]}"
+[ "${TARGETS[*]}" = "all" ] && TARGETS=(windows linux mac)
 
 # The source goes into each container as a copy without the git history, the virtual environment,
 # earlier builds or downloaded data, so a build never sees anything that is not in the repository.
-COPY_SOURCE='mkdir -p /tmp/build && tar -C /src --exclude=./.git --exclude=./.venv --exclude=./build --exclude=./dist \
-  --exclude=./data/raw --exclude=./data/work --exclude=./data/tiles --exclude=./data/map_vietnam.sqlite \
-  --exclude="*/__pycache__" -cf - . | tar -xf - -C /tmp/build && cd /tmp/build'
+EXCLUDES=(--exclude=./.git --exclude=./.venv --exclude=./build --exclude=./dist --exclude=./data/raw
+  --exclude=./data/work --exclude=./data/tiles --exclude=./data/map_vietnam.sqlite --exclude="*/__pycache__")
+COPY_SOURCE="mkdir -p /tmp/build && tar -C /src $(printf '%q ' "${EXCLUDES[@]}")-cf - . | tar -xf - -C /tmp/build && cd /tmp/build"
 
 build_windows() {
   echo "== Windows $VERSION (under Wine)"
@@ -76,12 +82,38 @@ build_linux() {
   "
 }
 
+build_mac() {
+  if [ -z "${MAC_HOST:-}" ]; then
+    echo "Set MAC_HOST to a Mac reachable with ssh, for example: MAC_HOST=my-mac packaging/build.sh mac" >&2
+    exit 2
+  fi
+  echo "== macOS $VERSION (on $MAC_HOST)"
+  local remote arch zip
+  remote="$(ssh "$MAC_HOST" 'mktemp -d /tmp/map-vietnam-build.XXXXXX')"
+  # shellcheck disable=SC2064  # expand now: the folder name is known here
+  trap "ssh '$MAC_HOST' 'rm -rf $remote' >/dev/null 2>&1 || true" RETURN
+  tar -C "$ROOT" "${EXCLUDES[@]}" -cf - . | ssh "$MAC_HOST" "tar -xf - -C $remote"
+  arch="$(ssh "$MAC_HOST" 'uname -m')"
+  zip="Map-Vietnam-$VERSION-macos-$arch.zip"
+  ssh "$MAC_HOST" "set -euo pipefail; export PATH=/opt/homebrew/bin:/usr/local/bin:\$HOME/.local/bin:\$PATH
+    cd $remote
+    command -v uv >/dev/null || { echo 'uv is needed on the Mac: brew install uv' >&2; exit 1; }
+    uv venv -q --python 3.12 .build-venv
+    VIRTUAL_ENV=.build-venv uv pip install -q -r requirements.txt pyinstaller==$PYINSTALLER_VERSION
+    .build-venv/bin/pyinstaller packaging/map-vietnam.spec --noconfirm --log-level WARN
+    codesign --verify --deep --strict 'dist/Map Vietnam.app'
+    .build-venv/bin/python packaging/smoke_test.py 'dist/Map Vietnam.app/Contents/MacOS/Map Vietnam'
+    ditto -c -k --keepParent 'dist/Map Vietnam.app' '$zip'"
+  scp -q "$MAC_HOST:$remote/$zip" "$OUT/$zip"
+}
+
 mkdir -p "$OUT"
 for target in "${TARGETS[@]}"; do
   case "$target" in
     windows) build_windows ;;
     linux) build_linux ;;
-    *) echo "Unknown target '$target' (use windows or linux)" >&2; exit 2 ;;
+    mac) build_mac ;;
+    *) echo "Unknown target '$target' (use windows, linux, mac or all)" >&2; exit 2 ;;
   esac
 done
 echo "== Done:"

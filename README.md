@@ -41,9 +41,10 @@ The maps and records you add are kept in `%LOCALAPPDATA%\Map Vietnam`, apart fro
 updating is just running a newer installer. Uninstalling (Settings > Apps) asks whether to delete
 them too.
 
-**Linux.** The same Releases page has a Linux download: unpack the `.tar.gz` and run
-`Map Vietnam/Map Vietnam`. **Mac:** there is no ready-made Mac download yet; run it from source
-as below (double-click `Start Map Vietnam.command`).
+**Mac and Linux.** The same Releases page has a Mac download (Apple silicon, macOS 15 or newer):
+unzip it, drag **Map Vietnam** to Applications and open it; the first time, macOS asks you to
+allow it in **System Settings > Privacy & Security** ([how](docs/troubleshooting.md)). The Linux
+download is a `.tar.gz`: unpack it and run `Map Vietnam/Map Vietnam`.
 
 ### Or run it from source
 

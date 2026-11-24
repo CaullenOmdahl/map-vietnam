@@ -6,7 +6,8 @@
 It starts the executable with --no-window on a free port and a throw-away data folder
 (MAPVIETNAM_HOME), then checks that
   * the viewer page (/app/) and the map library (/api/library) are served,
-  * a child job runs the way the app starts them: `<exe> --run-script catalog.py --help`,
+  * child jobs run the way the app starts them: `<exe> --run-script catalog.py --help`, and
+    georef_scan.py, which loads the map libraries in the other order,
   * the window toolkit loads (`<exe> --check-window`; no window is opened). --no-window-check
     skips this one, for builds tested under Wine, which has no WebView2,
   * POST /api/quit stops the app, and the process exits.
@@ -61,18 +62,22 @@ def main(argv):
     with tempfile.TemporaryDirectory(prefix="map-vietnam-smoke-") as home:
         env = {**os.environ, "MAPVIETNAM_HOME": home}
 
-        child = subprocess.run(
-            [exe, "--run-script", "catalog.py", "--help"],
-            env=env,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=START_TIMEOUT_S,
-        )
-        if child.returncode != 0 or "usage" not in child.stdout.lower():
-            return fail(f"--run-script catalog.py --help exited {child.returncode}: {child.stdout} {child.stderr}")
-        print("child script ok:", child.stdout.splitlines()[0])
+        # Two child scripts that load PROJ (through pyproj) and GDAL (through rasterio) in opposite
+        # orders: on macOS the two wheels' PROJ libraries share a name, and a bundle that mixes
+        # them up fails one order or the other.
+        for script in ("catalog.py", "georef_scan.py"):
+            child = subprocess.run(
+                [exe, "--run-script", script, "--help"],
+                env=env,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=START_TIMEOUT_S,
+            )
+            if child.returncode != 0 or "usage" not in child.stdout.lower():
+                return fail(f"--run-script {script} --help exited {child.returncode}: {child.stdout} {child.stderr}")
+            print("child script ok:", child.stdout.splitlines()[0])
 
         # The window toolkit is the part --no-window never touches: load it, without opening a window.
         toolkit = (

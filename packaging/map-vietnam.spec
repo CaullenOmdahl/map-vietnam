@@ -21,7 +21,9 @@
 # per-user data folder, so the installed folder is never written to.
 
 import ast
+import os
 import re
+import subprocess
 import sys
 import sysconfig
 import tomllib
@@ -127,6 +129,7 @@ datas = [
     (str(SCRIPTS), "scripts"),  # the sources run_script_from_argv loads by path
     (str(ROOT / "LICENSE"), "."),
     (str(ROOT / "NOTICE"), "."),
+    (str(ROOT / "packaging" / "icons" / "map-vietnam.png"), "packaging/icons"),  # the Linux window's icon
 ]
 LICENCES = licence_files() + globals().get("QT_LICENCES", [])
 missing = {"rasterio", "numpy", "pillow", "pypdf", "pypdfium2", "pyproj", "certifi", "pywebview"} - {
@@ -204,3 +207,51 @@ if sys.platform == "darwin":
             "LSMinimumSystemVersion": "15.0",  # the pinned rasterio wheels need macOS 15
         },
     )
+
+
+def own_libraries_first(lib_root):
+    """macOS only. The rasterio and pyproj wheels each bring their own PROJ, under the same file name
+    (libproj.25.*.dylib) and install name but built differently: rasterio's has its symbols renamed.
+    PyInstaller links every binary to one copy by name, and macOS' loader also reuses an already
+    loaded library with the same install name, so one package always gets the other's PROJ and fails
+    to load ("Symbol not found: _proj_context_create"). The Linux and Windows wheels give their copies
+    distinct names, so this is not needed there. Here every package library that differs from the
+    shared copy of the same name is renamed (<package>-<name>), given that as its install name, and
+    the package's binaries are pointed at it; changed files are re-signed ad hoc, as PyInstaller
+    signs them."""
+    for own_dir in lib_root.glob("*/__dot__dylibs"):
+        package = own_dir.parent
+        renamed = {}
+        for lib in sorted(own_dir.iterdir()):
+            shared = lib_root / lib.name
+            if lib.is_symlink() or not shared.exists() or shared.resolve() == lib.resolve():
+                continue
+            unique = f"{package.name}-{lib.name}"
+            lib.rename(own_dir / unique)
+            subprocess.run(["install_name_tool", "-id", f"@rpath/{unique}", str(own_dir / unique)], check=True, capture_output=True)
+            renamed[lib.name] = unique
+        if not renamed:
+            continue
+        for binary in [*package.rglob("*.so"), *package.rglob("*.dylib")]:
+            if binary.is_symlink():
+                continue
+            listing = subprocess.run(["otool", "-L", str(binary)], capture_output=True, text=True, check=True).stdout
+            changes = []
+            for line in listing.splitlines()[1:]:
+                dep = line.strip().split(" (")[0]
+                name = Path(dep).name
+                if name in renamed and not dep.endswith(f"/{renamed[name]}"):
+                    relative = Path(os.path.relpath(own_dir, binary.parent)) / renamed[name]
+                    changes += ["-change", dep, f"@loader_path/{relative.as_posix()}"]
+            if changes:
+                subprocess.run(["install_name_tool", *changes, str(binary)], check=True, capture_output=True)
+            if changes or binary.parent == own_dir:
+                subprocess.run(["codesign", "--force", "--sign", "-", str(binary)], check=True, capture_output=True)
+
+
+if sys.platform == "darwin":
+    own_libraries_first(Path(DISTPATH) / NAME / "_internal")
+    app_path = Path(DISTPATH) / f"{NAME}.app"
+    own_libraries_first(app_path / "Contents" / "Frameworks")
+    # The changed files broke the bundle's ad-hoc seal; seal it again.
+    subprocess.run(["codesign", "--force", "--deep", "--sign", "-", str(app_path)], check=True, capture_output=True)

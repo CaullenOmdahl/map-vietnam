@@ -595,6 +595,19 @@ function setAttribution(m, extra) {
   attribExtra = key;
   m.addControl(attribCtrl, isDesk() ? "bottom-right" : "top-left");
 }
+// On a laptop the credits sit at the bottom right and the map bar in the bottom middle, and a long old-map credit
+// would run under the bar. Keep them beside it, wrapping, or, when there is no room beside it, lift them above it.
+function fitAttribution() {
+  const box = maps[0]?.getContainer().querySelector(".maplibregl-ctrl-bottom-right");
+  if (!box) return;
+  const bar = $("#mapbar").getBoundingClientRect();
+  const room = Math.floor(innerWidth - bar.right - 16);
+  const besideOk = !isDesk() || !bar.width || room >= 200;
+  const maxWidth = besideOk && isDesk() && bar.width ? room + "px" : "";
+  const bottom = besideOk ? "" : Math.ceil(innerHeight - bar.top + 6) + "px";
+  if (box.style.maxWidth !== maxWidth) box.style.maxWidth = maxWidth;
+  if (box.style.bottom !== bottom) box.style.bottom = bottom;
+}
 // Shows the chosen old map on each map (and hides the rest), with the shared opacity.
 function applyEra() {
   const right = S.compare && S.eraB !== "today" ? eraById(S.eraB) : null;
@@ -3338,6 +3351,11 @@ function checkEmptyKinds() {
   const m = createMap("mapA", true);
   maps.push(m); window.map = m;
   tilesBusy = true; // until the first "idle"
+  // The credits follow the map bar's size and their own (a new old map changes their text), and the window's.
+  const fitObserver = new ResizeObserver(() => fitAttribution());
+  fitObserver.observe($("#mapbar"));
+  m.on("load", () => { const box = m.getContainer().querySelector(".maplibregl-ctrl-bottom-right"); if (box) fitObserver.observe(box); fitAttribution(); });
+  addEventListener("resize", fitAttribution);
   loadView();
 
   $("#panelBtn").addEventListener("click", () => setPanelHidden(!S.panelHidden));
