@@ -14,18 +14,23 @@ Everything is done from the map
   map share their state; the terminal route stays for people who script it
 
 Installers
-- A Windows installer (per user, no administrator needed) and a Linux `.tar.gz`, both built on
-  one Linux machine with `packaging/build.sh` (Docker; Windows under Wine, the installer with
-  NSIS) and smoke-tested there, installer included. A Mac app builds on a Mac from the same
-  PyInstaller spec. The installed app keeps what it downloads in a per-user data folder, kept when
+- A Windows installer (per user, no administrator needed), a Linux `.tar.gz` and a Mac `.zip`,
+  all built from one Linux machine with `packaging/build.sh` (Docker; Windows under Wine, the
+  installer with NSIS; the Mac app over ssh on a Mac) and smoke-tested, installer included. The installed app keeps what it downloads in a per-user data folder, kept when
   you update and asked about when you uninstall; `MAPVIETNAM_HOME` moves it. Nothing is
   code-signed; docs/troubleshooting.md explains SmartScreen and macOS' first-open step
+- A new app icon: Vietnam's outline, half on an old paper map and half on today's map, split by the
+  viewer's compare handle (`packaging/make_icons.py`); the small sizes and the favicon are simplified
+  so they still read at 16 px, and the Linux window now shows it too
 
 Its own window
 - Map Vietnam now opens in its own window instead of a browser tab (`scripts/desktop.py`, using
   pywebview). Links to record sources open in your browser, exports show a Save dialog, and closing
   the window stops the app like **Quit Map Vietnam**. Where no window can open, the browser is used
 - `python3 start.py --yes` (and the other setup options) with no command now runs `setup`
+- The old map's credit no longer runs under the map bar on a laptop screen (it wraps beside the bar or
+  sits above it), panel scrollbars are thin and themed on Linux and Windows, and Linux no longer
+  prints a GTK import traceback before opening its Qt window
 
 A bigger map library
 - The library grows from 537 to 895 maps: 498 US Army L7014 sheets at 1:50,000, 298 French

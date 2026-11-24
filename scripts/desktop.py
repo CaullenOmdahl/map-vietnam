@@ -32,6 +32,7 @@ cheap: the packaged app relaunches itself that way for every child job.
 
 import argparse
 import importlib
+import importlib.util
 import os
 import re
 import signal
@@ -45,6 +46,7 @@ from urllib.parse import urlsplit
 import paths
 
 TITLE = "Map Vietnam"
+WINDOW_ICON = paths.APP_ROOT / "packaging" / "icons" / "map-vietnam.png"
 WINDOW_SIZE = (1280, 820)
 MIN_SIZE = (360, 560)  # small enough for the viewer's phone-like layout
 STOP_TIMEOUT_S = 40  # a server stopping ends its jobs first (each waits for its child process)
@@ -244,13 +246,18 @@ def on_page_loaded(window, own_url, opener=None):
     window.run_js(SHIM)
 
 
-def window_toolkit(frozen=None, platform=None):
-    """Which window toolkit to ask pywebview for, or None to let it choose. The packaged Linux app
-    carries only the Qt one, so it asks for Qt by name; otherwise pywebview tries GTK first and prints
-    an import traceback before it settles on Qt."""
+def window_toolkit(frozen=None, platform=None, has_pyside=None):
+    """Which window toolkit to ask pywebview for, or None to let it choose. On Linux, Qt by name
+    whenever PySide6 is there (always in the packaged app; from source when start.py could install
+    it): otherwise pywebview tries GTK first and prints an import traceback before it settles on Qt.
+    Without PySide6 pywebview may still find a system GTK."""
     frozen = paths.is_frozen() if frozen is None else frozen
     platform = sys.platform if platform is None else platform
-    return "qt" if frozen and platform.startswith("linux") else None
+    if not platform.startswith("linux"):
+        return None
+    if has_pyside is None:
+        has_pyside = frozen or importlib.util.find_spec("PySide6") is not None
+    return "qt" if has_pyside else None
 
 
 def use_pyside():
@@ -298,7 +305,9 @@ def open_window(url, srv, thread):
 
     threading.Thread(target=close_when_server_stops, name="close-window", daemon=True).start()
     use_pyside()
-    webview.start(gui=window_toolkit())  # returns when the window has closed
+    # The window's icon on Linux (taskbar, window switcher); Windows and macOS take it from the program.
+    icon = {"icon": str(WINDOW_ICON)} if WINDOW_ICON.exists() else {}
+    webview.start(gui=window_toolkit(), **icon)  # returns when the window has closed
     return True
 
 

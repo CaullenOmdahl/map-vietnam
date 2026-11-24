@@ -275,6 +275,8 @@ def test_an_environment_without_pip_is_removed_so_the_next_run_makes_it_afresh(t
 
 def test_a_pip_failure_says_what_to_check(tmp_path, monkeypatch):
     monkeypatch.setattr(start, "VENV", tmp_path / ".venv")
+    # The stamp too: left on the real .venv, a set-up checkout would look installed already.
+    monkeypatch.setattr(start, "REQUIREMENTS_STAMP", tmp_path / ".venv" / "requirements.sha256")
     start.VENV.mkdir()
     monkeypatch.setattr(start, "runs", lambda cmd: True)
     monkeypatch.setattr(start.subprocess, "run", lambda cmd, **kw: start.subprocess.CompletedProcess(cmd, 1))

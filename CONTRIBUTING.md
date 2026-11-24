@@ -106,7 +106,8 @@ design changes.
 The downloads on the Releases page are built on one Linux machine with Docker, no CI involved:
 
 ```sh
-packaging/build.sh            # or: packaging/build.sh windows / packaging/build.sh linux
+packaging/build.sh                      # Windows and Linux; or: packaging/build.sh windows / linux
+MAC_HOST=my-mac packaging/build.sh all  # also the Mac app, built over ssh on that Mac (needs uv there)
 ```
 
 It builds the Windows app under Wine with the Windows build of Python, makes the installer with
@@ -120,7 +121,9 @@ PC before publishing. The files land in `dist/release/`. To release: change `ver
 gh release create v0.1.0 dist/release/* --generate-notes
 ```
 
-A Mac app has to be built on a Mac, with the PyInstaller commands above. Nothing is code-signed;
+The Mac app has to be built on a Mac: `mac` copies the source to `MAC_HOST` (any Mac you can
+`ssh` to without a password prompt, with macOS 15+ and [uv](https://docs.astral.sh/uv/)), builds
+and smoke-tests it in a temporary folder there and brings back the zip. Nothing is code-signed;
 users get the steps in [docs/troubleshooting.md](docs/troubleshooting.md).
 
 Every build copies the licence files of the bundled packages into the app's `licenses/` folder

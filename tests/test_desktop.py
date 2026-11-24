@@ -398,11 +398,17 @@ def test_window_is_titled_and_sized_for_phones_and_desktops(monkeypatch):
 
 # ---- the window toolkit --------------------------------------------------------------------------------
 @pytest.mark.parametrize(
-    "frozen, platform, expected",
-    [(True, "linux", "qt"), (False, "linux", None), (True, "win32", None), (True, "darwin", None)],
+    "frozen, platform, has_pyside, expected",
+    [
+        (True, "linux", None, "qt"),  # the packaged Linux app always carries PySide6
+        (False, "linux", True, "qt"),  # from source with PySide6: no GTK attempt and its traceback
+        (False, "linux", False, None),  # from source without it: let pywebview look for GTK
+        (True, "win32", None, None),
+        (False, "darwin", True, None),
+    ],
 )
-def test_the_packaged_linux_app_asks_for_qt_by_name(frozen, platform, expected):
-    assert desktop.window_toolkit(frozen=frozen, platform=platform) == expected
+def test_linux_asks_for_qt_by_name_when_pyside6_is_there(frozen, platform, has_pyside, expected):
+    assert desktop.window_toolkit(frozen=frozen, platform=platform, has_pyside=has_pyside) == expected
 
 
 def test_qt_is_asked_for_pyside6_unless_the_person_chose(monkeypatch):
@@ -432,7 +438,8 @@ def test_the_window_is_started_with_the_chosen_toolkit(monkeypatch):
     monkeypatch.setattr(webview, "create_window", lambda *a, **k: Window())
     monkeypatch.setattr(webview, "start", lambda *a, **k: (seen.update(k), srv.quit()))
     desktop.open_window("http://127.0.0.1:4321/app/", srv, thread)
-    assert seen == {"gui": "qt"}
+    assert seen["gui"] == "qt"
+    assert seen.get("icon", desktop.WINDOW_ICON.as_posix()).endswith("map-vietnam.png")  # Linux's window icon
 
 
 def test_check_window_reports_a_toolkit_that_cannot_load(monkeypatch, capsys):

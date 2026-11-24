@@ -114,6 +114,8 @@ body.filtered #loading { top: 58px; }
 #omni:focus-within .hint-key { display: none; }
 #qCancel { flex: none; text-decoration: none; min-height: 44px; }
 #panelScroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+/* A thin scrollbar in the theme's colours: Chromium on Linux and Windows otherwise draws a classic grey one with arrows. */
+#panelScroll, .popover { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 #view { padding: 0 16px 20px; }
 
 /* results */
