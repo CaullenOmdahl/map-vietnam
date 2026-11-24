@@ -179,6 +179,20 @@ a = Analysis(
 GPL_ONLY_QT = ("virtualkeyboard",)
 a.binaries = [b for b in a.binaries if not any(w in b[0].lower() for w in GPL_ONLY_QT)]
 a.datas = [d for d in a.datas if not any(w in d[0].lower() for w in GPL_ONLY_QT)]
+# Linux: leave out the system libraries the user's own graphics driver and desktop load alongside
+# the app. Bundled from the build image (Ubuntu 22.04), they shadow the system's newer copies, and
+# a newer Mesa driver then fails to load (it needs a newer libstdc++), EGL never starts and Qt
+# WebEngine aborts. Every distribution with glibc 2.35 or newer has these. The wheels' own,
+# hash-named copies (libpng16-<hash>.so...) are private to their packages and stay.
+HOST_LIBS = (
+    "libstdc++.so.6", "libgcc_s.so.1", "libgbm.so.1", "libdrm.so.2", "libEGL.so.1", "libGL.so.1",
+    "libGLX.so.0", "libGLdispatch.so.0", "libOpenGL.so.0", "libglib-2.0.so.0", "libgio-2.0.so.0",
+    "libgobject-2.0.so.0", "libgmodule-2.0.so.0", "libdbus-1.so.3", "libfontconfig.so.1",
+    "libfreetype.so.6", "libexpat.so.1", "libffi.so.8", "libpcre2-8.so.0", "libpcre.so.3",
+    "libmount.so.1", "libblkid.so.1", "libselinux.so.1", "libuuid.so.1",
+)  # fmt: skip
+if sys.platform.startswith("linux"):
+    a.binaries = [b for b in a.binaries if Path(b[0]).name not in HOST_LIBS]
 pyz = PYZ(a.pure)
 
 exe = EXE(

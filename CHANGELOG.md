@@ -22,6 +22,9 @@ Settings
   of only after Kaggle refuses a download
 
 Downloads
+- The Linux download no longer bundles the system's C++, graphics, glib and font libraries: on
+  distributions newer than Ubuntu 22.04 the old copies stopped the graphics driver loading and the
+  app closed at start
 - The Mac download is a `.dmg`: open it and drag Map Vietnam onto Applications. The README has
   step-by-step first-open instructions for macOS 15 and newer
 
