@@ -65,7 +65,7 @@ def main(argv):
         # Two child scripts that load PROJ (through pyproj) and GDAL (through rasterio) in opposite
         # orders: on macOS the two wheels' PROJ libraries share a name, and a bundle that mixes
         # them up fails one order or the other.
-        for script in ("catalog.py", "georef_scan.py"):
+        for script in ("catalog.py", "georef_scan.py", "build_geotiff.py"):
             child = subprocess.run(
                 [exe, "--run-script", script, "--help"],
                 env=env,
