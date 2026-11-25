@@ -2,6 +2,16 @@
 
 Notable changes to Map Vietnam. Versions follow [semantic versioning](https://semver.org).
 
+## 0.2.0 (Unreleased)
+
+Trackpad navigation & overlay glass
+- Multi-touch trackpads now work like Apple Maps across the main map, swipe comparison and custom-map
+  placement: two-finger drag pans the map and pinch or stretch zooms smoothly around the pointer.
+  Physical notched mouse wheels still zoom automatically, and **Settings › Scrolling** lets you choose
+  Automatic, Trackpad or Mouse wheel explicitly
+- Floating UI overlay backgrounds (sidebar, map bar, map controls, popovers and map badges) now use
+  60% opacity frosted glass in light and dark themes
+
 ## 0.1.1 - 2026-11-24
 
 Your own maps

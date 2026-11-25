@@ -25,13 +25,13 @@
                                  evById / pnById, pushed to the "ev" / "pn" GeoJSON sources of every map
      /api/search, /api/gridref, /api/lonlat -> the search box, grid-square card and coordinate rows
      /api/cases…              -> S.cases / S.kase (the open case: pinned records, candidate sites, notes, exports)
-     localStorage ("mvapp.*") -> view position, chosen map, opacity, filters, theme, recently viewed
+     localStorage ("mvapp.*") -> view position, chosen map, opacity, filters, theme, scroll mode, recently viewed
 
    State lives in one object, S. Each change goes through a small apply* / render* function that pushes it
    to the maps (layout, paint, filter, setData) or redraws the panel: render() rebuilds the current card
    from VIEWS[S.view.name] and wire() connects its [data-act] buttons to ACTIONS.
 
-   Sections, in order: constants, helpers, state, maps, historical maps, compare, evidence loading, filters,
+   Sections, in order: constants, helpers, state, maps, trackpad, historical maps, compare, evidence loading, filters,
    selection and position, map clicks, panel / sheet, panel views (home, record, nearby, pin, grid square,
    historical map, cases, sites), search, popovers, base map and theme, keyboard, boot. The map library (adding
    and removing old maps) follows the historical-map card, and the records section (adding and removing record
@@ -346,6 +346,7 @@ function createMap(container, isPrimary) {
   });
   m.on("click", e => onMapClick(m, e));
   wireLongPress(m);
+  wireTrackpad(m);
   m.on("mousemove", e => {
     if (S.placing || !m.loadedOverlays) return;
     if (S.view.name === "library") { const id = footprintAt(m, e.point); setFpState("hover", id); m.getCanvas().style.cursor = id ? "pointer" : ""; return; }
@@ -522,6 +523,151 @@ function fitSquare(square) {
   const pad = mapPadding(), grow = Math.max(ne[0] - sw[0], ne[1] - sw[1]); // square fills about a third of the view
   const maxZoom = Math.min(MAX_FLY_ZOOM, Math.max(14, capZoom((sw[0] + ne[0]) / 2, (sw[1] + ne[1]) / 2)));
   primary().fitBounds([[sw[0] - grow, sw[1] - grow], [ne[0] + grow, ne[1] + grow]], { padding: pad, maxZoom, duration: reduceMotion ? 0 : 700 });
+}
+
+// ================================================================ trackpad & scroll navigation
+// Apple Maps-style trackpad gestures across every map (main, swipe-compare, and custom-map placement):
+//   * Two-finger drag pans the map (via wheel events whose deltas match a trackpad).
+//   * Pinch / stretch zooms around the pointer (via ctrlKey wheel events in Chromium/WKWebView or Safari's
+//     WebKit gesturestart/change/end events, suppressing duplicate ctrlKey wheel events during a gesture).
+//   * A physical notched mouse wheel still zooms as usual when Scrolling is "Automatic" or "Mouse wheel".
+const WHEEL_GAP_MS = 180;
+const GESTURE_COOLDOWN_MS = 120;
+const PAN_END_MS = 140;
+const SCROLL_MODES = [["auto", "Automatic"], ["trackpad", "Trackpad"], ["wheel", "Mouse wheel"]];
+const scrollMode = () => {
+  const m = store.get("scrollMode", "auto");
+  return m === "trackpad" || m === "wheel" ? m : "auto";
+};
+function setScrollMode(m) {
+  store.set("scrollMode", m === "trackpad" || m === "wheel" ? m : "auto");
+  settingsRefresh(true);
+}
+function isMouseWheelEvent(e) {
+  if (!e || e.ctrlKey || e.metaKey) return false;
+  if ((e.deltaMode || 0) !== 0) return true;
+  const dx = e.deltaX || 0, dy = e.deltaY || 0, wd = e.wheelDeltaY;
+  return dx === 0 && dy !== 0 && Number.isFinite(wd) && Math.abs(wd) >= 120 && Math.abs(wd) % 120 === 0 && wd !== Math.round(-dy * 3);
+}
+function classifyWheelEvent(e, state, mode, now = Date.now()) {
+  if (e.ctrlKey && state.gestureAt && now - state.gestureAt <= (state.gestureActive ? 2000 : GESTURE_COOLDOWN_MS)) return "ignore";
+  if (e.ctrlKey) {
+    state.mode = null;
+    state.lastTime = now;
+    return "zoom";
+  }
+  if (mode === "wheel") return "zoom";
+  if (mode === "trackpad") return "pan";
+  const fresh = !state.mode || !state.lastTime || now - state.lastTime > WHEEL_GAP_MS;
+  let kind;
+  if ((e.deltaX || 0) !== 0) kind = "pan";
+  else if (!fresh) kind = state.mode;
+  else kind = isMouseWheelEvent(e) ? "zoom" : "pan";
+  state.mode = kind;
+  state.lastTime = now;
+  return kind;
+}
+function zoomAroundMercator(centerLngLat, anchorLngLat, oldZoom, newZoom, MercatorCoordinate) {
+  const s = Math.pow(2, newZoom - oldZoom);
+  if (!Number.isFinite(s) || s <= 0) return centerLngLat;
+  const c = MercatorCoordinate.fromLngLat(centerLngLat), a = MercatorCoordinate.fromLngLat(anchorLngLat);
+  const nx = a.x + (c.x - a.x) / s;
+  const ny = Math.min(1, Math.max(0, a.y + (c.y - a.y) / s));
+  return new MercatorCoordinate(nx, ny, 0).toLngLat();
+}
+function wireTrackpad(m) {
+  const el = m.getCanvasContainer();
+  const ac = new AbortController(), sig = ac.signal;
+  const wheelState = { mode: null, lastTime: 0, gestureAt: 0, gestureActive: false };
+  let accX = 0, accY = 0, raf = 0, panActive = false, endTimer = 0;
+  let gZoom = null, lastPt = null;
+
+  const emitMoveEnd = () => {
+    if (maps.includes(m)) eachMap(x => x.fire("moveend"));
+    else m.fire("moveend");
+  };
+  const clearPan = () => {
+    clearTimeout(endTimer); endTimer = 0;
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    accX = 0; accY = 0;
+  };
+  const rememberPt = e => {
+    if (!Number.isFinite(e?.clientX) || !Number.isFinite(e?.clientY)) return;
+    const r = el.getBoundingClientRect();
+    lastPt = [e.clientX - r.left, e.clientY - r.top];
+  };
+  const gesturePt = e => {
+    const r = el.getBoundingClientRect();
+    if (Number.isFinite(e?.clientX) && Number.isFinite(e?.clientY) && (e.clientX !== 0 || e.clientY !== 0 || !lastPt))
+      return [e.clientX - r.left, e.clientY - r.top];
+    return lastPt || [r.width / 2, r.height / 2];
+  };
+
+  el.addEventListener("pointermove", rememberPt, { passive: true, signal: sig });
+  el.addEventListener("mousemove", rememberPt, { passive: true, signal: sig });
+
+  el.addEventListener("wheel", e => {
+    rememberPt(e);
+    const kind = classifyWheelEvent(e, wheelState, scrollMode(), performance.now());
+    if (kind === "ignore") {
+      e.preventDefault(); e.stopImmediatePropagation();
+      return;
+    }
+    if (kind === "zoom") {
+      clearPan(); panActive = false;
+      return; // let MapLibre's native ScrollZoomHandler zoom smoothly around the cursor
+    }
+    e.preventDefault(); e.stopImmediatePropagation();
+    const scale = e.deltaMode === 1 ? 20 : e.deltaMode === 2 ? (el.clientHeight || 600) : 1;
+    accX += (e.deltaX || 0) * scale;
+    accY += (e.deltaY || 0) * scale;
+    if (!raf) {
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const x = accX, y = accY;
+        accX = 0; accY = 0;
+        if (!panActive) { panActive = true; m.stop(); }
+        if (x || y) m.panBy([x, y], { animate: false }, { trackpadMove: true });
+        clearTimeout(endTimer);
+        endTimer = setTimeout(() => { panActive = false; endTimer = 0; emitMoveEnd(); }, PAN_END_MS);
+      });
+    }
+  }, { passive: false, capture: true, signal: sig });
+
+  el.addEventListener("gesturestart", e => {
+    e.preventDefault();
+    clearPan(); panActive = false;
+    m.stop();
+    gZoom = m.getZoom();
+    wheelState.gestureActive = true;
+    wheelState.gestureAt = performance.now();
+  }, { passive: false, signal: sig });
+
+  el.addEventListener("gesturechange", e => {
+    e.preventDefault();
+    wheelState.gestureAt = performance.now();
+    if (gZoom == null || !Number.isFinite(e.scale) || e.scale <= 0) return;
+    const target = Math.min(m.getMaxZoom(), Math.max(m.getMinZoom(), gZoom + Math.log2(e.scale)));
+    const oldZoom = m.getZoom();
+    if (Math.abs(target - oldZoom) < 1e-6) return;
+    const anchor = m.unproject(gesturePt(e));
+    const center = zoomAroundMercator(m.getCenter(), anchor, oldZoom, target, maplibregl.MercatorCoordinate);
+    m.jumpTo({ center, zoom: target }, { trackpadMove: true });
+  }, { passive: false, signal: sig });
+
+  const endGesture = e => {
+    e.preventDefault?.();
+    const wasPinch = gZoom != null;
+    gZoom = null;
+    wheelState.gestureActive = false;
+    wheelState.gestureAt = performance.now();
+    if (wasPinch) emitMoveEnd();
+  };
+  el.addEventListener("gestureend", endGesture, { passive: false, signal: sig });
+  el.addEventListener("gesturecancel", endGesture, { passive: false, signal: sig });
+  addEventListener("blur", () => { gZoom = null; wheelState.gestureActive = false; clearPan(); panActive = false; }, { signal: sig });
+
+  m.on("remove", () => { clearPan(); ac.abort(); });
 }
 
 // ================================================================ historical maps (eras)
@@ -796,10 +942,10 @@ function setCompare(on) {
     const a = primary(), b = createMap("mapB", false);
     maps[1] = b;
     let lock = false;
-    const follow = (src, dst) => () => { if (lock) return; lock = true; dst.jumpTo({ center: src.getCenter(), zoom: src.getZoom(), bearing: src.getBearing(), padding: src.getPadding() }); lock = false; };
+    const follow = (src, dst) => e => { if (lock) return; lock = true; dst.jumpTo({ center: src.getCenter(), zoom: src.getZoom(), bearing: src.getBearing(), padding: src.getPadding() }, e?.trackpadMove ? { trackpadMove: true } : undefined); lock = false; };
     const fa = follow(a, b), fb = follow(b, a);
     a.on("move", fa); b.on("move", fb);
-    b.on("moveend", () => scheduleLoad());
+    b.on("moveend", e => { if (!e?.trackpadMove) scheduleLoad(); });
     unsync = () => a.off("move", fa);
     b.on("overlays", () => applyEra());
     cmpX = null; placeDivider();
@@ -3338,7 +3484,7 @@ function storageHTML() {
 }
 
 const settingsSig = () => JSON.stringify([S.lib.loaded, S.lib.err, customMaps().map(m => [m.id, m.state, m.title, m.year, m.kind, !!m.bounds, m.error]),
-  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, S.base, store.get("theme", "auto"), outlinesOn(), S.rec.key, S.eraA]);
+  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, S.base, store.get("theme", "auto"), scrollMode(), outlinesOn(), S.rec.key, S.eraA]);
 let settingsLastSig = "";
 // Redraws the card when something it shows changed; otherwise only moves the progress rings. A field being typed in is
 // never torn out from under the caret.
@@ -3419,13 +3565,14 @@ function keySectionHTML() {
 }
 VIEWS.settings = v => {
   settingsLastSig = settingsSig();
-  const theme = store.get("theme", "auto"), mine = customMaps();
+  const theme = store.get("theme", "auto"), mode = scrollMode(), mine = customMaps();
   const seg = (label, inner) => `<div class="set-row"><span class="set-k">${label}</span><div class="seg" role="group" aria-label="${label}">${inner}</div></div>`;
   return `${headHTML("Settings", "Preferences, your own maps and storage")}
     <h3 class="sub-head">Preferences</h3>
     <div class="group">
       ${seg("Today’s map", Object.entries(BASES).map(([k, b]) => `<button data-act="setBase" data-s="${k}" aria-pressed="${S.base === k}">${esc(b.name)}</button>`).join(""))}
       ${seg("Appearance", ["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${theme === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join(""))}
+      ${seg("Scrolling", SCROLL_MODES.map(([k, label]) => `<button data-act="scrollMode" data-m="${k}" aria-pressed="${mode === k}">${label}</button>`).join(""))}
       <div class="set-row"><span class="set-k">Old map outlines</span>${outlinesSeg("seg")}</div>
     </div>
     <h3 class="sub-head">Kaggle key</h3>
@@ -3449,6 +3596,7 @@ VIEWS.settings.after = () => {
 };
 ACTIONS.openSettings = () => openSettings();
 ACTIONS.setBase = el => setBase(el.dataset.s);
+ACTIONS.scrollMode = el => setScrollMode(el.dataset.m);
 ACTIONS.setKeyAdd = () => { S.view.keyOpen = true; rerenderKeepingFocus(); $('#view [data-act="recKeyPick"]')?.focus({ preventScroll: true }); };
 ACTIONS.cmPick = () => $("#cmFile")?.click();
 ACTIONS.cmUpCancel = () => S.cm.up?.xhr.abort();
@@ -3602,7 +3750,7 @@ function openPlacement(entry, opener = document.activeElement) {
   pl.today.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
   pl.today.on("click", e => plClickToday(e.lngLat));
   pl.today.on("load", () => { pl.todayReady = true; setBasePaint(pl.today); plDraw(); });
-  [pl.scan, pl.today].forEach(m => { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation?.(); });
+  [pl.scan, pl.today].forEach(m => { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation?.(); wireTrackpad(m); });
   const b = entry.bounds || (pl.pairs.length ? pl.pairs.reduce((a, p) => [Math.min(a[0], p.lon), Math.min(a[1], p.lat), Math.max(a[2], p.lon), Math.max(a[3], p.lat)], [180, 90, -180, -90]) : null);
   if (b && b[2] > b[0] && b[3] > b[1]) pl.today.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, duration: 0, maxZoom: 15 });
   $("#plUndo").onclick = () => { if (pl.pending) pl.pending = null; else pl.pairs.pop(); plRender(); };
@@ -3852,7 +4000,8 @@ function checkEmptyKinds() {
   m.on("dataloading", e => { if (e.dataType === "source" && !tilesBusy) { tilesBusy = true; updateLoading(); } });
   m.on("idle", () => { if (tilesBusy) { tilesBusy = false; updateLoading(); } });
   let saveViewTimer;
-  m.on("moveend", () => {
+  m.on("moveend", e => {
+    if (e?.trackpadMove) return;
     clearTimeout(saveViewTimer);
     saveViewTimer = setTimeout(() => { store.set("center", m.getCenter().toArray()); store.set("zoom", m.getZoom()); }, 250);
     updateCounts(); scheduleLoad(); renderMapbar(); libRefreshView(); if (S.view.name === "records") recRefreshView();
