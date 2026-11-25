@@ -69,7 +69,7 @@ import numpy as np
 import paths
 import tiling
 from datums import INDIAN_1960
-from files import StillInUse, delete, lock_file, path_bytes, unlock_file, write_json
+from files import StillInUse, delete, lock_file, path_bytes, read_json, unlock_file, write_json
 from PIL import Image
 from pyproj import Transformer
 
@@ -195,6 +195,7 @@ class Library:
         self.work = self.root / "data" / "work" / "maps"
         self.scans = self.app_root / "data" / "scans"
         self.custom = custom_maps.CustomMaps(self.root)  # the user's own maps
+        self.alignments = self.root / "data" / "alignments"
         self.python = python or sys.executable
         self._python_given = python is not None
         self._lock = threading.RLock()
@@ -243,6 +244,10 @@ class Library:
             raise LibraryError(f"not in the map list: {', '.join(map(str, unknown))}")
         return [entries[i] for i in dict.fromkeys(ids)]
 
+    def entry(self, map_id):
+        """One catalogue or custom map entry; LibraryError if not listed."""
+        return self.entries_for([map_id])[0]
+
     def select(self, area=None, region=None):
         """Catalogue entries overlapping `area` ([w, s, e, n]) and/or in `region`."""
         if region is not None and region not in REGIONS:
@@ -258,6 +263,30 @@ class Library:
         """The installed file of a map (it may not exist)."""
         return self.tiles / f"{map_id}{catalog.MBTILES}"
 
+    def alignment_dir(self, map_id):
+        """Folder holding a user's alignment override (preview, work image, points, control) for `map_id`."""
+        return self.alignments / map_id
+
+    def alignment_control_path(self, map_id):
+        """The control file written when the user saves an adjusted alignment for `map_id`."""
+        return self.alignment_dir(map_id) / "control.json"
+
+    def alignment_state_path(self, map_id):
+        """The saved point pairs, image dimensions and bounds for re-opening alignment on `map_id`."""
+        return self.alignment_dir(map_id) / "alignment.json"
+
+    def alignment_preview_path(self, map_id):
+        """The shrunk JPEG preview served to the Placement screen when adjusting `map_id`."""
+        return self.alignment_dir(map_id) / "preview.jpg"
+
+    def alignment_work_path(self, map_id):
+        """The full-resolution working image that user alignment pixel coordinates refer to."""
+        return self.alignment_dir(map_id) / "work.jpg"
+
+    def has_alignment(self, map_id):
+        """True when a saved user alignment override exists for `map_id`."""
+        return self.alignment_control_path(map_id).exists()
+
     def installed_ids(self):
         """Ids of every installed map, listed in the catalogue or not."""
         return catalog.installed_ids(self.tiles)
@@ -270,19 +299,19 @@ class Library:
         return download_maps.raw_paths(entry, self.raw)
 
     def disk_bytes(self, map_id, entry=None):
-        """Bytes a map takes on disk (tiles plus download), or None when it takes none."""
-        n = path_bytes(self.tiles_path(map_id))
+        """Bytes a map takes on disk (tiles, download and alignment override), or None when zero."""
+        n = path_bytes(self.tiles_path(map_id)) + path_bytes(self.alignment_dir(map_id))
         if entry:
             n += sum(path_bytes(p) for p in self.raw_paths(entry)[1])
         return n or None
 
     def disk_usage(self, records_db=None):
-        """{"maps", "records", "downloads", "total"} in bytes: installed maps (tiles and the
-        user's own uploads), the record database and what the record sources downloaded, and the
-        old maps' downloads kept for rebuilding."""
+        """{"maps", "records", "downloads", "total"} in bytes: installed maps (tiles, the user's
+        own uploads and alignment overrides), the record database and what the record sources
+        downloaded, and the old maps' downloads kept for rebuilding."""
         folders = {m["series"] for m in self.catalogue().get("maps", [])} | {"scans"}
         downloads = sum(path_bytes(self.raw / name) for name in folders)
-        maps = path_bytes(self.tiles) + self.custom.disk_bytes()
+        maps = path_bytes(self.tiles) + self.custom.disk_bytes() + path_bytes(self.alignments)
         records = path_bytes(records_db) + max(path_bytes(self.raw) - downloads, 0) if records_db else 0
         return {"maps": maps, "records": records, "downloads": downloads, "total": maps + records + downloads}
 
@@ -304,6 +333,7 @@ class Library:
 
         attempt(tiles)
         attempt(tiles.with_name(tiles.name + tiling.PARTIAL_SUFFIX))
+        attempt(self.alignment_dir(map_id))
         if not keep_log:
             attempt(self.log_path(map_id))
         if entry:
@@ -424,6 +454,7 @@ class Library:
                         "error": error,
                         "disk_bytes": self.disk_bytes(map_id, entry),
                         "disk_estimate": round(estimated_disk_bytes([entry], series)),
+                        "adjusted": self.has_alignment(map_id),
                     }
                 )
             # Maps installed by hand or by an older version, no longer in the catalogue: listed so
@@ -447,6 +478,7 @@ class Library:
                         "error": None,
                         "disk_bytes": self.disk_bytes(map_id),
                         "disk_estimate": None,
+                        "adjusted": self.has_alignment(map_id),
                     }
                 )
             return {
@@ -510,6 +542,121 @@ class Library:
             self._jobs[map_id] = Job(entry, rebuild=True)
             self._queue.append(map_id)
             self._wake.notify_all()
+
+    def _alignment_image_size(self, work_path):
+        with Image.open(work_path) as img:
+            return {"width": img.width, "height": img.height}
+
+    def prepare_alignment(self, map_id):
+        """Prepare work/preview images for adjusting `map_id` and return its Placement payload."""
+        entry = self.entry(map_id)
+        if entry.get("custom") and entry.get("kind") == "scan":
+            raise LibraryError("Use Place on map to adjust this custom image.")
+        if not self.tiles_path(map_id).exists():
+            raise LibraryError("Install this map before adjusting its alignment.")
+        src, _ = self.raw_paths(entry)
+        if not src.exists():
+            raise LibraryError("The original map file is missing. Re-add the map to download it again.")
+        folder = self.alignment_dir(map_id)
+        work = self.alignment_work_path(map_id)
+        preview = self.alignment_preview_path(map_id)
+        if not (work.exists() and preview.exists()):
+            created = not folder.exists()
+            folder.mkdir(parents=True, exist_ok=True)
+            try:
+                image_dims = self.custom.make_work_image(src, folder)
+            except Exception:
+                if created:
+                    with contextlib.suppress(OSError):
+                        delete(folder)
+                raise
+        else:
+            image_dims = None
+        state = read_json(self.alignment_state_path(map_id))
+        if isinstance(state, dict) and isinstance(state.get("image"), dict):
+            image_dims = state["image"]
+            points = state.get("points") or []
+            bounds = state.get("bounds")
+        else:
+            if image_dims is None:
+                image_dims = self._alignment_image_size(work)
+            points, bounds = [], None
+        return {
+            "id": map_id,
+            "title": entry.get("title") or map_id,
+            "year": str(entry.get("year") or entry.get("date") or ""),
+            "image": image_dims,
+            "points": points,
+            "bounds": bounds or entry.get("bounds"),
+            "original_bounds": entry.get("bounds"),
+            "adjusted": self.has_alignment(map_id),
+            "preview_url": f"/api/library/{map_id}/align/preview",
+        }
+
+    def save_alignment(self, map_id, points):
+        """Save user alignment control points for `map_id` and queue a rebuild from `work.jpg`."""
+        entry = self.entry(map_id)
+        if entry.get("custom") and entry.get("kind") == "scan":
+            raise LibraryError("Use Place on map to adjust this custom image.")
+        with self._lock:
+            job = self._jobs.get(map_id)
+            if job and job.state != "failed":
+                raise LibraryError("This map is being made right now. Wait until it is ready, then adjust it again.")
+            work = self.alignment_work_path(map_id)
+            if not work.exists():
+                raise LibraryError("Prepare this map's alignment image before saving points.")
+            image_dims = self._alignment_image_size(work)
+            pts = custom_maps.clean_points(points, image_dims)
+            bounds = custom_maps.placed_bounds(pts, image_dims["width"], image_dims["height"])
+            max_zoom = (
+                min(custom_maps.native_zoom_for(bounds, image_dims["width"]), custom_maps.MAX_ZOOM)
+                if bounds
+                else custom_maps.MAX_ZOOM
+            )
+            scan_meta = {}
+            if entry.get("kind") == "scan":
+                scan_file = self.scans / f"{map_id}.json"
+                if scan_file.exists():
+                    scan_meta = (read_json(scan_file) or {}).get("meta", {})
+            meta = {
+                "title": entry.get("title") or map_id,
+                "date": str(entry.get("year") or entry.get("date") or ""),
+                "dateNote": entry.get("date_note") or entry.get("dateNote") or "",
+                **scan_meta,
+            }
+            control = {
+                "image": str(work),
+                "crs": "EPSG:4326",
+                "gcps": pts,
+                "max_zoom": max_zoom,
+                "meta": meta,
+            }
+            if len(pts) < custom_maps.POLYNOMIAL_POINTS:
+                control["order"] = 1
+            write_json(self.alignment_control_path(map_id), control)
+            write_json(self.alignment_state_path(map_id), {"image": image_dims, "points": pts, "bounds": bounds})
+            self.cancel_path(map_id).unlink(missing_ok=True)
+            self._jobs[map_id] = Job(entry, rebuild=True)
+            self._queue.append(map_id)
+            self._wake.notify_all()
+        return {"ok": True, "id": map_id, "adjusted": True, "bounds": bounds}
+
+    def reset_alignment(self, map_id):
+        """Delete user alignment overrides for `map_id` and queue a rebuild from original sources."""
+        entry = self.entry(map_id)
+        with self._lock:
+            job = self._jobs.get(map_id)
+            if job and job.state != "failed":
+                raise LibraryError("This map is being made right now. Wait until it is ready, then adjust it again.")
+            try:
+                delete(self.alignment_dir(map_id))
+            except StillInUse as e:
+                raise LibraryError(str(e)) from e
+            self.cancel_path(map_id).unlink(missing_ok=True)
+            self._jobs[map_id] = Job(entry, rebuild=True)
+            self._queue.append(map_id)
+            self._wake.notify_all()
+        return {"ok": True, "id": map_id, "adjusted": False}
 
     def remove(self, ids):
         """Remove maps: stop them if queued or being added, delete their tiles and downloads,
@@ -694,7 +841,7 @@ class Library:
                             # Keep nothing but the log: trying again starts from a fresh download.
                             # The user's own upload cannot be fetched again, so it stays.
                             with contextlib.suppress(StillInUse):  # the build's own error is the news
-                                if entry.get("custom"):
+                                if entry.get("custom") or job.rebuild:
                                     tiles = self.tiles_path(map_id)
                                     delete(tiles.with_name(tiles.name + tiling.PARTIAL_SUFFIX))
                                 else:
@@ -742,6 +889,9 @@ class Library:
     def _download_and_build(self, job, report):
         """The two steps of adding a map; call only while holding exclusive()."""
         entry = job.entry
+        if self.has_alignment(entry["id"]):
+            self._set(job, report, "building", 0.0)
+            return self._build(job, self.alignment_work_path(entry["id"]), report)
         if entry.get("custom"):  # uploaded already: only the build is left
             self._set(job, report, "building", 0.0)
             return self._build(job, self.custom.build_input(entry), report)
@@ -774,6 +924,14 @@ class Library:
 
     def build_command(self, entry, path, out):
         """The child process that builds `entry`'s tiles from its download `path` into `out`."""
+        if self.has_alignment(entry["id"]):
+            return self.script_command(
+                "georef_scan.py",
+                str(self.alignment_control_path(entry["id"])),
+                str(out),
+                "--image",
+                str(self.alignment_work_path(entry["id"])),
+            )
         if entry.get("custom"):
             return self.custom_build_command(entry, path, out)
         if entry["kind"] == "scan":

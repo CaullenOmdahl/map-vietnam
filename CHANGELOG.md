@@ -2,6 +2,13 @@
 
 Notable changes to Map Vietnam. Versions follow [semantic versioning](https://semver.org).
 
+## Unreleased
+
+Map alignment
+- Any installed historical map (or uploaded GeoTIFF / GeoPDF) can be aligned or rescaled against
+  today's map using **Adjust alignment**, reusing the two-pane Placement screen, and reset to its
+  original georeferencing with **Reset to original**
+
 ## 0.1.1 - 2026-11-24
 
 Your own maps

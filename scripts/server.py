@@ -108,6 +108,7 @@ MAX_BODY_BYTES = 1 << 20  # the API's JSON bodies are tiny; refuse anything bigg
 UPLOAD_PATH = "/api/library/custom"  # the one route whose body is a raw file, not JSON
 UPLOAD_BLOCK = 1 << 20
 CUSTOM_PATH = re.compile(r"library/custom/(custom_[0-9a-f]{10})/(preview|points|edit)")
+ALIGN_PATH = re.compile(r"library/([A-Za-z0-9_-]+)/align/(prepare|preview|points|reset)")
 # How long a removal request waits for the removal to finish before it answers, so the answer
 # usually shows the source already gone; a removal queued behind a running job answers sooner.
 REMOVE_WAIT_S = 5
@@ -802,6 +803,9 @@ class Handler(SimpleHTTPRequestHandler):
         m = CUSTOM_PATH.fullmatch(p)
         if m and (method, m[2]) in (("GET", "preview"), ("POST", "points"), ("POST", "edit")):
             return self.custom_map_api(m[1], m[2])
+        am = ALIGN_PATH.fullmatch(p)
+        if am and ((method == "GET" and am[2] == "preview") or (method == "POST" and am[2] != "preview")):
+            return self.align_map_api(am[1], am[2])
         self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
     def upload_custom_map(self):
@@ -842,6 +846,16 @@ class Handler(SimpleHTTPRequestHandler):
         listing = lib.listing()
         self.send_json({"map": next(m for m in listing["maps"] if m["id"] == entry["id"]), "library": listing})
 
+    def send_jpeg(self, path):
+        """Send a JPEG file without caching (previews change when re-uploaded or prepared)."""
+        body = path.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "image/jpeg")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        self.wfile.write(body)
+
     def custom_map_api(self, map_id, action):
         """The routes of one of the user's own maps: preview, points, edit."""
         lib = self.library
@@ -850,14 +864,7 @@ class Handler(SimpleHTTPRequestHandler):
             path = lib.custom.preview_path(map_id)
             if entry["kind"] != "scan" or not path.exists():
                 raise custom_maps.NoSuchMap()
-            body = path.read_bytes()
-            self.send_response(HTTPStatus.OK)
-            self.send_header("Content-Type", "image/jpeg")
-            self.send_header("Content-Length", str(len(body)))
-            self.send_header("Cache-Control", "no-cache")
-            self.end_headers()
-            self.wfile.write(body)
-            return
+            return self.send_jpeg(path)
         b = self.body()
         if action == "points":
             lib.place_custom(map_id, b.get("points"), b.get("title"), b.get("year"))
@@ -866,6 +873,24 @@ class Handler(SimpleHTTPRequestHandler):
             lib.custom.edit(map_id, b.get("title"), b.get("year"))
             lib.write_catalog()
         self.send_json(lib.listing())
+
+    def align_map_api(self, map_id, action):
+        """The alignment routes of any installed map: prepare, preview, points, reset."""
+        lib = self.library
+        if action == "preview":
+            path = lib.alignment_preview_path(map_id)
+            if not path.exists():
+                return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+            return self.send_jpeg(path)
+        b = self.body()
+        if action == "prepare":
+            return self.send_json(lib.prepare_alignment(map_id))
+        if action == "points":
+            res = lib.save_alignment(map_id, b.get("points"))
+        else:
+            res = lib.reset_alignment(map_id)
+        lib.start_worker()
+        self.send_json(res)
 
     def settings(self):
         """GET /api/settings: where the data is kept and how much space each kind takes."""

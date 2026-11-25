@@ -459,7 +459,9 @@ function addOverlays(m) {
 function addEraLayer(m, l) {
   const id = `ov-${l.id}`;
   if (m.getLayer(id)) return;
-  m.addSource(id, { type: "raster", tiles: ["/" + l.tiles.replace(/^\//, "")], tileSize: 256, bounds: l.bounds || undefined,
+  const ver = tileVersions[l.id];
+  const tileUrl = "/" + l.tiles.replace(/^\//, "") + (ver ? `?v=${ver}` : "");
+  m.addSource(id, { type: "raster", tiles: [tileUrl], tileSize: 256, bounds: l.bounds || undefined,
     attribution: l.attribution ? esc(l.attribution) : undefined,
     minzoom: l.minzoom || 0, maxzoom: l.maxzoom || 15 });
   m.addLayer({ id, type: "raster", source: id, layout: { visibility: "none" }, paint: { "raster-opacity": S.opacity, "raster-fade-duration": 0 } },
@@ -1842,9 +1844,12 @@ ACTIONS.sheet60 = el => { const e = eraById(el.dataset.id); if (e && !eraInYears
 VIEWS.era = v => {
   const e = eraById(v.id);
   if (!e) return headHTML("Historical map") + `<p class="muted">No map selected.</p>`;
-  return `${headHTML(esc(e.name), `<span>${esc(e.years)} · ${esc(e.short)} · ${esc(e.series)}</span>`)}
+  const lib = S.lib.byId.get(e.id), customScan = lib?.custom && lib?.kind === "scan";
+  return `${headHTML(esc(e.name), `<span>${esc(e.years)} · ${esc(e.short)} · ${esc(e.series)}${lib?.adjusted ? " · adjusted" : ""}</span>`)}
     <div class="row" style="margin-top:14px"><button class="btn small" data-act="fit" data-id="${e.id}">Zoom to coverage</button>
       ${S.eraA !== e.id ? `<button class="btn small primary" data-act="setEra" data-id="${e.id}">Show this map</button>` : ""}
+      ${customScan ? `<button class="btn small" data-act="cmPlace" data-id="${e.id}">Place again</button>`
+        : `<button class="btn small" data-act="alignMap" data-id="${e.id}">Adjust alignment</button>`}
       <button class="btn small danger" data-act="eraRemove" data-id="${e.id}">${icon.trash}Remove</button></div>
     ${!eraInYears(e) ? `<p class="quiet-note">${icon.warn}<span>Outside your years (${esc(yearsText())}), so it is hidden on the map.</span></p>` : ""}
     <p class="small-t muted">Positions on old maps can be off by hundreds of metres or more. Check each sheet’s note.</p>
@@ -1953,6 +1958,9 @@ function scheduleLibraryPoll() {
 let libWasBusy = false;
 let libBatchToasted = false; // a several-map add started in this window: its toast already says so, so no second announcement
 const justInstalled = new Set(); // maps seen to finish, announced once their layer is on the map
+const awaitingRebuild = new Set(); // maps whose alignment rebuild or reset was triggered here
+const pendingRebuilt = new Set(); // installed maps whose rebuilt tiles need fresh MapLibre sources
+const tileVersions = {}; // mapId -> timestamp cache-buster after alignment or placement rebuilds
 function applyLibrary(r) {
   const before = S.lib.byId, first = !S.lib.loaded, wasConverting = S.lib.legacy?.state === "converting";
   const maps = r.maps || [];
@@ -1962,13 +1970,22 @@ function applyLibrary(r) {
   S.lib = { maps, byId: new Map(maps.map(m => [m.id, m])), series: r.series || {}, queueBytes: r.queue_bytes || 0, legacy: r.legacy || null, loaded: true, err: null };
   if (!first) for (const m of maps) {
     const was = before.get(m.id)?.state;
-    if (!was || was === m.state) continue;
-    if (m.state === "installed") justInstalled.add(m.id);
-    if (m.state === "failed") toast(`${m.title} could not be added. Open Old maps to try again.`, 6000);
+    if (m.state === "installed") {
+      if (was && was !== "installed") justInstalled.add(m.id);
+      if ((was && LIB_BUSY.has(was)) || awaitingRebuild.has(m.id)) {
+        awaitingRebuild.delete(m.id);
+        tileVersions[m.id] = Date.now();
+        pendingRebuilt.add(m.id);
+      }
+    }
+    if (was && was !== m.state && m.state === "failed") {
+      awaitingRebuild.delete(m.id);
+      toast(`${m.title} could not be added. Open Old maps to try again.`, 6000);
+    }
   }
-  // catalog.json lists exactly the installed maps; reload it whenever the two disagree.
+  // catalog.json lists exactly the installed maps; reload it whenever the two disagree or a rebuild finished.
   const installed = maps.filter(m => m.state === "installed").map(m => m.id), have = new Set(S.catalog.map(l => l.id));
-  if (installed.length !== have.size || installed.some(id => !have.has(id))) refreshCatalog();
+  if (pendingRebuilt.size || installed.length !== have.size || installed.some(id => !have.has(id))) refreshCatalog();
   else announceInstalled();
   const nowBusy = libBusyMaps().length;
   if (!first && nowBusy && !libWasBusy && !libBatchToasted) announce(`Adding ${nowBusy} map${nowBusy === 1 ? "" : "s"}. You can keep using the map.`);
@@ -2006,7 +2023,9 @@ async function refreshCatalog(tries = 0) {
     const want = S.lib.maps.filter(m => m.state === "installed" && m.bounds);
     // The server writes catalog.json before it reports a map installed; retry briefly in case of a race anyway.
     if (want.some(m => !layers.some(l => l.id === m.id)) && tries < 4) { catalogBusy = false; setTimeout(() => refreshCatalog(tries + 1), 800); return; }
-    setCatalog(layers);
+    const rebuiltIds = new Set(pendingRebuilt);
+    pendingRebuilt.clear();
+    setCatalog(layers, rebuiltIds);
     announceInstalled();
   } catch { /* the next library change tries again */ }
   catalogBusy = false;
@@ -2014,15 +2033,17 @@ async function refreshCatalog(tries = 0) {
 }
 // Swaps in a new list of installed maps: adds the new layers to every map, drops the removed ones, and moves off a
 // removed map if it was on screen.
-function setCatalog(layers) {
+function setCatalog(layers, rebuiltIds = new Set()) {
   const now = new Set(layers.map(l => l.id)), had = new Set(S.catalog.map(l => l.id));
   for (const l of S.catalog) if (!now.has(l.id)) eachMap(m => removeEraLayer(m, l.id));
-  for (const l of layers) if (!had.has(l.id)) eachMap(m => addEraLayer(m, l));
+  for (const id of rebuiltIds) if (had.has(id) && now.has(id)) eachMap(m => removeEraLayer(m, id));
+  for (const l of layers) if (!had.has(l.id) || rebuiltIds.has(l.id)) eachMap(m => addEraLayer(m, l));
   S.catalog = layers; S.eras = buildEras(layers);
   if (S.eraA && !eraById(S.eraA)) { S.eraA = null; store.set("era", "today"); }
   if (S.eraB !== "today" && !eraById(S.eraB)) S.eraB = "today";
   applyEra();
   if (S.view.name === "library") libRefreshView(true);
+  if (S.view.name === "era") render();
 }
 // A map has just finished: show it straight away if it is the first old map of the area on screen (that is what
 // adding it asked for), otherwise say it is ready and offer to show it.
@@ -2295,14 +2316,15 @@ function libDetail(m) {
   const licence = m.licence || ser.licence;
   // The row's own control (Add, Retry, Show / Hide, or the progress ring that stops it) is the main action; the
   // opened row adds only what the row cannot do.
-  const acts = (m.custom ? `<button class="btn small" data-act="cmManage" data-id="${id}">Edit or place again</button>` : "")
+  const acts = (m.custom ? `<button class="btn small" data-act="cmManage" data-id="${id}">Edit or place again</button>`
+    : m.state === "installed" ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : "")
     + (m.state === "installed" ? `<button class="btn small danger" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button>` : "");
   const confirm = S.view.confirm === "remove:" + m.id ? `<div class="confirm-box" role="alertdialog" aria-label="Remove ${t}">
       <span>Remove <b>${t}</b> from this computer? This frees ${fmtMB(m.disk_bytes) || "its space"}. You can add it again later.</span>
       <div class="row"><button class="btn small danger solid" data-act="libRemove" data-id="${id}">Remove</button>
       <button class="btn small" data-act="libCancel">Keep it</button></div></div>` : "";
   return `<div class="lib-detail" id="libd-${id}">
-    <p>${esc(libWhat(m))}${years ? ` · ${esc(years)}` : ""}</p>
+    <p>${esc(libWhat(m))}${years ? ` · ${esc(years)}` : ""}${m.adjusted ? " · adjusted" : ""}</p>
     ${maker ? `<p class="muted">${esc(maker)}</p>` : ""}
     ${size ? `<p class="muted">${esc(size)}</p>` : ""}
     ${m.error ? `<p class="err">${esc(m.error)}</p>` : ""}
@@ -3378,14 +3400,14 @@ function cmDetail(m) {
       <div class="row"><button class="btn small danger solid" data-act="libRemove" data-id="${id}">Remove</button>
       <button class="btn small" data-act="libCancel">Keep it</button></div></div>` : "";
   return `<div class="lib-detail" id="libd-${id}">
-    <p>${esc(CUSTOM_KIND_WORDS[m.kind] || "Map")}${ready ? ` · uses ${esc(sizeText(m.disk_bytes))}` : ""}</p>
+    <p>${esc(CUSTOM_KIND_WORDS[m.kind] || "Map")}${ready ? ` · uses ${esc(sizeText(m.disk_bytes))}${m.adjusted ? " · adjusted" : ""}` : ""}</p>
     ${m.state === "needs_points" ? `<p class="muted">Match three or more spots on it to today’s map to place it.</p>` : ""}
     <form class="cm-edit stack" data-id="${id}" autocomplete="off">
       <label class="field"><span>Name</span><input type="text" name="mtitle" required maxlength="120" value="${esc(m.title)}"></label>
       <label class="field"><span>Year (optional)</span><input type="number" name="myear" min="1800" max="2100" inputmode="numeric" placeholder="e.g. 1968" value="${m.year ? esc(m.year) : ""}"></label>
       <div class="row"><button class="btn small primary" type="submit">Save</button></div>
       <div class="err" role="alert"></div></form>
-    <div class="row">${m.state === "needs_points" ? "" : m.kind === "scan" ? `<button class="btn small" data-act="cmPlace" data-id="${id}">Place again</button>` : ""}
+    <div class="row">${m.state === "needs_points" ? "" : m.kind === "scan" ? `<button class="btn small" data-act="cmPlace" data-id="${id}">Place again</button>` : ready ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : ""}
       ${ready && m.bounds ? `<button class="btn small" data-act="cmFit" data-id="${id}">Zoom to map</button>` : ""}
       <button class="btn small danger" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button></div>
     ${confirm}</div>`;
@@ -3465,6 +3487,17 @@ ACTIONS.cmFit = el => {
   primary().fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: mapPadding(), maxZoom: 15, duration: reduceMotion ? 0 : 600 });
 };
 ACTIONS.cmPlace = el => { const m = S.lib.byId.get(el.dataset.id); if (m) openPlacement(m, el); };
+ACTIONS.alignMap = async el => {
+  const id = el?.dataset?.id;
+  if (!id || el.disabled) return;
+  const prev = el.textContent;
+  el.disabled = true; el.textContent = "Preparing…";
+  try {
+    const data = await api(`/api/library/${encodeURIComponent(id)}/align/prepare`, { method: "POST", body: {} });
+    openPlacement(data, { opener: el, mode: "align" });
+  } catch (e) { toast(e.message || "Could not prepare alignment.", 5000); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
 ACTIONS.cmManage = el => openSettings(el.dataset.id);
 
 async function cmSaveEdit(e) {
@@ -3553,30 +3586,36 @@ function fitAffine(pairs, w, h) {
   return { at, rms: Math.sqrt(sq / pairs.length) };
 }
 
-function openPlacement(entry, opener = document.activeElement) {
+function openPlacement(entry, openerOrOpts = document.activeElement) {
   if (pl || !entry?.image) { if (!entry?.image) toast("This map has no picture to place."); return; }
   closePopovers();
+  const opts = openerOrOpts && !(openerOrOpts instanceof Element) && typeof openerOrOpts === "object"
+    ? openerOrOpts : { opener: openerOrOpts, mode: "custom" };
+  const opener = opts.opener || document.activeElement, mode = opts.mode || "custom", isAlign = mode === "align";
   const w = entry.image.width, h = entry.image.height;
-  pl = { entry, w, h, k: PL_SCALE / Math.max(w, h), url: `/api/library/custom/${encodeURIComponent(entry.id)}/preview`,
+  const url = entry.preview_url || `/api/library/custom/${encodeURIComponent(entry.id)}/preview`;
+  pl = { entry, mode, w, h, k: PL_SCALE / Math.max(w, h), url,
     pairs: (entry.points || []).map(([col, row, lon, lat]) => ({ col, row, lon, lat })), pending: null, opacity: 0.6, marks: [], todayReady: false, opener, discard: false };
   const dark = isDark();
   document.body.insertAdjacentHTML("beforeend", `<div id="place" role="dialog" aria-modal="true" aria-labelledby="plTitle">
-    <header class="pl-bar"><div class="pl-head"><h2 id="plTitle" tabindex="-1">Place ${esc(entry.title)}</h2><p id="plStep" class="pl-step" role="status"></p></div>
-      <div class="pl-btns"><button class="btn" id="plUndo">Undo last</button><button class="btn" id="plClear">Clear</button>
-        <button class="btn" id="plCancel">Cancel</button><button class="btn primary" id="plSave" disabled>Place map</button></div></header>
+    <header class="pl-bar"><div class="pl-head"><h2 id="plTitle" tabindex="-1">${isAlign ? "Adjust alignment" : "Place"} ${isAlign ? "— " : ""}${esc(entry.title)}</h2><p id="plStep" class="pl-step" role="status"></p></div>
+      <div class="pl-btns">${isAlign && entry.adjusted ? `<button class="btn danger" id="plReset">Reset to original</button>` : ""}
+        <button class="btn" id="plUndo">Undo last</button><button class="btn" id="plClear">Clear</button>
+        <button class="btn" id="plCancel">Cancel</button><button class="btn primary" id="plSave" disabled>${isAlign ? "Save alignment" : "Place map"}</button></div></header>
     <div class="pl-panes">
-      <section class="pl-pane" id="plScanPane" aria-label="Your map"><span class="pl-tag">Your map</span><div class="pl-map" id="plScan"></div>
+      <section class="pl-pane" id="plScanPane" aria-label="${isAlign ? "Historical map" : "Your map"}"><span class="pl-tag">${isAlign ? "Historical map" : "Your map"}</span><div class="pl-map" id="plScan"></div>
         <svg class="pl-cross" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
-        <button class="btn small pl-mark" data-pl="scan" aria-label="Mark the middle of your map (the + sign)">Mark the +</button></section>
+        <button class="btn small pl-mark" data-pl="scan" aria-label="Mark the middle of this map (the + sign)">Mark the +</button></section>
       <section class="pl-pane" id="plTodayPane" aria-label="Today’s map"><span class="pl-tag">Today’s map</span><div class="pl-map" id="plToday"></div>
         <svg class="pl-cross" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
         <button class="btn small pl-mark" data-pl="today" aria-label="Mark the middle of today’s map (the + sign)">Mark the +</button></section>
     </div>
     <div class="pl-tray">
       <ol id="plPairs" class="pl-pairs" aria-label="Matched spots"></ol>
-      <div class="pl-fields">
-        <label class="field"><span>Name</span><input type="text" id="plName" maxlength="120" value="${esc(entry.title)}"></label>
-        <label class="field"><span>Year (optional)</span><input type="number" id="plYear" min="1800" max="2100" inputmode="numeric" placeholder="e.g. 1968" value="${entry.year ? esc(entry.year) : ""}"></label>
+      <div class="pl-fields"${isAlign ? ` style="grid-template-columns:minmax(0,2fr) minmax(0,2fr)"` : ""}>
+        ${isAlign ? `<div class="field"><span>Adjusting</span><div class="small-t muted" id="plMapInfo">${esc(entry.title)}${entry.year ? ` (${esc(entry.year)})` : ""}${entry.adjusted ? " · currently adjusted" : ""}</div></div>`
+          : `<label class="field"><span>Name</span><input type="text" id="plName" maxlength="120" value="${esc(entry.title)}"></label>
+             <label class="field"><span>Year (optional)</span><input type="number" id="plYear" min="1800" max="2100" inputmode="numeric" placeholder="e.g. 1968" value="${entry.year ? esc(entry.year) : ""}"></label>`}
         <label class="field pl-op"><span>See-through <span id="plOpVal" class="mono">60%</span></span><input type="range" id="plOp" min="10" max="100" value="60" disabled aria-label="Opacity of your map over today’s map"></label>
       </div>
       <div class="err" id="plErr" role="alert"></div>
@@ -3611,6 +3650,7 @@ function openPlacement(entry, opener = document.activeElement) {
   $("#plYes").onclick = () => closePlacement();
   $("#plNo").onclick = () => { $("#plDiscard").hidden = true; pl.discard = false; $("#plCancel").focus(); };
   $("#plSave").onclick = plSave;
+  if ($("#plReset")) $("#plReset").onclick = plReset;
   $("#plOp").oninput = e => { pl.opacity = +e.target.value / 100; $("#plOpVal").textContent = e.target.value + "%"; if (pl.todayReady && pl.today.getLayer("pl-scan")) pl.today.setPaintProperty("pl-scan", "raster-opacity", pl.opacity); };
   $$("#place .pl-mark").forEach(btn => btn.onclick = () => btn.dataset.pl === "scan" ? plClickScan(pl.scan.getCenter()) : plClickToday(pl.today.getCenter()));
   $("#plPairs").onclick = e => { const x = e.target.closest("[data-del]"); if (x) { pl.pairs.splice(+x.dataset.del, 1); plRender(); } };
@@ -3673,7 +3713,7 @@ function plRender() {
   if (pl.pending) step = `<b>Spot ${n + 1}, step 2.</b> Now click the same spot on today’s map.`;
   else if (n < 3) step = `<b>1.</b> Click a spot on your map. <b>2.</b> Click the same spot on today’s map. ${n ? `${n} matched, at least 3 needed. Spread them out.` : "Use corners, road crossings or bridges."}`;
   else if (!fit) step = "Those spots are in a line or very close together. Add one further away from the others.";
-  else step = `Your map now lies over today’s map. Check the roads and rivers line up; drag the slider to compare. ${n >= 4 ? `Spots are off by about ${fit.rms < 10 ? "under 10" : Math.round(fit.rms)} m on average. ` : ""}Add more spots to improve it, then place the map.`;
+  else step = `Your map now lies over today’s map. Check the roads and rivers line up; drag the slider to compare. ${n >= 4 ? `Spots are off by about ${fit.rms < 10 ? "under 10" : Math.round(fit.rms)} m on average. ` : ""}Add more spots to improve it, then ${pl.mode === "align" ? "save the alignment" : "place the map"}.`;
   $("#plStep").innerHTML = step;
   $("#plScanPane").classList.toggle("want", !pl.pending);
   $("#plTodayPane").classList.toggle("want", !!pl.pending);
@@ -3698,14 +3738,53 @@ function plDraw() {
     m.addLayer({ id: "pl-scan", type: "raster", source: "pl-scan", paint: { "raster-opacity": pl.opacity, "raster-fade-duration": 0 } });
   } else { m.getSource("pl-scan").setCoordinates(coordinates); m.setLayoutProperty("pl-scan", "visibility", "visible"); }
 }
+async function plReset() {
+  if (!pl || pl.mode !== "align") return;
+  const cur = pl, btn = $("#plReset"), saveBtn = $("#plSave"), err = $("#plErr"), id = pl.entry.id, title = pl.entry.title;
+  if (btn) { btn.disabled = true; btn.textContent = "Resetting…"; }
+  saveBtn.disabled = true;
+  try {
+    await api(`/api/library/${encodeURIComponent(id)}/align/reset`, { method: "POST", body: {} });
+  } catch (e) {
+    if (pl === cur) {
+      err.textContent = e.message;
+      if (btn) { btn.disabled = false; btn.textContent = "Reset to original"; }
+      saveBtn.disabled = !plFit();
+    }
+    return;
+  }
+  awaitingRebuild.add(id);
+  if (pl === cur) closePlacement();
+  loadLibrary();
+  toast(`Resetting ${title} to its original alignment…`, 5000);
+}
 async function plSave() {
-  const name = $("#plName").value.trim(), y = $("#plYear").value.trim(), year = y ? +y : null, err = $("#plErr");
-  if (!name) { err.textContent = "Give the map a name."; $("#plName").focus(); return; }
-  if (y && !(year >= 1800 && year <= 2100)) { err.textContent = "The year should be between 1800 and 2100, or empty."; $("#plYear").focus(); return; }
-  const cur = pl, btn = $("#plSave"), id = pl.entry.id;
-  btn.disabled = true; btn.textContent = "Placing…";
+  const err = $("#plErr"), cur = pl, btn = $("#plSave"), id = pl.entry.id;
   // col / row are pixels of the full-size picture, which is what the scan is laid out in here.
   const points = pl.pairs.map(p => [Math.round(p.col * 10) / 10, Math.round(p.row * 10) / 10, +p.lon.toFixed(7), +p.lat.toFixed(7)]);
+  if (pl.mode === "align") {
+    btn.disabled = true; btn.textContent = "Saving…";
+    if ($("#plReset")) $("#plReset").disabled = true;
+    try {
+      await api(`/api/library/${encodeURIComponent(id)}/align/points`, { method: "POST", body: { points } });
+    } catch (e) {
+      if (pl === cur) {
+        err.textContent = e.message; btn.textContent = "Save alignment"; btn.disabled = false;
+        if ($("#plReset")) $("#plReset").disabled = false;
+      }
+      return;
+    }
+    awaitingRebuild.add(id);
+    const title = cur.entry.title;
+    if (pl === cur) closePlacement();
+    loadLibrary();
+    toast(`Rebuilding ${title} with the new alignment…`, 5000);
+    return;
+  }
+  const name = $("#plName").value.trim(), y = $("#plYear").value.trim(), year = y ? +y : null;
+  if (!name) { err.textContent = "Give the map a name."; $("#plName").focus(); return; }
+  if (y && !(year >= 1800 && year <= 2100)) { err.textContent = "The year should be between 1800 and 2100, or empty."; $("#plYear").focus(); return; }
+  btn.disabled = true; btn.textContent = "Placing…";
   let lib;
   try { lib = await api(`/api/library/custom/${encodeURIComponent(id)}/points`, { method: "POST", body: { points, title: name, year } }); }
   catch (e) { if (pl === cur) { err.textContent = e.message; btn.textContent = "Place map"; btn.disabled = false; } return; }
