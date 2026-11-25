@@ -2,6 +2,14 @@
 
 Notable changes to Map Vietnam. Versions follow [semantic versioning](https://semver.org).
 
+## 0.2.0 (Unreleased)
+
+Settings
+- Each control now lives in exactly one place: the base map is switched from the style popover
+  (now titled **Map style**), the appearance theme lives in **Settings**, the old-map outlines
+  Show/Hide sits in the **Old maps** card, and the Kaggle key is managed in **Settings** (the key
+  box still appears in Records when a download asks for one)
+
 ## 0.1.1 - 2026-11-24
 
 Your own maps
