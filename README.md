@@ -18,6 +18,11 @@ on your own computer and opens in its own window.
 - Swipe between any two maps side by side
 - Add your own old maps: a GeoTIFF or GeoPDF is placed for you, and a scan or photo is placed by
   clicking matching spots on it and on today's map
+- Adjust the alignment and scale of any installed old map (or uploaded GeoTIFF or GeoPDF) against
+  today's map using the same two-pane Placement screen, and reset to the original at any time
+- Navigate with Apple Maps-style trackpad gestures (two-finger pan and pinch-to-zoom, plus macOS
+  Force Touch feedback and Force Click shortcuts), with idle preloading of nearby old-map tiles
+  for smoother panning and zooming
 - Search by place name or by a wartime grid reference such as `WS683427`
 - Public war-era records: air strikes, aircraft losses, casualty records, hamlets, bases, battles
 - Every record shows the coordinate as its source wrote it, how far off it could be, and a link
@@ -124,6 +129,17 @@ at the top of the list.
 
 ![The Old maps list open beside the map, with outlines on the map showing where each old map lies](docs/images/add-old-maps.jpg)
 
+Use **Outlines** inside **Old maps** to show or hide sheet boundaries on the map, **Map style**
+(the folded-map button at the top right) to switch between today's street map and satellite view,
+and **Settings** (the gear button) to change appearance theme, scrolling mode (**Automatic**,
+**Trackpad**, or **Mouse wheel**), manage your Kaggle key, add your own maps (**My maps**), or
+check disk usage.
+
+If a historical map is noticeably offset against modern roads or rivers, open its info card (or
+select it in **Old maps** / **My maps**), click **Adjust alignment**, pin at least three matching
+landmarks against today's map, and click **Save alignment** to rebuild its tiles locally (or
+**Reset to original** to revert).
+
 The bar at the bottom switches between the maps you've added, and its slider fades the old map in
 and out. The button at the right end splits the screen so you can drag between two maps. This is
 Cao Lãnh in 1873 and in 1965:
@@ -155,7 +171,9 @@ licences and credits.
 ## Accuracy and limits
 
 Old maps don't sit perfectly on new ones. The 1960s US sheets are within about 50 m and the
-1:250,000 sheets within 100 to 200 m. The older French maps can be out by hundreds of metres.
+1:250,000 sheets within 100 to 200 m. The older French maps can be out by hundreds of metres. If an
+installed sheet is off in an area you care about, **Adjust alignment** lets you match landmarks to
+today's map and rebuild its tiles locally (**Reset to original** restores the shipped alignment).
 
 Wartime grid references were read off maps drawn on the Indian 1960 datum, a few hundred metres
 from the grid a GPS uses. Map Vietnam assumes Indian 1960 for any grid reference you type and
