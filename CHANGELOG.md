@@ -2,7 +2,7 @@
 
 Notable changes to Map Vietnam. Versions follow [semantic versioning](https://semver.org).
 
-## 0.2.0 (Unreleased)
+## 0.2.0 - 2026-11-25
 
 Settings
 - Each control now lives in exactly one place: the base map is switched from the style popover
