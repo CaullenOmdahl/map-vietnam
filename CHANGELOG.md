@@ -2,7 +2,34 @@
 
 Notable changes to Map Vietnam. Versions follow [semantic versioning](https://semver.org).
 
-## Unreleased
+## 0.2.0 (Unreleased)
+
+Settings
+- Each control now lives in exactly one place: the base map is switched from the style popover
+  (now titled **Map style**), the appearance theme lives in **Settings**, the old-map outlines
+  Show/Hide sits in the **Old maps** card, and the Kaggle key is managed in **Settings** (the key
+  box still appears in Records when a download asks for one)
+
+Zooming and panning old maps
+- While the map sits idle, the tiles just around what is on screen — and the same area one zoom in and
+  one out — are quietly fetched ahead from the local server, so the next pan or zoom draws almost at
+  once. Only old maps installed on this computer are fetched ahead; the street and satellite base maps
+  are never fetched ahead (their providers forbid it), they just keep more of what you have already seen
+  in memory
+
+Trackpad navigation & overlay glass
+- Multi-touch trackpads now work like Apple Maps across the main map, swipe comparison and custom-map
+  placement: two-finger drag pans the map and pinch or stretch zooms smoothly around the pointer.
+  Physical notched mouse wheels still zoom automatically, and **Settings › Scrolling** lets you choose
+  Automatic, Trackpad or Mouse wheel explicitly
+- Floating UI overlay backgrounds (sidebar, map bar, map controls, popovers and map badges) now use
+  60% opacity frosted glass in light and dark themes
+- Enlarged MapLibre's in-memory tile cache and added idle zoom-out parent tile preloading for local
+  old maps so zooming out no longer reloads recently viewed tiles
+- Added macOS Force Touch trackpad haptics (alignment ticks on opacity 0%/50%/100%, swipe-compare
+  centre snap, compass reset, native scan resolution threshold and custom-map placement) plus Force
+  Click shortcuts (X-ray peek through old maps, quick-pinning records and instant spot drops); silent
+  no-op on Windows, Linux and web browsers
 
 Map alignment
 - Any installed historical map (or uploaded GeoTIFF / GeoPDF) can be aligned or rescaled against

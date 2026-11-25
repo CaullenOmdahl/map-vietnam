@@ -101,7 +101,9 @@ if sys.platform == "win32":
     hiddenimports += ["msvcrt"]  # files.py's lock
     hiddenimports += collect_submodules("webview.platforms.winforms") + ["clr", "clr_loader", "pythonnet"]  # clr is the module pythonnet installs
 elif sys.platform == "darwin":
-    hiddenimports += collect_submodules("webview.platforms.cocoa") + ["objc", "Foundation", "AppKit", "WebKit"]
+    hiddenimports += collect_submodules("webview.platforms.cocoa") + [
+        "objc", "Foundation", "AppKit", "WebKit", "PyObjCTools.AppHelper",
+    ]  # fmt: skip
 else:
     hiddenimports += ["fcntl"]
     # The Qt window is optional on Linux (requirements-qt.txt); with it, bundle that backend.

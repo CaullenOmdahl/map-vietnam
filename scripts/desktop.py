@@ -53,6 +53,35 @@ STOP_TIMEOUT_S = 40  # a server stopping ends its jobs first (each waits for its
 
 EXPORT_PATH = re.compile(r"^/api/cases/[^/]+/export\.(gpx|kml|geojson)$")
 EXPORT_TYPES = {"gpx": "GPX", "kml": "KML", "geojson": "GeoJSON"}
+HAPTIC_PATTERNS = ("generic", "alignment", "level")
+
+
+def haptic_pattern_name(pattern):
+    """Normalise a requested haptic pattern name, or None if unknown."""
+    return pattern if isinstance(pattern, str) and pattern in HAPTIC_PATTERNS else None
+
+
+def perform_macos_haptic(pattern):
+    """Trigger a subtle Force Touch trackpad haptic pulse on macOS. No-op elsewhere."""
+    name = haptic_pattern_name(pattern)
+    if name is None or sys.platform != "darwin":
+        return False
+    try:
+        appkit = importlib.import_module("AppKit")
+        app_helper = importlib.import_module("PyObjCTools.AppHelper")
+        codes = {
+            "generic": appkit.NSHapticFeedbackPatternGeneric,
+            "alignment": appkit.NSHapticFeedbackPatternAlignment,
+            "level": appkit.NSHapticFeedbackPatternLevelChange,
+        }
+        code = codes[name]
+        when = appkit.NSHapticFeedbackPerformanceTimeNow
+        app_helper.callAfter(
+            lambda: appkit.NSHapticFeedbackManager.defaultPerformer().performFeedbackPattern_performanceTime_(code, when)
+        )
+        return True
+    except Exception:
+        return False
 
 
 # ---- decisions, without a GUI ---------------------------------------------------------------------
@@ -97,11 +126,19 @@ class WindowApi:
     """The methods the injected script calls (window.pywebview.api.*). Everything it is given is
     checked here again: the page is the viewer, but a page is never trusted with the computer."""
 
-    def __init__(self, own_url, window=None, opener=None, save_dialog=None):
+    def __init__(self, own_url, window=None, opener=None, save_dialog=None, haptic=None):
         self._own_url = own_url
         self._window = window
         self._open = opener or webbrowser.open
         self._save_dialog = save_dialog or self._ask_where_to_save
+        self._haptic = haptic or perform_macos_haptic
+
+    def haptic(self, pattern="generic"):
+        """Trigger a subtle trackpad haptic on macOS (silent no-op on Windows/Linux)."""
+        name = haptic_pattern_name(pattern)
+        if name is None:
+            return False
+        return bool(self._haptic(name))
 
     def open_external(self, url):
         """Open another site's address in the default browser. True if it was one."""

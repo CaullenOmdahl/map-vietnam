@@ -457,3 +457,65 @@ def test_check_window_reports_a_toolkit_that_cannot_load(monkeypatch, capsys):
 def test_check_window_is_a_command_line_flag(monkeypatch):
     monkeypatch.setattr(desktop, "check_window", lambda: 7)
     assert desktop.main(["--check-window"]) == 7
+
+
+# ---- macOS Force Touch haptics ----------------------------------------------------------------------
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        ("generic", "generic"),
+        ("alignment", "alignment"),
+        ("level", "level"),
+        ("unknown", None),
+        ("", None),
+        (None, None),
+        (123, None),
+    ],
+)
+def test_haptic_pattern_name_validates_known_patterns(raw, expected):
+    assert desktop.haptic_pattern_name(raw) == expected
+
+
+def test_window_api_haptic_validates_pattern_and_delegates():
+    seen = []
+    api = desktop.WindowApi(OWN, haptic=lambda p: seen.append(p) or True)
+    assert api.haptic("alignment") is True
+    assert api.haptic("level") is True
+    assert api.haptic("bogus") is False
+    assert seen == ["alignment", "level"]
+
+
+def test_perform_macos_haptic_is_noop_outside_darwin_and_calls_appkit_on_macos(monkeypatch):
+    monkeypatch.setattr(desktop.sys, "platform", "linux")
+    assert desktop.perform_macos_haptic("alignment") is False
+    monkeypatch.setattr(desktop.sys, "platform", "win32")
+    assert desktop.perform_macos_haptic("generic") is False
+
+    calls = []
+
+    class FakePerformer:
+        def performFeedbackPattern_performanceTime_(self, code, when):
+            calls.append((code, when))
+
+    fake_appkit = type(
+        "AppKit",
+        (),
+        {
+            "NSHapticFeedbackPatternGeneric": 0,
+            "NSHapticFeedbackPatternAlignment": 1,
+            "NSHapticFeedbackPatternLevelChange": 2,
+            "NSHapticFeedbackPerformanceTimeNow": 1,
+            "NSHapticFeedbackManager": type("M", (), {"defaultPerformer": staticmethod(lambda: FakePerformer())}),
+        },
+    )
+    fake_helper = type("AppHelper", (), {"callAfter": staticmethod(lambda fn: fn())})
+    monkeypatch.setattr(desktop.sys, "platform", "darwin")
+    monkeypatch.setattr(
+        desktop.importlib,
+        "import_module",
+        lambda name: fake_appkit if name == "AppKit" else fake_helper,
+    )
+    assert desktop.perform_macos_haptic("alignment") is True
+    assert desktop.perform_macos_haptic("level") is True
+    assert desktop.perform_macos_haptic("invalid") is False
+    assert calls == [(1, 1), (2, 1)]

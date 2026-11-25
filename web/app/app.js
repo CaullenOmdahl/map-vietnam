@@ -25,13 +25,14 @@
                                  evById / pnById, pushed to the "ev" / "pn" GeoJSON sources of every map
      /api/search, /api/gridref, /api/lonlat -> the search box, grid-square card and coordinate rows
      /api/cases…              -> S.cases / S.kase (the open case: pinned records, candidate sites, notes, exports)
-     localStorage ("mvapp.*") -> view position, chosen map, opacity, filters, theme, recently viewed
+     localStorage ("mvapp.*") -> view position, chosen map, opacity, filters, theme, scroll mode, recently viewed
 
    State lives in one object, S. Each change goes through a small apply* / render* function that pushes it
    to the maps (layout, paint, filter, setData) or redraws the panel: render() rebuilds the current card
    from VIEWS[S.view.name] and wire() connects its [data-act] buttons to ACTIONS.
 
-   Sections, in order: constants, helpers, state, maps, historical maps, compare, evidence loading, filters,
+   Sections, in order: constants, helpers, state, maps, trackpad, historical maps, compare, tile prefetch,
+   evidence loading, filters,
    selection and position, map clicks, panel / sheet, panel views (home, record, nearby, pin, grid square,
    historical map, cases, sites), search, popovers, base map and theme, keyboard, boot. The map library (adding
    and removing old maps) follows the historical-map card, and the records section (adding and removing record
@@ -330,6 +331,10 @@ function createMap(container, isPrimary) {
   // (padding is copied after creation so both halves of a comparison line up exactly)
   const m = new maplibregl.Map({
     container, style: makeStyle(), ...view, attributionControl: false, pitchWithRotate: false, maxPitch: 0, fadeDuration: reduceMotion ? 0 : 300,
+    // More tiles kept in memory, at more zoom levels: panning back, or zooming through a level already
+    // seen, redraws without asking the network. This is all the remote base maps get (their tile policies
+    // forbid prefetching); local old maps are prefetched as well, see "tile prefetch" below.
+    maxTileCacheSize: isDesk() ? 1024 : 256, maxTileCacheZoomLevels: 12,
   });
   m.touchZoomRotate.disableRotation();
   m.keyboard.disableRotation?.();
@@ -346,6 +351,8 @@ function createMap(container, isPrimary) {
   });
   m.on("click", e => onMapClick(m, e));
   wireLongPress(m);
+  wireTrackpad(m, true);
+  wirePrefetch(m);
   m.on("mousemove", e => {
     if (S.placing || !m.loadedOverlays) return;
     if (S.view.name === "library") { const id = footprintAt(m, e.point); setFpState("hover", id); m.getCanvas().style.cursor = id ? "pointer" : ""; return; }
@@ -353,6 +360,7 @@ function createMap(container, isPrimary) {
   });
   m.getCanvas().addEventListener("mouseleave", () => setFpState("hover", null));
   m.on("error", e => { if (!/Failed to fetch|could not be decoded|AJAXError/i.test(String(e?.error?.message || ""))) console.warn(e?.error || e); });
+  wirePrefetch(m);
   return m;
 }
 
@@ -526,6 +534,232 @@ function fitSquare(square) {
   primary().fitBounds([[sw[0] - grow, sw[1] - grow], [ne[0] + grow, ne[1] + grow]], { padding: pad, maxZoom, duration: reduceMotion ? 0 : 700 });
 }
 
+// ================================================================ trackpad & scroll navigation
+// Apple Maps-style trackpad gestures across every map (main, swipe-compare, and custom-map placement):
+//   * Two-finger drag pans the map (via wheel events whose deltas match a trackpad).
+//   * Pinch / stretch zooms around the pointer (via ctrlKey wheel events in Chromium/WKWebView or Safari's
+//     WebKit gesturestart/change/end events, suppressing duplicate ctrlKey wheel events during a gesture).
+//   * A physical notched mouse wheel still zooms as usual when Scrolling is "Automatic" or "Mouse wheel".
+const WHEEL_GAP_MS = 180;
+const GESTURE_COOLDOWN_MS = 120;
+const PAN_END_MS = 140;
+let lastHapticAt = 0;
+function haptic(pattern = "generic", minGap = 35) {
+  const now = performance.now();
+  if (now - lastHapticAt < minGap) return;
+  const fn = window.pywebview?.api?.haptic;
+  if (!fn) return;
+  lastHapticAt = now;
+  try { Promise.resolve(fn(pattern)).catch(() => {}); } catch {}
+}
+const SCROLL_MODES = [["auto", "Automatic"], ["trackpad", "Trackpad"], ["wheel", "Mouse wheel"]];
+const scrollMode = () => {
+  const m = store.get("scrollMode", "auto");
+  return m === "trackpad" || m === "wheel" ? m : "auto";
+};
+function setScrollMode(m) {
+  store.set("scrollMode", m === "trackpad" || m === "wheel" ? m : "auto");
+  settingsRefresh(true);
+}
+function isMouseWheelEvent(e) {
+  if (!e || e.ctrlKey || e.metaKey) return false;
+  if ((e.deltaMode || 0) !== 0) return true;
+  const dx = e.deltaX || 0, dy = e.deltaY || 0, wd = e.wheelDeltaY;
+  return dx === 0 && dy !== 0 && Number.isFinite(wd) && Math.abs(wd) >= 120 && Math.abs(wd) % 120 === 0 && wd !== Math.round(-dy * 3);
+}
+function classifyWheelEvent(e, state, mode, now = Date.now()) {
+  if (e.ctrlKey && state.gestureAt && now - state.gestureAt <= (state.gestureActive ? 2000 : GESTURE_COOLDOWN_MS)) return "ignore";
+  if (e.ctrlKey) {
+    state.mode = null;
+    state.lastTime = now;
+    return "zoom";
+  }
+  if (mode === "wheel") return "zoom";
+  if (mode === "trackpad") return "pan";
+  const fresh = !state.mode || !state.lastTime || now - state.lastTime > WHEEL_GAP_MS;
+  let kind;
+  if ((e.deltaX || 0) !== 0) kind = "pan";
+  else if (!fresh) kind = state.mode;
+  else kind = isMouseWheelEvent(e) ? "zoom" : "pan";
+  state.mode = kind;
+  state.lastTime = now;
+  return kind;
+}
+function zoomAroundMercator(centerLngLat, anchorLngLat, oldZoom, newZoom, MercatorCoordinate) {
+  const s = Math.pow(2, newZoom - oldZoom);
+  if (!Number.isFinite(s) || s <= 0) return centerLngLat;
+  const c = MercatorCoordinate.fromLngLat(centerLngLat), a = MercatorCoordinate.fromLngLat(anchorLngLat);
+  const nx = a.x + (c.x - a.x) / s;
+  const ny = Math.min(1, Math.max(0, a.y + (c.y - a.y) / s));
+  return new MercatorCoordinate(nx, ny, 0).toLngLat();
+}
+function wireTrackpad(m, isMainMap = false) {
+  const el = m.getCanvasContainer();
+  const ac = new AbortController(), sig = ac.signal;
+  const wheelState = { mode: null, lastTime: 0, gestureAt: 0, gestureActive: false };
+  let accX = 0, accY = 0, raf = 0, panActive = false, endTimer = 0;
+  let gZoom = null, lastPt = null;
+
+  const emitMoveEnd = () => {
+    if (maps.includes(m)) eachMap(x => x.fire("moveend"));
+    else m.fire("moveend");
+  };
+  const clearPan = () => {
+    clearTimeout(endTimer); endTimer = 0;
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    accX = 0; accY = 0;
+  };
+  const rememberPt = e => {
+    if (!Number.isFinite(e?.clientX) || !Number.isFinite(e?.clientY)) return;
+    const r = el.getBoundingClientRect();
+    lastPt = [e.clientX - r.left, e.clientY - r.top];
+  };
+  const gesturePt = e => {
+    const r = el.getBoundingClientRect();
+    if (Number.isFinite(e?.clientX) && Number.isFinite(e?.clientY) && (e.clientX !== 0 || e.clientY !== 0 || !lastPt))
+      return [e.clientX - r.left, e.clientY - r.top];
+    return lastPt || [r.width / 2, r.height / 2];
+  };
+
+  el.addEventListener("pointermove", rememberPt, { passive: true, signal: sig });
+  el.addEventListener("mousemove", rememberPt, { passive: true, signal: sig });
+
+  el.addEventListener("wheel", e => {
+    rememberPt(e);
+    const kind = classifyWheelEvent(e, wheelState, scrollMode(), performance.now());
+    if (kind === "ignore") {
+      e.preventDefault(); e.stopImmediatePropagation();
+      return;
+    }
+    if (kind === "zoom") {
+      clearPan(); panActive = false;
+      return; // let MapLibre's native ScrollZoomHandler zoom smoothly around the cursor
+    }
+    e.preventDefault(); e.stopImmediatePropagation();
+    const scale = e.deltaMode === 1 ? 20 : e.deltaMode === 2 ? (el.clientHeight || 600) : 1;
+    accX += (e.deltaX || 0) * scale;
+    accY += (e.deltaY || 0) * scale;
+    if (!raf) {
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const x = accX, y = accY;
+        accX = 0; accY = 0;
+        if (!panActive) { panActive = true; m.stop(); }
+        if (x || y) m.panBy([x, y], { animate: false }, { trackpadMove: true });
+        clearTimeout(endTimer);
+        endTimer = setTimeout(() => { panActive = false; endTimer = 0; emitMoveEnd(); }, PAN_END_MS);
+      });
+    }
+  }, { passive: false, capture: true, signal: sig });
+
+  el.addEventListener("gesturestart", e => {
+    e.preventDefault();
+    clearPan(); panActive = false;
+    m.stop();
+    gZoom = m.getZoom();
+    wheelState.gestureActive = true;
+    wheelState.gestureAt = performance.now();
+  }, { passive: false, signal: sig });
+
+  el.addEventListener("gesturechange", e => {
+    e.preventDefault();
+    wheelState.gestureAt = performance.now();
+    if (gZoom == null || !Number.isFinite(e.scale) || e.scale <= 0) return;
+    const target = Math.min(m.getMaxZoom(), Math.max(m.getMinZoom(), gZoom + Math.log2(e.scale)));
+    const oldZoom = m.getZoom();
+    if (Math.abs(target - oldZoom) < 1e-6) return;
+    const anchor = m.unproject(gesturePt(e));
+    const center = zoomAroundMercator(m.getCenter(), anchor, oldZoom, target, maplibregl.MercatorCoordinate);
+    m.jumpTo({ center, zoom: target }, { trackpadMove: true });
+  }, { passive: false, signal: sig });
+
+  const endGesture = e => {
+    e.preventDefault?.();
+    const wasPinch = gZoom != null;
+    gZoom = null;
+    wheelState.gestureActive = false;
+    wheelState.gestureAt = performance.now();
+    if (wasPinch) emitMoveEnd();
+  };
+  el.addEventListener("gestureend", endGesture, { passive: false, signal: sig });
+  el.addEventListener("gesturecancel", endGesture, { passive: false, signal: sig });
+  addEventListener("blur", () => { gZoom = null; wheelState.gestureActive = false; clearPan(); panActive = false; }, { signal: sig });
+
+  if (isMainMap) {
+    let wasOver = null;
+    m.on("zoom", () => {
+      const id = m === maps[1] ? (S.eraB === "today" ? null : S.eraB) : S.eraA;
+      const era = eraById(id), c = m.getCenter();
+      if (!era || !eraInYears(era) || !eraCovers(era, c.lng, c.lat)) { wasOver = null; return; }
+      const over = m.getZoom() > nativeZoom(era) + 0.05;
+      if (wasOver !== null && over !== wasOver) haptic(over ? "level" : "alignment", 80);
+      wasOver = over;
+    });
+
+    let peeking = false;
+    const endPeek = () => {
+      if (!peeking) return;
+      peeking = false;
+      forceConsumedAt = Date.now();
+      setPeekOpacity(S.opacity);
+      haptic("level");
+    };
+    el.addEventListener("webkitmouseforcewillbegin", e => { e.preventDefault(); }, { passive: false, signal: sig });
+    el.addEventListener("webkitmouseforcedown", async e => {
+      e.preventDefault();
+      forceConsumedAt = Date.now();
+      clearTimeout(spotTimer);
+      if (S.draft || S.placing || S.view.name === "library") return;
+      const pt = gesturePt(e), point = { x: pt[0], y: pt[1] }, ll = m.unproject(pt);
+      const hits = hitTest(m, point);
+      if (hits.length) {
+        const sites = hits.filter(f => f.layer.id === "site-dot");
+        if (sites.length) { haptic("generic"); openSite(+sites[0].properties.id); return; }
+        const seen = new Set(), recs = [];
+        for (const f of hits) { const id = +f.properties.id; if (seen.has(id)) continue; seen.add(id); recs.push(f); }
+        const list = recs.map(propsOf).map(x => ({ ...x, d: distBearing([ll.lng, ll.lat], [x.lon, x.lat]).d }))
+          .sort((a, b) => a.d - b.d || (a.date_start || "").localeCompare(b.date_start || "") || a.id - b.id);
+        const rec = list[0];
+        if (rec) {
+          if (S.kase && rec.id != null) {
+            try {
+              const cid = S.kase.id;
+              if (S.kase.items.some(i => i.id === rec.id)) {
+                S.kase = await api(`/api/cases/${cid}/items/${rec.id}`, { method: "DELETE" });
+                toast(`Removed from “${S.kase.name}”`);
+              } else {
+                S.kase = await api(`/api/cases/${cid}/items`, { method: "POST", body: { evidence_id: rec.id } });
+                toast(`Added to “${S.kase.name}”`);
+              }
+              drawCase(); render(); haptic("generic");
+            } catch (err) { toast(err.message); }
+          } else {
+            haptic("generic");
+            openEvidence(rec.id, rec, { stack: list.length > 1 ? { recs: list.slice(0, 50), i: 0, lon: ll.lng, lat: ll.lat } : null });
+          }
+          return;
+        }
+      }
+      const id = m === maps[1] ? (S.eraB === "today" ? null : S.eraB) : S.eraA;
+      const era = eraById(id);
+      if (era && eraInYears(era) && S.opacity > 0.05) {
+        peeking = true;
+        setPeekOpacity(0);
+        haptic("level");
+        return;
+      }
+      haptic("generic");
+      openSpot(ll.lng, ll.lat);
+    }, { passive: false, signal: sig });
+    el.addEventListener("webkitmouseforceup", endPeek, { passive: true, signal: sig });
+    addEventListener("mouseup", endPeek, { passive: true, signal: sig });
+    addEventListener("blur", endPeek, { signal: sig });
+    m.on("remove", endPeek);
+  }
+
+  m.on("remove", () => { clearPan(); ac.abort(); });
+}
+
 // ================================================================ historical maps (eras)
 // Every sheet is its own choice: a map is picked for the place on screen, not merged with its neighbours by year.
 function buildEras(layers) {
@@ -632,6 +866,15 @@ function applyEra() {
     }
   });
   renderMapbar();
+}
+function setPeekOpacity(alpha) {
+  eachMap(m => {
+    for (const l of S.catalog) {
+      const id = `ov-${l.id}`;
+      if (m.getLayer(id) && m.getLayoutProperty(id, "visibility") === "visible")
+        m.setPaintProperty(id, "raster-opacity", alpha);
+    }
+  });
 }
 // Chooses the old map for side "A" (main / left) or "B" (right, when comparing); id "today" means none.
 function setEra(id, side = "A") {
@@ -798,10 +1041,10 @@ function setCompare(on) {
     const a = primary(), b = createMap("mapB", false);
     maps[1] = b;
     let lock = false;
-    const follow = (src, dst) => () => { if (lock) return; lock = true; dst.jumpTo({ center: src.getCenter(), zoom: src.getZoom(), bearing: src.getBearing(), padding: src.getPadding() }); lock = false; };
+    const follow = (src, dst) => e => { if (lock) return; lock = true; dst.jumpTo({ center: src.getCenter(), zoom: src.getZoom(), bearing: src.getBearing(), padding: src.getPadding() }, e?.trackpadMove ? { trackpadMove: true } : undefined); lock = false; };
     const fa = follow(a, b), fb = follow(b, a);
     a.on("move", fa); b.on("move", fb);
-    b.on("moveend", () => scheduleLoad());
+    b.on("moveend", e => { if (!e?.trackpadMove) scheduleLoad(); });
     unsync = () => a.off("move", fa);
     b.on("overlays", () => applyEra());
     cmpX = null; placeDivider();
@@ -832,7 +1075,15 @@ function placeDivider() {
   const clamp = x => Math.min(innerWidth - 24, Math.max(mapLeft() + 24, x));
   h.addEventListener("pointerdown", e => {
     h.setPointerCapture(e.pointerId);
-    const move = ev => { cmpX = clamp(ev.clientX); placeDivider(); };
+    let snapped = false;
+    const move = ev => {
+      const raw = clamp(ev.clientX), mid = Math.round(mapLeft() + (innerWidth - mapLeft()) / 2);
+      const atMid = Math.abs(raw - mid) <= 6;
+      if (atMid && !snapped) haptic("alignment");
+      snapped = atMid;
+      cmpX = atMid ? mid : raw;
+      placeDivider();
+    };
     const up = () => { h.removeEventListener("pointermove", move); h.removeEventListener("pointerup", up); h.removeEventListener("pointercancel", up); };
     h.addEventListener("pointermove", move); h.addEventListener("pointerup", up); h.addEventListener("pointercancel", up);
   });
@@ -840,6 +1091,99 @@ function placeDivider() {
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") { cmpX = clamp(cmpX + (e.key === "ArrowLeft" ? -40 : 40)); placeDivider(); e.preventDefault(); }
   });
 })();
+
+// ================================================================ tile prefetch
+// Old-map tiles come from this app's own server, so while the map sits idle the ones most likely wanted
+// next are fetched ahead into the browser's HTTP cache: the view plus a ring of tiles around it at the
+// current zoom, zoom-out parent levels (-1..-4), and one zoom in. The next pan or zoom then draws at once.
+// The remote street/satellite base maps are never prefetched (their providers forbid fetching tiles
+// nobody has viewed); they only get the larger in-memory cache set in createMap and openPlacement.
+// Prefetching uses fetch() rather than MapLibre, so it never drives the "Loading…" indicator. The server
+// answers tiles with an ETag and Cache-Control: no-cache (send_tile in scripts/server.py), so when
+// MapLibre later asks for a prefetched tile it revalidates cheaply (304) and draws the cached bytes.
+// A pass runs after a short pause on MapLibre's "idle", is capped at PF_MAX tiles with PF_WAY requests in
+// flight, and is abandoned (AbortController) the moment the map moves again or is removed, the old map is
+// switched or hidden, the app quits, or the page unloads. Both sides of a comparison prefetch their own.
+const PF_MAX = 140, PF_WAY = 4, PF_DELAY = 350, PF_SEEN_MAX = 20000;
+const pfSeen = new Set(); // tile URLs already fetched this session, so each is asked for at most once
+const prefetchers = new Map(); // map -> { timer, pass } for every map created (main and comparison)
+
+// Longitude/latitude to the Web-Mercator tile at zoom z (the slippy layout the MBTiles files are built in).
+function tileOf(lon, lat, z) {
+  const n = 2 ** z, r = Math.max(-85.051129, Math.min(85.051129, lat)) * Math.PI / 180;
+  return [Math.min(n - 1, Math.max(0, Math.floor((lon + 180) / 360 * n))),
+    Math.min(n - 1, Math.max(0, Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n)))];
+}
+// The tiles covering [w, s, e, n] at zoom z, grown by `ring` tiles on every side, nearest the centre first.
+function tilesAround(b, z, ring) {
+  const [x0, y0] = tileOf(b[0], b[3], z), [x1, y1] = tileOf(b[2], b[1], z), n = 2 ** z;
+  const out = [];
+  for (let x = Math.max(0, x0 - ring); x <= Math.min(n - 1, x1 + ring); x++)
+    for (let y = Math.max(0, y0 - ring); y <= Math.min(n - 1, y1 + ring); y++) out.push([x, y]);
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  return out.sort((p, q) => Math.hypot(p[0] - cx, p[1] - cy) - Math.hypot(q[0] - cx, q[1] - cy));
+}
+// True while old map `id` is the one shown on this map (a layer switched or hidden mid-pass ends it).
+function pfShown(m, id) {
+  return !!m.getLayer(`ov-${id}`) && m.getLayoutProperty(`ov-${id}`, "visibility") === "visible";
+}
+// One idle pass on map m: build the tile list for the old maps it shows, then fetch it PF_WAY at a time.
+function prefetchPass(m, st) {
+  if (stopped || !m.loadedOverlays) return;
+  const b = m.getBounds(), zoom = m.getZoom(), queue = [], seen = new Set();
+  for (const l of S.catalog) {
+    if (!pfShown(m, l.id)) continue;
+    // The tile zoom MapLibre is drawing: 256-px tiles on a 512-px world, one more than the map zoom.
+    const tz = Math.min(l.maxzoom || 15, Math.max(l.minzoom || 0, Math.floor(zoom) + 1));
+    // Where the view meets the sheet's coverage: tiles are never asked for where the sheet has none.
+    const bb = l.bounds ? [Math.max(b.getWest(), l.bounds[0]), Math.max(b.getSouth(), l.bounds[1]),
+      Math.min(b.getEast(), l.bounds[2]), Math.min(b.getNorth(), l.bounds[3])]
+      : [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    if (bb[0] >= bb[2] || bb[1] >= bb[3]) continue;
+    const tpl = "/" + l.tiles.replace(/^\//, "");
+    for (const dz of [0, -1, -2, -3, -4, 1]) {
+      const z = tz + dz;
+      if (z < (l.minzoom || 0) || z > (l.maxzoom || 15)) continue;
+      for (const [x, y] of tilesAround(bb, z, dz ? 0 : 1)) {
+        const url = tpl.replace("{z}", z).replace("{x}", x).replace("{y}", y);
+        if (!seen.has(url) && !pfSeen.has(url)) { seen.add(url); queue.push([l.id, url]); }
+      }
+    }
+  }
+  queue.length = Math.min(queue.length, PF_MAX);
+  if (!queue.length) return;
+  const pass = { abort: new AbortController() };
+  st.pass = pass;
+  let next = 0;
+  const work = async () => {
+    while (next < queue.length && !pass.abort.signal.aborted) {
+      const [id, url] = queue[next++];
+      if (!pfShown(m, id)) { pass.abort.abort(); return; } // the old map changed mid-pass: stop now
+      pfSeen.add(url);
+      if (pfSeen.size > PF_SEEN_MAX) pfSeen.clear(); // keep the set small; a repeat only costs a 304
+      try { await (await fetch(url, { signal: pass.abort.signal })).arrayBuffer(); }
+      catch { return; } // aborted, or the server is quitting: let the pass end quietly
+    }
+  };
+  Promise.all(Array.from({ length: PF_WAY }, work)).then(() => { if (st.pass === pass) st.pass = null; });
+}
+function prefetchStop(m) {
+  const st = prefetchers.get(m);
+  if (!st) return;
+  clearTimeout(st.timer);
+  st.pass?.abort.abort();
+  st.pass = null;
+}
+function prefetchStopAll() { for (const m of [...prefetchers.keys()]) prefetchStop(m); }
+addEventListener("pagehide", prefetchStopAll);
+// Wired from createMap: every map (main, and the comparison map while it exists) prefetches on idle.
+function wirePrefetch(m) {
+  const st = { timer: 0, pass: null };
+  prefetchers.set(m, st);
+  m.on("idle", () => { prefetchStop(m); st.timer = setTimeout(() => prefetchPass(m, st), PF_DELAY); });
+  m.on("movestart", () => prefetchStop(m));
+  m.on("remove", () => { prefetchStop(m); prefetchers.delete(m); });
+}
 
 // ================================================================ evidence loading (cached grid cells)
 // The view is covered by fixed grid cells; each cell is fetched once ("e:x:y" evidence, "p:x:y" place names),
@@ -1129,6 +1473,7 @@ function onMapClick(m, e) {
   // A tap that lands while the sheet is still settling was meant for the sheet, not the map.
   if (!isDesk() && Date.now() - sheetMovedAt < 450) return;
   if (Date.now() - longPressAt < 600) return; // the long press already dropped a pin
+  if (Date.now() - forceConsumedAt < 600) return; // a Force Click already handled this press
   if (S.placing) { endPlacing(); openSiteForm(e.lngLat.lng, e.lngLat.lat, 100, "", ""); return; }
   if (S.draft) return; // editing a site: drag the pin instead
   if (S.view.name === "library") {
@@ -1161,6 +1506,7 @@ function onMapClick(m, e) {
   spotTimer = setTimeout(() => openSpot(e.lngLat.lng, e.lngLat.lat), 300);
 }
 let longPressAt = 0; // time of the last touch long press, so the click that follows it is ignored
+let forceConsumedAt = 0; // time of the last Force Click / X-ray peek release, so the click after it is ignored
 function wireLongPress(m) {
   m.on("dblclick", () => clearTimeout(spotTimer));
   m.on("movestart", () => clearTimeout(spotTimer));
@@ -2153,15 +2499,13 @@ function applyFootprintFilter() {
     m.setFilter("libfp-line-in", lines ? ["all", ["in", ["get", "st"], ["literal", ["installed", "busy"]]], sf] : nothing);
   });
 }
-// Settings: whether the sheet outlines are drawn while the Old maps card is open (the sheet pointed at or chosen is
-// outlined either way, so the map and the list still match).
+// Whether the sheet outlines are drawn while the Old maps card is open (the sheet pointed at or chosen is
+// outlined either way, so the map and the list still match). Toggled from the Old maps card only.
 const outlinesOn = () => store.get("outlines", true) !== false;
 function setOutlines(on) {
   store.set("outlines", on);
   applyFootprintFilter();
   if (S.view.name === "library") libRefreshView(true);
-  settingsRefresh(true);
-  if (!$("#popStyle").hidden) { renderStylePop(); $(`#popStyle [data-act="outlines"][data-on="${on ? 1 : 0}"]`)?.focus(); }
 }
 const fpState = { sel: null, hover: null };
 function setFpState(key, id, force = false) {
@@ -2413,7 +2757,7 @@ VIEWS.library = v => {
       ${md.kinds.length > 1 ? `<div class="seg lib-seg" role="group" aria-label="Show maps of one scale">${chip("all", "All", null)}${md.kinds.map(x => chip(x.k, x.label, x.n)).join("")}</div>` : ""}
       ${n > 1 ? `<div class="lib-sort" role="group" aria-label="Order of the list"><span class="small-t muted">Order</span>
         ${LIB_SORTS.map(([k, label]) => `<button class="linkish small-t" data-act="libSort" data-s="${k}" aria-pressed="${md.sort === k}">${k === "here" && typed ? "Nearest" : label}</button>`).join("")}</div>` : ""}
-      ${outlinesSeg("lib-sort")}
+      ${outlinesSeg()}
     </div>
     ${busy.length ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span>
       <span class="grow"><b>Adding ${busy.length} map${busy.length === 1 ? "" : "s"}</b><span class="small-t muted" data-lib-left>${esc(leftText())}</span></span>
@@ -2867,7 +3211,7 @@ ACTIONS.recKeyPick = () => $("#keyFile")?.click();
 ACTIONS.recAskKey = () => { closePopovers(); recAsk("thor", "key"); };
 ACTIONS.outlines = el => setOutlines(el.dataset.on === "1");
 ACTIONS.recKeyForget = async () => {
-  try { applyRecords(await api("/api/records/key", { method: "DELETE" })); toast("The key was removed from this computer"); if (!$("#popStyle").hidden) renderStylePop(); settingsRefresh(true); }
+  try { applyRecords(await api("/api/records/key", { method: "DELETE" })); toast("The key was removed from this computer"); settingsRefresh(true); }
   catch (e) { toast("Could not remove the key: " + e.message, 5000); }
 };
 
@@ -2901,6 +3245,7 @@ ACTIONS.quitAsk = () => { S.view.quit = true; render(); $('#view [data-act="quit
 ACTIONS.quitCancel = () => { S.view.quit = false; render(); $('#view [data-act="quitAsk"]')?.focus(); };
 // Stops the local server. The page cannot go on without it, so it is replaced by a note saying how to start again.
 ACTIONS.quit = async () => {
+  prefetchStopAll();
   try { await api("/api/quit", { method: "POST", body: {} }); }
   catch (e) { toast("Could not quit: " + e.message, 5000); return; }
   stopped = true; clearTimeout(recTimer); clearTimeout(libTimer);
@@ -3268,27 +3613,18 @@ function togglePopover(id, anchor) {
   if (id === "popLayers") renderLayersPop();
   openPopover(id, anchor);
 }
-// The Show/Hide pair for the sheet outlines, in the Old maps card and in settings.
-function outlinesSeg(cls) {
-  const on = outlinesOn(), b = (v, label) => `<button class="${cls === "lib-sort" ? "linkish small-t" : ""}" data-act="outlines" data-on="${v}" aria-pressed="${on === !!v}">${label}</button>`;
-  return `<div class="${cls}" role="group" aria-label="Sheet outlines on the map">${cls === "lib-sort" ? '<span class="small-t muted">Outlines</span>' : ""}${b(1, "Show")}${b(0, "Hide")}</div>`;
+// The Show/Hide pair for the sheet outlines, in the Old maps card (their only home: the outlines are
+// about the maps listed there, so they sit beside the list's other tools).
+function outlinesSeg() {
+  const on = outlinesOn(), b = (v, label) => `<button class="linkish small-t" data-act="outlines" data-on="${v}" aria-pressed="${on === !!v}">${label}</button>`;
+  return `<div class="lib-sort" role="group" aria-label="Sheet outlines on the map"><span class="small-t muted">Outlines</span>${b(1, "Show")}${b(0, "Hide")}</div>`;
 }
-// The Kaggle key, in settings: whether one is saved, and the way to add or forget it.
-function keySettingsHTML() {
-  const k = S.rec.key || {};
-  if (k.present) return `<p class="small-t muted">A Kaggle key is saved${k.source && k.source !== "env file" ? ` (from ${esc(k.source)})` : " on this computer"}. It is only ever sent to Kaggle.</p>
-    ${k.source === "env file" ? `<div class="row"><button class="btn small" data-act="recKeyForget">Forget the key</button></div>` : ""}`;
-  return `<p class="small-t muted">Kaggle may ask for a free key when you add the air strikes.</p>
-    <div class="row"><button class="btn small" data-act="recAskKey">Add a Kaggle key</button></div>`;
-}
+// The style popover holds only the base-map cards (switched often) and a way into Settings. Appearance,
+// the outlines and the Kaggle key each live in exactly one place instead: Settings for the first and
+// last, the Old maps card for the outlines.
 function renderStylePop() {
-  const t = store.get("theme", "auto");
   $("#popStyle").innerHTML = `<div class="sec"><h3>Today’s map</h3><div class="style-cards">
       ${Object.entries(BASES).map(([k, b]) => `<button class="style-card" data-base="${k}" aria-pressed="${S.base === k}"><span class="thumb ${k}"></span><span>${b.name}</span></button>`).join("")}</div></div>
-    <div class="sec"><h3>Appearance</h3><div class="seg" role="group" aria-label="Appearance">
-      ${["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${t === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join("")}</div></div>
-    <div class="sec"><h3>Old map outlines</h3><p class="small-t muted">The sheet edges drawn while the Old maps card is open.</p>${outlinesSeg("seg")}</div>
-    <div class="sec"><h3>Kaggle key</h3>${keySettingsHTML()}</div>
     <div class="sec"><button class="linkish" data-act="openSettings">All settings</button></div>`;
   $$("[data-base]", $("#popStyle")).forEach(b => b.addEventListener("click", () => { setBase(b.dataset.base); renderStylePop(); $(`#popStyle [data-base="${b.dataset.base}"]`).focus(); }));
   wire($("#popStyle"));
@@ -3360,7 +3696,7 @@ function storageHTML() {
 }
 
 const settingsSig = () => JSON.stringify([S.lib.loaded, S.lib.err, customMaps().map(m => [m.id, m.state, m.title, m.year, m.kind, !!m.bounds, m.error]),
-  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, S.base, store.get("theme", "auto"), outlinesOn(), S.rec.key, S.eraA]);
+  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, store.get("theme", "auto"), scrollMode(), S.rec.key, S.eraA]);
 let settingsLastSig = "";
 // Redraws the card when something it shows changed; otherwise only moves the progress rings. A field being typed in is
 // never torn out from under the caret.
@@ -3441,14 +3777,15 @@ function keySectionHTML() {
 }
 VIEWS.settings = v => {
   settingsLastSig = settingsSig();
-  const theme = store.get("theme", "auto"), mine = customMaps();
+  const theme = store.get("theme", "auto"), mode = scrollMode(), mine = customMaps();
   const seg = (label, inner) => `<div class="set-row"><span class="set-k">${label}</span><div class="seg" role="group" aria-label="${label}">${inner}</div></div>`;
+  // Preferences holds only what is set once and left alone: the base map is switched from the style popover,
+  // the outlines from the Old maps card.
   return `${headHTML("Settings", "Preferences, your own maps and storage")}
     <h3 class="sub-head">Preferences</h3>
     <div class="group">
-      ${seg("Today’s map", Object.entries(BASES).map(([k, b]) => `<button data-act="setBase" data-s="${k}" aria-pressed="${S.base === k}">${esc(b.name)}</button>`).join(""))}
       ${seg("Appearance", ["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${theme === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join(""))}
-      <div class="set-row"><span class="set-k">Old map outlines</span>${outlinesSeg("seg")}</div>
+      ${seg("Scrolling", SCROLL_MODES.map(([k, label]) => `<button data-act="scrollMode" data-m="${k}" aria-pressed="${mode === k}">${label}</button>`).join(""))}
     </div>
     <h3 class="sub-head">Kaggle key</h3>
     <div class="set-block">${keySectionHTML()}</div>
@@ -3470,7 +3807,7 @@ VIEWS.settings.after = () => {
   wireKeyBox();
 };
 ACTIONS.openSettings = () => openSettings();
-ACTIONS.setBase = el => setBase(el.dataset.s);
+ACTIONS.scrollMode = el => setScrollMode(el.dataset.m);
 ACTIONS.setKeyAdd = () => { S.view.keyOpen = true; rerenderKeepingFocus(); $('#view [data-act="recKeyPick"]')?.focus({ preventScroll: true }); };
 ACTIONS.cmPick = () => $("#cmFile")?.click();
 ACTIONS.cmUpCancel = () => S.cm.up?.xhr.abort();
@@ -3636,12 +3973,15 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   pl.scan.on("click", e => plClickScan(e.lngLat));
   pl.scan.on("error", e => { if (/image|Failed|404|decode/i.test(String(e?.error?.message || ""))) $("#plErr").textContent = "The picture of your map could not be loaded."; });
   const c = primary().getCenter();
-  pl.today = new maplibregl.Map({ ...common, container: "plToday", style: makeStyle(), center: c, zoom: primary().getZoom() });
+  pl.today = new maplibregl.Map({
+    ...common, container: "plToday", style: makeStyle(), center: c, zoom: primary().getZoom(),
+    maxTileCacheSize: isDesk() ? 512 : 128, maxTileCacheZoomLevels: 10,
+  });
   pl.today.addControl(ctl(), "top-right");
   pl.today.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
   pl.today.on("click", e => plClickToday(e.lngLat));
   pl.today.on("load", () => { pl.todayReady = true; setBasePaint(pl.today); plDraw(); });
-  [pl.scan, pl.today].forEach(m => { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation?.(); });
+  [pl.scan, pl.today].forEach(m => { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation?.(); wireTrackpad(m, false); });
   const b = entry.bounds || (pl.pairs.length ? pl.pairs.reduce((a, p) => [Math.min(a[0], p.lon), Math.min(a[1], p.lat), Math.max(a[2], p.lon), Math.max(a[3], p.lat)], [180, 90, -180, -90]) : null);
   if (b && b[2] > b[0] && b[3] > b[1]) pl.today.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, duration: 0, maxZoom: 15 });
   $("#plUndo").onclick = () => { if (pl.pending) pl.pending = null; else pl.pairs.pop(); plRender(); };
@@ -3650,8 +3990,16 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   $("#plYes").onclick = () => closePlacement();
   $("#plNo").onclick = () => { $("#plDiscard").hidden = true; pl.discard = false; $("#plCancel").focus(); };
   $("#plSave").onclick = plSave;
+  $("#plSave").onclick = plSave;
   if ($("#plReset")) $("#plReset").onclick = plReset;
-  $("#plOp").oninput = e => { pl.opacity = +e.target.value / 100; $("#plOpVal").textContent = e.target.value + "%"; if (pl.todayReady && pl.today.getLayer("pl-scan")) pl.today.setPaintProperty("pl-scan", "raster-opacity", pl.opacity); };
+  let prevPlOp = Math.round(pl.opacity * 100);
+  $("#plOp").oninput = e => {
+    const v = Math.round(+e.target.value);
+    if (v !== prevPlOp && [10, 50, 100].some(t => v === t || (prevPlOp < t && v > t) || (prevPlOp > t && v < t))) haptic("alignment");
+    prevPlOp = v;
+    pl.opacity = +e.target.value / 100; $("#plOpVal").textContent = e.target.value + "%";
+    if (pl.todayReady && pl.today.getLayer("pl-scan")) pl.today.setPaintProperty("pl-scan", "raster-opacity", pl.opacity);
+  };
   $$("#place .pl-mark").forEach(btn => btn.onclick = () => btn.dataset.pl === "scan" ? plClickScan(pl.scan.getCenter()) : plClickToday(pl.today.getCenter()));
   $("#plPairs").onclick = e => { const x = e.target.closest("[data-del]"); if (x) { pl.pairs.splice(+x.dataset.del, 1); plRender(); } };
   pl.keys = e => { if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); plAskCancel(); } };
@@ -3684,12 +4032,15 @@ function plClickScan(ll) {
   const [col, row] = plFromLL(ll);
   if (col < 0 || row < 0 || col > pl.w || row > pl.h) { toast("That spot is off your map. Click on the map itself."); return; }
   pl.pending = { col, row };
+  haptic("generic");
   plRender();
 }
 function plClickToday(ll) {
   if (!pl.pending) { toast("First click a spot on your map (left or top), then the same spot on today’s map."); return; }
+  const hadFit = !!plFit();
   pl.pairs.push({ col: pl.pending.col, row: pl.pending.row, lon: ll.lng, lat: ll.lat });
   pl.pending = null;
+  haptic(!hadFit && plFit() ? "alignment" : "generic");
   plRender();
 }
 // A numbered pin; each pair has its own colour so the two halves of a pair are easy to match by eye.
@@ -3797,7 +4148,9 @@ async function plSave() {
 }
 
 // ================================================================ base map, theme
-function setBase(k) { S.base = k; store.set("base", k); applyBase(); renderMapbar(); settingsRefresh(true); }
+// The base map is switched from the style popover only, so changing it refreshes the map and the map
+// bar, not Settings (which no longer shows it).
+function setBase(k) { S.base = k; store.set("base", k); applyBase(); renderMapbar(); }
 // Shows the chosen base map on one map, tuned for the theme. Also used by the Placement screen's map of today.
 function setBasePaint(m) {
   const dark = isDark();
@@ -3844,7 +4197,6 @@ function setTheme(t) {
   store.set("theme", t);
   if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
   applyBase(); applyEra(); settingsRefresh(true);
-  if (!$("#popStyle").hidden) { renderStylePop(); $(`#popStyle [data-theme="${t}"]`)?.focus(); }
 }
 (function initTheme() { const t = store.get("theme", "auto"); if (t !== "auto") document.documentElement.dataset.theme = t; })();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { applyBase(); applyEra(); });
@@ -3919,19 +4271,26 @@ function checkEmptyKinds() {
   $("#pickA").addEventListener("click", () => S.catalogLoaded && !S.eras.length ? openLibrary()
     : $("#popMaps").hidden || pickSide !== "A" ? openMapPicker("A") : closePopovers());
   $("#pickB").addEventListener("click", () => $("#popMaps").hidden || pickSide !== "B" ? openMapPicker("B") : closePopovers());
-  $("#opacity").addEventListener("input", e => { S.opacity = +e.target.value / 100; store.set("opacity", S.opacity); $("#opVal").textContent = e.target.value + "%"; applyEra(); });
+  let prevOp = Math.round(S.opacity * 100);
+  $("#opacity").addEventListener("input", e => {
+    const v = Math.round(+e.target.value);
+    if (v !== prevOp && [0, 50, 100].some(t => v === t || (prevOp < t && v > t) || (prevOp > t && v < t))) haptic("alignment");
+    prevOp = v;
+    S.opacity = +e.target.value / 100; store.set("opacity", S.opacity); $("#opVal").textContent = e.target.value + "%"; applyEra();
+  });
   $("#locBtn").addEventListener("click", locate);
   $("#filterOpen").addEventListener("click", () => togglePopover("popLayers", $("#layersBtn")));
   $("#filterClear").addEventListener("click", () => { S.hidden = new Set(); S.years = null; kindsChanged(true); setYears(null); });
   $("#zin").addEventListener("click", () => m.zoomIn());
   $("#zout").addEventListener("click", () => m.zoomOut());
-  $("#compass").addEventListener("click", () => m.easeTo({ bearing: 0, duration: reduceMotion ? 0 : 300 }));
+  $("#compass").addEventListener("click", () => { haptic("alignment"); m.easeTo({ bearing: 0, duration: reduceMotion ? 0 : 300 }); });
   m.on("rotate", () => { $("#compass svg").style.transform = `rotate(${-m.getBearing()}deg)`; });
 
   m.on("dataloading", e => { if (e.dataType === "source" && !tilesBusy) { tilesBusy = true; updateLoading(); } });
   m.on("idle", () => { if (tilesBusy) { tilesBusy = false; updateLoading(); } });
   let saveViewTimer;
-  m.on("moveend", () => {
+  m.on("moveend", e => {
+    if (e?.trackpadMove) return;
     clearTimeout(saveViewTimer);
     saveViewTimer = setTimeout(() => { store.set("center", m.getCenter().toArray()); store.set("zoom", m.getZoom()); }, 250);
     updateCounts(); scheduleLoad(); renderMapbar(); libRefreshView(); if (S.view.name === "records") recRefreshView();
