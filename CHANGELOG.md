@@ -11,6 +11,12 @@ Trackpad navigation & overlay glass
   Automatic, Trackpad or Mouse wheel explicitly
 - Floating UI overlay backgrounds (sidebar, map bar, map controls, popovers and map badges) now use
   60% opacity frosted glass in light and dark themes
+- Enlarged MapLibre's in-memory tile cache and added idle zoom-out parent tile preloading for local
+  old maps so zooming out no longer reloads recently viewed tiles
+- Added macOS Force Touch trackpad haptics (alignment ticks on opacity 0%/50%/100%, swipe-compare
+  centre snap, compass reset, native scan resolution threshold and custom-map placement) plus Force
+  Click shortcuts (X-ray peek through old maps, quick-pinning records and instant spot drops); silent
+  no-op on Windows, Linux and web browsers
 
 ## 0.1.1 - 2026-11-24
 

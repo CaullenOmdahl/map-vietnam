@@ -31,7 +31,7 @@
    to the maps (layout, paint, filter, setData) or redraws the panel: render() rebuilds the current card
    from VIEWS[S.view.name] and wire() connects its [data-act] buttons to ACTIONS.
 
-   Sections, in order: constants, helpers, state, maps, trackpad, historical maps, compare, evidence loading, filters,
+   Sections, in order: constants, helpers, state, maps, trackpad, historical maps, compare, tile prefetch, evidence loading, filters,
    selection and position, map clicks, panel / sheet, panel views (home, record, nearby, pin, grid square,
    historical map, cases, sites), search, popovers, base map and theme, keyboard, boot. The map library (adding
    and removing old maps) follows the historical-map card, and the records section (adding and removing record
@@ -330,6 +330,7 @@ function createMap(container, isPrimary) {
   // (padding is copied after creation so both halves of a comparison line up exactly)
   const m = new maplibregl.Map({
     container, style: makeStyle(), ...view, attributionControl: false, pitchWithRotate: false, maxPitch: 0, fadeDuration: reduceMotion ? 0 : 300,
+    maxTileCacheSize: isDesk() ? 1024 : 256, maxTileCacheZoomLevels: 12,
   });
   m.touchZoomRotate.disableRotation();
   m.keyboard.disableRotation?.();
@@ -346,7 +347,8 @@ function createMap(container, isPrimary) {
   });
   m.on("click", e => onMapClick(m, e));
   wireLongPress(m);
-  wireTrackpad(m);
+  wireTrackpad(m, true);
+  wirePrefetch(m);
   m.on("mousemove", e => {
     if (S.placing || !m.loadedOverlays) return;
     if (S.view.name === "library") { const id = footprintAt(m, e.point); setFpState("hover", id); m.getCanvas().style.cursor = id ? "pointer" : ""; return; }
@@ -534,6 +536,15 @@ function fitSquare(square) {
 const WHEEL_GAP_MS = 180;
 const GESTURE_COOLDOWN_MS = 120;
 const PAN_END_MS = 140;
+let lastHapticAt = 0;
+function haptic(pattern = "generic", minGap = 35) {
+  const now = performance.now();
+  if (now - lastHapticAt < minGap) return;
+  const fn = window.pywebview?.api?.haptic;
+  if (!fn) return;
+  lastHapticAt = now;
+  try { Promise.resolve(fn(pattern)).catch(() => {}); } catch {}
+}
 const SCROLL_MODES = [["auto", "Automatic"], ["trackpad", "Trackpad"], ["wheel", "Mouse wheel"]];
 const scrollMode = () => {
   const m = store.get("scrollMode", "auto");
@@ -575,7 +586,7 @@ function zoomAroundMercator(centerLngLat, anchorLngLat, oldZoom, newZoom, Mercat
   const ny = Math.min(1, Math.max(0, a.y + (c.y - a.y) / s));
   return new MercatorCoordinate(nx, ny, 0).toLngLat();
 }
-function wireTrackpad(m) {
+function wireTrackpad(m, isMainMap = false) {
   const el = m.getCanvasContainer();
   const ac = new AbortController(), sig = ac.signal;
   const wheelState = { mode: null, lastTime: 0, gestureAt: 0, gestureActive: false };
@@ -666,6 +677,78 @@ function wireTrackpad(m) {
   el.addEventListener("gestureend", endGesture, { passive: false, signal: sig });
   el.addEventListener("gesturecancel", endGesture, { passive: false, signal: sig });
   addEventListener("blur", () => { gZoom = null; wheelState.gestureActive = false; clearPan(); panActive = false; }, { signal: sig });
+
+  if (isMainMap) {
+    let wasOver = null;
+    m.on("zoom", () => {
+      const id = m === maps[1] ? (S.eraB === "today" ? null : S.eraB) : S.eraA;
+      const era = eraById(id), c = m.getCenter();
+      if (!era || !eraInYears(era) || !eraCovers(era, c.lng, c.lat)) { wasOver = null; return; }
+      const over = m.getZoom() > nativeZoom(era) + 0.05;
+      if (wasOver !== null && over !== wasOver) haptic(over ? "level" : "alignment", 80);
+      wasOver = over;
+    });
+
+    let peeking = false;
+    const endPeek = () => {
+      if (!peeking) return;
+      peeking = false;
+      forceConsumedAt = Date.now();
+      setPeekOpacity(S.opacity);
+      haptic("level");
+    };
+    el.addEventListener("webkitmouseforcewillbegin", e => { e.preventDefault(); }, { passive: false, signal: sig });
+    el.addEventListener("webkitmouseforcedown", async e => {
+      e.preventDefault();
+      forceConsumedAt = Date.now();
+      clearTimeout(spotTimer);
+      if (S.draft || S.placing || S.view.name === "library") return;
+      const pt = gesturePt(e), point = { x: pt[0], y: pt[1] }, ll = m.unproject(pt);
+      const hits = hitTest(m, point);
+      if (hits.length) {
+        const sites = hits.filter(f => f.layer.id === "site-dot");
+        if (sites.length) { haptic("generic"); openSite(+sites[0].properties.id); return; }
+        const seen = new Set(), recs = [];
+        for (const f of hits) { const id = +f.properties.id; if (seen.has(id)) continue; seen.add(id); recs.push(f); }
+        const list = recs.map(propsOf).map(x => ({ ...x, d: distBearing([ll.lng, ll.lat], [x.lon, x.lat]).d }))
+          .sort((a, b) => a.d - b.d || (a.date_start || "").localeCompare(b.date_start || "") || a.id - b.id);
+        const rec = list[0];
+        if (rec) {
+          if (S.kase && rec.id != null) {
+            try {
+              const cid = S.kase.id;
+              if (S.kase.items.some(i => i.id === rec.id)) {
+                S.kase = await api(`/api/cases/${cid}/items/${rec.id}`, { method: "DELETE" });
+                toast(`Removed from “${S.kase.name}”`);
+              } else {
+                S.kase = await api(`/api/cases/${cid}/items`, { method: "POST", body: { evidence_id: rec.id } });
+                toast(`Added to “${S.kase.name}”`);
+              }
+              drawCase(); render(); haptic("generic");
+            } catch (err) { toast(err.message); }
+          } else {
+            haptic("generic");
+            openEvidence(rec.id, rec, { stack: list.length > 1 ? { recs: list.slice(0, 50), i: 0, lon: ll.lng, lat: ll.lat } : null });
+          }
+          return;
+        }
+      }
+      const id = m === maps[1] ? (S.eraB === "today" ? null : S.eraB) : S.eraA;
+      const era = eraById(id);
+      if (era && eraInYears(era) && S.opacity > 0.05) {
+        peeking = true;
+        setPeekOpacity(0);
+        haptic("level");
+        return;
+      }
+      haptic("generic");
+      openSpot(ll.lng, ll.lat);
+    }, { passive: false, signal: sig });
+    el.addEventListener("webkitmouseforceup", endPeek, { passive: true, signal: sig });
+    addEventListener("mouseup", endPeek, { passive: true, signal: sig });
+    addEventListener("blur", endPeek, { signal: sig });
+    m.on("remove", endPeek);
+  }
 
   m.on("remove", () => { clearPan(); ac.abort(); });
 }
@@ -776,6 +859,15 @@ function applyEra() {
     }
   });
   renderMapbar();
+}
+function setPeekOpacity(alpha) {
+  eachMap(m => {
+    for (const l of S.catalog) {
+      const id = `ov-${l.id}`;
+      if (m.getLayer(id) && m.getLayoutProperty(id, "visibility") === "visible")
+        m.setPaintProperty(id, "raster-opacity", alpha);
+    }
+  });
 }
 // Chooses the old map for side "A" (main / left) or "B" (right, when comparing); id "today" means none.
 function setEra(id, side = "A") {
@@ -976,7 +1068,15 @@ function placeDivider() {
   const clamp = x => Math.min(innerWidth - 24, Math.max(mapLeft() + 24, x));
   h.addEventListener("pointerdown", e => {
     h.setPointerCapture(e.pointerId);
-    const move = ev => { cmpX = clamp(ev.clientX); placeDivider(); };
+    let snapped = false;
+    const move = ev => {
+      const raw = clamp(ev.clientX), mid = Math.round(mapLeft() + (innerWidth - mapLeft()) / 2);
+      const atMid = Math.abs(raw - mid) <= 6;
+      if (atMid && !snapped) haptic("alignment");
+      snapped = atMid;
+      cmpX = atMid ? mid : raw;
+      placeDivider();
+    };
     const up = () => { h.removeEventListener("pointermove", move); h.removeEventListener("pointerup", up); h.removeEventListener("pointercancel", up); };
     h.addEventListener("pointermove", move); h.addEventListener("pointerup", up); h.addEventListener("pointercancel", up);
   });
@@ -984,6 +1084,85 @@ function placeDivider() {
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") { cmpX = clamp(cmpX + (e.key === "ArrowLeft" ? -40 : 40)); placeDivider(); e.preventDefault(); }
   });
 })();
+
+// ================================================================ tile prefetch
+// Local old-map tiles come from our own server, so while the map sits idle we quietly warm surrounding
+// pan tiles, zoom-out parent levels (-1..-4) and one zoom-in level into the browser HTTP cache. Remote
+// street/satellite base maps are never prefetched (their policies forbid it); they rely on the larger
+// MapLibre in-memory tile cache configured in createMap and openPlacement.
+const PF_MAX = 140, PF_WAY = 4, PF_DELAY = 350, PF_SEEN_MAX = 20000;
+const pfSeen = new Set();
+const prefetchers = new Map();
+
+function tileOf(lon, lat, z) {
+  const n = 2 ** z, r = Math.max(-85.051129, Math.min(85.051129, lat)) * Math.PI / 180;
+  return [Math.min(n - 1, Math.max(0, Math.floor((lon + 180) / 360 * n))),
+    Math.min(n - 1, Math.max(0, Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n)))];
+}
+function tilesAround(b, z, ring) {
+  const [x0, y0] = tileOf(b[0], b[3], z), [x1, y1] = tileOf(b[2], b[1], z), n = 2 ** z;
+  const out = [];
+  for (let x = Math.max(0, x0 - ring); x <= Math.min(n - 1, x1 + ring); x++)
+    for (let y = Math.max(0, y0 - ring); y <= Math.min(n - 1, y1 + ring); y++) out.push([x, y]);
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  return out.sort((p, q) => Math.hypot(p[0] - cx, p[1] - cy) - Math.hypot(q[0] - cx, q[1] - cy));
+}
+function pfShown(m, id) {
+  return !!m.getLayer(`ov-${id}`) && m.getLayoutProperty(`ov-${id}`, "visibility") === "visible";
+}
+function prefetchPass(m, st) {
+  if (stopped || !m.loadedOverlays) return;
+  const b = m.getBounds(), zoom = m.getZoom(), queue = [], seen = new Set();
+  for (const l of S.catalog) {
+    if (!pfShown(m, l.id)) continue;
+    const tz = Math.min(l.maxzoom || 15, Math.max(l.minzoom || 0, Math.floor(zoom) + 1));
+    const bb = l.bounds ? [Math.max(b.getWest(), l.bounds[0]), Math.max(b.getSouth(), l.bounds[1]),
+      Math.min(b.getEast(), l.bounds[2]), Math.min(b.getNorth(), l.bounds[3])]
+      : [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    if (bb[0] >= bb[2] || bb[1] >= bb[3]) continue;
+    const tpl = "/" + l.tiles.replace(/^\//, "");
+    for (const dz of [0, -1, -2, -3, -4, 1]) {
+      const z = tz + dz;
+      if (z < (l.minzoom || 0) || z > (l.maxzoom || 15)) continue;
+      for (const [x, y] of tilesAround(bb, z, dz ? 0 : 1)) {
+        const url = tpl.replace("{z}", z).replace("{x}", x).replace("{y}", y);
+        if (!seen.has(url) && !pfSeen.has(url)) { seen.add(url); queue.push([l.id, url]); }
+      }
+    }
+  }
+  queue.length = Math.min(queue.length, PF_MAX);
+  if (!queue.length) return;
+  const pass = { abort: new AbortController() };
+  st.pass = pass;
+  let next = 0;
+  const work = async () => {
+    while (next < queue.length && !pass.abort.signal.aborted) {
+      const [id, url] = queue[next++];
+      if (!pfShown(m, id)) { pass.abort.abort(); return; }
+      pfSeen.add(url);
+      if (pfSeen.size > PF_SEEN_MAX) pfSeen.clear();
+      try { await (await fetch(url, { signal: pass.abort.signal })).arrayBuffer(); }
+      catch { return; }
+    }
+  };
+  Promise.all(Array.from({ length: PF_WAY }, work)).then(() => { if (st.pass === pass) st.pass = null; });
+}
+function prefetchStop(m) {
+  const st = prefetchers.get(m);
+  if (!st) return;
+  clearTimeout(st.timer);
+  st.pass?.abort.abort();
+  st.pass = null;
+}
+function prefetchStopAll() { for (const m of [...prefetchers.keys()]) prefetchStop(m); }
+addEventListener("pagehide", prefetchStopAll);
+function wirePrefetch(m) {
+  const st = { timer: 0, pass: null };
+  prefetchers.set(m, st);
+  m.on("idle", () => { prefetchStop(m); st.timer = setTimeout(() => prefetchPass(m, st), PF_DELAY); });
+  m.on("movestart", () => prefetchStop(m));
+  m.on("remove", () => { prefetchStop(m); prefetchers.delete(m); });
+}
 
 // ================================================================ evidence loading (cached grid cells)
 // The view is covered by fixed grid cells; each cell is fetched once ("e:x:y" evidence, "p:x:y" place names),
@@ -1273,6 +1452,7 @@ function onMapClick(m, e) {
   // A tap that lands while the sheet is still settling was meant for the sheet, not the map.
   if (!isDesk() && Date.now() - sheetMovedAt < 450) return;
   if (Date.now() - longPressAt < 600) return; // the long press already dropped a pin
+  if (Date.now() - forceConsumedAt < 600) return; // a Force Click already handled this press
   if (S.placing) { endPlacing(); openSiteForm(e.lngLat.lng, e.lngLat.lat, 100, "", ""); return; }
   if (S.draft) return; // editing a site: drag the pin instead
   if (S.view.name === "library") {
@@ -1305,6 +1485,7 @@ function onMapClick(m, e) {
   spotTimer = setTimeout(() => openSpot(e.lngLat.lng, e.lngLat.lat), 300);
 }
 let longPressAt = 0; // time of the last touch long press, so the click that follows it is ignored
+let forceConsumedAt = 0; // time of the last Force Click / X-ray peek release, so the click after it is ignored
 function wireLongPress(m) {
   m.on("dblclick", () => clearTimeout(spotTimer));
   m.on("movestart", () => clearTimeout(spotTimer));
@@ -3025,6 +3206,7 @@ ACTIONS.quitAsk = () => { S.view.quit = true; render(); $('#view [data-act="quit
 ACTIONS.quitCancel = () => { S.view.quit = false; render(); $('#view [data-act="quitAsk"]')?.focus(); };
 // Stops the local server. The page cannot go on without it, so it is replaced by a note saying how to start again.
 ACTIONS.quit = async () => {
+  prefetchStopAll();
   try { await api("/api/quit", { method: "POST", body: {} }); }
   catch (e) { toast("Could not quit: " + e.message, 5000); return; }
   stopped = true; clearTimeout(recTimer); clearTimeout(libTimer);
@@ -3745,12 +3927,15 @@ function openPlacement(entry, opener = document.activeElement) {
   pl.scan.on("click", e => plClickScan(e.lngLat));
   pl.scan.on("error", e => { if (/image|Failed|404|decode/i.test(String(e?.error?.message || ""))) $("#plErr").textContent = "The picture of your map could not be loaded."; });
   const c = primary().getCenter();
-  pl.today = new maplibregl.Map({ ...common, container: "plToday", style: makeStyle(), center: c, zoom: primary().getZoom() });
+  pl.today = new maplibregl.Map({
+    ...common, container: "plToday", style: makeStyle(), center: c, zoom: primary().getZoom(),
+    maxTileCacheSize: isDesk() ? 512 : 128, maxTileCacheZoomLevels: 10,
+  });
   pl.today.addControl(ctl(), "top-right");
   pl.today.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
   pl.today.on("click", e => plClickToday(e.lngLat));
   pl.today.on("load", () => { pl.todayReady = true; setBasePaint(pl.today); plDraw(); });
-  [pl.scan, pl.today].forEach(m => { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation?.(); wireTrackpad(m); });
+  [pl.scan, pl.today].forEach(m => { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation?.(); wireTrackpad(m, false); });
   const b = entry.bounds || (pl.pairs.length ? pl.pairs.reduce((a, p) => [Math.min(a[0], p.lon), Math.min(a[1], p.lat), Math.max(a[2], p.lon), Math.max(a[3], p.lat)], [180, 90, -180, -90]) : null);
   if (b && b[2] > b[0] && b[3] > b[1]) pl.today.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, duration: 0, maxZoom: 15 });
   $("#plUndo").onclick = () => { if (pl.pending) pl.pending = null; else pl.pairs.pop(); plRender(); };
@@ -3759,7 +3944,14 @@ function openPlacement(entry, opener = document.activeElement) {
   $("#plYes").onclick = () => closePlacement();
   $("#plNo").onclick = () => { $("#plDiscard").hidden = true; pl.discard = false; $("#plCancel").focus(); };
   $("#plSave").onclick = plSave;
-  $("#plOp").oninput = e => { pl.opacity = +e.target.value / 100; $("#plOpVal").textContent = e.target.value + "%"; if (pl.todayReady && pl.today.getLayer("pl-scan")) pl.today.setPaintProperty("pl-scan", "raster-opacity", pl.opacity); };
+  let prevPlOp = Math.round(pl.opacity * 100);
+  $("#plOp").oninput = e => {
+    const v = Math.round(+e.target.value);
+    if (v !== prevPlOp && [10, 50, 100].some(t => v === t || (prevPlOp < t && v > t) || (prevPlOp > t && v < t))) haptic("alignment");
+    prevPlOp = v;
+    pl.opacity = +e.target.value / 100; $("#plOpVal").textContent = e.target.value + "%";
+    if (pl.todayReady && pl.today.getLayer("pl-scan")) pl.today.setPaintProperty("pl-scan", "raster-opacity", pl.opacity);
+  };
   $$("#place .pl-mark").forEach(btn => btn.onclick = () => btn.dataset.pl === "scan" ? plClickScan(pl.scan.getCenter()) : plClickToday(pl.today.getCenter()));
   $("#plPairs").onclick = e => { const x = e.target.closest("[data-del]"); if (x) { pl.pairs.splice(+x.dataset.del, 1); plRender(); } };
   pl.keys = e => { if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); plAskCancel(); } };
@@ -3792,12 +3984,15 @@ function plClickScan(ll) {
   const [col, row] = plFromLL(ll);
   if (col < 0 || row < 0 || col > pl.w || row > pl.h) { toast("That spot is off your map. Click on the map itself."); return; }
   pl.pending = { col, row };
+  haptic("generic");
   plRender();
 }
 function plClickToday(ll) {
   if (!pl.pending) { toast("First click a spot on your map (left or top), then the same spot on today’s map."); return; }
+  const hadFit = !!plFit();
   pl.pairs.push({ col: pl.pending.col, row: pl.pending.row, lon: ll.lng, lat: ll.lat });
   pl.pending = null;
+  haptic(!hadFit && plFit() ? "alignment" : "generic");
   plRender();
 }
 // A numbered pin; each pair has its own colour so the two halves of a pair are easy to match by eye.
@@ -3988,13 +4183,19 @@ function checkEmptyKinds() {
   $("#pickA").addEventListener("click", () => S.catalogLoaded && !S.eras.length ? openLibrary()
     : $("#popMaps").hidden || pickSide !== "A" ? openMapPicker("A") : closePopovers());
   $("#pickB").addEventListener("click", () => $("#popMaps").hidden || pickSide !== "B" ? openMapPicker("B") : closePopovers());
-  $("#opacity").addEventListener("input", e => { S.opacity = +e.target.value / 100; store.set("opacity", S.opacity); $("#opVal").textContent = e.target.value + "%"; applyEra(); });
+  let prevOp = Math.round(S.opacity * 100);
+  $("#opacity").addEventListener("input", e => {
+    const v = Math.round(+e.target.value);
+    if (v !== prevOp && [0, 50, 100].some(t => v === t || (prevOp < t && v > t) || (prevOp > t && v < t))) haptic("alignment");
+    prevOp = v;
+    S.opacity = +e.target.value / 100; store.set("opacity", S.opacity); $("#opVal").textContent = e.target.value + "%"; applyEra();
+  });
   $("#locBtn").addEventListener("click", locate);
   $("#filterOpen").addEventListener("click", () => togglePopover("popLayers", $("#layersBtn")));
   $("#filterClear").addEventListener("click", () => { S.hidden = new Set(); S.years = null; kindsChanged(true); setYears(null); });
   $("#zin").addEventListener("click", () => m.zoomIn());
   $("#zout").addEventListener("click", () => m.zoomOut());
-  $("#compass").addEventListener("click", () => m.easeTo({ bearing: 0, duration: reduceMotion ? 0 : 300 }));
+  $("#compass").addEventListener("click", () => { haptic("alignment"); m.easeTo({ bearing: 0, duration: reduceMotion ? 0 : 300 }); });
   m.on("rotate", () => { $("#compass svg").style.transform = `rotate(${-m.getBearing()}deg)`; });
 
   m.on("dataloading", e => { if (e.dataType === "source" && !tilesBusy) { tilesBusy = true; updateLoading(); } });

@@ -1,5 +1,6 @@
 """Static and Node-backed behavioral checks for Apple Maps-style trackpad navigation in web/app."""
 
+import ast
 import json
 import re
 import shutil
@@ -12,12 +13,13 @@ ROOT = Path(__file__).resolve().parent.parent
 APP_JS = ROOT / "web" / "app" / "app.js"
 APP_CSS = ROOT / "web" / "app" / "app.css"
 INDEX_HTML = ROOT / "web" / "app" / "index.html"
+DESKTOP_PY = ROOT / "scripts" / "desktop.py"
 
 
 def _extract_trackpad_helpers():
     text = APP_JS.read_text(encoding="utf-8")
     start = text.index("const WHEEL_GAP_MS = ")
-    end = text.index("function wireTrackpad(m) {")
+    end = text.index("function wireTrackpad(")
     return text[start:end]
 
 
@@ -31,10 +33,34 @@ def test_overscroll_behavior_is_disabled_on_page_and_map_containers():
 
 def test_trackpad_handler_is_wired_to_all_maps_and_guarded_against_frame_thrash():
     js = APP_JS.read_text(encoding="utf-8")
-    assert "wireTrackpad(m);" in js
-    assert re.search(r"\[pl\.scan,\s*pl\.today\]\.forEach\([^\n]*wireTrackpad\(m\)", js)
+    assert "wireTrackpad(m, true);" in js
+    assert re.search(r"\[pl\.scan,\s*pl\.today\]\.forEach\([^\n]*wireTrackpad\(m,\s*false\)", js)
     assert "SCROLL_MODES" in js and 'ACTIONS.scrollMode' in js
     assert "e?.trackpadMove" in js
+
+
+def test_tile_cache_and_zoom_out_prefetch_are_configured():
+    js = APP_JS.read_text(encoding="utf-8")
+    assert "maxTileCacheSize:" in js and "maxTileCacheZoomLevels:" in js
+    assert "wirePrefetch(m);" in js
+    assert "[0, -1, -2, -3, -4, 1]" in js
+
+
+def test_macos_haptics_and_force_click_are_wired_without_static_darwin_imports():
+    js = APP_JS.read_text(encoding="utf-8")
+    assert "function haptic(" in js
+    assert "webkitmouseforcewillbegin" in js and "webkitmouseforcedown" in js
+    # packaging/map-vietnam.spec script_modules() AST-scans scripts/*.py on all platforms:
+    # desktop.py must not statically import AppKit or PyObjCTools.
+    tree = ast.parse(DESKTOP_PY.read_text(encoding="utf-8"))
+    static_imports = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            static_imports.update(a.name for a in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            static_imports.add(node.module)
+    assert "AppKit" not in static_imports and "PyObjCTools" not in static_imports
+    assert not any(name.startswith("PyObjCTools.") for name in static_imports)
 
 
 def test_overlay_backgrounds_use_60_percent_frosted_glass():
@@ -51,7 +77,7 @@ def test_index_html_bumps_cache_busters_for_css_and_js():
     css_v = re.search(r"/app/app\.css\?v=(\d+)", html)
     js_v = re.search(r"/app/app\.js\?v=(\d+)", html)
     assert css_v and int(css_v.group(1)) >= 38
-    assert js_v and int(js_v.group(1)) >= 43
+    assert js_v and int(js_v.group(1)) >= 44
 
 
 # ---- behavioral JS checks via Node -----------------------------------------------------------------
