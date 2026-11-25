@@ -31,6 +31,11 @@ Trackpad navigation & overlay glass
   Click shortcuts (X-ray peek through old maps, quick-pinning records and instant spot drops); silent
   no-op on Windows, Linux and web browsers
 
+Map alignment
+- Any installed historical map (or uploaded GeoTIFF / GeoPDF) can be aligned or rescaled against
+  today's map using **Adjust alignment**, reusing the two-pane Placement screen, and reset to its
+  original georeferencing with **Reset to original**
+
 ## 0.1.1 - 2026-11-24
 
 Your own maps
