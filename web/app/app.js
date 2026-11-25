@@ -31,7 +31,8 @@
    to the maps (layout, paint, filter, setData) or redraws the panel: render() rebuilds the current card
    from VIEWS[S.view.name] and wire() connects its [data-act] buttons to ACTIONS.
 
-   Sections, in order: constants, helpers, state, maps, historical maps, compare, evidence loading, filters,
+   Sections, in order: constants, helpers, state, maps, historical maps, compare, tile prefetch,
+   evidence loading, filters,
    selection and position, map clicks, panel / sheet, panel views (home, record, nearby, pin, grid square,
    historical map, cases, sites), search, popovers, base map and theme, keyboard, boot. The map library (adding
    and removing old maps) follows the historical-map card, and the records section (adding and removing record
@@ -330,6 +331,10 @@ function createMap(container, isPrimary) {
   // (padding is copied after creation so both halves of a comparison line up exactly)
   const m = new maplibregl.Map({
     container, style: makeStyle(), ...view, attributionControl: false, pitchWithRotate: false, maxPitch: 0, fadeDuration: reduceMotion ? 0 : 300,
+    // More tiles kept in memory, at more zoom levels: panning back, or zooming through a level already
+    // seen, redraws without asking the network. This is all the remote base maps get (their tile policies
+    // forbid prefetching); local old maps are prefetched as well, see "tile prefetch" below.
+    maxTileCacheSize: 256, maxTileCacheZoomLevels: 8,
   });
   m.touchZoomRotate.disableRotation();
   m.keyboard.disableRotation?.();
@@ -353,6 +358,7 @@ function createMap(container, isPrimary) {
   });
   m.getCanvas().addEventListener("mouseleave", () => setFpState("hover", null));
   m.on("error", e => { if (!/Failed to fetch|could not be decoded|AJAXError/i.test(String(e?.error?.message || ""))) console.warn(e?.error || e); });
+  wirePrefetch(m);
   return m;
 }
 
@@ -838,6 +844,99 @@ function placeDivider() {
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") { cmpX = clamp(cmpX + (e.key === "ArrowLeft" ? -40 : 40)); placeDivider(); e.preventDefault(); }
   });
 })();
+
+// ================================================================ tile prefetch
+// Old-map tiles come from this app's own server, so while the map sits idle the ones most likely wanted
+// next are fetched ahead into the browser's HTTP cache: the view plus a ring of tiles around it at the
+// current zoom, and the view itself one zoom in and one out. The next pan or zoom then draws at once.
+// The remote street/satellite base maps are never prefetched (their providers forbid fetching tiles
+// nobody has viewed); they only get the larger in-memory cache set in createMap.
+// Prefetching uses fetch() rather than MapLibre, so it never drives the "Loading…" indicator. The server
+// answers tiles with an ETag and Cache-Control: no-cache (send_tile in scripts/server.py), so when
+// MapLibre later asks for a prefetched tile it revalidates cheaply (304) and draws the cached bytes.
+// A pass runs after a short pause on MapLibre's "idle", is capped at PF_MAX tiles with PF_WAY requests in
+// flight, and is abandoned (AbortController) the moment the map moves again or is removed, the old map is
+// switched or hidden, the app quits, or the page unloads. Both sides of a comparison prefetch their own.
+const PF_MAX = 100, PF_WAY = 3, PF_DELAY = 400, PF_SEEN_MAX = 20000;
+const pfSeen = new Set(); // tile URLs already fetched this session, so each is asked for at most once
+const prefetchers = new Map(); // map -> { timer, pass } for every map created (main and comparison)
+
+// Longitude/latitude to the Web-Mercator tile at zoom z (the slippy layout the MBTiles files are built in).
+function tileOf(lon, lat, z) {
+  const n = 2 ** z, r = Math.max(-85.051129, Math.min(85.051129, lat)) * Math.PI / 180;
+  return [Math.min(n - 1, Math.max(0, Math.floor((lon + 180) / 360 * n))),
+    Math.min(n - 1, Math.max(0, Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n)))];
+}
+// The tiles covering [w, s, e, n] at zoom z, grown by `ring` tiles on every side, nearest the centre first.
+function tilesAround(b, z, ring) {
+  const [x0, y0] = tileOf(b[0], b[3], z), [x1, y1] = tileOf(b[2], b[1], z), n = 2 ** z;
+  const out = [];
+  for (let x = Math.max(0, x0 - ring); x <= Math.min(n - 1, x1 + ring); x++)
+    for (let y = Math.max(0, y0 - ring); y <= Math.min(n - 1, y1 + ring); y++) out.push([x, y]);
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  return out.sort((p, q) => Math.hypot(p[0] - cx, p[1] - cy) - Math.hypot(q[0] - cx, q[1] - cy));
+}
+// True while old map `id` is the one shown on this map (a layer switched or hidden mid-pass ends it).
+function pfShown(m, id) {
+  return !!m.getLayer(`ov-${id}`) && m.getLayoutProperty(`ov-${id}`, "visibility") === "visible";
+}
+// One idle pass on map m: build the tile list for the old maps it shows, then fetch it PF_WAY at a time.
+function prefetchPass(m, st) {
+  if (stopped || !m.loadedOverlays) return;
+  const b = m.getBounds(), zoom = m.getZoom(), queue = [], seen = new Set();
+  for (const l of S.catalog) {
+    if (!pfShown(m, l.id)) continue;
+    // The tile zoom MapLibre is drawing: 256-px tiles on a 512-px world, one more than the map zoom.
+    const tz = Math.min(l.maxzoom || 15, Math.max(l.minzoom || 0, Math.floor(zoom) + 1));
+    // Where the view meets the sheet's coverage: tiles are never asked for where the sheet has none.
+    const bb = l.bounds ? [Math.max(b.getWest(), l.bounds[0]), Math.max(b.getSouth(), l.bounds[1]),
+      Math.min(b.getEast(), l.bounds[2]), Math.min(b.getNorth(), l.bounds[3])]
+      : [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    if (bb[0] >= bb[2] || bb[1] >= bb[3]) continue;
+    const tpl = "/" + l.tiles.replace(/^\//, "");
+    for (const dz of [0, 1, -1]) { // this zoom (with a one-tile ring), then one zoom in, then one out
+      const z = tz + dz;
+      if (z < (l.minzoom || 0) || z > (l.maxzoom || 15)) continue;
+      for (const [x, y] of tilesAround(bb, z, dz ? 0 : 1)) {
+        const url = tpl.replace("{z}", z).replace("{x}", x).replace("{y}", y);
+        if (!seen.has(url) && !pfSeen.has(url)) { seen.add(url); queue.push([l.id, url]); }
+      }
+    }
+  }
+  queue.length = Math.min(queue.length, PF_MAX);
+  if (!queue.length) return;
+  const pass = { abort: new AbortController() };
+  st.pass = pass;
+  let next = 0;
+  const work = async () => {
+    while (next < queue.length && !pass.abort.signal.aborted) {
+      const [id, url] = queue[next++];
+      if (!pfShown(m, id)) { pass.abort.abort(); return; } // the old map changed mid-pass: stop now
+      pfSeen.add(url);
+      if (pfSeen.size > PF_SEEN_MAX) pfSeen.clear(); // keep the set small; a repeat only costs a 304
+      try { await (await fetch(url, { signal: pass.abort.signal })).arrayBuffer(); }
+      catch { return; } // aborted, or the server is quitting: let the pass end quietly
+    }
+  };
+  Promise.all(Array.from({ length: PF_WAY }, work)).then(() => { if (st.pass === pass) st.pass = null; });
+}
+function prefetchStop(m) {
+  const st = prefetchers.get(m);
+  if (!st) return;
+  clearTimeout(st.timer);
+  st.pass?.abort.abort();
+  st.pass = null;
+}
+function prefetchStopAll() { for (const m of [...prefetchers.keys()]) prefetchStop(m); }
+addEventListener("pagehide", prefetchStopAll);
+// Wired from createMap: every map (main, and the comparison map while it exists) prefetches on idle.
+function wirePrefetch(m) {
+  const st = { timer: 0, pass: null };
+  prefetchers.set(m, st);
+  m.on("idle", () => { prefetchStop(m); st.timer = setTimeout(() => prefetchPass(m, st), PF_DELAY); });
+  m.on("movestart", () => prefetchStop(m));
+  m.on("remove", () => { prefetchStop(m); prefetchers.delete(m); });
+}
 
 // ================================================================ evidence loading (cached grid cells)
 // The view is covered by fixed grid cells; each cell is fetched once ("e:x:y" evidence, "p:x:y" place names),
@@ -2877,6 +2976,7 @@ ACTIONS.quitAsk = () => { S.view.quit = true; render(); $('#view [data-act="quit
 ACTIONS.quitCancel = () => { S.view.quit = false; render(); $('#view [data-act="quitAsk"]')?.focus(); };
 // Stops the local server. The page cannot go on without it, so it is replaced by a note saying how to start again.
 ACTIONS.quit = async () => {
+  prefetchStopAll();
   try { await api("/api/quit", { method: "POST", body: {} }); }
   catch (e) { toast("Could not quit: " + e.message, 5000); return; }
   stopped = true; clearTimeout(recTimer); clearTimeout(libTimer);

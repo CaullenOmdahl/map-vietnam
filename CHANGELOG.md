@@ -10,6 +10,13 @@ Settings
   Show/Hide sits in the **Old maps** card, and the Kaggle key is managed in **Settings** (the key
   box still appears in Records when a download asks for one)
 
+Zooming and panning old maps
+- While the map sits idle, the tiles just around what is on screen — and the same area one zoom in and
+  one out — are quietly fetched ahead from the local server, so the next pan or zoom draws almost at
+  once. Only old maps installed on this computer are fetched ahead; the street and satellite base maps
+  are never fetched ahead (their providers forbid it), they just keep more of what you have already seen
+  in memory
+
 ## 0.1.1 - 2026-11-24
 
 Your own maps
