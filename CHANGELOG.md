@@ -4,6 +4,12 @@ Notable changes to Map Vietnam. Versions follow [semantic versioning](https://se
 
 ## 0.2.0 (Unreleased)
 
+Settings
+- Each control now lives in exactly one place: the base map is switched from the style popover
+  (now titled **Map style**), the appearance theme lives in **Settings**, the old-map outlines
+  Show/Hide sits in the **Old maps** card, and the Kaggle key is managed in **Settings** (the key
+  box still appears in Records when a download asks for one)
+
 Zooming and panning old maps
 - While the map sits idle, the tiles just around what is on screen — and the same area one zoom in and
   one out — are quietly fetched ahead from the local server, so the next pan or zoom draws almost at

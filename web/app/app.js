@@ -2231,15 +2231,13 @@ function applyFootprintFilter() {
     m.setFilter("libfp-line-in", lines ? ["all", ["in", ["get", "st"], ["literal", ["installed", "busy"]]], sf] : nothing);
   });
 }
-// Settings: whether the sheet outlines are drawn while the Old maps card is open (the sheet pointed at or chosen is
-// outlined either way, so the map and the list still match).
+// Whether the sheet outlines are drawn while the Old maps card is open (the sheet pointed at or chosen is
+// outlined either way, so the map and the list still match). Toggled from the Old maps card only.
 const outlinesOn = () => store.get("outlines", true) !== false;
 function setOutlines(on) {
   store.set("outlines", on);
   applyFootprintFilter();
   if (S.view.name === "library") libRefreshView(true);
-  settingsRefresh(true);
-  if (!$("#popStyle").hidden) { renderStylePop(); $(`#popStyle [data-act="outlines"][data-on="${on ? 1 : 0}"]`)?.focus(); }
 }
 const fpState = { sel: null, hover: null };
 function setFpState(key, id, force = false) {
@@ -2490,7 +2488,7 @@ VIEWS.library = v => {
       ${md.kinds.length > 1 ? `<div class="seg lib-seg" role="group" aria-label="Show maps of one scale">${chip("all", "All", null)}${md.kinds.map(x => chip(x.k, x.label, x.n)).join("")}</div>` : ""}
       ${n > 1 ? `<div class="lib-sort" role="group" aria-label="Order of the list"><span class="small-t muted">Order</span>
         ${LIB_SORTS.map(([k, label]) => `<button class="linkish small-t" data-act="libSort" data-s="${k}" aria-pressed="${md.sort === k}">${k === "here" && typed ? "Nearest" : label}</button>`).join("")}</div>` : ""}
-      ${outlinesSeg("lib-sort")}
+      ${outlinesSeg()}
     </div>
     ${busy.length ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span>
       <span class="grow"><b>Adding ${busy.length} map${busy.length === 1 ? "" : "s"}</b><span class="small-t muted" data-lib-left>${esc(leftText())}</span></span>
@@ -2944,7 +2942,7 @@ ACTIONS.recKeyPick = () => $("#keyFile")?.click();
 ACTIONS.recAskKey = () => { closePopovers(); recAsk("thor", "key"); };
 ACTIONS.outlines = el => setOutlines(el.dataset.on === "1");
 ACTIONS.recKeyForget = async () => {
-  try { applyRecords(await api("/api/records/key", { method: "DELETE" })); toast("The key was removed from this computer"); if (!$("#popStyle").hidden) renderStylePop(); settingsRefresh(true); }
+  try { applyRecords(await api("/api/records/key", { method: "DELETE" })); toast("The key was removed from this computer"); settingsRefresh(true); }
   catch (e) { toast("Could not remove the key: " + e.message, 5000); }
 };
 
@@ -3346,27 +3344,18 @@ function togglePopover(id, anchor) {
   if (id === "popLayers") renderLayersPop();
   openPopover(id, anchor);
 }
-// The Show/Hide pair for the sheet outlines, in the Old maps card and in settings.
-function outlinesSeg(cls) {
-  const on = outlinesOn(), b = (v, label) => `<button class="${cls === "lib-sort" ? "linkish small-t" : ""}" data-act="outlines" data-on="${v}" aria-pressed="${on === !!v}">${label}</button>`;
-  return `<div class="${cls}" role="group" aria-label="Sheet outlines on the map">${cls === "lib-sort" ? '<span class="small-t muted">Outlines</span>' : ""}${b(1, "Show")}${b(0, "Hide")}</div>`;
+// The Show/Hide pair for the sheet outlines, in the Old maps card (their only home: the outlines are
+// about the maps listed there, so they sit beside the list's other tools).
+function outlinesSeg() {
+  const on = outlinesOn(), b = (v, label) => `<button class="linkish small-t" data-act="outlines" data-on="${v}" aria-pressed="${on === !!v}">${label}</button>`;
+  return `<div class="lib-sort" role="group" aria-label="Sheet outlines on the map"><span class="small-t muted">Outlines</span>${b(1, "Show")}${b(0, "Hide")}</div>`;
 }
-// The Kaggle key, in settings: whether one is saved, and the way to add or forget it.
-function keySettingsHTML() {
-  const k = S.rec.key || {};
-  if (k.present) return `<p class="small-t muted">A Kaggle key is saved${k.source && k.source !== "env file" ? ` (from ${esc(k.source)})` : " on this computer"}. It is only ever sent to Kaggle.</p>
-    ${k.source === "env file" ? `<div class="row"><button class="btn small" data-act="recKeyForget">Forget the key</button></div>` : ""}`;
-  return `<p class="small-t muted">Kaggle may ask for a free key when you add the air strikes.</p>
-    <div class="row"><button class="btn small" data-act="recAskKey">Add a Kaggle key</button></div>`;
-}
+// The style popover holds only the base-map cards (switched often) and a way into Settings. Appearance,
+// the outlines and the Kaggle key each live in exactly one place instead: Settings for the first and
+// last, the Old maps card for the outlines.
 function renderStylePop() {
-  const t = store.get("theme", "auto");
   $("#popStyle").innerHTML = `<div class="sec"><h3>Today’s map</h3><div class="style-cards">
       ${Object.entries(BASES).map(([k, b]) => `<button class="style-card" data-base="${k}" aria-pressed="${S.base === k}"><span class="thumb ${k}"></span><span>${b.name}</span></button>`).join("")}</div></div>
-    <div class="sec"><h3>Appearance</h3><div class="seg" role="group" aria-label="Appearance">
-      ${["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${t === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join("")}</div></div>
-    <div class="sec"><h3>Old map outlines</h3><p class="small-t muted">The sheet edges drawn while the Old maps card is open.</p>${outlinesSeg("seg")}</div>
-    <div class="sec"><h3>Kaggle key</h3>${keySettingsHTML()}</div>
     <div class="sec"><button class="linkish" data-act="openSettings">All settings</button></div>`;
   $$("[data-base]", $("#popStyle")).forEach(b => b.addEventListener("click", () => { setBase(b.dataset.base); renderStylePop(); $(`#popStyle [data-base="${b.dataset.base}"]`).focus(); }));
   wire($("#popStyle"));
@@ -3438,7 +3427,7 @@ function storageHTML() {
 }
 
 const settingsSig = () => JSON.stringify([S.lib.loaded, S.lib.err, customMaps().map(m => [m.id, m.state, m.title, m.year, m.kind, !!m.bounds, m.error]),
-  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, S.base, store.get("theme", "auto"), outlinesOn(), S.rec.key, S.eraA]);
+  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, store.get("theme", "auto"), S.rec.key, S.eraA]);
 let settingsLastSig = "";
 // Redraws the card when something it shows changed; otherwise only moves the progress rings. A field being typed in is
 // never torn out from under the caret.
@@ -3521,12 +3510,12 @@ VIEWS.settings = v => {
   settingsLastSig = settingsSig();
   const theme = store.get("theme", "auto"), mine = customMaps();
   const seg = (label, inner) => `<div class="set-row"><span class="set-k">${label}</span><div class="seg" role="group" aria-label="${label}">${inner}</div></div>`;
+  // Preferences holds only what is set once and left alone: the base map is switched from the style popover,
+  // the outlines from the Old maps card.
   return `${headHTML("Settings", "Preferences, your own maps and storage")}
     <h3 class="sub-head">Preferences</h3>
     <div class="group">
-      ${seg("Today’s map", Object.entries(BASES).map(([k, b]) => `<button data-act="setBase" data-s="${k}" aria-pressed="${S.base === k}">${esc(b.name)}</button>`).join(""))}
       ${seg("Appearance", ["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${theme === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join(""))}
-      <div class="set-row"><span class="set-k">Old map outlines</span>${outlinesSeg("seg")}</div>
     </div>
     <h3 class="sub-head">Kaggle key</h3>
     <div class="set-block">${keySectionHTML()}</div>
@@ -3548,7 +3537,6 @@ VIEWS.settings.after = () => {
   wireKeyBox();
 };
 ACTIONS.openSettings = () => openSettings();
-ACTIONS.setBase = el => setBase(el.dataset.s);
 ACTIONS.setKeyAdd = () => { S.view.keyOpen = true; rerenderKeepingFocus(); $('#view [data-act="recKeyPick"]')?.focus({ preventScroll: true }); };
 ACTIONS.cmPick = () => $("#cmFile")?.click();
 ACTIONS.cmUpCancel = () => S.cm.up?.xhr.abort();
@@ -3818,7 +3806,9 @@ async function plSave() {
 }
 
 // ================================================================ base map, theme
-function setBase(k) { S.base = k; store.set("base", k); applyBase(); renderMapbar(); settingsRefresh(true); }
+// The base map is switched from the style popover only, so changing it refreshes the map and the map
+// bar, not Settings (which no longer shows it).
+function setBase(k) { S.base = k; store.set("base", k); applyBase(); renderMapbar(); }
 // Shows the chosen base map on one map, tuned for the theme. Also used by the Placement screen's map of today.
 function setBasePaint(m) {
   const dark = isDark();
@@ -3865,7 +3855,6 @@ function setTheme(t) {
   store.set("theme", t);
   if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
   applyBase(); applyEra(); settingsRefresh(true);
-  if (!$("#popStyle").hidden) { renderStylePop(); $(`#popStyle [data-theme="${t}"]`)?.focus(); }
 }
 (function initTheme() { const t = store.get("theme", "auto"); if (t !== "auto") document.documentElement.dataset.theme = t; })();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { applyBase(); applyEra(); });
