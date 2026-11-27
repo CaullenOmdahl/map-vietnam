@@ -136,7 +136,7 @@ def test_single_flight_deduplicates_concurrent_requests_and_cache_is_infinite(tm
     threading.Thread(target=upstream.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{upstream.server_address[1]}/archive.json"
 
-    storage = HubStorage(root=tmp_path / "vol", pacer=HostPacer(default_interval=0.0))
+    storage = HubStorage(root=tmp_path / "vol", pacer=HostPacer(default_interval=0.0), allow_loopback=True)
     results = []
 
     def worker():
@@ -262,10 +262,11 @@ def test_bidirectional_client_push_visibility_immutable_stream_and_offline_pull(
     pulled = client_b.pull_pack_offline(entry_pub["id"])
     assert pulled.is_file() and tiling.read_metadata(pulled)["name"] == "Cao Lanh Recon"
 
-    # Even if Hub goes offline, Reader B's append-only streamed tile cache still serves the cached tile!
+    # Even if Hub goes offline AND a fresh HubClient restarts cold, the append-only streamed tile cache still serves!
     srv.stop_gracefully()
     time.sleep(0.1)
-    offline_hit, _ = client_b.get_streamed_tile(entry_pub["id"], 9, tx, ty)
+    cold_client_b = HubClient(root=lib_b.root)
+    offline_hit, _ = cold_client_b.get_streamed_tile(entry_pub["id"], 9, tx, ty)
     assert offline_hit == tile_bytes
     archive.close()
 
@@ -434,7 +435,7 @@ def test_local_server_hub_terrain_transect_media_and_aerial_import_http(hub_inst
     lib_b = make_library(tmp_path / "client_b", archive, monkeypatch)
     db_b = tmp_path / "client_b" / "e.sqlite"
     store.connect(db_b).close()
-    local_srv = server.make_server(0, db_b, map_library=lib_b)
+    local_srv = server.make_server(0, db_b, map_library=lib_b, allow_loopback=True)
     threading.Thread(target=local_srv.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{local_srv.server_address[1]}"
 
@@ -535,3 +536,95 @@ def test_local_server_hub_terrain_transect_media_and_aerial_import_http(hub_inst
         img_srv.shutdown()
         img_srv.server_close()
         archive.close()
+
+
+def test_security_guards_path_traversal_ssrf_group_spoofing_and_sea_level_lidar(hub_instance, tmp_path):
+    """Verify P1/P2 hardening: `..` traversal refusal, SSRF/file:// blocks, secret scrubbing,
+    group_tag spoofing prevention, `preserve_visibility`, and `0.0 m` GEDI laser footprints."""
+    from hub.polite import is_safe_id, validate_fetch_url
+    from hub.storage import HubStorageError
+    from hub_client import HubClientError, clean_hub_url
+
+    hub_url, srv = hub_instance
+
+    # 1. Path traversal IDs rejected everywhere; `.part1` layer names survive `clean_work()`.
+    for bad in ("", ".", "..", "../etc", "foo/../bar", ".hidden", "a/b"):
+        assert is_safe_id(bad) is False
+        with pytest.raises(HubStorageError):
+            srv.storage.tiles_path(bad)
+    assert is_safe_id("sheet.part1") is True
+    keep_file = srv.storage.tiles_dir / "sheet.part1.mbtiles"
+    scratch_file = srv.storage.tiles_dir / "sheet.mbtiles.partial"
+    keep_file.write_bytes(b"valid")
+    scratch_file.write_bytes(b"temp")
+    srv.storage.clean_work()
+    assert keep_file.is_file() and not scratch_file.exists()
+    keep_file.unlink()
+
+    # 2. SSRF & cleartext remote Hub URLs rejected; proprietary `file://` / metadata sources dropped & scrubbed.
+    for bad_url in (
+        "file:///data/db/hub.sqlite",
+        "http://169.254.169.254/latest/meta-data/",
+        "http://127.0.0.1:8080/secret",
+        "https://10.0.0.5/internal.tif",
+    ):
+        with pytest.raises(ValueError):
+            validate_fetch_url(bad_url, allow_loopback=False)
+    with pytest.raises(HubClientError):
+        clean_hub_url("http://remote-hub.example.com")
+    assert clean_hub_url("https://remote-hub.example.com/hub/v1") == "https://remote-hub.example.com"
+
+    srv.storage.vault.set_many(
+        {
+            "PROPRIETARY_SOURCES_JSON": json.dumps(
+                [
+                    {"id": "evil_file", "tiles": "file:///data/db/hub.sqlite"},
+                    {"id": "evil_meta", "tiles": "http://169.254.169.254/{z}/{x}/{y}"},
+                    {
+                        "id": "planet",
+                        "tiles": "https://tiles.planet.example/v1/tok99abcXYZ12345678/{z}/{x}/{y}.png?api_key=psecret_777&fmt=png",
+                    },
+                ]
+            )
+        }
+    )
+    assert [s["id"] for s in srv.storage.vault.proprietary_sources()] == ["planet"]
+    scrubbed = srv.storage.vault.scrub(
+        "Error fetching https://tiles.planet.example/v1/tok99abcXYZ12345678/9/405/240.png?api_key=psecret_777&fmt=png"
+    )
+    assert "psecret_777" not in scrubbed and "tok99abcXYZ12345678" not in scrubbed
+
+    # 3. Non-admin uploader cannot spoof another team's `group_tag`, and `preserve_visibility` keeps shared visibility.
+    admin_hc = HubClient(root=tmp_path / "adm")
+    admin_hc.save_config(hub_url, "bootstrap_super_secret_admin_12345")
+    team_a_key = admin_hc.proxy_post(
+        "/hub/v1/admin/keys", {"label": "Team A", "scopes": ["read", "upload"], "group_tag": "team_a"}
+    )
+    mbt = make_test_mbtiles(tmp_path / "pack.mbtiles")
+    from hub.auth import authenticate
+
+    with srv.storage.connect() as db:
+        p_team_a = authenticate(db, f"Bearer {team_a_key['token']}")
+    tmp_copy = tmp_path / "copy1.mbtiles"
+    tmp_copy.write_bytes(mbt.read_bytes())
+    layer = srv.storage.ingest_pushed_pack(
+        tmp_copy, "shared_custom_1", {"visibility": "group", "group_tag": "spoofed_other_team"}, p_team_a
+    )
+    assert layer["group_tag"] == "team_a"  # Spoofed group_tag ignored!
+
+    tmp_copy2 = tmp_path / "copy2.mbtiles"
+    tmp_copy2.write_bytes(mbt.read_bytes())
+    updated = srv.storage.ingest_pushed_pack(
+        tmp_copy2, "shared_custom_1", {"visibility": "private", "preserve_visibility": True}, p_team_a
+    )
+    assert updated["visibility"] == "group" and updated["revision"] == 2
+
+    # 4. `0.0 m` sea-level NASA GEDI laser shots are preserved, not falsy-dropped.
+    gedi = terrain_aerial.query_sliderule_gedi(
+        [106.5, 10.3, 106.55, 10.35],
+        lambda *a, **kw: (
+            json.dumps([{"longitude": 106.52, "latitude": 10.32, "elev_lowestmode": 0.0, "rh98": 4.2}]).encode("utf-8"),
+            "application/json",
+        ),
+    )
+    assert len(gedi["features"]) == 1 and gedi["features"][0]["properties"]["ground_m"] == 0.0

@@ -30,6 +30,8 @@ import numpy as np
 import rasterio
 import tiling
 from rasterio.enums import Resampling
+from rasterio.transform import from_bounds
+from rasterio.warp import reproject
 from rasterio.windows import from_bounds as window_from_bounds
 
 EARTH_RADIUS_M = 6_371_008.8
@@ -194,6 +196,46 @@ def read_cog_window(cog_url, bbox, scale_factor=1.0):
     return arr, mask, transform, crs
 
 
+def _mosaic_tiled_cog_windows(tile_specs, bbox, scale_factor):
+    """Read and mosaic one or more `(url, sub_bbox)` COG windows onto `bbox` (`[w, s, e, n]`)."""
+    w, s, e, n = bbox
+    pieces = []
+    for url, cb in tile_specs:
+        try:
+            sub_arr, sub_mask, sub_tr, sub_crs = read_cog_window(url, cb, scale_factor)
+        except Exception:
+            continue
+        if sub_mask.any():
+            pieces.append((sub_arr, sub_mask, sub_tr, sub_crs))
+    if not pieces:
+        raise ValueError("No land elevation pixels were found in that area.")
+    if len(pieces) == 1:
+        return pieces[0]
+    min_dx = min(abs(p[2].a) for p in pieces if p[2].a)
+    min_dy = min(abs(p[2].e) for p in pieces if p[2].e)
+    out_w = max(1, min(16_384, int(round((e - w) / min_dx))))
+    out_h = max(1, min(16_384, int(round((n - s) / min_dy))))
+    dst_transform = from_bounds(w, s, e, n, out_w, out_h)
+    dst_crs = rasterio.crs.CRS.from_epsg(4326)
+    dst = np.full((out_h, out_w), np.nan, dtype=np.float32)
+    for sub_arr, sub_mask, sub_tr, sub_crs in pieces:
+        src = np.where(sub_mask, sub_arr, np.nan).astype(np.float32)
+        reproject(
+            src,
+            dst,
+            src_transform=sub_tr,
+            src_crs=sub_crs,
+            src_nodata=np.nan,
+            dst_transform=dst_transform,
+            dst_crs=dst_crs,
+            dst_nodata=np.nan,
+            init_dest_nodata=False,
+            resampling=Resampling.bilinear,
+        )
+    valid = np.isfinite(dst) & (dst > -12_000.0) & (dst < 12_000.0)
+    return np.where(valid, dst, 0.0).astype(np.float32), valid, dst_transform, dst_crs
+
+
 def build_cog_dem_pack(pack_key, bbox, out_path, *, progress=None):
     """Stream `bbox` from a public COG (`gedtm30`, `glo30_hand`, `eth_canopy_10m`) and write lossless
     Terrarium WebP tiles to `out_path`. Returns metadata dict."""
@@ -206,21 +248,23 @@ def build_cog_dem_pack(pack_key, bbox, out_path, *, progress=None):
     if "url" in spec:
         elev, valid, transform, crs = read_cog_window(spec["url"], [w, s, e, n], spec["scale_factor"])
     elif "url_template" in spec:
-        lat_i = math.floor((s + n) / 2.0)
-        lon_i = math.floor((w + e) / 2.0)
-        cb = [max(w, float(lon_i)), max(s, float(lat_i)), min(e, float(lon_i + 1)), min(n, float(lat_i + 1))]
-        if not (cb[0] < cb[2] and cb[1] < cb[3]):
-            cb = [w, s, e, n]
-        url = spec["url_template"].format(lat=abs(lat_i), lon=abs(lon_i))
-        elev, valid, transform, crs = read_cog_window(url, cb, spec["scale_factor"])
+        tile_specs = []
+        for lat_i in range(math.floor(s), math.ceil(n)):
+            for lon_i in range(math.floor(w), math.ceil(e)):
+                cb = [max(w, float(lon_i)), max(s, float(lat_i)), min(e, float(lon_i + 1)), min(n, float(lat_i + 1))]
+                if cb[0] < cb[2] and cb[1] < cb[3]:
+                    tile_specs.append((spec["url_template"].format(lat=abs(lat_i), lon=abs(lon_i)), cb))
+        elev, valid, transform, crs = _mosaic_tiled_cog_windows(tile_specs, [w, s, e, n], spec["scale_factor"])
     else:
-        lat3 = int(math.floor(((s + n) / 2.0) / 3.0) * 3)
-        lon3 = int(math.floor(((w + e) / 2.0) / 3.0) * 3)
-        cb = [max(w, float(lon3)), max(s, float(lat3)), min(e, float(lon3 + 3)), min(n, float(lat3 + 3))]
-        if not (cb[0] < cb[2] and cb[1] < cb[3]):
-            cb = [w, s, e, n]
-        url = spec["url_template_3deg"].format(lat3=abs(lat3), lon3=abs(lon3))
-        elev, valid, transform, crs = read_cog_window(url, cb, spec["scale_factor"])
+        tile_specs = []
+        lat_start, lat_end = int(math.floor(s / 3.0) * 3), int(math.ceil(n / 3.0) * 3)
+        lon_start, lon_end = int(math.floor(w / 3.0) * 3), int(math.ceil(e / 3.0) * 3)
+        for lat3 in range(lat_start, lat_end, 3):
+            for lon3 in range(lon_start, lon_end, 3):
+                cb = [max(w, float(lon3)), max(s, float(lat3)), min(e, float(lon3 + 3)), min(n, float(lat3 + 3))]
+                if cb[0] < cb[2] and cb[1] < cb[3]:
+                    tile_specs.append((spec["url_template_3deg"].format(lat3=abs(lat3), lon3=abs(lon3)), cb))
+        elev, valid, transform, crs = _mosaic_tiled_cog_windows(tile_specs, [w, s, e, n], spec["scale_factor"])
 
     if not valid.any():
         raise ValueError("No land elevation pixels were found in that area.")
@@ -249,7 +293,7 @@ def build_cog_dem_pack(pack_key, bbox, out_path, *, progress=None):
 
 
 # ---- Point Elevation, Uncertainty & Line-of-Sight Transects -------------------------------------
-def sample_cog_point(cog_url, lon, lat, scale_factor=1.0):
+def sample_cog_point(cog_url, lon, lat, scale_factor=1.0, *, raise_on_error=False):
     """Sample a single float value from `cog_url` at `(lon, lat)`, or return None."""
     try:
         with warnings.catch_warnings():
@@ -264,6 +308,8 @@ def sample_cog_point(cog_url, lon, lat, scale_factor=1.0):
                 val = raw * float(scale_factor)
                 return round(val, 2) if (-12_000.0 < val < 12_000.0) else None
     except Exception:
+        if raise_on_error:
+            raise
         return None
 
 
@@ -288,10 +334,13 @@ def sample_point_terrain(
         # Round key to ~1 arc-second (0.0003°) so repeat clicks on the same 30 m pixel hit infinite cache.
         cell_key = f"gedtm30_pt:{round(lon, 4):.4f},{round(lat, 4):.4f}"
         if cache_fn is not None:
-            cached = cache_fn(cell_key, lambda: _probe_gedtm30_remote(lon, lat))
-            ground_m, uncertainty_m = cached.get("ground_m"), cached.get("uncertainty_m")
+            try:
+                cached = cache_fn(cell_key, lambda: _probe_gedtm30_remote(lon, lat, raise_on_error=True))
+                ground_m, uncertainty_m = cached.get("ground_m"), cached.get("uncertainty_m")
+            except Exception:
+                ground_m, uncertainty_m = None, None
         else:
-            res = _probe_gedtm30_remote(lon, lat)
+            res = _probe_gedtm30_remote(lon, lat, raise_on_error=False)
             ground_m, uncertainty_m = res.get("ground_m"), res.get("uncertainty_m")
         if ground_m is not None:
             ground_source = "GEDTM30 (30 m bare-earth COG)"
@@ -313,9 +362,13 @@ def sample_point_terrain(
     }
 
 
-def _probe_gedtm30_remote(lon, lat):
-    elev = sample_cog_point(GEDTM30_ELEV_COG, lon, lat, scale_factor=0.1)
-    std = sample_cog_point(GEDTM30_STD_COG, lon, lat, scale_factor=0.1) if elev is not None else None
+def _probe_gedtm30_remote(lon, lat, *, raise_on_error=False):
+    elev = sample_cog_point(GEDTM30_ELEV_COG, lon, lat, scale_factor=0.1, raise_on_error=raise_on_error)
+    std = (
+        sample_cog_point(GEDTM30_STD_COG, lon, lat, scale_factor=0.1, raise_on_error=raise_on_error)
+        if elev is not None
+        else None
+    )
     return {"ground_m": elev, "uncertainty_m": max(0.1, std) if std is not None else None}
 
 
@@ -444,9 +497,9 @@ def query_sliderule_gedi(bbox, fetch_fn):
         for rec in rows:
             if not isinstance(rec, dict):
                 continue
-            lon = rec.get("longitude") or rec.get("lon")
-            lat = rec.get("latitude") or rec.get("lat")
-            elev = rec.get("elev_lowestmode") or rec.get("elevation_lm")
+            lon = rec.get("longitude") if rec.get("longitude") is not None else rec.get("lon")
+            lat = rec.get("latitude") if rec.get("latitude") is not None else rec.get("lat")
+            elev = rec.get("elev_lowestmode") if rec.get("elev_lowestmode") is not None else rec.get("elevation_lm")
             if lon is None or lat is None or elev is None:
                 continue
             features.append(
@@ -635,22 +688,27 @@ def search_allmaps_iiif(bbox, limit=15, *, fetch_fn):
         if not isinstance(it, dict):
             continue
         res = it.get("resource") or {}
-        iiif_id = str(res.get("id") or "")
+        iiif_id = str(res.get("id") or "").strip()
+        if not iiif_id.startswith("https://"):
+            continue
+        raw_w, raw_h = res.get("width"), res.get("height")
+        width = int(raw_w) if isinstance(raw_w, (int, float)) and raw_w > 0 else None
+        height = int(raw_h) if isinstance(raw_h, (int, float)) and raw_h > 0 else None
         gcps = []
         for g in it.get("gcps") or []:
             px = g.get("resource") or g.get("image")
             geo = g.get("geo")
             if isinstance(px, list) and isinstance(geo, list) and len(px) >= 2 and len(geo) >= 2:
                 gcps.append([float(px[0]), float(px[1]), float(geo[0]), float(geo[1])])
-        if iiif_id and len(gcps) >= 3:
+        if len(gcps) >= 3:
             maps.append(
                 {
-                    "id": it.get("id") or "",
+                    "id": str(it.get("id") or ""),
                     "iiif_service": iiif_id,
                     "preview_url": f"{iiif_id.rstrip('/')}/full/,900/0/default.jpg",
                     "full_url": f"{iiif_id.rstrip('/')}/full/max/0/default.jpg",
-                    "width": res.get("width"),
-                    "height": res.get("height"),
+                    "width": width,
+                    "height": height,
                     "gcp_count": len(gcps),
                     "gcps": gcps,
                     "licence": "IIIF source archive + CC0 Allmaps control points",

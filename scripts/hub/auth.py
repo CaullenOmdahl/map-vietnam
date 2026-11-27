@@ -306,6 +306,16 @@ class UpstreamVault:
             "proprietary_count": len(proprietary),
         }
 
+    def _raw_proprietary_items(self):
+        raw = self.get("PROPRIETARY_SOURCES_JSON")
+        if not raw:
+            return []
+        try:
+            items = json.loads(raw)
+        except ValueError:
+            return []
+        return [it for it in items if isinstance(it, dict)] if isinstance(items, list) else []
+
     def proprietary_sources(self):
         """Parsed list of operator-configured proprietary tile/DEM sources (without leaking URLs/keys).
 
@@ -314,23 +324,31 @@ class UpstreamVault:
            "encoding": null | "terrarium", "format": "png" | "webp", "maxzoom": 18, "bounds": [102,8,110,24],
            "attribution": "Planet Labs", "stream_only": true}]`.
         """
-        raw = self.get("PROPRIETARY_SOURCES_JSON")
-        if not raw:
-            return []
-        try:
-            items = json.loads(raw)
-        except ValueError:
-            return []
-        if not isinstance(items, list):
-            return []
+        import urllib.parse
+
+        from hub.polite import is_safe_id
+
+        allow_loopback = (self._env.get("HUB_ALLOW_LOOPBACK_UPSTREAM") or "").strip() == "1"
         valid = []
-        for item in items:
-            if isinstance(item, dict) and item.get("id") and item.get("tiles"):
+        for item in self._raw_proprietary_items():
+            sid = item.get("id")
+            tiles = str(item.get("tiles") or "").strip()
+            if not (is_safe_id(sid) and tiles):
+                continue
+            sample_url = tiles.replace("{z}", "0").replace("{x}", "0").replace("{y}", "0")
+            parsed = urllib.parse.urlparse(sample_url)
+            scheme = parsed.scheme.lower()
+            host = (parsed.hostname or "").lower()
+            if scheme == "https" and host and host not in ("localhost", "127.0.0.1", "::1"):
+                valid.append(item)
+            elif allow_loopback and scheme == "http" and host in ("127.0.0.1", "localhost"):
                 valid.append(item)
         return valid
 
     def scrub(self, text):
         """Replace any configured secret values in `text` with `[REDACTED]`."""
+        import urllib.parse
+
         out = str(text or "")
         if not out:
             return out
@@ -339,10 +357,26 @@ class UpstreamVault:
             val = self.get(k) if k != "HUB_BOOTSTRAP_ADMIN_KEY" else (self._env.get(k) or "").strip()
             if val and len(val) >= 4:
                 sensitive.append(val)
-        for src in self.proprietary_sources():
+        for src in self._raw_proprietary_items():
             url = str(src.get("tiles") or "")
             if "?" in url:
-                sensitive.append(url.split("?", 1)[1])
+                qpart = url.split("?", 1)[1]
+                sensitive.append(qpart)
+                for _, qv in urllib.parse.parse_qsl(qpart, keep_blank_values=False):
+                    clean_v = re.sub(r"\{[zxy]\}", "", qv).strip()
+                    if len(clean_v) >= 4:
+                        sensitive.append(clean_v)
+            parsed = urllib.parse.urlparse(url)
+            for seg in (parsed.path or "").split("/"):
+                if (
+                    seg
+                    and "{" not in seg
+                    and len(seg) >= 16
+                    and re.search(r"[0-9]", seg)
+                    and re.search(r"[A-Za-z]", seg)
+                ):
+                    sensitive.append(seg)
         for secret in sorted(set(sensitive), key=len, reverse=True):
             out = out.replace(secret, "[REDACTED]")
+        out = re.sub(r"(?i)([?&](?:api_key|apikey|key|token|access_token)=)[^&\s\"'<>]+", r"\1[REDACTED]", out)
         return re.sub(r"mvhub_[0-9a-f]{8}_[0-9a-f]{16,96}", "mvhub_[REDACTED]", out)

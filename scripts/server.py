@@ -100,7 +100,7 @@ import records
 import store
 import terrain_aerial
 import tiling
-from hub.polite import HostPacer, SingleFlight, polite_fetch_bytes
+from hub.polite import HostPacer, SingleFlight, is_safe_id, polite_fetch_bytes
 
 WEB = paths.APP_ROOT / "web"  # the viewer, shipped with the app; the data under web/ is elsewhere (see Handler)
 EMPTY_TILE = tiling.empty_tile()
@@ -602,10 +602,21 @@ class Handler(SimpleHTTPRequestHandler):
             raise ValueError("send a JSON object")
         return data
 
+    def _scrub_local(self, text):
+        out = str(text or "")
+        if not out:
+            return out
+        env_vals = records.read_env(self.library.root / ".env") if self.library else {}
+        for k in ("USGS_M2M_TOKEN", "KAGGLE_KEY", "HUB_API_KEY", "EARTHDATA_TOKEN"):
+            for v in (os.environ.get(k), env_vals.get(k)):
+                if v and len(v) >= 4:
+                    out = out.replace(v, "[REDACTED]")
+        return re.sub(r"mvhub_[0-9a-f]{8}_[0-9a-f]{16,96}", "mvhub_[REDACTED]", out)
+
     def send_failure(self, error):
         """Answer 500 for a failure of the server itself, logging the traceback for the console."""
         traceback.print_exception(error, file=sys.stderr)
-        self.send_json({"error": f"the server failed: {error}"}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        self.send_json({"error": f"the server failed: {self._scrub_local(error)}"}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
     def own_hosts(self):
         """The Host header values that name this server: 127.0.0.1, localhost or [::1] on its port."""
@@ -687,7 +698,7 @@ class Handler(SimpleHTTPRequestHandler):
         except KeyError as e:  # a field or query value the request left out
             self.send_json({"error": f"{e.args[0]} is missing"}, HTTPStatus.BAD_REQUEST)
         except (ValueError, TypeError) as e:  # LibraryError is a ValueError
-            self.send_json({"error": str(e)}, HTTPStatus.BAD_REQUEST)
+            self.send_json({"error": self._scrub_local(e)}, HTTPStatus.BAD_REQUEST)
         except OverflowError:  # a number too big for SQLite, e.g. an id of 30 digits
             self.send_json({"error": "a number in the request is too large"}, HTTPStatus.BAD_REQUEST)
         except sqlite3.IntegrityError as e:  # a duplicate name, or a record id that does not exist
@@ -1013,19 +1024,28 @@ class Handler(SimpleHTTPRequestHandler):
         f_path = cache_root / f"{digest}.bin"
         if f_path.is_file():
             return f_path.read_bytes(), "application/octet-stream"
-        body, ctype = polite_fetch_bytes(
-            url,
-            pacer=self.local_pacer,
-            flight=self.local_flight,
-            headers=headers,
-            data=data,
-            method=method,
-            timeout=timeout,
-        )
-        part = cache_root / f"{digest}.partial"
-        part.write_bytes(body)
-        part.replace(f_path)
-        return body, ctype
+
+        def _fetch_and_persist():
+            if f_path.is_file():
+                return f_path.read_bytes(), "application/octet-stream"
+            body, ctype = polite_fetch_bytes(
+                url,
+                pacer=self.local_pacer,
+                headers=headers,
+                data=data,
+                method=method,
+                timeout=timeout,
+                allow_loopback=getattr(self, "allow_loopback", False),
+            )
+            part = cache_root / f"{digest}.{os.getpid()}.{threading.get_ident()}.partial"
+            try:
+                part.write_bytes(body)
+                part.replace(f_path)
+            finally:
+                part.unlink(missing_ok=True)
+            return body, ctype
+
+        return self.local_flight.do(("local_cache", digest), _fetch_and_persist)
 
     def _local_dem_paths(self):
         dem_paths = []
@@ -1141,10 +1161,11 @@ class Handler(SimpleHTTPRequestHandler):
                 terrain_aerial.build_cog_dem_pack(pack, bbox, out_path)
                 self.library.write_catalog()
                 if self.hub.config()["configured"] and self.hub.config()["auto_push"]:
+                    req_vis = str(b.get("visibility") or "hub")
 
                     def _push_dem():
                         with contextlib.suppress(Exception):
-                            self.hub.push_local_layer(lid, self.library, visibility="hub")
+                            self.hub.push_local_layer(lid, self.library, visibility=req_vis)
 
                     threading.Thread(target=_push_dem, daemon=True).start()
             return self.send_json({"layer_id": lid, "state": "done"})
@@ -1154,36 +1175,50 @@ class Handler(SimpleHTTPRequestHandler):
         lon, lat = float(q["lon"]), float(q["lat"])
         remote = q.get("remote", "0") in ("1", "true")
         dem_paths, hand_path, canopy_path = self._local_dem_paths()
-        if not dem_paths and self.hub.config()["configured"]:
+        local_res = terrain_aerial.sample_point_terrain(
+            lon, lat, dem_paths=dem_paths, hand_path=hand_path, canopy_path=canopy_path, remote_fallback=False
+        )
+        if local_res["ground_m"] is not None:
+            return self.send_json(local_res)
+        if self.hub.config()["configured"]:
             try:
                 return self.send_json(
                     self.hub.proxy_get("/hub/v1/elevation", {"lon": lon, "lat": lat, "remote": "1" if remote else "0"})
                 )
             except hub_client.HubClientError:
                 pass
-        res = terrain_aerial.sample_point_terrain(
-            lon, lat, dem_paths=dem_paths, hand_path=hand_path, canopy_path=canopy_path, remote_fallback=remote
-        )
-        self.send_json(res)
+        if remote:
+            local_res = terrain_aerial.sample_point_terrain(
+                lon, lat, dem_paths=(), hand_path=hand_path, canopy_path=canopy_path, remote_fallback=True
+            )
+        self.send_json(local_res)
 
     def transect_api(self):
         b = self.body()
+        start, end = b["start"], b["end"]
         dem_paths, _, canopy_path = self._local_dem_paths()
         chosen_dem = None
         if b.get("dem_id"):
-            cand = self.library.tiles_path(str(b["dem_id"]))
+            did = str(b["dem_id"])
+            if not is_safe_id(did):
+                raise ValueError("Invalid dem_id.")
+            cand = self.library.tiles_path(did)
             if cand.is_file():
                 chosen_dem = cand
-        if chosen_dem is None and dem_paths:
-            chosen_dem = dem_paths[0][1]
+        if chosen_dem is None:
+            for _, cand in dem_paths:
+                bounds = tiling.read_bounds(cand)
+                if tiling.bounds_cover(bounds, start[0], start[1]) and tiling.bounds_cover(bounds, end[0], end[1]):
+                    chosen_dem = cand
+                    break
         if chosen_dem is None and self.hub.config()["configured"]:
             try:
                 return self.send_json(self.hub.proxy_post("/hub/v1/transect", b))
             except hub_client.HubClientError:
                 pass
         res = terrain_aerial.compute_transect(
-            b["start"],
-            b["end"],
+            start,
+            end,
             samples=b.get("samples", 64),
             observer_height_m=b.get("observer_height_m", 1.7),
             dem_path=chosen_dem,
@@ -1203,9 +1238,16 @@ class Handler(SimpleHTTPRequestHandler):
         if method == "POST" and p == "aerial/import":
             b = self.body()
             img_url = str(b.get("url") or "").strip()
-            if not img_url.startswith(("https://", "http://")):
+            allow_lb = getattr(self, "allow_loopback", False)
+            if not img_url.startswith("https://") and not (allow_lb and img_url.startswith("http://127.0.0.1:")):
                 raise ValueError("Provide an https:// image URL to import.")
-            raw, _ = self._local_cached_fetch(img_url)
+            raw, _ = polite_fetch_bytes(
+                img_url,
+                pacer=self.local_pacer,
+                flight=self.local_flight,
+                max_bytes=128 << 20,
+                allow_loopback=allow_lb,
+            )
             part = self.library.custom.incoming_path()
             try:
                 part.write_bytes(raw)
@@ -1417,7 +1459,16 @@ class MapServer(ThreadingHTTPServer):
             self.shutdown()
 
 
-def make_server(port=8765, db_path=store.DB_PATH, map_library=None, web=WEB, record_sources=None, hub=None):
+def make_server(
+    port=8765,
+    db_path=store.DB_PATH,
+    map_library=None,
+    web=WEB,
+    record_sources=None,
+    hub=None,
+    *,
+    allow_loopback=False,
+):
     """A threaded server on 127.0.0.1:`port` (0 picks a free port) over the store at `db_path`,
     serving the viewer's files in `web`, the maps of `map_library` (whose folder also holds
     catalog.json and tiles/), the record sources of `record_sources`, and an optional `hub` bridge."""
@@ -1432,7 +1483,7 @@ def make_server(port=8765, db_path=store.DB_PATH, map_library=None, web=WEB, rec
 
             def _push():
                 with contextlib.suppress(Exception):
-                    hc.push_local_layer(map_id, lib, visibility=vis)
+                    hc.push_local_layer(map_id, lib, visibility=vis, preserve_visibility=True)
 
             threading.Thread(target=_push, name=f"auto-push-{map_id}", daemon=True).start()
 
@@ -1450,6 +1501,7 @@ def make_server(port=8765, db_path=store.DB_PATH, map_library=None, web=WEB, rec
             "hub": hc,
             "local_pacer": pacer,
             "local_flight": flight,
+            "allow_loopback": bool(allow_loopback),
         },
     )
     srv = MapServer(("127.0.0.1", port), partial(handler, directory=str(web)))

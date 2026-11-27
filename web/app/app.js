@@ -3815,7 +3815,7 @@ function applyTerrain() {
       maxzoom: spec.maxzoom || 14,
       bounds: spec.bounds || undefined,
       encoding: "terrarium",
-      attribution: spec.attribution || undefined,
+      attribution: spec.attribution ? esc(spec.attribution) : undefined,
     });
     if (ramp) {
       try {
@@ -4052,7 +4052,7 @@ function hubSectionHTML() {
         <button class="btn small" data-act="hubDisconnect">Disconnect</button>
       </div>
       ${remoteOnly.length ? `<details><summary class="small-t" style="cursor:pointer;color:var(--accent)">${remoteOnly.length} map${remoteOnly.length === 1 ? "" : "s"} on Hub not yet saved offline</summary>
-        <ul class="list" style="margin-top:6px">${remoteOnly.slice(0, 25).map(l => `<li style="padding:6px 10px"><div class="grow"><div class="t">${esc(l.title)}</div><div class="m">${esc(l.series || "Hub archive")} · ${esc(sizeText(l.bytes))}</div></div>
+        <ul class="list" style="margin-top:6px">${remoteOnly.slice(0, 25).map(l => `<li style="padding:6px 10px"><div class="grow"><div class="t">${esc(l.title)}</div><div class="m">${esc(l.series || "Hub archive")} · ${esc(sizeText(l.size_bytes || l.bytes))}</div></div>
           <button class="btn small" data-act="hubPull" data-id="${esc(l.id)}">Keep offline</button></li>`).join("")}</ul></details>` : ""}
     </div>`;
   }
@@ -4216,7 +4216,7 @@ ACTIONS.buildDem = async el => {
   S.aerial.err = "";
   try {
     const res = await api("/api/terrain/build", { method: "POST", body: { pack, bbox: b.map(v => +v.toFixed(3)) } });
-    if (res.job_id) {
+    if (res.job_id && res.state !== "done") {
       toast("Hub is building regional terrain pack…", 5000);
       let done = null;
       for (let i = 0; i < 60; i++) {
@@ -4227,12 +4227,14 @@ ACTIONS.buildDem = async el => {
       }
       await loadHub();
       await loadTerrainSources();
-      if (done?.result_layer_id) setTerrainSource(done.result_layer_id);
+      const builtId = done?.layer_id || done?.result_layer_id || res.layer_id;
+      if (builtId) setTerrainSource(builtId);
       toast("Terrain pack ready on Hub (cached forever)");
     } else if (res.layer_id) {
+      await loadHub();
       await loadTerrainSources();
       setTerrainSource(res.layer_id);
-      toast("Bare-earth terrain pack built and active");
+      toast("Bare-earth terrain pack ready and active");
     }
     render();
   } catch (e) { S.aerial.err = e.message; render(); }
@@ -4416,7 +4418,7 @@ VIEWS.aerial = () => {
           <div class="aer-cap"><span>${m.gcp_count} control points</span>
             <div class="row" style="gap:6px">
               <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(m.preview_url)}" data-full="${esc(m.full_url)}" data-title="${esc("IIIF Map " + m.id.slice(-6))}">View</button>
-              <button class="linkish small-t" data-act="importAerial" data-url="${esc(m.full_url)}" data-title="${esc("Allmaps IIIF " + m.id.slice(-6))}" data-gcps="${esc(JSON.stringify(m.gcps))}" data-sw="${m.width || ""}" data-sh="${m.height || ""}">Auto-place</button>
+              <button class="linkish small-t" data-act="importAerial" data-url="${esc(m.full_url)}" data-title="${esc("Allmaps IIIF " + m.id.slice(-6))}" data-gcps="${esc(JSON.stringify(m.gcps))}" data-sw="${esc(m.width || "")}" data-sh="${esc(m.height || "")}">Auto-place</button>
             </div></div></div>`).join("")}</div>` : `<p class="muted">No Allmaps IIIF sheets indexed in this view.</p>`);
     }
     body = controls + listHTML;

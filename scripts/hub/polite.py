@@ -6,11 +6,74 @@ for the same resource share a single upstream execution, and `HostPacer` enforce
 minimum intervals between requests to any given host.
 """
 
+import ipaddress
+import re
+import socket
 import threading
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+
+SAFE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,95}$")
+DEFAULT_MAX_FETCH_BYTES = 256 << 20  # 256 MiB ceiling per upstream HTTP response
+FETCH_CHUNK = 1 << 20
+
+
+def is_safe_id(value):
+    """True when `value` is a safe single-segment identifier with no `..` traversal."""
+    s = str(value or "")
+    return bool(SAFE_ID_RE.fullmatch(s)) and ".." not in s
+
+
+def _ip_is_allowed(ip_obj, *, allow_loopback=False):
+    if ip_obj.is_loopback:
+        return bool(allow_loopback)
+    return bool(
+        ip_obj.is_global
+        and not ip_obj.is_private
+        and not ip_obj.is_link_local
+        and not ip_obj.is_multicast
+        and not ip_obj.is_reserved
+        and not ip_obj.is_unspecified
+    )
+
+
+def validate_fetch_url(url, *, allow_loopback=False):
+    """Validate an upstream HTTP(S) URL against scheme, private-network, and metadata SSRF."""
+    parsed = urllib.parse.urlparse(str(url or ""))
+    scheme = parsed.scheme.lower()
+    host = (parsed.hostname or "").strip().lower()
+    if not host:
+        raise ValueError("URL is missing a hostname.")
+    is_local_name = host in ("127.0.0.1", "localhost", "::1")
+    if scheme == "http":
+        if not (allow_loopback and is_local_name):
+            raise ValueError("Upstream URLs must use https://.")
+    elif scheme != "https":
+        raise ValueError(f"Unsupported URL scheme {scheme!r}; only https:// is allowed.")
+
+    try:
+        ip_obj = ipaddress.ip_address(host)
+        if not _ip_is_allowed(ip_obj, allow_loopback=allow_loopback):
+            raise ValueError(f"Refusing non-public upstream address {host!r}.")
+        return
+    except ValueError as e:
+        if "Refusing" in str(e):
+            raise
+
+    try:
+        infos = socket.getaddrinfo(host, parsed.port or (443 if scheme == "https" else 80), proto=socket.IPPROTO_TCP)
+    except socket.gaierror as e:
+        raise urllib.error.URLError(f"DNS lookup failed for {host}: {e}") from None
+    if not infos:
+        raise urllib.error.URLError(f"No DNS records for {host}")
+    for info in infos:
+        addr = info[4][0]
+        ip_obj = ipaddress.ip_address(addr.split("%", 1)[0])
+        if not _ip_is_allowed(ip_obj, allow_loopback=allow_loopback):
+            raise ValueError(f"Refusing upstream host {host!r} resolving to non-public IP {ip_obj}.")
+
 
 # Minimum delay (seconds) between consecutive requests to the same upstream hostname.
 HOST_INTERVALS_S = {
@@ -128,9 +191,50 @@ class _Call:
         self.exc = None
 
 
-def polite_fetch_bytes(url, *, pacer=None, flight=None, headers=None, data=None, method=None, contact="", timeout=30):
-    """Fetch `(body_bytes, content_type)` from `url` politely with single-flight deduplication and 429 retry."""
+class _SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Validate every redirect hop against SSRF/downgrade and strip auth headers cross-origin."""
+
+    def __init__(self, *, allow_loopback=False):
+        super().__init__()
+        self._allow_loopback = allow_loopback
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        old_p = urllib.parse.urlparse(req.full_url)
+        new_p = urllib.parse.urlparse(newurl)
+        if old_p.scheme.lower() == "https" and new_p.scheme.lower() != "https":
+            raise urllib.error.HTTPError(newurl, code, "Refusing HTTPS to HTTP downgrade redirect", headers, fp)
+        try:
+            validate_fetch_url(newurl, allow_loopback=self._allow_loopback)
+        except ValueError as e:
+            raise urllib.error.HTTPError(newurl, code, str(e), headers, fp) from None
+        redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if redirected is None:
+            return None
+        if (old_p.scheme.lower(), old_p.hostname, old_p.port) != (new_p.scheme.lower(), new_p.hostname, new_p.port):
+            for sensitive in ("Authorization", "X-auth-token", "X-Auth-Token", "Cookie"):
+                redirected.headers.pop(sensitive, None)
+                redirected.unredirected_hdrs.pop(sensitive, None)
+        return redirected
+
+
+def polite_fetch_bytes(
+    url,
+    *,
+    pacer=None,
+    flight=None,
+    headers=None,
+    data=None,
+    method=None,
+    contact="",
+    timeout=30,
+    max_bytes=DEFAULT_MAX_FETCH_BYTES,
+    allow_loopback=False,
+):
+    """Fetch `(body_bytes, content_type)` from `url` politely with SSRF validation, safe redirects,
+    bounded body reads, single-flight deduplication, and 429 retry."""
+    validate_fetch_url(url, allow_loopback=allow_loopback)
     req_headers = {"User-Agent": user_agent(contact), **(headers or {})}
+    opener = urllib.request.build_opener(_SafeRedirectHandler(allow_loopback=allow_loopback))
 
     def _run():
         last_err = None
@@ -139,9 +243,25 @@ def polite_fetch_bytes(url, *, pacer=None, flight=None, headers=None, data=None,
                 pacer.wait(url)
             req = urllib.request.Request(url, data=data, headers=req_headers, method=method)
             try:
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                with opener.open(req, timeout=timeout) as resp:
                     ctype = resp.headers.get("Content-Type") or "application/octet-stream"
-                    return resp.read(), ctype
+                    cl_raw = resp.headers.get("Content-Length")
+                    expected = int(cl_raw) if (cl_raw and cl_raw.isdigit()) else None
+                    if expected is not None and expected > max_bytes:
+                        raise ValueError(f"Upstream response ({expected} bytes) exceeds safety limit ({max_bytes}).")
+                    chunks = []
+                    total = 0
+                    while True:
+                        chunk = resp.read(FETCH_CHUNK)
+                        if not chunk:
+                            break
+                        total += len(chunk)
+                        if total > max_bytes:
+                            raise ValueError(f"Upstream response exceeded safety limit ({max_bytes} bytes).")
+                        chunks.append(chunk)
+                    if expected is not None and total != expected:
+                        raise urllib.error.URLError(f"Upstream connection closed early ({total} of {expected} bytes).")
+                    return b"".join(chunks), ctype
             except urllib.error.HTTPError as e:
                 last_err = e
                 if e.code in (429, 503) and attempt + 1 < MAX_RETRIES:

@@ -44,13 +44,16 @@ from hub.auth import (  # noqa: E402
     revoke_key,
     utc_now,
 )
+from hub.polite import is_safe_id  # noqa: E402
 from hub.storage import MAX_HUB_UPLOAD_BYTES, HubStorage, HubStorageError  # noqa: E402
 
 HUB_VERSION = "0.3.0"
-TILE_ROUTE_RE = re.compile(r"^/hub/v1/tiles/([A-Za-z0-9_.-]+)/(\d{1,2})/(\d{1,10})/(\d{1,10})\.(webp|png|jpg)$")
-PACK_ROUTE_RE = re.compile(r"^/hub/v1/packs/([A-Za-z0-9_.-]+)\.mbtiles$")
-LAYER_ROUTE_RE = re.compile(r"^/hub/v1/layers/([A-Za-z0-9_.-]+)$")
-JOB_ROUTE_RE = re.compile(r"^/hub/v1/jobs/([A-Za-z0-9_.-]+)$")
+TILE_ROUTE_RE = re.compile(
+    r"^/hub/v1/tiles/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})/(\d{1,2})/(\d{1,10})/(\d{1,10})\.(webp|png|jpg)$"
+)
+PACK_ROUTE_RE = re.compile(r"^/hub/v1/packs/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})\.mbtiles$")
+LAYER_ROUTE_RE = re.compile(r"^/hub/v1/layers/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})$")
+JOB_ROUTE_RE = re.compile(r"^/hub/v1/jobs/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})$")
 KEY_ROUTE_RE = re.compile(r"^/hub/v1/admin/keys/([0-9a-f]{8})$")
 UPLOAD_CHUNK = 1 << 20
 MAX_JSON_BYTES = 2 << 20
@@ -90,15 +93,26 @@ class HubJobRunner:
     def submit_dem_pack(self, pack_key, bbox, visibility, principal):
         """Queue or coalesce a regional COG DEM/HAND/canopy build on `/data/tiles/`."""
         principal.require("request_build")
+        if pack_key not in terrain_aerial.BUILDABLE_COG_PACKS:
+            raise HubStorageError(f"Unknown terrain pack {pack_key!r}.")
         w, s, e, n = terrain_aerial.check_dem_bbox(bbox)
         bbox_slug = f"{w:.2f}_{s:.2f}_{e:.2f}_{n:.2f}".replace("-", "m").replace(".", "p")
-        layer_id = f"dem_{pack_key}_{bbox_slug}"
+        vis = visibility if visibility in ("private", "group", "hub") else "hub"
+        if vis == "private":
+            layer_id = f"dem_{principal.key_id}_{pack_key}_{bbox_slug}"
+        elif vis == "group":
+            if not principal.group_tag:
+                raise HubStorageError("This API key has no group assigned for group-scoped DEM builds.")
+            grp_slug = re.sub(r"[^A-Za-z0-9_-]", "_", principal.group_tag)[:24]
+            layer_id = f"dem_grp_{grp_slug}_{pack_key}_{bbox_slug}"
+        else:
+            layer_id = f"dem_{pack_key}_{bbox_slug}"
 
         # Already in the infinite cache? Return ready immediately with zero work.
         if self.storage.tiles_path(layer_id).is_file():
             row = self.storage.get_layer_row(layer_id, principal)
             if row is not None:
-                return {"job_id": f"cached_{layer_id}", "layer_id": layer_id, "state": "done", "progress": 1.0}
+                return {"layer_id": layer_id, "state": "done", "progress": 1.0}
 
         with self._lock:
             if self._stopping:
@@ -117,7 +131,7 @@ class HubJobRunner:
                     """,
                     (job_id, layer_id, principal.key_id, now, now),
                 )
-            self._pool.submit(self._run_dem_job, job_id, layer_id, pack_key, [w, s, e, n], visibility, principal)
+            self._pool.submit(self._run_dem_job, job_id, layer_id, pack_key, [w, s, e, n], vis, principal)
         return self.get_job(job_id)
 
     def _update_job(self, job_id, *, state=None, progress=None, status_text=None, error=None):
@@ -151,17 +165,17 @@ class HubJobRunner:
                     job_id, progress=f, status_text=f"Tiling {pack_key} ({int(f * 100)}%)"
                 ),
             )
-            # Store in infinite Hub cache; build_only keys may cache hub-wide public packs without full upload scope.
-            uploader = principal
-            if not uploader.has_scope("upload"):
-                from hub.auth import Principal
+            # Store in infinite Hub cache; hub-wide public COG packs are system-owned so no user key locks them.
+            from hub.auth import Principal
 
-                uploader = Principal(
-                    key_id=principal.key_id,
-                    label=principal.label,
-                    scopes=frozenset({*principal.scopes, "upload"}),
-                    group_tag=principal.group_tag,
-                )
+            uploader = Principal(
+                key_id="system" if visibility == "hub" else principal.key_id,
+                label="Hub System" if visibility == "hub" else principal.label,
+                scopes=frozenset({"admin", "read", "request_build", "upload"})
+                if visibility == "hub"
+                else frozenset({*principal.scopes, "upload"}),
+                group_tag=principal.group_tag,
+            )
             self.storage.ingest_pushed_pack(
                 tmp,
                 layer_id,
@@ -443,7 +457,8 @@ class HubHandler(BaseHTTPRequestHandler):
         if mbt_path.is_file():
             with contextlib.suppress(sqlite3.Error), closing(tiling.connect_read_only(mbt_path)) as db:
                 data = tiling.read_tile(db, z, x, y)
-        if data is None:
+        is_empty = data is None
+        if is_empty:
             data = EMPTY_TERRARIUM if row["encoding"] == "terrarium" else EMPTY_WEBP
             ctype = "image/webp"
         else:
@@ -455,6 +470,8 @@ class HubHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", IMMUTABLE_CACHE_CONTROL)
         self.send_header("ETag", etag)
+        if is_empty:
+            self.send_header("X-MapVietnam-Empty", "1")
         self.end_headers()
         self.wfile.write(data)
 
@@ -465,33 +482,45 @@ class HubHandler(BaseHTTPRequestHandler):
         if row["licence_policy"] == "stream_only":
             raise AuthError("This layer's licence allows streaming only, not full offline pack downloads.", status=403)
         path = self.storage.tiles_path(layer_id)
-        if not path.is_file():
+        try:
+            f = open(path, "rb")
+        except FileNotFoundError:
             return self.send_json({"error": "Tile archive is missing on disk."}, HTTPStatus.NOT_FOUND)
-        total = path.stat().st_size
-        start, end = 0, total - 1
-        status = HTTPStatus.OK
-        range_hdr = self.headers.get("Range") or ""
-        if range_hdr.startswith("bytes="):
-            m = re.fullmatch(r"bytes=(\d+)-(\d*)", range_hdr.strip())
-            if m:
+        with f:
+            total = os.fstat(f.fileno()).st_size
+            if total == 0:
+                return self.send_json({"error": "Tile archive is empty."}, HTTPStatus.NOT_FOUND)
+            start, end = 0, total - 1
+            status = HTTPStatus.OK
+            range_hdr = (self.headers.get("Range") or "").strip()
+            if range_hdr.startswith("bytes="):
+                m = re.fullmatch(r"bytes=(\d+)-(\d*)", range_hdr)
+                if not m:
+                    self.send_response(HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
+                    self.send_header("Content-Range", f"bytes */{total}")
+                    self.send_header("Content-Length", "0")
+                    self.end_headers()
+                    return
                 start = int(m.group(1))
                 end = min(total - 1, int(m.group(2))) if m.group(2) else total - 1
-                if 0 <= start <= end < total:
-                    status = HTTPStatus.PARTIAL_CONTENT
-                else:
-                    start, end = 0, total - 1
+                if not (0 <= start <= end < total):
+                    self.send_response(HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
+                    self.send_header("Content-Range", f"bytes */{total}")
+                    self.send_header("Content-Length", "0")
+                    self.end_headers()
+                    return
+                status = HTTPStatus.PARTIAL_CONTENT
 
-        length = end - start + 1
-        self.send_response(status)
-        self.send_header("Content-Type", "application/vnd.sqlite3")
-        self.send_header("Accept-Ranges", "bytes")
-        self.send_header("Content-Length", str(length))
-        self.send_header("Cache-Control", IMMUTABLE_CACHE_CONTROL)
-        self.send_header("ETag", f'"{layer_id}-r{row["revision"]}"')
-        if status == HTTPStatus.PARTIAL_CONTENT:
-            self.send_header("Content-Range", f"bytes {start}-{end}/{total}")
-        self.end_headers()
-        with open(path, "rb") as f:
+            length = end - start + 1
+            self.send_response(status)
+            self.send_header("Content-Type", "application/vnd.sqlite3")
+            self.send_header("Accept-Ranges", "bytes")
+            self.send_header("Content-Length", str(length))
+            self.send_header("Cache-Control", IMMUTABLE_CACHE_CONTROL)
+            self.send_header("ETag", f'"{layer_id}-r{row["revision"]}"')
+            if status == HTTPStatus.PARTIAL_CONTENT:
+                self.send_header("Content-Range", f"bytes {start}-{end}/{total}")
+            self.end_headers()
             f.seek(start)
             remaining = length
             while remaining > 0:
@@ -521,9 +550,12 @@ class HubHandler(BaseHTTPRequestHandler):
         if meta_b64:
             info = json.loads(base64.b64decode(meta_b64).decode("utf-8"))
         layer_id = str(q.get("id") or info.get("id") or "").strip()
-        if not layer_id:
+        if not is_safe_id(layer_id):
             self.close_connection = True
-            raise HubStorageError("Specify the map layer id (?id=<layer_id>).")
+            raise HubStorageError("Specify a valid map layer id (letters, digits, '_', '-' or '.', no '..').")
+        if layer_id.startswith("dem_") and not principal.has_scope("admin"):
+            self.close_connection = True
+            raise AuthError("Layer ids starting with 'dem_' are reserved for Hub DEM builds.", status=403)
         if q.get("visibility"):
             info["visibility"] = q["visibility"]
         if q.get("title"):
@@ -592,17 +624,22 @@ class HubHandler(BaseHTTPRequestHandler):
 
     def serve_transect(self, principal, body):
         dem_paths, _, canopy_path = self._visible_dem_paths(principal)
+        start, end = body["start"], body["end"]
         dem_id = body.get("dem_id")
         chosen_dem = None
-        if dem_id:
+        if dem_id and is_safe_id(dem_id):
             row = self.storage.get_layer_row(str(dem_id), principal)
             if row and row["encoding"] == "terrarium":
                 chosen_dem = self.storage.tiles_path(row["id"])
-        if chosen_dem is None and dem_paths:
-            chosen_dem = dem_paths[0][1]
+        if chosen_dem is None:
+            for _, cand in dem_paths:
+                b = tiling.read_bounds(cand)
+                if tiling.bounds_cover(b, start[0], start[1]) and tiling.bounds_cover(b, end[0], end[1]):
+                    chosen_dem = cand
+                    break
         res = terrain_aerial.compute_transect(
-            body["start"],
-            body["end"],
+            start,
+            end,
             samples=body.get("samples", 64),
             observer_height_m=body.get("observer_height_m", 1.7),
             dem_path=chosen_dem,
@@ -694,9 +731,9 @@ class HubHTTPServer(ThreadingHTTPServer):
         threading.Thread(target=_drain, name="hub-stop", daemon=True).start()
 
 
-def make_hub_server(host="0.0.0.0", port=8780, data_root=None, env=None, pacer=None):
+def make_hub_server(host="0.0.0.0", port=8780, data_root=None, env=None, pacer=None, *, allow_loopback=False):
     """Construct a bound `HubHTTPServer` ready for `serve_forever()`."""
-    storage = HubStorage(root=data_root, env=env, pacer=pacer)
+    storage = HubStorage(root=data_root, env=env, pacer=pacer, allow_loopback=allow_loopback)
     jobs = HubJobRunner(storage)
     handler = type("BoundHubHandler", (HubHandler,), {"storage": storage, "jobs": jobs})
     return HubHTTPServer((host, int(port)), handler, storage, jobs)

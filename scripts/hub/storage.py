@@ -28,9 +28,9 @@ import tiling
 from files import delete
 
 from hub.auth import AuthError, UpstreamVault, ensure_bootstrap_admin, init_auth_tables, utc_now
-from hub.polite import HostPacer, SingleFlight, polite_fetch_bytes
+from hub.polite import SAFE_ID_RE, HostPacer, SingleFlight, is_safe_id, polite_fetch_bytes
 
-LAYER_ID_RE = re.compile(r"^[A-Za-z0-9_.-]{1,96}$")
+LAYER_ID_RE = SAFE_ID_RE
 VISIBILITIES = frozenset({"private", "group", "hub"})
 LICENCE_POLICIES = frozenset({"open", "noncommercial", "private_vault", "stream_only"})
 MAX_HUB_UPLOAD_BYTES = 2 << 30  # 2 GiB
@@ -54,8 +54,9 @@ def resolve_hub_root(root=None, env=None):
 class HubStorage:
     """Thread-safe manager for the Hub's persistent volume, infinite cache, and layer store."""
 
-    def __init__(self, root=None, env=None, pacer=None):
+    def __init__(self, root=None, env=None, pacer=None, *, allow_loopback=False):
         self.env = os.environ if env is None else env
+        self.allow_loopback = bool(allow_loopback or (self.env.get("HUB_ALLOW_LOOPBACK_UPSTREAM") or "").strip() == "1")
         self.root = resolve_hub_root(root, self.env)
         self.db_dir = self.root / "db"
         self.raw_dir = self.root / "cache" / "raw"
@@ -164,8 +165,9 @@ class HubStorage:
         """Remove any leftover `.partial` or `.part` scratch files from an interrupted build or deploy."""
         for folder in (self.work_dir, self.tiles_dir, self.raw_dir):
             if folder.is_dir():
-                for p in folder.glob("*.part*"):
-                    delete(p)
+                for p in folder.iterdir():
+                    if p.is_file() and p.name.endswith((".partial", ".part")):
+                        delete(p)
 
     def checkpoint(self):
         """Flush SQLite WAL cleanly during SIGTERM shutdown before Railway detaches the volume."""
@@ -235,6 +237,7 @@ class HubStorage:
                 method=method,
                 contact=self.vault.get("MAPVIETNAM_CONTACT"),
                 timeout=timeout,
+                allow_loopback=self.allow_loopback,
             )
             self.put_cached_raw(cache_key, url, body, ctype)
             return body, ctype
@@ -274,7 +277,7 @@ class HubStorage:
 
     # ---- MBTiles layer storage & bidirectional Client -> Hub cache push -------------------------
     def tiles_path(self, layer_id):
-        if not LAYER_ID_RE.fullmatch(str(layer_id)):
+        if not is_safe_id(layer_id):
             raise HubStorageError("Invalid layer id.")
         return self.tiles_dir / f"{layer_id}.mbtiles"
 
@@ -316,10 +319,10 @@ class HubStorage:
 
     def ingest_pushed_pack(self, temp_file, layer_id, info, principal):
         """Validate `temp_file` as an MBTiles archive and store it permanently in `/data/tiles/`."""
-        if not LAYER_ID_RE.fullmatch(str(layer_id)):
-            raise HubStorageError("Layer id may contain only letters, numbers, '_', '-' and '.'.")
-        visibility = str(info.get("visibility") or "hub").lower()
-        if visibility not in VISIBILITIES:
+        if not is_safe_id(layer_id):
+            raise HubStorageError("Layer id must start with a letter or digit and contain no '..' or '/'.")
+        req_vis = str(info.get("visibility") or "hub").lower()
+        if req_vis not in VISIBILITIES:
             raise HubStorageError(f"Visibility must be one of {', '.join(sorted(VISIBILITIES))}.")
         licence_policy = str(info.get("licence_policy") or "open").lower()
         if licence_policy not in LICENCE_POLICIES:
@@ -330,12 +333,23 @@ class HubStorage:
         size_bytes = Path(temp_file).stat().st_size
         dest = self.tiles_path(layer_id)
 
-        with closing(self.connect()) as db:
+        with self._tile_lock(f"layer:{layer_id}"), closing(self.connect()) as db:
             existing = db.execute("SELECT * FROM hub_layers WHERE id = ?", (layer_id,)).fetchone()
-            self.can_write_layer(existing, principal, visibility)
+            self.can_write_layer(existing, principal, req_vis)
+            if existing is not None and info.get("preserve_visibility"):
+                visibility = existing["visibility"]
+                group_tag = existing["group_tag"]
+            else:
+                visibility = req_vis
+                if principal.has_scope("admin") and info.get("group_tag") is not None:
+                    group_tag = str(info["group_tag"])[:64]
+                else:
+                    group_tag = principal.group_tag or ""
+                if visibility == "group" and not group_tag:
+                    raise HubStorageError("This API key is not assigned to a group for group-scoped sharing.")
+
             revision = (int(existing["revision"]) + 1) if existing else 1
             owner = existing["owner_key_id"] if existing else principal.key_id
-            group_tag = str(info.get("group_tag") or principal.group_tag or "")
             title = " ".join(str(info.get("title") or mmeta.get("name") or layer_id).split())[:200]
             series = str(info.get("series") or "Shared Hub maps")[:160]
             series_id = str(info.get("series_id") or info.get("seriesId") or "hub")[:64]
@@ -496,7 +510,9 @@ class HubStorage:
 
     def delete_layer(self, layer_id, principal):
         """Remove a layer from the Hub (allowed only for its owner or an `admin` key)."""
-        with closing(self.connect()) as db:
+        if not is_safe_id(layer_id):
+            raise HubStorageError("Invalid layer id.")
+        with self._tile_lock(f"layer:{layer_id}"), closing(self.connect()) as db:
             row = db.execute("SELECT * FROM hub_layers WHERE id = ?", (layer_id,)).fetchone()
             if row is None:
                 return False
@@ -504,8 +520,10 @@ class HubStorage:
                 raise AuthError("Only the key that uploaded this layer (or an admin) can delete it.", status=403)
             with db:
                 db.execute("DELETE FROM hub_layers WHERE id = ?", (layer_id,))
-        delete(self.tiles_path(layer_id))
-        delete(self.archives_dir / layer_id)
+            delete(self.tiles_path(layer_id))
+            arch_dir = (self.archives_dir / layer_id).resolve()
+            if arch_dir.parent == self.archives_dir.resolve():
+                delete(arch_dir)
         return True
 
     # ---- infinite append-only tile cache for proprietary / proxied tile sources ----------------
@@ -572,6 +590,7 @@ class HubStorage:
                 pacer=self.pacer,
                 contact=self.vault.get("MAPVIETNAM_CONTACT"),
                 timeout=20,
+                allow_loopback=self.allow_loopback,
             )
             self.append_cached_tile(cache_mbtiles, z, x, y, body, fmt=fmt)
             return body, ctype
@@ -582,9 +601,8 @@ class HubStorage:
     def add_media(self, item, principal):
         """Insert or update a geolocated photo/oblique aerial item in `hub_media`."""
         principal.require("upload")
-        media_id = re.sub(r"[^A-Za-z0-9_.-]", "_", str(item.get("id") or ""))[:96]
-        if not media_id:
-            media_id = f"media_{hashlib.sha256(os.urandom(16)).hexdigest()[:12]}"
+        raw_mid = str(item.get("id") or "").strip()
+        media_id = raw_mid if is_safe_id(raw_mid) else f"media_{hashlib.sha256(os.urandom(16)).hexdigest()[:12]}"
         lon, lat = float(item["lon"]), float(item["lat"])
         unc = float(item.get("uncertainty_m", 100.0))
         if unc <= 0 or not (-180 <= lon <= 180 and -85 <= lat <= 85):

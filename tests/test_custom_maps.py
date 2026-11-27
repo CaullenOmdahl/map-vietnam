@@ -491,3 +491,29 @@ def test_a_float_lidar_dem_geotiff_is_tiled_as_lossless_terrarium_dem(lib, tmp_p
     (layer,) = json.loads((lib.root / "web" / "catalog.json").read_text(encoding="utf-8"))["layers"]
     assert layer["encoding"] == "terrarium" and layer["title"] == "Cao Lanh LiDAR DTM"
     assert tiling.sample_dem_mbtiles(lib.tiles_path(entry["id"]), 105.72, 10.085) == pytest.approx(14.75, abs=0.05)
+
+
+def test_scan_with_eight_plus_gcps_builds_with_thin_plate_spline(lib, tmp_path):
+    """8+ control points automatically enable Thin Plate Spline (`tps=True`) and build cleanly."""
+    from PIL import Image
+
+    img_path = tmp_path / "shdai_aerial.jpg"
+    Image.new("RGB", (128, 128), (155, 140, 120)).save(img_path, format="JPEG")
+    entry = ingest(lib, tmp_path, img_path, title="SHDAI 8-GCP Aerial", year="1953")
+    assert entry["kind"] == "scan"
+    gcps = [
+        [0, 0, 105.50, 10.50],
+        [127, 0, 105.60, 10.50],
+        [127, 127, 105.60, 10.40],
+        [0, 127, 105.50, 10.40],
+        [64, 64, 105.551, 10.449],
+        [32, 96, 105.525, 10.425],
+        [96, 32, 105.575, 10.475],
+        [32, 32, 105.525, 10.475],
+    ]
+    lib.place_custom(entry["id"], gcps, "SHDAI 8-GCP Aerial", 1953)
+    ctrl = json.loads(lib.custom.control_path(entry["id"]).read_text(encoding="utf-8"))
+    assert ctrl.get("tps") is True
+    lib.run_pending()
+    assert lib.state_of(entry["id"]) == "installed"
+    assert lib.tiles_path(entry["id"]).is_file()

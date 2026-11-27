@@ -200,6 +200,7 @@ def write_tiles(
     *,
     transform=None,
     gcps=None,
+    tps=False,
     max_zoom=None,
     bounds=None,
     name="",
@@ -209,20 +210,21 @@ def write_tiles(
     """Tile `bands` from MIN_ZOOM to `max_zoom` into the MBTiles file `out_path`.
 
     `bands` is a uint8 array (4, h, w) in RGBA order whose alpha marks the map area; it is placed
-    in `src_crs` by either an affine `transform` or a list of rasterio `gcps`. `max_zoom` defaults
-    to native_zoom. `bounds` ([west, south, east, north] in degrees) limits the tiles to the map
-    frame and is what the file records as its extent; it defaults to the whole image.
-    `meta` adds metadata keys. `progress(fraction)` is called as the work gets done.
-    Returns (tiles written, [west, south, east, north], max_zoom).
+    in `src_crs` by either an affine `transform` or a list of rasterio `gcps` (using Thin Plate
+    Spline when `tps=True`). `max_zoom` defaults to native_zoom. `bounds` ([west, south, east,
+    north] in degrees) limits the tiles to the map frame and is what the file records as its extent;
+    it defaults to the whole image. `meta` adds metadata keys. `progress(fraction)` is called as
+    the work gets done. Returns (tiles written, [west, south, east, north], max_zoom).
     """
     _, h, w = bands.shape
     if transform is not None:
         image_bounds = transform_bounds(src_crs, "EPSG:4326", *array_bounds(h, w, transform))
         src = {"src_transform": transform}
     else:
-        geo_transform, geo_w, geo_h = calculate_default_transform(src_crs, "EPSG:4326", w, h, gcps=gcps)
+        warp_opts = {"SRC_METHOD": "GCP_TPS"} if tps else {}
+        geo_transform, geo_w, geo_h = calculate_default_transform(src_crs, "EPSG:4326", w, h, gcps=gcps, **warp_opts)
         image_bounds = array_bounds(geo_h, geo_w, geo_transform)
-        src = {"gcps": gcps}
+        src = {"gcps": gcps, **warp_opts}
     bounds = list(bounds or image_bounds)
     max_zoom = max_zoom or native_zoom(image_bounds, w)
     zooms = range(MIN_ZOOM, max_zoom + 1)
@@ -284,6 +286,23 @@ def read_metadata(path):
             return dict(db.execute("select name, value from metadata"))
     except sqlite3.Error:
         return {}
+
+
+def read_bounds(path):
+    """Return `[west, south, east, north]` floats from `path`'s MBTiles metadata, or `None`."""
+    raw = read_metadata(path).get("bounds")
+    if not raw:
+        return None
+    try:
+        vals = [float(v) for v in raw.split(",")]
+    except ValueError:
+        return None
+    return vals if len(vals) == 4 and vals[0] < vals[2] and vals[1] < vals[3] else None
+
+
+def bounds_cover(bounds, lon, lat):
+    """True when `bounds` (`[w, s, e, n]`) covers `(lon, lat)`."""
+    return bool(bounds and bounds[0] <= float(lon) <= bounds[2] and bounds[1] <= float(lat) <= bounds[3])
 
 
 DEM_CHUNK_TILES = 16  # 16x16 tiles (4096x4096 float32 = 64 MB max RAM per chunk on Railway/desktop)
