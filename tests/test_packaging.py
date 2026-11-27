@@ -13,6 +13,18 @@ def test_the_spec_is_valid_python():
     compile(source, "map-vietnam.spec", "exec")
 
 
+def test_the_spec_bundles_each_platforms_runtime_icon():
+    source = (PACKAGING / "map-vietnam.spec").read_text(encoding="utf-8")
+    assert (
+        'if sys.platform == "win32":\n'
+        '    datas.append((str(ROOT / "packaging" / "icons" / "map-vietnam.ico"), "packaging/icons"))'
+    ) in source
+    assert (
+        'elif sys.platform.startswith("linux"):\n'
+        '    datas.append((str(ROOT / "packaging" / "icons" / "map-vietnam.png"), "packaging/icons"))'
+    ) in source
+
+
 def test_the_windows_icon_holds_every_size():
     data = (PACKAGING / "icons" / "map-vietnam.ico").read_bytes()
     reserved, kind, count = struct.unpack("<HHH", data[:6])
