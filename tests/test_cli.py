@@ -22,6 +22,7 @@ SCRIPTS = [
     "scripts/desktop.py",
     "scripts/download_maps.py",
     "scripts/georef_scan.py",
+    "scripts/hub/hub_server.py",
     "scripts/l7014_meta.py",
     "scripts/library.py",
     "scripts/map_library_catalogue.py",
