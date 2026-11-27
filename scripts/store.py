@@ -77,6 +77,19 @@ create table if not exists notes (
   id integer primary key, case_id integer references cases(id) on delete cascade,
   body text not null, created_at text not null
 );
+create table if not exists shapes (
+  id integer primary key,
+  case_id integer not null references cases(id) on delete cascade,
+  name text not null,
+  kind text not null,
+  geometry_json text not null,
+  description text,
+  folder text,
+  color text,
+  date_start text,
+  date_end text,
+  created_at text not null
+);
 """
 
 
