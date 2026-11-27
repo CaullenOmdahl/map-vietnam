@@ -421,7 +421,37 @@ def test_qt_is_asked_for_pyside6_unless_the_person_chose(monkeypatch):
     assert os.environ["QT_API"] == "pyqt6"
 
 
-def test_the_window_is_started_with_the_chosen_toolkit(monkeypatch):
+@pytest.mark.parametrize(
+    "platform, expected",
+    [
+        ("linux", "map-vietnam.png"),
+        ("win32", "map-vietnam.ico"),
+        ("darwin", None),
+    ],
+)
+def test_window_icon_matches_the_platform(platform, expected):
+    icon = desktop.window_icon(platform=platform)
+    if expected is None:
+        assert icon is None
+    else:
+        assert icon is not None and icon.name == expected and icon.is_file()
+
+
+def test_window_icon_is_omitted_when_missing(tmp_path, monkeypatch):
+    monkeypatch.setattr(desktop.paths, "APP_ROOT", tmp_path)
+    assert desktop.window_icon(platform="win32") is None
+    assert desktop.window_icon(platform="linux") is None
+
+
+@pytest.mark.parametrize(
+    "platform, toolkit, icon_name",
+    [
+        ("linux", "qt", "map-vietnam.png"),
+        ("win32", None, "map-vietnam.ico"),
+        ("darwin", None, None),
+    ],
+)
+def test_the_window_is_started_with_the_chosen_toolkit_and_icon(monkeypatch, platform, toolkit, icon_name):
     pytest.importorskip("webview")
     import webview
 
@@ -434,12 +464,17 @@ def test_the_window_is_started_with_the_chosen_toolkit(monkeypatch):
             pass
 
     seen = {}
-    monkeypatch.setattr(desktop, "window_toolkit", lambda: "qt")
+    monkeypatch.setattr(desktop.sys, "platform", platform)
+    monkeypatch.setattr(desktop, "window_toolkit", lambda: toolkit)
+    monkeypatch.setattr(desktop, "use_pyside", lambda: None)
     monkeypatch.setattr(webview, "create_window", lambda *a, **k: Window())
     monkeypatch.setattr(webview, "start", lambda *a, **k: (seen.update(k), srv.quit()))
     desktop.open_window("http://127.0.0.1:4321/app/", srv, thread)
-    assert seen["gui"] == "qt"
-    assert seen.get("icon", desktop.WINDOW_ICON.as_posix()).endswith("map-vietnam.png")  # Linux's window icon
+    assert seen["gui"] == toolkit
+    if icon_name is None:
+        assert "icon" not in seen
+    else:
+        assert seen["icon"].endswith(icon_name)
 
 
 def test_check_window_reports_a_toolkit_that_cannot_load(monkeypatch, capsys):
