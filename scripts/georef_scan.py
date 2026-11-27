@@ -88,6 +88,8 @@ def build(control_path, out, *, image=None, progress=None):
     bands = np.dstack([img, alpha]).transpose(2, 0, 1)
     del img
     warp = {"transform": affine_fit(gcps)} if c.get("order") == 1 else {"gcps": gcps}
+    if c.get("tps") and c.get("order") != 1:
+        warp["tps"] = True
     report(LOAD_SHARE)
     meta = c.get("meta", {})
     n, bounds, max_zoom = write_tiles(

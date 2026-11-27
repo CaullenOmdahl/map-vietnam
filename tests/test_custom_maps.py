@@ -465,3 +465,29 @@ def test_settings_say_where_the_data_is_and_how_much_space_it_takes(web, tmp_pat
     assert set(body["disk"]) == {"maps", "records", "downloads", "total"}
     upload(base, write_geotiff(tmp_path / "g.tif"))
     assert request(f"{base}/api/settings")[1]["disk"]["maps"] > 0
+
+
+def test_a_float_lidar_dem_geotiff_is_tiled_as_lossless_terrarium_dem(lib, tmp_path):
+    path = tmp_path / "lidar_dtm.tif"
+    elev = np.full((1, 32, 48), 14.75, np.float32)
+    with rasterio.open(
+        path,
+        "w",
+        driver="GTiff",
+        width=48,
+        height=32,
+        count=1,
+        dtype="float32",
+        crs="EPSG:4326",
+        transform=from_origin(105.70, 10.10, 0.001, 0.001),
+        nodata=-9999.0,
+    ) as ds:
+        ds.write(elev)
+    entry = ingest(lib, tmp_path, path, title="Cao Lanh LiDAR DTM")
+    assert entry["kind"] == "dem"
+    lib.add([entry["id"]])
+    lib.run_pending()
+    assert lib.state_of(entry["id"]) == "installed"
+    (layer,) = json.loads((lib.root / "web" / "catalog.json").read_text(encoding="utf-8"))["layers"]
+    assert layer["encoding"] == "terrarium" and layer["title"] == "Cao Lanh LiDAR DTM"
+    assert tiling.sample_dem_mbtiles(lib.tiles_path(entry["id"]), 105.72, 10.085) == pytest.approx(14.75, abs=0.05)

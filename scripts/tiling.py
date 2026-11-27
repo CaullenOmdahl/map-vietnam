@@ -24,6 +24,7 @@ import math
 import os
 import sqlite3
 from contextlib import closing
+from pathlib import Path
 
 import morecantile
 import numpy as np
@@ -44,6 +45,10 @@ METRES_PER_DEG_LON = 111_320
 WEBP_QUALITY = 85
 WEBP_METHOD = 4
 PARTIAL_SUFFIX = ".partial"
+# Terrarium RGB elevation formula: height_m = (R * 256 + G + B / 256) - 32768 (1/256 m steps).
+TERRARIUM_OFFSET = 32_768.0
+TERRARIUM_MIN_M = -32_768.0
+TERRARIUM_MAX_M = 32_767.99609375
 
 
 def native_zoom(bounds, width_px):
@@ -67,6 +72,47 @@ def encode_webp(rgba):
     buf = io.BytesIO()
     img.save(buf, "WEBP", quality=WEBP_QUALITY, method=WEBP_METHOD)
     return buf.getvalue()
+
+
+def encode_terrarium_webp(elev_m, valid_mask=None):
+    """Lossless Terrarium-encoded WebP bytes for a (256, 256) float elevation grid in metres.
+
+    Lossy WebP chroma subsampling corrupts RGB-packed elevation into 10-50 m steps, so DEM tiles
+    are always written with `lossless=True`. No-data pixels are encoded as sea-level zero (with
+    alpha=0 when `valid_mask` has missing cells so MapLibre treats missing edges cleanly).
+    """
+    h, w = elev_m.shape
+    mask = np.isfinite(elev_m) if valid_mask is None else (valid_mask & np.isfinite(elev_m))
+    clean = np.where(mask, np.clip(elev_m, TERRARIUM_MIN_M, TERRARIUM_MAX_M), 0.0)
+    scaled = np.rint((clean + TERRARIUM_OFFSET) * 256.0).astype(np.uint32)
+    r = ((scaled >> 16) & 0xFF).astype(np.uint8)
+    g = ((scaled >> 8) & 0xFF).astype(np.uint8)
+    b = (scaled & 0xFF).astype(np.uint8)
+    if mask.all():
+        img = Image.fromarray(np.dstack([r, g, b]), "RGB")
+    else:
+        a = np.where(mask, 255, 0).astype(np.uint8)
+        img = Image.fromarray(np.dstack([r, g, b, a]), "RGBA")
+    buf = io.BytesIO()
+    img.save(buf, "WEBP", lossless=True, method=WEBP_METHOD)
+    return buf.getvalue()
+
+
+def decode_terrarium_webp(tile_bytes):
+    """(elev_m float32 array, valid bool mask) decoded from a Terrarium WebP or PNG tile."""
+    with Image.open(io.BytesIO(tile_bytes)) as img:
+        rgba = np.asarray(img.convert("RGBA"))
+    r = rgba[..., 0].astype(np.float32)
+    g = rgba[..., 1].astype(np.float32)
+    b = rgba[..., 2].astype(np.float32)
+    valid = rgba[..., 3] > 0
+    elev = (r * 256.0 + g + b / 256.0) - TERRARIUM_OFFSET
+    return elev, valid
+
+
+def empty_terrarium_tile():
+    """A 256 px lossless transparent Terrarium tile (0 m, alpha=0) for unstored ocean/empty cells."""
+    return encode_terrarium_webp(np.zeros((TILE_PX, TILE_PX), np.float32), np.zeros((TILE_PX, TILE_PX), bool))
 
 
 def empty_tile():
@@ -238,3 +284,113 @@ def read_metadata(path):
             return dict(db.execute("select name, value from metadata"))
     except sqlite3.Error:
         return {}
+
+
+DEM_CHUNK_TILES = 16  # 16x16 tiles (4096x4096 float32 = 64 MB max RAM per chunk on Railway/desktop)
+
+
+def write_dem_tiles(
+    elev,
+    src_crs,
+    out_path,
+    *,
+    transform,
+    valid_mask=None,
+    min_zoom=MIN_ZOOM,
+    max_zoom=None,
+    bounds=None,
+    name="",
+    meta=None,
+    progress=None,
+):
+    """Warp a 2D float elevation grid `elev` (metres) onto Web Mercator and store lossless Terrarium
+    WebP tiles in `out_path`. Tiles are warped in bounded 16x16-tile chunks so wide regional or
+    country DEM builds use under 100 MB of memory."""
+    elev_f = np.asarray(elev, dtype=np.float32)
+    h, w = elev_f.shape
+    mask = np.isfinite(elev_f) if valid_mask is None else (np.asarray(valid_mask, dtype=bool) & np.isfinite(elev_f))
+    src_elev = np.where(mask, elev_f, np.nan).astype(np.float32)
+    image_bounds = transform_bounds(src_crs, "EPSG:4326", *array_bounds(h, w, transform))
+    bounds = list(bounds or image_bounds)
+    max_zoom = max(min_zoom, max_zoom or native_zoom(image_bounds, w))
+    zooms = range(min_zoom, max_zoom + 1)
+    total_weight = sum(4**z for z in zooms) or 1
+    done_weight = 0
+
+    with MBTilesWriter(Path(out_path)) as out:
+        for z in zooms:
+            tiles = list(TMS.tiles(*bounds, [z]))
+            if not tiles:
+                done_weight += 4**z
+                continue
+            x0, y0 = min(t.x for t in tiles), min(t.y for t in tiles)
+            nx, ny = max(t.x for t in tiles) - x0 + 1, max(t.y for t in tiles) - y0 + 1
+            for cy in range(0, ny, DEM_CHUNK_TILES):
+                ch_y = min(DEM_CHUNK_TILES, ny - cy)
+                for cx in range(0, nx, DEM_CHUNK_TILES):
+                    ch_x = min(DEM_CHUNK_TILES, nx - cx)
+                    ul = TMS.xy_bounds(morecantile.Tile(x0 + cx, y0 + cy, z))
+                    res = (ul.right - ul.left) / TILE_PX
+                    dst = np.full((ch_y * TILE_PX, ch_x * TILE_PX), np.nan, np.float32)
+                    reproject(
+                        src_elev,
+                        dst,
+                        src_crs=src_crs,
+                        src_transform=transform,
+                        src_nodata=np.nan,
+                        dst_transform=Affine(res, 0, ul.left, 0, -res, ul.top),
+                        dst_crs="EPSG:3857",
+                        dst_nodata=np.nan,
+                        resampling=Resampling.bilinear if z == max_zoom else Resampling.average,
+                    )
+                    for ty in range(ch_y):
+                        for tx in range(ch_x):
+                            block = dst[ty * TILE_PX : (ty + 1) * TILE_PX, tx * TILE_PX : (tx + 1) * TILE_PX]
+                            bmask = np.isfinite(block)
+                            if bmask.any():
+                                out.put(z, x0 + cx + tx, y0 + cy + ty, encode_terrarium_webp(block, bmask))
+                if progress:
+                    progress((done_weight + 4**z * min(ny, cy + DEM_CHUNK_TILES) / ny) / total_weight)
+            done_weight += 4**z
+        extra = {"encoding": "terrarium", "type": "dem", **(meta or {})}
+        out.metadata = standard_metadata(name or Path(out_path).stem, bounds, min_zoom, max_zoom, **extra)
+        written = out.count
+    return written, bounds, max_zoom
+
+
+def lonlat_to_tile_pixel(lon, lat, z):
+    """(tile_x, tile_y, px_x, px_y) in XYZ numbering for WGS84 `(lon, lat)` at zoom `z`."""
+    n = 1 << z
+    lat_c = max(-85.05112878, min(85.05112878, float(lat)))
+    rad = math.radians(lat_c)
+    fx = ((float(lon) + 180.0) / 360.0) * n
+    fy = ((1.0 - math.log(math.tan(rad) + 1.0 / math.cos(rad)) / math.pi) / 2.0) * n
+    tx = min(n - 1, max(0, int(math.floor(fx))))
+    ty = min(n - 1, max(0, int(math.floor(fy))))
+    px = min(TILE_PX - 1, max(0, int((fx - tx) * TILE_PX)))
+    py = min(TILE_PX - 1, max(0, int((fy - ty) * TILE_PX)))
+    return tx, ty, px, py
+
+
+def sample_dem_mbtiles(path, lon, lat):
+    """Sample elevation (float metres) at WGS84 `(lon, lat)` from the deepest available tile in a
+    Terrarium MBTiles file `path`, or return None if not covered or unreadable."""
+    path = Path(path)
+    if not path.is_file():
+        return None
+    try:
+        with closing(connect_read_only(path)) as db:
+            meta = dict(db.execute("select name, value from metadata"))
+            min_z = int(meta.get("minzoom", 0))
+            max_z = int(meta.get("maxzoom", 15))
+            for z in range(max_z, min_z - 1, -1):
+                tx, ty, px, py = lonlat_to_tile_pixel(lon, lat, z)
+                raw = read_tile(db, z, tx, ty)
+                if not raw:
+                    continue
+                elev, valid = decode_terrarium_webp(raw)
+                if valid[py, px]:
+                    return round(float(elev[py, px]), 2)
+    except (sqlite3.Error, ValueError, OSError):
+        return None
+    return None

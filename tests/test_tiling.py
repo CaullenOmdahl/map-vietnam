@@ -78,3 +78,35 @@ def test_write_tiles_stores_only_tiles_with_map_and_records_its_extent(tmp_path)
         # Every stored z11 tile lies over the opaque west half (west of 105.1 E).
         cols = [c for (c,) in db.execute("select tile_column from tiles where zoom_level = 11")]
     assert cols and all(tiling.TMS.bounds(tiling.morecantile.Tile(c, 0, 11)).left < 105.1 for c in cols)
+
+
+def test_terrarium_dem_tiles_are_lossless_to_sub_centimetre_and_sampleable(tmp_path):
+    elev = np.linspace(-12.5, 1482.35, 256 * 256, dtype=np.float32).reshape(256, 256)
+    mask = np.ones((256, 256), dtype=bool)
+    mask[:32, :32] = False
+    raw = tiling.encode_terrarium_webp(elev, mask)
+    decoded, got_mask = tiling.decode_terrarium_webp(raw)
+    assert np.array_equal(got_mask, mask)
+    # 1/256 m step = ~0.0039 m max quantization error (lossy WebP would be > 5 m).
+    assert np.max(np.abs(decoded[mask] - elev[mask])) < 0.005
+
+    bounds = (105.5, 10.3, 105.7, 10.5)
+    grid = np.full((64, 64), 2.35, dtype=np.float32)
+    grid[32:, :] = 448.20
+    out = tmp_path / "dem.mbtiles"
+    n, got, zoom = tiling.write_dem_tiles(
+        grid,
+        CRS.from_epsg(4326),
+        out,
+        transform=from_bounds(*bounds, 64, 64),
+        max_zoom=10,
+        name="Bare Earth",
+    )
+    assert n > 0 and zoom == 10 and got == pytest.approx(list(bounds))
+    meta = tiling.read_metadata(out)
+    assert meta["encoding"] == "terrarium" and meta["type"] == "dem"
+    north_h = tiling.sample_dem_mbtiles(out, 105.6, 10.46)
+    south_h = tiling.sample_dem_mbtiles(out, 105.6, 10.34)
+    assert north_h == pytest.approx(2.35, abs=0.05)
+    assert south_h == pytest.approx(448.20, abs=0.05)
+    assert tiling.sample_dem_mbtiles(out, 108.0, 16.0) is None

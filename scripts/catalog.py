@@ -108,6 +108,8 @@ def layer(layer_id, meta, entry, series, scan_meta, corrections):
         "maxzoom": int(meta.get("maxzoom", DEFAULT_MAXZOOM)),
     }
     out.update({k: v for k, v in scan_meta.items() if k in out and v})
+    if meta.get("encoding"):
+        out["encoding"] = meta["encoding"]
     out.update(corrections.get(layer_id, {}).get("overrides", {}))
     return out
 

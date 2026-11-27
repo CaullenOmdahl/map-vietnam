@@ -211,6 +211,7 @@ class Library:
         # The conversion of old map folders started from the viewer: state is idle, converting or failed.
         self._migration = {"state": "idle", "error": None, "converted": 0}
         self._legacy_sizes = {}  # folder name -> (folder mtime, bytes)
+        self.on_installed = None  # optional callback(map_id) fired when a build completes
 
     # ---- the catalogue ---------------------------------------------------------------------
     def catalogue(self):
@@ -861,6 +862,9 @@ class Library:
                     del self._jobs[map_id]
                 job.state, job.progress = "installed", None
             report(job)
+            if self.on_installed:
+                with contextlib.suppress(Exception):
+                    self.on_installed(map_id)
         except download_maps.Cancelled:
             self._stopped(job, report)
         except Exception as e:  # any failure belongs to this map only: the worker must go on
@@ -950,12 +954,13 @@ class Library:
         return cmd + (["--dpi", str(dpi)] if dpi else [])
 
     def custom_build_command(self, entry, path, out):
-        """The child process that builds one of the user's own maps: a GeoTIFF with
+        """The child process that builds one of the user's own maps: a GeoTIFF or DEM with
         build_geotiff.py, a GeoPDF with build_tiles.py, a placed scan with georef_scan.py."""
-        if entry["kind"] == "geotiff":
-            return self.script_command(
+        if entry["kind"] in ("geotiff", "dem"):
+            cmd = self.script_command(
                 "build_geotiff.py", str(path), str(out), "--title", entry["title"], "--date", entry.get("date", "")
             )
+            return cmd + (["--dem"] if entry["kind"] == "dem" else [])
         if entry["kind"] == "geopdf":
             return self.script_command("build_tiles.py", str(path), str(out))
         control = self.custom.control_path(entry["id"])

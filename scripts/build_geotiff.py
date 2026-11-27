@@ -19,7 +19,7 @@ import rasterio
 from rasterio.enums import ColorInterp, Resampling
 from rasterio.transform import Affine, array_bounds
 from rasterio.warp import transform_bounds
-from tiling import native_zoom, write_tiles
+from tiling import native_zoom, write_dem_tiles, write_tiles
 
 # Pixels read at most; beyond this the picture is shrunk while reading (about 240 MB of RGBA).
 MAX_PIXELS = 60_000_000
@@ -66,7 +66,30 @@ def read_rgba(ds):
     return np.stack([*rgb, valid.astype(np.uint8) * 255]), transform
 
 
-def build(src, out, *, title="", date="", progress=None):
+def is_elevation_dem(ds):
+    """True for a single-band floating-point GeoTIFF (such as a LiDAR or photogrammetry DTM/DSM)."""
+    return ds.count == 1 and str(ds.dtypes[0]) in ("float32", "float64")
+
+
+def read_dem(ds):
+    """Read a single-band elevation GeoTIFF as `(elev_float32, valid_bool, transform)`."""
+    k = max(1.0, (ds.width * ds.height / MAX_PIXELS) ** 0.5)
+    w, h = max(1, round(ds.width / k)), max(1, round(ds.height / k))
+    transform = ds.transform * Affine.scale(ds.width / w, ds.height / h)
+    shape = (h, w)
+    valid = ds.dataset_mask(out_shape=shape, resampling=Resampling.nearest) > 0
+    band = ds.read(1, out_shape=shape, resampling=Resampling.bilinear).astype(np.float32)
+    scale = (ds.scales or (1.0,))[0] or 1.0
+    offset = (ds.offsets or (0.0,))[0] or 0.0
+    if scale != 1.0 or offset != 0.0:
+        band = band * float(scale) + float(offset)
+    if ds.nodata is not None and np.isfinite(ds.nodata):
+        valid &= ~np.isclose(band, float(ds.nodata) * float(scale) + float(offset))
+    valid &= np.isfinite(band) & (band > -12_000.0) & (band < 12_000.0)
+    return band, valid, transform
+
+
+def build(src, out, *, title="", date="", dem=False, progress=None):
     """Tile the GeoTIFF `src` into the MBTiles file `out`. Returns {"tiles", "bounds", "maxzoom"}."""
     report = progress or (lambda fraction: None)
     with warnings.catch_warnings():
@@ -75,8 +98,30 @@ def build(src, out, *, title="", date="", progress=None):
     with ds:
         if ds.crs is None or ds.transform.is_identity:
             raise ValueError(f"{Path(src).name} has no position on the Earth (no coordinate system)")
-        bands, transform = read_rgba(ds)
         crs = ds.crs
+        as_dem = dem or is_elevation_dem(ds)
+        if as_dem:
+            elev, valid, transform = read_dem(ds)
+        else:
+            bands, transform = read_rgba(ds)
+    if as_dem:
+        if not valid.any():
+            raise ValueError(f"{Path(src).name} has no valid elevation values in it")
+        report(LOAD_SHARE)
+        h, w = elev.shape
+        extent = transform_bounds(crs, "EPSG:4326", *array_bounds(h, w, transform))
+        n, bounds, zoom = write_dem_tiles(
+            elev,
+            crs,
+            out,
+            transform=transform,
+            valid_mask=valid,
+            max_zoom=min(native_zoom(extent, w), MAX_ZOOM),
+            name=title or Path(src).stem,
+            meta={"date": date},
+            progress=lambda fraction: report(LOAD_SHARE + (1 - LOAD_SHARE) * fraction),
+        )
+        return {"tiles": n, "bounds": bounds, "maxzoom": zoom, "encoding": "terrarium"}
     if not bands[3].any():
         raise ValueError(f"{Path(src).name} has no picture in it (every pixel is empty)")
     report(LOAD_SHARE)
@@ -102,13 +147,21 @@ def main(argv=None):
     ap.add_argument("out", type=Path, help="MBTiles file to write")
     ap.add_argument("--title", default="", help="the map's name")
     ap.add_argument("--date", default="", help="the map's year")
+    ap.add_argument("--dem", action="store_true", help="encode single-band values as lossless Terrarium elevation")
     ap.add_argument("--progress", action="store_true", help='print "progress <0..1>" lines while working')
     args = ap.parse_args(argv)
 
     def progress(fraction):
         print(f"progress {fraction:.3f}", flush=True)
 
-    result = build(args.src, args.out, title=args.title, date=args.date, progress=progress if args.progress else None)
+    result = build(
+        args.src,
+        args.out,
+        title=args.title,
+        date=args.date,
+        dem=args.dem,
+        progress=progress if args.progress else None,
+    )
     print(json.dumps({"done": result}), flush=True)
 
 
