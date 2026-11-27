@@ -2,6 +2,20 @@
 
 Notable changes to Map Vietnam. Versions follow [semantic versioning](https://semver.org).
 
+## 0.2.1 - 2026-11-27
+
+Windows
+- Fixed a crash on startup in the Windows installer where passing `map-vietnam.png` to `pywebview`'s
+  WinForms backend caused `System.Drawing.Icon` to fail with `System.ArgumentException`. Windows
+  now bundles and loads `map-vietnam.ico`, Linux continues to use `map-vietnam.png`, and macOS
+  uses its `.app` bundle icon
+
+Downloads & security
+- Added native Linux packages for Ubuntu/Debian (`.deb`), CachyOS/Arch Linux (`.pkg.tar.zst`),
+  and Fedora (`.rpm`) alongside the portable `.tar.gz` archive, with an application menu entry
+  and `map-vietnam` launcher
+- Pinned `bottle==0.13.4` in `requirements.txt`
+
 ## 0.2.0 - 2026-11-25
 
 Settings
