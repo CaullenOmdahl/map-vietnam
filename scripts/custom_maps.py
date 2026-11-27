@@ -249,18 +249,23 @@ def affine_from_points(points):
     return coef
 
 
-def placed_bounds(points, width, height):
-    """WGS84 [w, s, e, n] of a scan placed by `points`, from its corners; None if they are no fit."""
+def placed_corners(points, width, height):
+    """[NW, NE, SE, SW] (lon, lat) corners of a scan placed by `points`; None if no fit."""
     coef = affine_from_points(points)
     if coef is None:
         return None
     corners = np.array([[0, 0, 1], [width, 0, 1], [width, height, 1], [0, height, 1]], float) @ coef
-    return [
-        float(corners[:, 0].min()),
-        float(corners[:, 1].min()),
-        float(corners[:, 0].max()),
-        float(corners[:, 1].max()),
-    ]
+    return [(float(c[0]), float(c[1])) for c in corners]
+
+
+def placed_bounds(points, width, height):
+    """WGS84 [w, s, e, n] of a scan placed by `points`, from its corners; None if they are no fit."""
+    corners = placed_corners(points, width, height)
+    if corners is None:
+        return None
+    lons = [c[0] for c in corners]
+    lats = [c[1] for c in corners]
+    return [min(lons), min(lats), max(lons), max(lats)]
 
 
 def clean_points(points, image):
@@ -448,6 +453,31 @@ class CustomMaps:
         """Remember the extent the build actually covers (None keeps what the entry has)."""
         if bounds and self.entry_path(map_id).exists():
             self.update(map_id, bounds=list(bounds))
+
+    def ingest_placed_overlay(self, upload, filename, title, corners_lonlat, year=""):
+        """Ingest an already-georeferenced image overlay (e.g. a KML/KMZ GroundOverlay).
+
+        `corners_lonlat` is four (lon, lat) pairs in image corner order: [NW, NE, SE, SW].
+        Converts them into pixel-to-lon/lat control points and writes control.json so the
+        caller can queue the map build immediately.
+        """
+        entry = self.ingest(upload, filename, title, year)
+        try:
+            if entry["kind"] != "scan":
+                return entry
+            w, h = entry["image"]["width"], entry["image"]["height"]
+            nw, ne, se, sw = corners_lonlat
+            points = [
+                [0.0, 0.0, nw[0], nw[1]],
+                [float(w), 0.0, ne[0], ne[1]],
+                [float(w), float(h), se[0], se[1]],
+                [0.0, float(h), sw[0], sw[1]],
+            ]
+            return self.save_points(entry["id"], points, entry["title"], year)
+        except BaseException:
+            with contextlib.suppress(OSError):
+                delete(self.folder(entry["id"]))
+            raise
 
     def disk_bytes(self):
         """Bytes the stored uploads and working images take."""

@@ -51,8 +51,8 @@ WINDOW_SIZE = (1280, 820)
 MIN_SIZE = (360, 560)  # small enough for the viewer's phone-like layout
 STOP_TIMEOUT_S = 40  # a server stopping ends its jobs first (each waits for its child process)
 
-EXPORT_PATH = re.compile(r"^/api/cases/[^/]+/export\.(gpx|kml|geojson)$")
-EXPORT_TYPES = {"gpx": "GPX", "kml": "KML", "geojson": "GeoJSON"}
+EXPORT_PATH = re.compile(r"^/api/cases/[^/]+/export\.(gpx|kml|kmz|geojson)$")
+EXPORT_TYPES = {"gpx": "GPX", "kml": "KML", "kmz": "KMZ", "geojson": "GeoJSON"}
 HAPTIC_PATTERNS = ("generic", "alignment", "level")
 
 
@@ -186,7 +186,7 @@ SHIM = r"""
 (() => {
   if (window.__mapVietnamShim) return;
   window.__mapVietnamShim = true;
-  const EXPORT = /^\/api\/cases\/[^/]+\/export\.(gpx|kml|geojson)$/;
+  const EXPORT = /^\/api\/cases\/[^/]+\/export\.(gpx|kml|kmz|geojson)$/;
   const say = text => { try { toast(text, 5000); } catch (e) {} };
   const api = () => window.pywebview && window.pywebview.api;
   const onClick = event => {

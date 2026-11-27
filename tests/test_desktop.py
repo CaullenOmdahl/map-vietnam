@@ -47,6 +47,7 @@ def test_default_ports_are_filled_in_when_comparing_origins():
     [
         ("http://127.0.0.1:8765/api/cases/abc123/export.gpx", "gpx"),
         ("http://127.0.0.1:8765/api/cases/abc123/export.kml", "kml"),
+        ("http://127.0.0.1:8765/api/cases/abc123/export.kmz", "kmz"),
         ("http://127.0.0.1:8765/api/cases/7/export.geojson", "geojson"),
         ("http://127.0.0.1:8765/api/cases/abc/export.gpx?x=1", "gpx"),
         ("http://127.0.0.1:8765/api/cases/abc/export.exe", None),
@@ -68,6 +69,7 @@ def test_export_links_are_recognised_only_on_our_own_server(url, fmt):
         ("Cao Lãnh.gpx", "gpx", "Cao Lãnh.gpx"),
         ("a/b\\c:d", "kml", "a_b_c_d.kml"),
         ('what? "now"', "kml", "what_ _now_.kml"),
+        ("REFNO 1718", "kmz", "REFNO 1718.kmz"),
         ("", "geojson", "map-vietnam-case.geojson"),
         (None, "geojson", "map-vietnam-case.geojson"),
         ("..", "gpx", "map-vietnam-case.gpx"),
@@ -171,7 +173,7 @@ def test_save_export_reports_a_file_that_cannot_be_written(tmp_path, monkeypatch
 def test_the_injected_script_covers_exports_and_outside_links():
     """The shim is JavaScript we cannot run here; pin the pieces its behaviour rests on."""
     assert "save_export" in desktop.SHIM and "open_external" in desktop.SHIM
-    assert "export\\.(gpx|kml|geojson)" in desktop.SHIM
+    assert "export\\.(gpx|kml|kmz|geojson)" in desktop.SHIM
     assert "window.open" in desktop.SHIM
 
 
