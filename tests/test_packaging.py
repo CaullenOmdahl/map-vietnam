@@ -70,3 +70,14 @@ def test_the_uninstaller_removes_only_its_own_files():
 @pytest.mark.parametrize("name", ["map-vietnam.png", "map-vietnam.ico", "map-vietnam.icns"])
 def test_every_icon_is_committed(name):
     assert (PACKAGING / "icons" / name).stat().st_size > 1000
+
+
+def test_linux_native_packaging_config_covers_deb_rpm_and_arch():
+    nfpm = (PACKAGING / "linux" / "nfpm.yaml").read_text(encoding="utf-8")
+    desktop_entry = (PACKAGING / "linux" / "map-vietnam.desktop").read_text(encoding="utf-8")
+    launcher = (PACKAGING / "linux" / "map-vietnam.sh").read_text(encoding="utf-8")
+    assert "version: ${VERSION}" in nfpm
+    for target in ("deb:", "rpm:", "archlinux:"):
+        assert target in nfpm
+    assert "Exec=/usr/bin/map-vietnam" in desktop_entry
+    assert 'exec "/opt/map-vietnam/Map Vietnam" "$@"' in launcher

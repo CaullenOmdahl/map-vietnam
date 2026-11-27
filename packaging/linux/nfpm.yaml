@@ -1,0 +1,130 @@
+# nFPM configuration for native Linux packages (.deb for Ubuntu/Debian, .rpm for Fedora,
+# .pkg.tar.zst for Arch/CachyOS). Version comes from VERSION in the environment, set by
+# packaging/build.sh from pyproject.toml.
+name: map-vietnam
+arch: amd64
+platform: linux
+version: ${VERSION}
+release: "1"
+section: science
+priority: optional
+maintainer: "Map Vietnam contributors <https://github.com/CaullenOmdahl/map-vietnam>"
+description: |
+  Dated historical maps of Vietnam over today's map, with war-era records
+  you can search, filter, pin and export.
+homepage: "https://github.com/CaullenOmdahl/map-vietnam"
+license: "Apache-2.0"
+
+deb:
+  compression: xz
+
+rpm:
+  summary: "Dated historical maps of Vietnam over today's map, with war-era records"
+  compression: zstd
+
+contents:
+  - src: "dist/Map Vietnam/"
+    dst: "/opt/map-vietnam"
+  - src: "packaging/linux/map-vietnam.sh"
+    dst: "/usr/bin/map-vietnam"
+    file_info:
+      mode: 0755
+  - src: "packaging/linux/map-vietnam.desktop"
+    dst: "/usr/share/applications/map-vietnam.desktop"
+    file_info:
+      mode: 0644
+  - src: "dist/icons/map-vietnam-512.png"
+    dst: "/usr/share/icons/hicolor/512x512/apps/map-vietnam.png"
+    file_info:
+      mode: 0644
+  - src: "dist/icons/map-vietnam-256.png"
+    dst: "/usr/share/icons/hicolor/256x256/apps/map-vietnam.png"
+    file_info:
+      mode: 0644
+  - src: "LICENSE"
+    dst: "/usr/share/licenses/map-vietnam/LICENSE"
+    file_info:
+      mode: 0644
+  - src: "NOTICE"
+    dst: "/usr/share/licenses/map-vietnam/NOTICE"
+    file_info:
+      mode: 0644
+
+overrides:
+  deb:
+    depends:
+      - libgl1
+      - libegl1
+      - libopengl0
+      - libglib2.0-0t64 | libglib2.0-0
+      - libfontconfig1
+      - libfreetype6
+      - libdbus-1-3
+      - libxkbcommon0
+      - libxkbcommon-x11-0
+      - libxcb-cursor0
+      - libxcb-icccm4
+      - libxcb-image0
+      - libxcb-keysyms1
+      - libxcb-randr0
+      - libxcb-render-util0
+      - libxcb-shape0
+      - libxcb-xinerama0
+      - libxcb-xkb1
+      - libx11-xcb1
+      - libxcomposite1
+      - libxdamage1
+      - libxrandr2
+      - libxtst6
+      - libxshmfence1
+      - libxkbfile1
+      - libnss3
+      - libasound2t64 | libasound2
+  rpm:
+    depends:
+      - mesa-libGL
+      - mesa-libEGL
+      - libglvnd-opengl
+      - glib2
+      - fontconfig
+      - freetype
+      - dbus-libs
+      - libxkbcommon
+      - libxkbcommon-x11
+      - xcb-util-cursor
+      - xcb-util-wm
+      - xcb-util-image
+      - xcb-util-keysyms
+      - xcb-util-renderutil
+      - libxcb
+      - libX11-xcb
+      - libXcomposite
+      - libXdamage
+      - libXrandr
+      - libXtst
+      - libxshmfence
+      - libxkbfile
+      - nss
+      - alsa-lib
+  archlinux:
+    depends:
+      - mesa
+      - glib2
+      - fontconfig
+      - freetype2
+      - dbus
+      - libxkbcommon
+      - libxkbcommon-x11
+      - xcb-util-cursor
+      - xcb-util-wm
+      - xcb-util-image
+      - xcb-util-keysyms
+      - xcb-util-renderutil
+      - libxcomposite
+      - libxdamage
+      - libxrandr
+      - libxtst
+      - libxshmfence
+      - libxkbfile
+      - nss
+      - alsa-lib

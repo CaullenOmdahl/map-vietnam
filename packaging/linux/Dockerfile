@@ -9,6 +9,7 @@
 FROM ubuntu:22.04
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/goreleaser/nfpm:v2.45.0 /usr/bin/nfpm /usr/local/bin/nfpm
 
 ENV DEBIAN_FRONTEND=noninteractive PYTHONUTF8=1 PIP_DISABLE_PIP_VERSION_CHECK=1 \
     UV_PYTHON_INSTALL_DIR=/opt/python
