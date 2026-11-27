@@ -74,9 +74,14 @@ has a one-line Terminal alternative. Your maps and records are kept in
 
 ### Download Map Vietnam for Linux
 
-Download **Map-Vietnam-...-linux-x86_64.tar.gz** from the same
-[Releases page](https://github.com/CaullenOmdahl/map-vietnam/releases/latest), unpack it and run
-`Map Vietnam/Map Vietnam`.
+From the [Releases page](https://github.com/CaullenOmdahl/map-vietnam/releases/latest), download the package for your distribution:
+
+- **Ubuntu / Debian:** `map-vietnam_..._amd64.deb` (`sudo apt install ./map-vietnam_*_amd64.deb`)
+- **CachyOS / Arch Linux:** `map-vietnam-...-x86_64.pkg.tar.zst` (`sudo pacman -U ./map-vietnam-*-x86_64.pkg.tar.zst`)
+- **Fedora:** `map-vietnam-...x86_64.rpm` (`sudo dnf install ./map-vietnam-*.x86_64.rpm`)
+- **Portable archive (any x86-64 Linux):** `Map-Vietnam-...-linux-x86_64.tar.gz` — unpack and run `Map Vietnam/Map Vietnam`.
+
+The packages add **Map Vietnam** to your application menu and install the `map-vietnam` command.
 
 ### Or run it from source
 

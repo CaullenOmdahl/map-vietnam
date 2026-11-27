@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Map Vietnam
+GenericName=Historical Map Viewer
+Comment=Dated historical maps of Vietnam over today's map, with war-era records
+Exec=/usr/bin/map-vietnam
+Icon=map-vietnam
+Terminal=false
+Categories=Education;Geography;Science;
+StartupWMClass=Map Vietnam
