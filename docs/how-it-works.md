@@ -161,7 +161,29 @@ the map (with a radius and your reasoning), and free-text notes. Cases live in t
 file (tables `cases`, `case_items`, `sites`, `notes`). The server exports a case as GeoJSON, KML
 or GPX: every point carries its accuracy radius, and every export carries the case notes and a
 warning that strike sites may hold unexploded ordnance.
-The `media` table is reserved for geolocated photos; the viewer does not use it yet.
+The `media` table stores geolocated oblique aerial photographs and flight-index references, and can
+optionally sync entries with a connected Hub server.
+
+## Intermediary Hub Server (Docker + Railway Volume)
+
+Map Vietnam works completely standalone on `127.0.0.1`, and can also connect (`Settings ->
+Intermediary Hub server`) to a self-hosted **Hub Server** (`scripts/hub/hub_server.py`, packaged in
+`Dockerfile` + `railway.json` for Railway with an attached persistent volume at `/data`):
+
+1. **Vaulted server-side keys.** An operator sets upstream credentials once on the Hub
+   (`USGS_USERNAME`, `USGS_M2M_TOKEN`, `KAGGLE_KEY`, `EARTHDATA_TOKEN`, `PROPRIETARY_SOURCES_JSON`).
+   Connected desktop clients authenticate with scoped Bearer keys (`mvhub_<id>_<secret>`, stored as
+   salted `scrypt` hashes in `/data/hub.sqlite`) and never see upstream secrets.
+2. **Polite upstream coordinator.** Concurrent identical upstream requests coalesce through
+   `SingleFlight`, and per-host intervals (`HostPacer`) keep archive requests gentle.
+3. **Infinite write-once cache.** Historical maps, aerial frames, LiDAR shots and built `.mbtiles`
+   packs never change: `/data/raw_cache/`, `/data/tiles/*.mbtiles`, HTTP tile responses
+   (`Cache-Control: private, max-age=31536000, immutable`), and the desktop client's local
+   `data/hub_cache/` `.mbtiles` files have **zero TTL and zero automatic eviction**.
+4. **Bidirectional archive sync.** Any map or LiDAR DEM imported, placed, or aligned locally on a
+   desktop client can be pushed back to the Hub (`Cache to Hub` or `HUB_AUTO_PUSH=true`) with
+   `private`, `group`, or `hub` visibility so collaborators or your other computers can stream it
+   immediately or save the full `.mbtiles` pack offline (`Keep offline`).
 
 ## Grid references and datums
 

@@ -16,8 +16,21 @@ on your own computer and opens in its own window.
   ones you want and nothing else is downloaded
 - Find maps by place, sheet number or year, sort them by date, and see every edition of a sheet
 - Swipe between any two maps side by side
-- Add your own old maps: a GeoTIFF or GeoPDF is placed for you, and a scan or photo is placed by
-  clicking matching spots on it and on today's map
+- Add your own old maps or LiDAR elevation GeoTIFFs: a GeoTIFF, float32 DEM or GeoPDF is placed for
+  you, and a scan or photo is placed by clicking matching spots on it and on today's map (8+ spots
+  use a Thin Plate Spline warp)
+- Bare-earth ground topography, spaceborne LiDAR and relief shaders: stream global terrain or build
+  regional 30 m bare-earth DEMs (`GEDTM30`), flood/drainage relief (`GLO-30 HAND`) and canopy height
+  packs, query NASA GEDI laser footprints, inspect point elevation + vertical uncertainty (including
+  Vietnam's Hòn Dấu MSL datum), and draw Earth-curvature line-of-sight profiles
+- Historical aerial & reconnaissance explorer: search and place 1948–1956 French Indochina aerial
+  missions (`NAKALA SHDAI` + `PLOT` flight-index cards), declassified `CORONA / KH-7 / KH-9`
+  satellite scenes, wartime `Landsat 1–2 MSS` scenes, `OpenAerialMap` drone orthomosaics, `Allmaps`
+  IIIF sheets, and `NARA RG 373` 1°×1° aerial sortie overlay indexes
+- Optional Dockerized **Intermediary Hub Server** (ready for Railway with an attached persistent
+  disk): vault upstream API keys once, pace and deduplicate requests politely, cache old maps and
+  archive responses **infinitely**, and push locally imported or aligned maps back to the Hub to
+  share with collaborators or across your own machines
 - Adjust the alignment and scale of any installed old map (or uploaded GeoTIFF or GeoPDF) against
   today's map using the same two-pane Placement screen, and reset to the original at any time
 - Navigate with Apple Maps-style trackpad gestures (two-finger pan and pinch-to-zoom, plus macOS

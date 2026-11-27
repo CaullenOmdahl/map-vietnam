@@ -43,6 +43,7 @@
 const BASES = {
   osm: { name: "Street map", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors', maxzoom: 19 },
   sat: { name: "Satellite", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], attribution: "Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community", maxzoom: 19 },
+  oam: { name: "UAV aerial", tiles: ["https://global.imagery.hotosm.org/{z}/{x}/{y}.png"], attribution: "OpenAerialMap / Open Imagery Network (CC BY 4.0)", maxzoom: 20 },
 };
 // Each evidence kind gets its own colour and shape (shape paths are in a 24×24 box).
 const SHAPES = {
@@ -294,6 +295,12 @@ const S = {
   lib: { maps: [], byId: new Map(), series: {}, queueBytes: 0, legacy: null, loaded: false, err: null }, catalogLoaded: false,
   // The record sources (see "records" below): every source that can be added, by id, with its state.
   rec: { sources: [], byId: new Map(), key: {}, busy: false, firstRun: false, revision: null, loaded: false, err: null },
+  // Optional Intermediary Hub Server (shared infinite cache, vaulted keys, and bidirectional map sync).
+  hub: { configured: false, connected: false, url: "", me: null, layers: [], auto_push: false, loaded: false, err: "" },
+  // Terrain, Bare-Earth LiDAR DEMs & Relief Shaders.
+  terrain: { source: store.get("terrainSrc", "off"), mode: store.get("terrainMode", "hillshade"), pitch3d: store.get("pitch3d", false), sources: null },
+  profilingFrom: null, transect: null,
+  aerial: { tab: "nakala", q: "", loading: false, res: null, err: "" },
 };
 window.S = S; // console handle for debugging (with window.map, set in boot)
 // Resolves once the old-map catalogue is in S.catalog (set in boot); overlays are added only after it.
@@ -381,9 +388,9 @@ function shapeImage(kind) {
 // evidence, place names and selections. Layer order is draw order, so selections and position come last.
 function addOverlays(m) {
   for (const k of EV_KINDS) if (k !== "air_strike") { const im = shapeImage(k); m.addImage(`k-${k}`, im.data, { pixelRatio: im.pixelRatio }); }
-  for (const l of S.catalog) addEraLayer(m, l);
+  for (const l of visualLayers()) addEraLayer(m, l);
   addFootprintLayers(m);
-  for (const id of ["ev", "pn", "sel", "gridsq", "gridsq-c", "sites", "draft", "near", "hover", "line", "meacc", "me", "spot"]) m.addSource(id, { type: "geojson", data: lastData[id] || empty() });
+  for (const id of ["ev", "pn", "sel", "gridsq", "gridsq-c", "sites", "draft", "near", "hover", "line", "meacc", "me", "spot", "lidar", "transect-vis", "transect-occ"]) m.addSource(id, { type: "geojson", data: lastData[id] || empty() });
   const color = ["match", ["get", "kind"], ...Object.entries(KINDS).flatMap(([k, v]) => [k, v.color]), "#888"];
   const isStrike = ["==", ["get", "kind"], "air_strike"];
 
@@ -454,12 +461,15 @@ function addOverlays(m) {
   m.addLayer({ id: "meacc", type: "fill", source: "meacc", paint: { "fill-color": "#1d72f2", "fill-opacity": 0.12 } });
   m.addLayer({ id: "me", type: "circle", source: "me", paint: { "circle-radius": 8, "circle-color": "#1d72f2", "circle-stroke-color": "#fff", "circle-stroke-width": 3 } });
   m.addLayer({ id: "spot", type: "circle", source: "spot", paint: { "circle-radius": 7, "circle-color": "#fff", "circle-stroke-color": "#111", "circle-stroke-width": 4 } });
+  m.addLayer({ id: "lidar-shots", type: "circle", source: "lidar", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 2.5, 16, 6], "circle-color": "#10b981", "circle-stroke-color": "#064e3b", "circle-stroke-width": 1.2, "circle-opacity": 0.9 } });
+  m.addLayer({ id: "transect-occ-line", type: "line", source: "transect-occ", paint: { "line-color": "#dc2626", "line-width": 3, "line-dasharray": [2, 2] } });
+  m.addLayer({ id: "transect-vis-line", type: "line", source: "transect-vis", paint: { "line-color": "#16a34a", "line-width": 3.5 } });
 
   m.getSource("ev").setData(S.ev);
   m.getSource("pn").setData(S.pn);
   m.loadedOverlays = true;
   updateHeat();
-  applyBase(); applyEra(); applyFilters(); drawCase(); drawTarget(); drawMe(); drawNearRing();
+  applyBase(); applyTerrain(); applyEra(); applyFilters(); drawCase(); drawTarget(); drawMe(); drawNearRing();
   showFootprints(S.view.name === "library", true);
 }
 // One installed old map as a raster layer (hidden until chosen). Maps added later go in under the coverage outlines
@@ -762,9 +772,16 @@ function wireTrackpad(m, isMainMap = false) {
 
 // ================================================================ historical maps (eras)
 // Every sheet is its own choice: a map is picked for the place on screen, not merged with its neighbours by year.
+function visualLayers() {
+  const local = S.catalog.filter(l => l.encoding !== "terrarium");
+  const have = new Set(local.map(l => l.id));
+  const remote = (S.hub.layers || []).filter(l => l.encoding !== "terrarium" && !have.has(l.id))
+    .map(l => ({ ...l, tiles: `tiles/${l.id}/{z}/{x}/{y}.${l.format || "webp"}?v=${l.revision || 1}`, hubStream: true }));
+  return [...local, ...remote];
+}
 function buildEras(layers) {
-  const eras = [...layers].sort((a, b) => ((yearOf(a.date) || 9999) - (yearOf(b.date) || 9999)) || a.title.localeCompare(b.title))
-    .map(l => ({ id: l.id, series: l.series, layers: [l] }));
+  const eras = [...layers.filter(l => l.encoding !== "terrarium")].sort((a, b) => ((yearOf(a.date) || 9999) - (yearOf(b.date) || 9999)) || a.title.localeCompare(b.title))
+    .map(l => ({ id: l.id, series: l.series, layers: [l], hubStream: !!l.hubStream }));
   for (const e of eras) {
     const ys = e.layers.map(l => yearOf(l.date)).filter(Boolean);
     e.y0 = ys.length ? Math.min(...ys) : null; e.y1 = ys.length ? Math.max(...ys) : null;
@@ -856,8 +873,9 @@ function applyEra() {
     if (!m?.loadedOverlays) return;
     const want = i === 0 ? S.eraA : (S.eraB === "today" ? null : S.eraB);
     const era = eraById(want);
-    for (const l of S.catalog) {
-      const on = !!era && era.layers.includes(l) && eraInYears(era);
+    for (const l of visualLayers()) {
+      const on = !!era && era.layers.some(x => x.id === l.id) && eraInYears(era);
+      if (!m.getLayer(`ov-${l.id}`)) addEraLayer(m, l);
       m.setLayoutProperty(`ov-${l.id}`, "visibility", on ? "visible" : "none");
       // One opacity for every old map shown (both sides when comparing). Scans keep their own paper colours in dark
       // mode too: dimming them made the sheet, the evidence and the labels on it all muddy.
@@ -869,7 +887,7 @@ function applyEra() {
 }
 function setPeekOpacity(alpha) {
   eachMap(m => {
-    for (const l of S.catalog) {
+    for (const l of visualLayers()) {
       const id = `ov-${l.id}`;
       if (m.getLayer(id) && m.getLayoutProperty(id, "visibility") === "visible")
         m.setPaintProperty(id, "raster-opacity", alpha);
@@ -1041,7 +1059,7 @@ function setCompare(on) {
     const a = primary(), b = createMap("mapB", false);
     maps[1] = b;
     let lock = false;
-    const follow = (src, dst) => e => { if (lock) return; lock = true; dst.jumpTo({ center: src.getCenter(), zoom: src.getZoom(), bearing: src.getBearing(), padding: src.getPadding() }, e?.trackpadMove ? { trackpadMove: true } : undefined); lock = false; };
+    const follow = (src, dst) => e => { if (lock) return; lock = true; dst.jumpTo({ center: src.getCenter(), zoom: src.getZoom(), bearing: src.getBearing(), pitch: src.getPitch(), padding: src.getPadding() }, e?.trackpadMove ? { trackpadMove: true } : undefined); lock = false; };
     const fa = follow(a, b), fb = follow(b, a);
     a.on("move", fa); b.on("move", fb);
     b.on("moveend", e => { if (!e?.trackpadMove) scheduleLoad(); });
@@ -1475,6 +1493,7 @@ function onMapClick(m, e) {
   if (Date.now() - longPressAt < 600) return; // the long press already dropped a pin
   if (Date.now() - forceConsumedAt < 600) return; // a Force Click already handled this press
   if (S.placing) { endPlacing(); openSiteForm(e.lngLat.lng, e.lngLat.lat, 100, "", ""); return; }
+  if (S.profilingFrom) { const from = S.profilingFrom; endProfiling(); runTransect(from, [e.lngLat.lng, e.lngLat.lat]); return; }
   if (S.draft) return; // editing a site: drag the pin instead
   if (S.view.name === "library") {
     // The card shows coverage: a tap picks the map under it (the most detailed one where sheets overlap).
@@ -1775,7 +1794,9 @@ VIEWS.home = v => {
       <button class="summary-row" data-act="openLibrary"><span class="row-ico" aria-hidden="true">${icon.map}</span>
         <span class="grow"><span class="t">Old maps</span><span class="m">${esc(libHomeLine())}</span></span>${icon.chevR}</button>
       <button class="summary-row" data-act="openRecords"><span class="row-ico" aria-hidden="true">${S.rec.busy ? '<span class="spin"></span>' : icon.doc}</span>
-        <span class="grow"><span class="t">Records</span><span class="m" data-rec-line>${esc(recHomeLine())}</span></span>${icon.chevR}</button></div>
+        <span class="grow"><span class="t">Records</span><span class="m" data-rec-line>${esc(recHomeLine())}</span></span>${icon.chevR}</button>
+      <button class="summary-row" data-act="openAerial"><span class="row-ico" aria-hidden="true">${icon.near}</span>
+        <span class="grow"><span class="t">Aerial, LiDAR &amp; terrain</span><span class="m">${esc(aerialHomeLine())}</span></span>${icon.chevR}</button></div>
     <div class="foot-note"><span>${coarse ? "Touch and hold the map to drop a pin. " : "Click an empty spot (or right-click) to drop a pin. "}Runs on your computer only. Records can be wrong: check each source.</span></div>
     ${v.quit ? `<div class="confirm-box calm quit-box" role="alertdialog" aria-label="Quit Map Vietnam">
         <span>Quit Map Vietnam? The map stops working in this window until you start it again.${S.rec.busy || libBusyMaps().length ? " What is being added now stops; what was already downloaded is kept." : ""}</span>
@@ -1796,8 +1817,16 @@ VIEWS.home.after = () => {
 // "2 on this computer · adding 1", or an invitation when there are none yet.
 function libHomeLine() {
   const have = S.lib.maps.filter(m => m.state === "installed").length || S.catalog.length, busy = libBusyMaps().length;
-  const parts = [have ? `${have} on this computer` : "Add old maps of any area", busy ? `adding ${busy}` : ""];
+  const hubN = (S.hub.layers || []).filter(l => l.encoding !== "terrarium" && !l.installed_offline).length;
+  const parts = [have ? `${have} on this computer` : "Add old maps of any area", hubN ? `${hubN} on Hub` : "", busy ? `adding ${busy}` : ""];
   return parts.filter(Boolean).join(" · ");
+}
+function aerialHomeLine() {
+  const parts = [];
+  if (S.terrain.source && S.terrain.source !== "off") parts.push("Relief active");
+  if (S.hub.connected) parts.push("Hub connected");
+  parts.push("1948–56 SHD aerials · Keyhole · bare-earth LiDAR");
+  return parts.join(" · ");
 }
 ACTIONS.newCaseToggle = () => { const f = $("#newCase"); if (!f) return; f.hidden = !f.hidden; if (!f.hidden) f.name.focus(); };
 ACTIONS.clearRecent = () => { store.set("recent", []); render(); };
@@ -2121,8 +2150,9 @@ VIEWS.multi.after = async v => {
 
 // ---------------------------------------------------------------- Clicked empty spot
 VIEWS.spot = v => `${headHTML("Dropped pin", `<span class="mono">${v.lat.toFixed(5)}, ${v.lon.toFixed(5)}</span>`)}
-  <div class="actions three">
+  <div class="actions">
     <button class="act primary" data-act="siteHere" data-lon="${v.lon}" data-lat="${v.lat}" data-m="100"><span class="ci">${icon.pin}</span><span>Place site</span></button>
+    <button class="act" data-act="profileFromSpot" data-lon="${v.lon}" data-lat="${v.lat}"><span class="ci">${icon.near}</span><span>Profile</span></button>
     <button class="act" data-act="copySpotGrid"><span class="ci">${icon.grid}</span><span>Copy grid ref</span></button>
     <button class="act" data-act="copy" data-what="position" data-text="${v.lat.toFixed(5)}, ${v.lon.toFixed(5)}"><span class="ci">${icon.copy}</span><span>Copy position</span></button>
   </div>
@@ -2130,20 +2160,106 @@ VIEWS.spot = v => `${headHTML("Dropped pin", `<span class="mono">${v.lat.toFixed
   <div class="group" id="grids">
     <div class="kv-row"><span class="k">Wartime grid · Indian 1960</span><span class="v mono">…</span></div>
     <div class="kv-row"><span class="k">GPS grid · WGS84</span><span class="v mono">…</span></div></div>
+  <div class="group" id="spotTerrain" style="margin-top:10px">
+    <div class="kv-row"><span class="k">Bare-earth ground elevation</span><span class="v muted">Sampling…</span></div></div>
+  <div id="transectSlot">${S.transect ? transectHTML(S.transect) : ""}</div>
   <p class="small-t muted" style="margin:8px 2px 0">The two grids differ by a few hundred metres. 1960s reports and sheets use the wartime grid.</p>`;
 VIEWS.spot.after = async v => {
   try {
     const r = v.grids || (v.grids = await api(`/api/lonlat?lon=${v.lon}&lat=${v.lat}`));
     if (S.view !== v) return;
-    $("#grids").innerHTML = gridRows(r); wire($("#grids"));
-  } catch (e) { $("#grids").innerHTML = `<div class="kv-row err">${esc(e.message)}</div>`; }
+    if ($("#grids")) { $("#grids").innerHTML = gridRows(r); wire($("#grids")); }
+  } catch (e) { if ($("#grids")) $("#grids").innerHTML = `<div class="kv-row err">${esc(e.message)}</div>`; }
+  try {
+    const t = v.terrain || (v.terrain = await api(`/api/elevation?lon=${v.lon}&lat=${v.lat}&remote=1`));
+    if (S.view !== v || !$("#spotTerrain")) return;
+    const rows = [];
+    if (t.ground_m != null) {
+      const unc = t.uncertainty_m != null ? ` ± ${t.uncertainty_m.toFixed(1)} m` : "";
+      rows.push(`<div class="kv-row"><span class="k">Bare-earth elevation</span><span class="v"><b>${t.ground_m.toFixed(1)} m</b>${esc(unc)}</span>
+        ${t.ground_source ? `<span class="v2">${esc(t.ground_source)}</span>` : ""}</div>`);
+    } else {
+      rows.push(`<div class="kv-row"><span class="k">Bare-earth elevation</span><span class="v muted">No land sample here</span></div>`);
+    }
+    if (t.hon_dau_m != null) rows.push(`<div class="kv-row"><span class="k">Vietnam Hòn Dấu MSL datum</span><span class="v mono">${t.hon_dau_m.toFixed(2)} m</span><span class="v2">Lowland flood-datum equivalent (~0.18 m offset from global geoid).</span></div>`);
+    if (t.hand_m != null) rows.push(`<div class="kv-row"><span class="k">Height above nearest drainage (HAND)</span><span class="v">${t.hand_m.toFixed(1)} m</span></div>`);
+    if (t.canopy_m != null) rows.push(`<div class="kv-row"><span class="k">Tree canopy height</span><span class="v">${t.canopy_m.toFixed(1)} m</span></div>`);
+    $("#spotTerrain").innerHTML = rows.join("");
+  } catch { if ($("#spotTerrain")) $("#spotTerrain").remove(); }
 };
 ACTIONS.copySpotGrid = () => { const g = S.view.grids; if (g) copyText(g.mgrs_indian1960, "Indian 1960 grid ref"); };
+ACTIONS.profileFromSpot = el => startProfiling([+el.dataset.lon, +el.dataset.lat]);
+ACTIONS.clearTransect = () => clearTransect();
 const gridRows = r => `
   <div class="kv-row"><span class="k">Wartime grid · Indian 1960 (wartime map datum)</span><span class="v"><span class="mono">${esc(r.mgrs_indian1960)}</span></span>
     <span class="inline-btns"><button class="linkish small-t" data-act="copy" data-what="Indian 1960 grid" data-text="${esc(r.mgrs_indian1960)}">Copy</button></span></div>
   <div class="kv-row"><span class="k">GPS grid · WGS84</span><span class="v"><span class="mono">${esc(r.mgrs_wgs84)}</span></span>
-    <span class="inline-btns"><button class="linkish small-t" data-act="copy" data-what="WGS84 grid" data-text="${esc(r.mgrs_wgs84)}">Copy</button></span></div>`;
+    <span class="inline-btns"><button class="linkish small-t" data-act="copy" data-what="WGS84 grid" data-text="${esc(r.mgrs_wgs84)}">Copy</button></span></div>
+  ${r.nara_rg373 ? `<div class="kv-row"><span class="k">NARA RG 373 aerial index square</span><span class="v"><span class="mono">${esc(r.nara_rg373.degree_square)}</span></span>
+    <span class="v2">1°×1° reconnaissance sortie overlay index (1935–1971)</span>
+    ${safeUrl(r.nara_rg373.catalog_url) ? `<span class="inline-btns"><a class="small-t" href="${esc(r.nara_rg373.catalog_url)}" target="_blank" rel="noopener">Search NARA RG 373</a></span>` : ""}</div>` : ""}`;
+
+function startProfiling(fromLonLat) {
+  if (S.compare) setCompare(false);
+  S.profilingFrom = fromLonLat;
+  document.body.classList.add("placing");
+  $("#placing").hidden = false;
+  $("#placing span").textContent = coarse ? "Tap a second spot for an elevation & sightline profile" : "Click a second spot on the map for an elevation & sightline profile";
+  if (!isDesk()) setSheet("peek");
+}
+function endProfiling() {
+  S.profilingFrom = null;
+  if (!S.placing) { document.body.classList.remove("placing"); $("#placing").hidden = true; }
+}
+function clearTransect() {
+  S.transect = null;
+  setData("transect-vis", empty());
+  setData("transect-occ", empty());
+  if ($("#transectSlot")) $("#transectSlot").innerHTML = "";
+}
+async function runTransect(start, end) {
+  toast("Computing bare-earth elevation & line-of-sight profile…");
+  try {
+    const tr = await api("/api/transect", { method: "POST", body: { start, end, samples: 64, observer_height_m: 1.7, remote_cog: true } });
+    S.transect = tr;
+    const visSegs = [], occSegs = [];
+    const pts = tr.points || [];
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i];
+      const seg = [[a.lon, a.lat], [b.lon, b.lat]];
+      (b.visible === false ? occSegs : visSegs).push(seg);
+    }
+    setData("transect-vis", visSegs.length ? { type: "Feature", geometry: { type: "MultiLineString", coordinates: visSegs }, properties: {} } : empty());
+    setData("transect-occ", occSegs.length ? { type: "Feature", geometry: { type: "MultiLineString", coordinates: occSegs }, properties: {} } : empty());
+    if (S.view.name !== "spot") openSpot(start[0], start[1]);
+    else if ($("#transectSlot")) { $("#transectSlot").innerHTML = transectHTML(tr); wire($("#transectSlot")); }
+    if (!isDesk()) setSheet("half");
+  } catch (e) { toast("Could not compute profile: " + e.message, 5000); }
+}
+function transectHTML(tr) {
+  const pts = (tr.points || []).filter(p => p.ground_m != null);
+  if (pts.length < 2) return `<div class="transect-box"><div class="row"><b class="small-t">Terrain profile</b><button class="linkish small-t" data-act="clearTransect">Clear</button></div><p class="small-t muted">No elevation samples available along this line.</p></div>`;
+  const W = 320, H = 110, padX = 8, padY = 14;
+  const minG = Math.min(...pts.map(p => p.ground_m)), maxG = Math.max(...pts.map(p => p.ground_m + (p.canopy_m || 0)));
+  const spanG = Math.max(5, maxG - minG), maxD = Math.max(1, tr.total_distance_m || pts.at(-1).distance_m || 1);
+  const xOf = d => padX + (d / maxD) * (W - padX * 2);
+  const yOf = h => H - padY - ((h - minG) / spanG) * (H - padY * 2);
+  const poly = pts.map(p => `${xOf(p.distance_m).toFixed(1)},${yOf(p.ground_m).toFixed(1)}`).join(" ");
+  const area = `${xOf(pts[0].distance_m).toFixed(1)},${H - padY} ${poly} ${xOf(pts.at(-1).distance_m).toFixed(1)},${H - padY}`;
+  const p0 = pts[0], pEnd = pts.at(-1);
+  const losY0 = yOf(p0.ground_m + (tr.observer_height_m || 1.7)), losY1 = yOf(pEnd.ground_m);
+  const clearEnd = pEnd.visible !== false;
+  return `<div class="transect-box" role="region" aria-label="Terrain elevation profile">
+    <div class="row" style="justify-content:space-between"><b class="small-t">Profile · ${esc(fmtM(tr.total_distance_m))}</b>
+      <button class="linkish small-t" data-act="clearTransect">Clear</button></div>
+    <div class="small-t muted">${minG.toFixed(1)} m to ${maxG.toFixed(1)} m · Sightline to end: <b style="color:${clearEnd ? "#16a34a" : "#dc2626"}">${clearEnd ? "Visible" : "Blocked by terrain"}</b></div>
+    <svg class="transect-svg" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+      <polygon points="${area}" fill="rgba(14,90,75,0.16)"/>
+      <polyline points="${poly}" fill="none" stroke="var(--accent)" stroke-width="2"/>
+      <line x1="${xOf(p0.distance_m).toFixed(1)}" y1="${losY0.toFixed(1)}" x2="${xOf(pEnd.distance_m).toFixed(1)}" y2="${losY1.toFixed(1)}"
+        stroke="${clearEnd ? "#16a34a" : "#dc2626"}" stroke-width="1.4" stroke-dasharray="${clearEnd ? "none" : "4 3"}"/>
+    </svg></div>`;
+}
 
 // ---------------------------------------------------------------- Grid reference square
 async function openGridRef(ref, datum = "indian1960") {
@@ -2191,12 +2307,24 @@ VIEWS.era = v => {
   const e = eraById(v.id);
   if (!e) return headHTML("Historical map") + `<p class="muted">No map selected.</p>`;
   const lib = S.lib.byId.get(e.id), customScan = lib?.custom && lib?.kind === "scan";
+  const onHub = (S.hub.layers || []).some(l => l.id === e.id);
+  const pushBox = v.pushAsk === e.id ? `<div class="confirm-box calm" style="margin-top:10px" role="group" aria-label="Cache map to Hub">
+    <span>Cache <b>${esc(e.name)}</b> permanently on the Hub server? Choose who on the Hub can see it:</span>
+    <div class="row"><button class="btn small primary" data-act="hubPushOne" data-id="${esc(e.id)}" data-vis="hub">All Hub members</button>
+      <button class="btn small" data-act="hubPushOne" data-id="${esc(e.id)}" data-vis="group">My group</button>
+      <button class="btn small" data-act="hubPushOne" data-id="${esc(e.id)}" data-vis="private">Private</button>
+      <button class="btn small" data-act="hubPushCancel">Cancel</button></div></div>` : "";
   return `${headHTML(esc(e.name), `<span>${esc(e.years)} · ${esc(e.short)} · ${esc(e.series)}${lib?.adjusted ? " · adjusted" : ""}</span>`)}
+    ${e.hubStream ? `<div style="margin-top:8px"><span class="hub-badge">Streamed from Hub · viewed tiles cached forever</span></div>`
+      : onHub ? `<div style="margin-top:8px"><span class="hub-badge">Cached on Hub</span></div>` : ""}
     <div class="row" style="margin-top:14px"><button class="btn small" data-act="fit" data-id="${e.id}">Zoom to coverage</button>
       ${S.eraA !== e.id ? `<button class="btn small primary" data-act="setEra" data-id="${e.id}">Show this map</button>` : ""}
-      ${customScan ? `<button class="btn small" data-act="cmPlace" data-id="${e.id}">Place again</button>`
-        : `<button class="btn small" data-act="alignMap" data-id="${e.id}">Adjust alignment</button>`}
-      <button class="btn small danger" data-act="eraRemove" data-id="${e.id}">${icon.trash}Remove</button></div>
+      ${e.hubStream ? `<button class="btn small" data-act="hubPull" data-id="${e.id}">${icon.dl}Keep full map offline</button>` : `
+        ${customScan ? `<button class="btn small" data-act="cmPlace" data-id="${e.id}">Place again</button>`
+          : `<button class="btn small" data-act="alignMap" data-id="${e.id}">Adjust alignment</button>`}
+        ${S.hub.connected ? `<button class="btn small" data-act="hubPushAsk" data-id="${e.id}">${onHub ? "Update on Hub" : "Cache to Hub"}</button>` : ""}
+        <button class="btn small danger" data-act="eraRemove" data-id="${e.id}">${icon.trash}Remove</button>`}</div>
+    ${pushBox}
     ${!eraInYears(e) ? `<p class="quiet-note">${icon.warn}<span>Outside your years (${esc(yearsText())}), so it is hidden on the map.</span></p>` : ""}
     <p class="small-t muted">Positions on old maps can be off by hundreds of metres or more. Check each sheet’s note.</p>
     <div class="group"><ul class="list">${e.layers.map(l => `<li style="display:block;padding:10px 14px"><div class="t" style="white-space:normal;font-weight:500">${esc(l.title)}</div>
@@ -2379,15 +2507,25 @@ async function refreshCatalog(tries = 0) {
 }
 // Swaps in a new list of installed maps: adds the new layers to every map, drops the removed ones, and moves off a
 // removed map if it was on screen.
-function setCatalog(layers, rebuiltIds = new Set()) {
-  const now = new Set(layers.map(l => l.id)), had = new Set(S.catalog.map(l => l.id));
-  for (const l of S.catalog) if (!now.has(l.id)) eachMap(m => removeEraLayer(m, l.id));
-  for (const id of rebuiltIds) if (had.has(id) && now.has(id)) eachMap(m => removeEraLayer(m, id));
-  for (const l of layers) if (!had.has(l.id) || rebuiltIds.has(l.id)) eachMap(m => addEraLayer(m, l));
-  S.catalog = layers; S.eras = buildEras(layers);
+function syncEraLayers(rebuiltIds = new Set()) {
+  const vis = visualLayers(), wantIds = new Set(vis.map(l => l.id));
+  eachMap(m => {
+    for (const l of S.catalog) if (!wantIds.has(l.id)) removeEraLayer(m, l.id);
+    for (const id of rebuiltIds) removeEraLayer(m, id);
+    for (const l of vis) addEraLayer(m, l);
+  });
+  S.eras = buildEras(vis);
   if (S.eraA && !eraById(S.eraA)) { S.eraA = null; store.set("era", "today"); }
   if (S.eraB !== "today" && !eraById(S.eraB)) S.eraB = "today";
   applyEra();
+}
+function setCatalog(layers, rebuiltIds = new Set()) {
+  const prevIds = S.catalog.map(l => l.id);
+  S.catalog = layers;
+  const nowSet = new Set(visualLayers().map(l => l.id));
+  for (const id of prevIds) if (!nowSet.has(id)) eachMap(m => removeEraLayer(m, id));
+  syncEraLayers(rebuiltIds);
+  loadTerrainSources();
   if (S.view.name === "library") libRefreshView(true);
   if (S.view.name === "era") render();
 }
@@ -3380,8 +3518,8 @@ function startPlacing() {
   $("#placing span").textContent = coarse ? "Tap the map where the candidate site is" : "Click the map where the candidate site is";
   if (!isDesk()) setSheet("peek");
 }
-function endPlacing() { S.placing = false; document.body.classList.remove("placing"); $("#placing").hidden = true; }
-$("#placingCancel").addEventListener("click", endPlacing);
+function endPlacing() { S.placing = false; if (!S.profilingFrom) { document.body.classList.remove("placing"); $("#placing").hidden = true; } }
+$("#placingCancel").addEventListener("click", () => { endPlacing(); endProfiling(); });
 
 let draftMarker = null;
 async function openSiteForm(lon, lat, m, name, why = "") {
@@ -3622,11 +3760,126 @@ function outlinesSeg() {
 // The style popover holds only the base-map cards (switched often) and a way into Settings. Appearance,
 // the outlines and the Kaggle key each live in exactly one place instead: Settings for the first and
 // last, the Old maps card for the outlines.
+const TERRAIN_MODES = [
+  ["hillshade", "Multidirectional shade"],
+  ["delta", "Delta 0–5 m micro-relief"],
+  ["hypso", "Hypsometric tint"],
+  ["canopy", "Canopy / HAND ramp"],
+];
+async function loadTerrainSources() {
+  try {
+    S.terrain.sources = await api("/api/terrain/sources");
+    applyTerrain();
+    if (!$("#popStyle").hidden) renderStylePop();
+  } catch { /* optional */ }
+}
+function terrainSourceSpec(srcId) {
+  if (!srcId || srcId === "off") return null;
+  const st = S.terrain.sources;
+  const stream = st?.streaming?.find(s => s.id === srcId);
+  if (stream) return stream;
+  const inst = st?.installed_dems?.find(s => s.id === srcId);
+  if (inst) return { ...inst, tiles: [inst.tiles], tileSize: 256, encoding: "terrarium" };
+  // Fallback before /api/terrain/sources resolves so saved preference renders right away.
+  if (srcId === "mapterhorn_dsm") return { id: "mapterhorn_dsm", tiles: ["https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"], tileSize: 512, maxzoom: 15, encoding: "terrarium" };
+  if (srcId === "aws_terrarium_dsm") return { id: "aws_terrarium_dsm", tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 14, encoding: "terrarium" };
+  return null;
+}
+function terrainColorRamp(mode) {
+  if (mode === "delta") return ["interpolate", ["linear"], ["elevation"], -2, "rgba(14,116,144,0.55)", 0, "rgba(34,211,238,0.45)", 1.0, "rgba(134,239,172,0.48)", 2.2, "rgba(253,224,71,0.52)", 3.8, "rgba(249,115,22,0.52)", 6.0, "rgba(180,83,9,0.48)", 25, "rgba(120,113,108,0.22)"];
+  if (mode === "hypso") return ["interpolate", ["linear"], ["elevation"], -5, "rgba(30,64,175,0.45)", 0, "rgba(167,243,208,0.4)", 25, "rgba(134,239,172,0.42)", 150, "rgba(253,230,138,0.45)", 500, "rgba(251,146,60,0.45)", 1200, "rgba(180,83,9,0.5)", 2400, "rgba(245,245,244,0.55)"];
+  if (mode === "canopy") return ["interpolate", ["linear"], ["elevation"], 0, "rgba(254,249,195,0.1)", 2, "rgba(187,247,208,0.42)", 10, "rgba(34,197,94,0.5)", 22, "rgba(21,128,61,0.58)", 38, "rgba(6,78,59,0.65)"];
+  return null;
+}
+function terrainBeforeLayer(m) {
+  for (const l of visualLayers()) if (m.getLayer(`ov-${l.id}`)) return `ov-${l.id}`;
+  return m.getLayer("libfp-fill") ? "libfp-fill" : (m.getLayer("strike-heat") ? "strike-heat" : undefined);
+}
+function applyTerrain() {
+  const spec = terrainSourceSpec(S.terrain.source);
+  const ramp = spec ? terrainColorRamp(S.terrain.mode) : null;
+  eachMap(m => {
+    for (const lid of ["terrain-hs", "terrain-color"]) if (m.getLayer(lid)) m.removeLayer(lid);
+    try { m.setTerrain(null); } catch { /* ignore */ }
+    if (m.getSource("dem-active")) m.removeSource("dem-active");
+    if (!spec) {
+      m.setMaxPitch(0);
+      if (m.getPitch() > 0) m.easeTo({ pitch: 0, duration: reduceMotion ? 0 : 250 });
+      return;
+    }
+    const before = terrainBeforeLayer(m);
+    m.addSource("dem-active", {
+      type: "raster-dem",
+      tiles: spec.tiles,
+      tileSize: spec.tileSize || 256,
+      maxzoom: spec.maxzoom || 14,
+      bounds: spec.bounds || undefined,
+      encoding: "terrarium",
+      attribution: spec.attribution || undefined,
+    });
+    if (ramp) {
+      try {
+        m.addLayer({ id: "terrain-color", type: "color-relief", source: "dem-active", paint: { "color-relief-color": ramp, "color-relief-opacity": 0.55 } }, before);
+      } catch { /* older WebGL fallback keeps hillshade */ }
+    }
+    const hsPaint = { "hillshade-exaggeration": S.terrain.mode === "delta" ? 0.85 : 0.58, "hillshade-shadow-color": "#1c1917", "hillshade-accent-color": "#44403c" };
+    try { m.addLayer({ id: "terrain-hs", type: "hillshade", source: "dem-active", paint: { ...hsPaint, "hillshade-method": "multidirectional" } }, before); }
+    catch { m.addLayer({ id: "terrain-hs", type: "hillshade", source: "dem-active", paint: hsPaint }, before); }
+    m.setMaxPitch(S.terrain.pitch3d ? 60 : 0);
+    if (S.terrain.pitch3d) {
+      try { m.setTerrain({ source: "dem-active", exaggeration: 1.35 }); } catch { /* ignore */ }
+      if (m.getPitch() < 35) m.easeTo({ pitch: 48, duration: reduceMotion ? 0 : 400 });
+    } else if (m.getPitch() > 0) {
+      m.easeTo({ pitch: 0, duration: reduceMotion ? 0 : 250 });
+    }
+  });
+  if (S.view.name === "home") render();
+}
+function setTerrainSource(srcId) {
+  S.terrain.source = srcId || "off";
+  store.set("terrainSrc", S.terrain.source);
+  if (S.terrain.source === "off" && S.terrain.pitch3d) { S.terrain.pitch3d = false; store.set("pitch3d", false); }
+  applyTerrain();
+}
+function setTerrainMode(mode) { S.terrain.mode = mode; store.set("terrainMode", mode); applyTerrain(); }
+function setPitch3d(on) {
+  S.terrain.pitch3d = !!on; store.set("pitch3d", S.terrain.pitch3d);
+  if (S.terrain.pitch3d && (!S.terrain.source || S.terrain.source === "off")) { S.terrain.source = "mapterhorn_dsm"; store.set("terrainSrc", "mapterhorn_dsm"); }
+  applyTerrain();
+}
+
 function renderStylePop() {
+  const dems = S.terrain.sources?.installed_dems || [];
+  const streams = S.terrain.sources?.streaming || [
+    { id: "mapterhorn_dsm", title: "Mapterhorn Global Terrain (Surface DSM)" },
+    { id: "aws_terrarium_dsm", title: "AWS Open Terrain (SRTM Surface DSM)" },
+  ];
+  const curSrc = S.terrain.source || "off";
   $("#popStyle").innerHTML = `<div class="sec"><h3>Today’s map</h3><div class="style-cards">
       ${Object.entries(BASES).map(([k, b]) => `<button class="style-card" data-base="${k}" aria-pressed="${S.base === k}"><span class="thumb ${k}"></span><span>${b.name}</span></button>`).join("")}</div></div>
-    <div class="sec"><button class="linkish" data-act="openSettings">All settings</button></div>`;
-  $$("[data-base]", $("#popStyle")).forEach(b => b.addEventListener("click", () => { setBase(b.dataset.base); renderStylePop(); $(`#popStyle [data-base="${b.dataset.base}"]`).focus(); }));
+    <div class="sec"><h3>Terrain &amp; bare-earth relief</h3>
+      <label class="field"><span class="small-t muted">Elevation model</span>
+        <select id="terrainSrcSel" aria-label="Elevation model">
+          <option value="off"${curSrc === "off" ? " selected" : ""}>Off</option>
+          <optgroup label="Streaming global DSM (zero download)">
+            ${streams.map(s => `<option value="${esc(s.id)}"${curSrc === s.id ? " selected" : ""}>${esc(s.title)}</option>`).join("")}
+          </optgroup>
+          ${dems.length ? `<optgroup label="Bare-earth, LiDAR &amp; Hub DEMs">
+            ${dems.map(d => `<option value="${esc(d.id)}"${curSrc === d.id ? " selected" : ""}>${esc(d.title)}${d.local ? "" : " (Hub)"}</option>`).join("")}
+          </optgroup>` : ""}
+        </select></label>
+      ${curSrc !== "off" ? `<div class="terrain-chips" role="group" aria-label="Relief shader">
+        ${TERRAIN_MODES.map(([k, lbl]) => `<button type="button" data-tmode="${k}" aria-pressed="${S.terrain.mode === k}">${esc(lbl)}</button>`).join("")}
+        <button type="button" data-pitch3d="1" aria-pressed="${!!S.terrain.pitch3d}">3D tilt</button>
+      </div>` : `<div class="terrain-chips"><button type="button" data-pitch3d="1" aria-pressed="false">Turn on 3D terrain</button></div>`}
+    </div>
+    <div class="sec" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <button class="linkish" data-act="openAerial">Aerials, LiDAR &amp; DEMs</button>
+      <button class="linkish" data-act="openSettings">All settings</button></div>`;
+  $$("[data-base]", $("#popStyle")).forEach(b => b.addEventListener("click", () => { setBase(b.dataset.base); renderStylePop(); $(`#popStyle [data-base="${b.dataset.base}"]`)?.focus(); }));
+  $("#terrainSrcSel")?.addEventListener("change", e => { setTerrainSource(e.target.value); renderStylePop(); $("#terrainSrcSel")?.focus(); });
+  $$("[data-tmode]", $("#popStyle")).forEach(b => b.addEventListener("click", () => { setTerrainMode(b.dataset.tmode); renderStylePop(); $(`#popStyle [data-tmode="${b.dataset.tmode}"]`)?.focus(); }));
+  $$("[data-pitch3d]", $("#popStyle")).forEach(b => b.addEventListener("click", () => { setPitch3d(!S.terrain.pitch3d); renderStylePop(); }));
   wire($("#popStyle"));
 }
 function renderLayersPop(keepFocus = false) {
@@ -3664,7 +3917,7 @@ document.addEventListener("focusin", e => {
 // /api/library/custom/<id>/points saves the matched spots and queues the build, /edit renames, /api/settings reports
 // where data is kept and how much space it uses. Your own maps are library entries with series "custom" (S.lib), so
 // they show in the Old maps card and on the map like any other installed map.
-const CUSTOM_KIND_WORDS = { geotiff: "GeoTIFF", geopdf: "GeoPDF", scan: "Scan" };
+const CUSTOM_KIND_WORDS = { geotiff: "GeoTIFF", geopdf: "GeoPDF", scan: "Scan", dem: "Elevation / LiDAR DEM" };
 const UPLOAD_MAX = 2 * 1024 ** 3; // the server's limit
 const customMaps = () => S.lib.maps.filter(m => m.custom);
 const sizeText = b => fmtMB(b) || "0 MB";
@@ -3677,7 +3930,7 @@ function openSettings(sel = null) {
   show("settings", { sel, confirm: null, keyOpen: false });
   if (from && from !== document.body && !$("#panel").contains(from)) S.opener = from;
   focusCard();
-  loadLibrary(); loadSettings();
+  loadLibrary(); loadSettings(); loadHub();
   if (sel) reveal($(`#view [data-lib-row="${CSS.escape(sel)}"]`));
 }
 async function loadSettings() {
@@ -3696,7 +3949,8 @@ function storageHTML() {
 }
 
 const settingsSig = () => JSON.stringify([S.lib.loaded, S.lib.err, customMaps().map(m => [m.id, m.state, m.title, m.year, m.kind, !!m.bounds, m.error]),
-  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, store.get("theme", "auto"), scrollMode(), S.rec.key, S.eraA]);
+  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, store.get("theme", "auto"), scrollMode(), S.rec.key, S.eraA,
+  S.hub.configured, S.hub.connected, S.hub.url, S.hub.auto_push, S.hub.layers?.length || 0, S.hub.err]);
 let settingsLastSig = "";
 // Redraws the card when something it shows changed; otherwise only moves the progress rings. A field being typed in is
 // never torn out from under the caret.
@@ -3743,8 +3997,10 @@ function cmDetail(m) {
       <label class="field"><span>Year (optional)</span><input type="number" name="myear" min="1800" max="2100" inputmode="numeric" placeholder="e.g. 1968" value="${m.year ? esc(m.year) : ""}"></label>
       <div class="row"><button class="btn small primary" type="submit">Save</button></div>
       <div class="err" role="alert"></div></form>
-    <div class="row">${m.state === "needs_points" ? "" : m.kind === "scan" ? `<button class="btn small" data-act="cmPlace" data-id="${id}">Place again</button>` : ready ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : ""}
+    <div class="row">${m.state === "needs_points" ? "" : m.kind === "scan" ? `<button class="btn small" data-act="cmPlace" data-id="${id}">Place again</button>` : ready && m.kind !== "dem" ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : ""}
+      ${ready && m.kind === "dem" ? `<button class="btn small primary" data-act="useDem" data-id="${id}">Show relief</button>` : ""}
       ${ready && m.bounds ? `<button class="btn small" data-act="cmFit" data-id="${id}">Zoom to map</button>` : ""}
+      ${ready && S.hub.connected ? `<button class="btn small" data-act="hubPushOne" data-id="${id}" data-vis="hub">Cache to Hub</button>` : ""}
       <button class="btn small danger" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button></div>
     ${confirm}</div>`;
 }
@@ -3775,23 +4031,126 @@ function keySectionHTML() {
     <div class="row"><button class="btn small" data-act="setKeyAdd">${k.present ? "Replace the key" : "Add a Kaggle key"}</button>
     ${k.present && k.source === "env file" ? `<button class="btn small" data-act="recKeyForget">Forget the key</button>` : ""}</div>`;
 }
+function hubSectionHTML() {
+  const h = S.hub;
+  const localInstalled = S.lib.maps.filter(m => m.state === "installed");
+  const remoteOnly = (h.layers || []).filter(l => !l.installed_offline);
+  if (h.configured && h.connected) {
+    const caps = h.me?.capabilities || {};
+    const capBits = [caps.usgs_m2m ? "USGS M2M" : "", caps.kaggle ? "Kaggle" : "", caps.earthdata ? "NASA Earthdata" : ""].filter(Boolean);
+    return `<div class="stack" style="gap:10px">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+        <span class="hub-badge">Connected · ${esc(h.me?.client?.name || h.url)}</span>
+        <span class="small-t muted mono">${esc(h.url)}</span>
+      </div>
+      <p class="small-t muted" style="margin:0">Shared infinite cache: old maps and aerials never expire. ${capBits.length ? `Server keys ready: <b>${esc(capBits.join(", "))}</b>. ` : ""}${h.cache_bytes ? `Local streamed tile cache: ${esc(sizeText(h.cache_bytes))}.` : ""}</p>
+      <label class="switch"><input type="checkbox" data-act="hubAutoPush" ${h.auto_push ? "checked" : ""}><span class="tog" aria-hidden="true"></span><span>Automatically cache newly imported &amp; aligned local maps to Hub</span></label>
+      <div class="row" style="flex-wrap:wrap;gap:8px">
+        ${localInstalled.length ? `<label class="small-t muted" style="display:inline-flex;align-items:center;gap:6px">Share as
+          <select id="hubVisSel" aria-label="Visibility on Hub"><option value="hub">All Hub members</option><option value="group">My group</option><option value="private">Private</option></select></label>
+          <button class="btn small primary" data-act="hubPushAll">Cache all ${localInstalled.length} local map${localInstalled.length === 1 ? "" : "s"} to Hub</button>` : ""}
+        <button class="btn small" data-act="hubDisconnect">Disconnect</button>
+      </div>
+      ${remoteOnly.length ? `<details><summary class="small-t" style="cursor:pointer;color:var(--accent)">${remoteOnly.length} map${remoteOnly.length === 1 ? "" : "s"} on Hub not yet saved offline</summary>
+        <ul class="list" style="margin-top:6px">${remoteOnly.slice(0, 25).map(l => `<li style="padding:6px 10px"><div class="grow"><div class="t">${esc(l.title)}</div><div class="m">${esc(l.series || "Hub archive")} · ${esc(sizeText(l.bytes))}</div></div>
+          <button class="btn small" data-act="hubPull" data-id="${esc(l.id)}">Keep offline</button></li>`).join("")}</ul></details>` : ""}
+    </div>`;
+  }
+  return `<form id="hubForm" class="stack" autocomplete="off">
+    <p class="small-t muted" style="margin:0">Connect to a shared Map Vietnam Hub server (for example on Railway) to use vaulted API keys, polite shared caching, and bidirectional personal archive sync.</p>
+    ${h.configured && !h.connected ? `<div class="err" role="alert">Saved Hub (${esc(h.url)}) could not be reached${h.err ? ": " + esc(h.err) : ""}.</div>` : ""}
+    <label class="field"><span>Hub URL</span><input type="url" name="hurl" required placeholder="https://map-vietnam-hub.up.railway.app" value="${esc(h.url || "")}"></label>
+    <label class="field"><span>API key</span><input type="password" name="hkey" ${h.configured ? "" : "required"} placeholder="${h.configured ? "Leave blank to keep saved key" : "mvhub_…"}"></label>
+    <label class="switch"><input type="checkbox" name="hauto" ${h.auto_push ? "checked" : ""}><span class="tog" aria-hidden="true"></span><span>Auto-cache local maps to Hub</span></label>
+    <div class="row"><button class="btn small primary" type="submit">Connect Hub</button>
+      ${h.configured ? `<button class="btn small" type="button" data-act="hubDisconnect">Forget Hub</button>` : ""}</div>
+    <div class="err" id="hubFormErr" role="alert"></div></form>`;
+}
+async function loadHub() {
+  try { applyHub(await api("/api/hub")); }
+  catch (e) { S.hub.err = e.message; S.hub.loaded = true; }
+}
+function applyHub(r) {
+  const prevIds = (S.hub.layers || []).map(l => l.id);
+  S.hub = { ...S.hub, ...r, err: r.error || "", loaded: true };
+  const visSet = new Set(visualLayers().map(l => l.id));
+  for (const id of prevIds) if (!visSet.has(id)) eachMap(m => removeEraLayer(m, id));
+  syncEraLayers();
+  loadTerrainSources();
+  settingsRefresh();
+  if (["home", "era"].includes(S.view.name)) render();
+}
+ACTIONS.hubAutoPush = async el => {
+  try { applyHub(await api("/api/hub/auto-push", { method: "POST", body: { auto_push: !!el.checked } })); toast(el.checked ? "Local maps will auto-cache to Hub" : "Auto-cache turned off"); }
+  catch (e) { el.checked = !el.checked; toast(e.message, 5000); }
+};
+ACTIONS.hubDisconnect = async () => {
+  try { applyHub(await api("/api/hub/config", { method: "DELETE" })); toast("Disconnected from Hub (cached tiles kept on disk)"); }
+  catch (e) { toast(e.message, 5000); }
+};
+ACTIONS.hubPushAsk = el => { S.view.pushAsk = el.dataset.id; render(); };
+ACTIONS.hubPushCancel = () => { S.view.pushAsk = null; render(); };
+ACTIONS.hubPushOne = async el => {
+  const id = el.dataset.id, vis = el.dataset.vis || $("#hubVisSel")?.value || "hub";
+  if (!id || el.disabled) return;
+  const prev = el.textContent; el.disabled = true; el.textContent = "Caching…";
+  try {
+    const r = await api("/api/hub/push", { method: "POST", body: { id, visibility: vis } });
+    if (S.view.pushAsk) S.view.pushAsk = null;
+    applyHub(r);
+    toast("Cached permanently on Hub");
+  } catch (e) { toast("Could not cache to Hub: " + e.message, 5000); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.hubPushAll = async el => {
+  const ids = S.lib.maps.filter(m => m.state === "installed").map(m => m.id);
+  const vis = $("#hubVisSel")?.value || "hub";
+  if (!ids.length || el.disabled) return;
+  const prev = el.textContent; el.disabled = true; el.textContent = "Caching…";
+  try {
+    const r = await api("/api/hub/push", { method: "POST", body: { ids, visibility: vis } });
+    applyHub(r);
+    toast(`Cached ${ids.length} map${ids.length === 1 ? "" : "s"} permanently on Hub`);
+  } catch (e) { toast("Could not cache all maps: " + e.message, 5000); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.hubPull = async el => {
+  const id = el.dataset.id; if (!id || el.disabled) return;
+  const prev = el.textContent; el.disabled = true; el.textContent = "Saving…";
+  try {
+    const r = await api("/api/hub/pull", { method: "POST", body: { id } });
+    applyHub(r);
+    await refreshCatalog();
+    await loadLibrary();
+    toast("Saved full map offline on this computer");
+  } catch (e) { toast("Could not save offline: " + e.message, 5000); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.useDem = el => {
+  const id = el.dataset.id; if (!id) return;
+  setTerrainSource(id);
+  const b = S.lib.byId.get(id)?.bounds;
+  if (b) primary().fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: mapPadding(), maxZoom: 14, duration: reduceMotion ? 0 : 600 });
+  toast("Showing bare-earth relief");
+};
+
 VIEWS.settings = v => {
   settingsLastSig = settingsSig();
   const theme = store.get("theme", "auto"), mode = scrollMode(), mine = customMaps();
   const seg = (label, inner) => `<div class="set-row"><span class="set-k">${label}</span><div class="seg" role="group" aria-label="${label}">${inner}</div></div>`;
-  // Preferences holds only what is set once and left alone: the base map is switched from the style popover,
-  // the outlines from the Old maps card.
-  return `${headHTML("Settings", "Preferences, your own maps and storage")}
+  return `${headHTML("Settings", "Preferences, Hub server, your own maps and storage")}
     <h3 class="sub-head">Preferences</h3>
     <div class="group">
       ${seg("Appearance", ["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${theme === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join(""))}
       ${seg("Scrolling", SCROLL_MODES.map(([k, label]) => `<button data-act="scrollMode" data-m="${k}" aria-pressed="${mode === k}">${label}</button>`).join(""))}
     </div>
+    <h3 class="sub-head">Intermediary Hub server</h3>
+    <div class="set-block">${hubSectionHTML()}</div>
     <h3 class="sub-head">Kaggle key</h3>
     <div class="set-block">${keySectionHTML()}</div>
-    <h3 class="sub-head">My maps</h3>
+    <h3 class="sub-head">My maps &amp; LiDAR DEMs</h3>
     <div class="set-block">
-      <p class="small-t muted">Add a map from your computer. A GeoTIFF or GeoPDF is placed for you. A photo or scan (JPG, PNG or PDF) is placed by matching three or more spots on it to today’s map.</p>
+      <p class="small-t muted">Add a map or elevation GeoTIFF from your computer. A GeoTIFF, float32 LiDAR DEM, or GeoPDF is placed for you. A photo or scan (JPG, PNG or PDF) is placed by matching spots to today’s map (8+ spots use Thin Plate Spline).</p>
       <div id="cmUp">${uploadHTML()}</div>
       <div class="err" id="cmErr" role="alert">${esc(S.cm.err)}</div>
       ${mine.length ? `<div class="group"><ul class="list lib-list" aria-label="Your own maps">${mine.map(cmRow).join("")}</ul></div>`
@@ -3799,12 +4158,280 @@ VIEWS.settings = v => {
     </div>
     <h3 class="sub-head">Storage</h3>
     <div id="setDisk">${storageHTML()}</div>
-    <p class="foot-note">Everything stays on this computer.</p>`;
+    <p class="foot-note">Local data stays on this computer unless you connect a Hub server and choose to cache maps there.</p>`;
 };
 VIEWS.settings.after = () => {
   $("#cmFile")?.addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) cmUpload(f); });
   $$("#view .cm-edit").forEach(f => f.addEventListener("submit", cmSaveEdit));
+  $("#hubForm")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.target, err = $("#hubFormErr"), btn = f.querySelector('button[type="submit"]');
+    err.textContent = ""; btn.disabled = true; btn.textContent = "Connecting…";
+    try {
+      const r = await api("/api/hub/config", { method: "POST", body: { url: f.hurl.value.trim(), api_key: f.hkey.value.trim(), auto_push: !!f.hauto.checked } });
+      applyHub(r);
+      toast("Connected to Hub server");
+    } catch (x) { err.textContent = x.message; btn.disabled = false; btn.textContent = "Connect Hub"; }
+  });
   wireKeyBox();
+};
+
+// ================================================================ Aerial, LiDAR & Terrain Explorer
+const AER_TABS = [
+  ["nakala", "1948–56 SHD"],
+  ["usgs", "Keyhole Sat"],
+  ["landsat", "1972–75 MSS"],
+  ["oam", "UAV / Drone"],
+  ["allmaps", "Allmaps IIIF"],
+  ["terrain", "LiDAR & DEM"],
+];
+function openAerial(tab = null) {
+  closePopovers();
+  if (tab) S.aerial.tab = tab;
+  show("aerial", {});
+  if (!S.aerial.res && S.aerial.tab !== "terrain") runAerialSearch();
+}
+ACTIONS.openAerial = () => openAerial();
+ACTIONS.aerTab = el => { S.aerial.tab = el.dataset.tab; S.aerial.err = ""; S.aerial.res = null; render(); if (S.aerial.tab !== "terrain") runAerialSearch(); };
+ACTIONS.aerSearch = () => runAerialSearch();
+ACTIONS.useOamBase = () => { setBase("oam"); toast("Switched base map to OpenAerialMap UAV imagery"); };
+ACTIONS.clearLidar = () => { setData("lidar", empty()); S.aerial.lidarCount = 0; render(); toast("Cleared LiDAR footprints"); };
+ACTIONS.queryLidar = async el => {
+  const b = viewBounds(); if (!b || el.disabled) return;
+  const prev = el.textContent; el.disabled = true; el.textContent = "Querying SlideRule…";
+  S.aerial.err = "";
+  try {
+    const fc = await api(`/api/lidar?bbox=${b.map(v => v.toFixed(4)).join(",")}`);
+    setData("lidar", fc);
+    S.aerial.lidarCount = (fc.features || []).length;
+    render();
+    toast(S.aerial.lidarCount ? `Plotted ${S.aerial.lidarCount} NASA GEDI laser footprints` : "No GEDI laser footprints inside this exact box");
+  } catch (e) { S.aerial.err = e.message; render(); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.buildDem = async el => {
+  const pack = el.dataset.pack, b = viewBounds();
+  if (!pack || !b || el.disabled) return;
+  const prev = el.textContent; el.disabled = true; el.textContent = "Building…";
+  S.aerial.err = "";
+  try {
+    const res = await api("/api/terrain/build", { method: "POST", body: { pack, bbox: b.map(v => +v.toFixed(3)) } });
+    if (res.job_id) {
+      toast("Hub is building regional terrain pack…", 5000);
+      let done = null;
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 1500));
+        const st = await api(`/api/hub/job/${encodeURIComponent(res.job_id)}`);
+        if (st.state === "done") { done = st; break; }
+        if (st.state === "failed") throw new Error(st.error || "Hub terrain build failed.");
+      }
+      await loadHub();
+      await loadTerrainSources();
+      if (done?.result_layer_id) setTerrainSource(done.result_layer_id);
+      toast("Terrain pack ready on Hub (cached forever)");
+    } else if (res.layer_id) {
+      await loadTerrainSources();
+      setTerrainSource(res.layer_id);
+      toast("Bare-earth terrain pack built and active");
+    }
+    render();
+  } catch (e) { S.aerial.err = e.message; render(); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.importAerial = async el => {
+  const url = el.dataset.url, title = el.dataset.title || "Historical aerial", year = el.dataset.year || "";
+  if (!url || el.disabled) return;
+  let gcps = null;
+  if (el.dataset.gcps) { try { gcps = JSON.parse(el.dataset.gcps); } catch { gcps = null; } }
+  const body = { url, title, year, gcps, source_width: +el.dataset.sw || undefined, source_height: +el.dataset.sh || undefined };
+  const prev = el.textContent; el.disabled = true; el.textContent = "Importing…";
+  try {
+    const r = await api("/api/aerial/import", { method: "POST", body });
+    closeLightbox();
+    applyLibrary(r.library);
+    if (r.map.state === "needs_points") {
+      toast("Imported frame. Match 3+ spots (8+ for spline warp) on today’s map.", 5000);
+      openPlacement(S.lib.byId.get(r.map.id) || r.map);
+    } else {
+      toast(`Imported & queued ${title}`, 5000);
+      openSettings(r.map.id);
+    }
+  } catch (e) { toast("Could not import image: " + e.message, 5000); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.aerPreview = el => openLightbox({
+  preview: el.dataset.preview,
+  full: el.dataset.full || el.dataset.preview,
+  title: el.dataset.title || "Aerial frame",
+  year: el.dataset.year || "",
+  sourceUrl: el.dataset.src || "",
+});
+
+function closeLightbox() { $(".aer-lightbox")?.remove(); }
+function openLightbox({ preview, full, title, year, sourceUrl }) {
+  closeLightbox();
+  if (!safeUrl(preview)) return;
+  document.body.insertAdjacentHTML("beforeend", `<div class="aer-lightbox" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <img src="${esc(preview)}" alt="${esc(title)}">
+    <div class="aer-lb-bar">
+      <b>${esc(title)}</b>${year ? `<span>(${esc(year)})</span>` : ""}
+      ${safeUrl(full) ? `<button class="btn small primary" data-act="importAerial" data-url="${esc(full)}" data-title="${esc(title)}" data-year="${esc(year)}">Import &amp; place on map</button>` : ""}
+      ${safeUrl(sourceUrl) ? `<a class="btn small" href="${esc(sourceUrl)}" target="_blank" rel="noopener">Archive record</a>` : ""}
+      <button class="btn small" id="aerLbClose">Close</button>
+    </div></div>`);
+  const lb = $(".aer-lightbox");
+  wire(lb);
+  $("#aerLbClose").focus();
+  $("#aerLbClose").onclick = closeLightbox;
+  lb.addEventListener("click", e => { if (e.target === lb) closeLightbox(); });
+}
+
+async function runAerialSearch() {
+  const tab = S.aerial.tab, b = viewBounds() || [105.4, 10.2, 105.9, 10.7];
+  const bbox = b.map(v => v.toFixed(3)).join(",");
+  S.aerial.loading = true; S.aerial.err = ""; render();
+  try {
+    if (tab === "nakala") S.aerial.res = await api(`/api/aerial/nakala?q=${encodeURIComponent(S.aerial.q || "")}&size=10`);
+    else if (tab === "usgs") S.aerial.res = await api(`/api/aerial/usgs?bbox=${bbox}&dataset=${encodeURIComponent(S.aerial.usgsDs || "corona")}`);
+    else if (tab === "landsat") S.aerial.res = await api(`/api/aerial/landsat?bbox=${bbox}`);
+    else if (tab === "oam") S.aerial.res = await api(`/api/aerial/oam?bbox=${bbox}`);
+    else if (tab === "allmaps") S.aerial.res = await api(`/api/aerial/allmaps?bbox=${bbox}`);
+  } catch (e) { S.aerial.err = e.message; }
+  finally { S.aerial.loading = false; if (S.view.name === "aerial") render(); }
+}
+
+function quadkeyAt(lon, lat, z = 9) {
+  const [tx, ty] = tileOf(lon, lat, z);
+  let qk = "";
+  for (let i = z; i > 0; i--) {
+    let d = 0, mask = 1 << (i - 1);
+    if (tx & mask) d += 1;
+    if (ty & mask) d += 2;
+    qk += d;
+  }
+  return qk;
+}
+
+VIEWS.aerial = () => {
+  const tab = S.aerial.tab, res = S.aerial.res, [lon, lat] = viewCenter();
+  const latI = Math.floor(lat), lonI = Math.floor(lon);
+  const rgCode = `${String(Math.abs(latI)).padStart(2, "0")}${latI >= 0 ? "N" : "S"}${String(Math.abs(lonI)).padStart(3, "0")}${lonI >= 0 ? "E" : "W"}`;
+  const rgUrl = `https://catalog.archives.gov/search?q=${encodeURIComponent(`"Overlay Indexes" "${rgCode}"`)}&recordGroupNumber=373`;
+  const metaCog = `https://dataforgood-fb-data.s3.amazonaws.com/forests/v1/alsgedi_global_v6_float/chm/${quadkeyAt(lon, lat, 9)}.tif`;
+
+  let body = "";
+  if (tab === "terrain") {
+    const packs = [
+      ["gedtm30", "GEDTM30 Bare-Earth Terrain (30 m)", "Removes tree canopy & buildings using NASA GEDI + ICESat-2 LiDAR fusion."],
+      ["glo30_hand", "GLO-30 HAND Flood / Drainage Relief (30 m)", "Height Above Nearest Drainage — highlights dikes, levees, canals & dry ground."],
+      ["eth_canopy_10m", "ETH Tree Canopy Height (10 m)", "Global canopy height calibrated with GEDI spaceborne LiDAR."],
+    ];
+    body = `
+      <h3 class="sub-head">Spaceborne LiDAR laser shots (NASA GEDI)</h3>
+      <div class="group"><div class="inner stack">
+        <p class="small-t muted" style="margin:0">Query discrete ~25 m GEDI L2A bare-earth &amp; canopy laser footprints inside the current view (zoom in to &le;12 km across).</p>
+        <div class="row">
+          <button class="btn small primary" data-act="queryLidar">Show GEDI LiDAR shots in view</button>
+          ${S.aerial.lidarCount ? `<button class="btn small" data-act="clearLidar">Clear (${S.aerial.lidarCount})</button>` : ""}
+        </div>
+      </div></div>
+      <h3 class="sub-head">Build regional bare-earth DEM (${S.hub.connected ? "cached on Hub" : "on this computer"})</h3>
+      <p class="small-t muted">Streams only the area on screen (up to 2.5° across) from Cloud-Optimized GeoTIFFs into lossless 1/256 m Terrarium tiles.</p>
+      <div class="group"><ul class="list">${packs.map(([k, t, desc]) => `<li style="padding:10px 14px;align-items:center">
+        <div class="grow"><div class="t">${esc(t)}</div><div class="m">${esc(desc)}</div></div>
+        <button class="btn small primary" data-act="buildDem" data-pack="${k}">Build here</button></li>`).join("")}</ul></div>
+      <h3 class="sub-head">Direct LiDAR &amp; sortie index links at map centre</h3>
+      <div class="group">
+        <div class="kv-row"><span class="k">NARA RG 373 1°×1° aerial sortie index</span><span class="v mono">${esc(rgCode)}</span>
+          <span class="inline-btns"><a class="small-t" href="${esc(rgUrl)}" target="_blank" rel="noopener">Open NARA Catalog</a></span></div>
+        <div class="kv-row"><span class="k">Meta / WRI 1 m Canopy Height COG tile</span><span class="v mono">Quadkey ${esc(quadkeyAt(lon, lat, 9))}</span>
+          <span class="inline-btns"><a class="small-t" href="${esc(metaCog)}" target="_blank" rel="noopener">Download 1 m COG (.tif)</a></span></div>
+      </div>`;
+  } else {
+    const controls = tab === "nakala"
+      ? `<form id="aerNakalaForm" class="row" style="margin-top:10px"><input class="grow" type="search" id="aerQ" placeholder="Place or mission (e.g. Dien Bien Phu, Saigon, Tourane)…" value="${esc(S.aerial.q || "")}" style="min-height:36px;border-radius:10px;border:1px solid var(--line);padding:0 10px;background:var(--surface-2)"><button class="btn small primary" type="submit">Search</button></form>`
+      : tab === "usgs"
+      ? `<div class="row" style="margin-top:10px;flex-wrap:wrap"><select id="aerUsgsDs" aria-label="Declassified satellite dataset">
+          <option value="corona"${(S.aerial.usgsDs || "corona") === "corona" ? " selected" : ""}>CORONA / ARGON / LANYARD (1960–72)</option>
+          <option value="gambit_kh9mc"${S.aerial.usgsDs === "gambit_kh9mc" ? " selected" : ""}>GAMBIT KH-7 (0.6 m) &amp; KH-9 Mapping</option>
+          <option value="hexagon_kh9pc"${S.aerial.usgsDs === "hexagon_kh9pc" ? " selected" : ""}>HEXAGON KH-9 Panoramic (1971–84, 0.6 m)</option>
+        </select><button class="btn small primary" data-act="aerSearch">Search map view</button></div>`
+      : `<div class="row" style="margin-top:10px;justify-content:space-between"><span class="small-t muted">Searching current map area</span><button class="btn small primary" data-act="aerSearch">Refresh for view</button></div>`;
+
+    let listHTML = "";
+    if (S.aerial.loading) listHTML = `<p class="muted" style="margin-top:12px">Searching archive${S.hub.connected ? " via Hub infinite cache" : ""}…</p>`;
+    else if (tab === "nakala" && res) {
+      const ms = res.missions || [];
+      listHTML = `<p class="small-t muted" style="margin:8px 2px">${fmtInt(res.total || ms.length)} French SHD Indochina aerial missions (1948–1956) on CNRS NAKALA. Open a <b>PLOT</b> index card first to locate frame numbers, then click any frame to inspect or place on the map.</p>` +
+        (ms.length ? ms.map(m => {
+          const yr = (m.date || "").slice(0, 4);
+          const thumbs = [...(m.plots || []).map(p => ({ ...p, isPlot: true })), ...(m.sample_frames || []).slice(0, 8)];
+          return `<div class="group" style="margin-top:10px"><div class="inner">
+            <div class="t" style="font-weight:600">${esc(m.title)}</div>
+            <div class="small-t muted">${esc([m.date || "1948–56", m.squadron, `${m.frame_count} frames`, m.licence].filter(Boolean).join(" · "))}
+              ${safeUrl(m.source_url) ? ` · <a href="${esc(m.source_url)}" target="_blank" rel="noopener">NAKALA DOI</a>` : ""}</div>
+            ${thumbs.length ? `<div class="aer-grid">${thumbs.map(f => `<div class="aer-card">
+              ${safeUrl(f.preview_url) ? `<img loading="lazy" src="${esc(f.preview_url)}" alt="${esc(f.name)}">` : ""}
+              <div class="aer-cap"><span class="mono" style="overflow:hidden;text-overflow:ellipsis">${esc(f.isPlot ? "PLOT INDEX" : f.name.slice(-14))}</span>
+                <div class="row" style="gap:4px">
+                  <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(f.preview_url)}" data-full="${esc(f.full_url)}" data-title="${esc(m.title + " — " + f.name)}" data-year="${esc(yr)}" data-src="${esc(m.source_url)}">View</button>
+                  <button class="linkish small-t" data-act="importAerial" data-url="${esc(f.full_url)}" data-title="${esc(m.title + " " + f.name)}" data-year="${esc(yr)}">Place</button>
+                </div></div></div>`).join("")}</div>` : ""}
+          </div></div>`;
+        }).join("") : `<p class="muted">No SHD missions matched that query.</p>`);
+    } else if (tab === "usgs" && res) {
+      if (res.needs_credentials) listHTML = `<div class="confirm-box calm" style="margin-top:12px"><span>${esc(res.message)}</span></div>`;
+      else {
+        const sc = res.scenes || [];
+        listHTML = `<p class="small-t muted" style="margin:8px 2px">${sc.length} declassified reconnaissance scenes overlapping this view.</p>` +
+          (sc.length ? `<div class="aer-grid">${sc.map(s => `<div class="aer-card">
+            ${safeUrl(s.browse_url) ? `<img loading="lazy" src="${esc(s.browse_url)}" alt="${esc(s.display_id)}">` : ""}
+            <div class="aer-cap"><b class="mono">${esc(s.display_id)}</b><span>${esc(s.date || "Undated")} · ${s.download_available ? "Free scan ready" : "Browse preview"}</span>
+              ${safeUrl(s.browse_url) ? `<div class="row" style="gap:6px"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.browse_url)}" data-full="${esc(s.browse_url)}" data-title="${esc(s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}">Inspect</button>
+                <button class="linkish small-t" data-act="importAerial" data-url="${esc(s.browse_url)}" data-title="${esc("Keyhole " + s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}">Place</button></div>` : ""}
+            </div></div>`).join("")}</div>` : `<p class="muted">No scenes found in this view.</p>`);
+      }
+    } else if (tab === "landsat" && res) {
+      const sc = res.scenes || [];
+      listHTML = `<p class="small-t muted" style="margin:8px 2px">${sc.length} wartime Landsat 1–2 MSS multispectral scenes (1972–1975, ≤35% cloud).</p>` +
+        (sc.length ? `<div class="aer-grid">${sc.map(s => `<div class="aer-card">
+          ${safeUrl(s.preview_url) ? `<img loading="lazy" src="${esc(s.preview_url)}" alt="${esc(s.id)}">` : ""}
+          <div class="aer-cap"><b>${esc((s.datetime || "").slice(0, 10))}</b><span>Cloud ${s.cloud_cover != null ? Math.round(s.cloud_cover) + "%" : "?"} · ${esc(s.platform)}</span>
+            ${safeUrl(s.preview_url) ? `<div class="row" style="gap:6px"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.preview_url)}" data-full="${esc(s.preview_url)}" data-title="${esc(s.id)}" data-year="${esc((s.datetime || "").slice(0, 4))}">View</button>
+              <button class="linkish small-t" data-act="importAerial" data-url="${esc(s.preview_url)}" data-title="${esc("Landsat MSS " + (s.datetime || "").slice(0, 10))}" data-year="${esc((s.datetime || "").slice(0, 4))}">Place</button></div>` : ""}
+          </div></div>`).join("")}</div>` : `<p class="muted">No clear 1972–75 Landsat MSS scenes in this box.</p>`);
+    } else if (tab === "oam" && res) {
+      const items = res.items || [];
+      listHTML = `<div class="row" style="margin:8px 0"><button class="btn small" data-act="useOamBase">Show global UAV mosaic on base map</button></div>` +
+        (items.length ? `<div class="group"><ul class="list">${items.map(it => `<li style="padding:10px 14px"><div class="grow">
+          <div class="t">${esc(it.title)}</div>
+          <div class="m">${esc([(it.datetime || "").slice(0, 10), it.gsd_m ? `${(it.gsd_m * 100).toFixed(0)} cm/px` : "", it.platform].filter(Boolean).join(" · "))}</div></div>
+          ${safeUrl(it.cog_url) ? `<a class="btn small" href="${esc(it.cog_url)}" target="_blank" rel="noopener">COG</a>` : ""}</li>`).join("")}</ul></div>`
+          : `<p class="muted">No individual UAV orthomosaics indexed in this exact view.</p>`);
+    } else if (tab === "allmaps" && res) {
+      const ms = res.maps || [];
+      listHTML = `<p class="small-t muted" style="margin:8px 2px">${ms.length} community-georeferenced IIIF maps (Gallica, Rumsey, LoC) in this view. Importing applies their control points automatically.</p>` +
+        (ms.length ? `<div class="aer-grid">${ms.map((m, idx) => `<div class="aer-card">
+          ${safeUrl(m.preview_url) ? `<img loading="lazy" src="${esc(m.preview_url)}" alt="IIIF map ${idx + 1}">` : ""}
+          <div class="aer-cap"><span>${m.gcp_count} control points</span>
+            <div class="row" style="gap:6px">
+              <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(m.preview_url)}" data-full="${esc(m.full_url)}" data-title="${esc("IIIF Map " + m.id.slice(-6))}">View</button>
+              <button class="linkish small-t" data-act="importAerial" data-url="${esc(m.full_url)}" data-title="${esc("Allmaps IIIF " + m.id.slice(-6))}" data-gcps="${esc(JSON.stringify(m.gcps))}" data-sw="${m.width || ""}" data-sh="${m.height || ""}">Auto-place</button>
+            </div></div></div>`).join("")}</div>` : `<p class="muted">No Allmaps IIIF sheets indexed in this view.</p>`);
+    }
+    body = controls + listHTML;
+  }
+
+  return `${headHTML("Aerial, LiDAR &amp; terrain", S.hub.connected ? `<span class="hub-badge">Hub infinite cache active</span>` : `<span>Historical overhead archives &amp; bare-earth relief</span>`)}
+    <div class="terrain-chips" role="tablist" aria-label="Archive and terrain sources">
+      ${AER_TABS.map(([k, lbl]) => `<button type="button" role="tab" data-act="aerTab" data-tab="${k}" aria-pressed="${tab === k}">${esc(lbl)}</button>`).join("")}
+    </div>
+    ${S.aerial.err ? `<div class="err" role="alert" style="margin-top:8px">${esc(S.aerial.err)}</div>` : ""}
+    ${body}`;
+};
+VIEWS.aerial.after = () => {
+  $("#aerNakalaForm")?.addEventListener("submit", e => { e.preventDefault(); S.aerial.q = $("#aerQ").value.trim(); runAerialSearch(); });
+  $("#aerUsgsDs")?.addEventListener("change", e => { S.aerial.usgsDs = e.target.value; runAerialSearch(); });
 };
 ACTIONS.openSettings = () => openSettings();
 ACTIONS.scrollMode = el => setScrollMode(el.dataset.m);
@@ -4207,13 +4834,16 @@ document.addEventListener("keydown", e => {
   const typing = e.target.closest?.("input, textarea, select");
   if (e.key === "/" && !typing) { e.preventDefault(); q.focus(); q.select(); }
   else if (e.key === "Escape") {
+    if ($(".aer-lightbox")) { e.preventDefault(); closeLightbox(); return; }
     const open = ["popStyle", "popLayers", "popMaps"].find(id => !$("#" + id).hidden);
     if (open) { const a = $("#" + open)._anchor; closePopovers(); a?.focus(); return; }
     // An open confirm box ("Remove this map?") closes first, like its Cancel button.
     const cancel = e.target.closest?.(".confirm-box")?.querySelector('[data-act$="Cancel"], #delNo');
     if (cancel) { e.preventDefault(); cancel.click(); return; }
     if (typing) return;
-    if (S.placing) endPlacing(); else if (S.view.name !== "home") back();
+    if (S.placing) endPlacing();
+    else if (S.profilingFrom) endProfiling();
+    else if (S.view.name !== "home") back();
   }
 });
 
@@ -4245,7 +4875,7 @@ function checkEmptyKinds() {
   catalogReady = api("/catalog.json", { cache: "no-store" }).then(c => (c.layers || []).filter(l => l.bounds))
     .catch(() => { toast("The old-map catalogue could not be loaded."); return []; })
     .then(layers => {
-      S.catalog = layers; S.eras = buildEras(S.catalog); S.catalogLoaded = true;
+      S.catalog = layers; S.eras = buildEras(visualLayers()); S.catalogLoaded = true;
       const saved = store.get("era", null);
       const [lon, lat] = viewCenter();
       S.eraA = saved === "today" ? null : (eraById(saved) && eraCovers(eraById(saved), lon, lat) ? saved : defaultEra());
@@ -4303,6 +4933,8 @@ function checkEmptyKinds() {
   m.once("idle", checkEmptyKinds);
   loadSources();
   loadRecords();
+  loadHub();
+  loadTerrainSources();
   await loadCases();
   if (S.caseId) await selectCase(S.caseId);
   if (S.view.name === "home") render();
