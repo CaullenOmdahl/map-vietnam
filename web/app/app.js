@@ -296,7 +296,8 @@ const S = {
   // The record sources (see "records" below): every source that can be added, by id, with its state.
   rec: { sources: [], byId: new Map(), key: {}, busy: false, firstRun: false, revision: null, loaded: false, err: null },
   // Optional Intermediary Hub Server (shared infinite cache, vaulted keys, and bidirectional map sync).
-  hub: { configured: false, connected: false, url: "", me: null, layers: [], auto_push: false, loaded: false, err: "" },
+  hub: { configured: false, connected: false, url: "", me: null, admin: null, layers: [], auto_push: false, loaded: false, err: "", justCreatedKey: null },
+  localKeys: { usgs_username: "", has_usgs_token: false, has_earthdata_token: false, contact: "", loaded: false },
   // Terrain, Bare-Earth LiDAR DEMs & Relief Shaders.
   terrain: { source: store.get("terrainSrc", "off"), mode: store.get("terrainMode", "hillshade"), pitch3d: store.get("pitch3d", false), sources: null },
   profilingFrom: null, transect: null,
@@ -2307,24 +2308,31 @@ VIEWS.era = v => {
   const e = eraById(v.id);
   if (!e) return headHTML("Historical map") + `<p class="muted">No map selected.</p>`;
   const lib = S.lib.byId.get(e.id), customScan = lib?.custom && lib?.kind === "scan";
-  const onHub = (S.hub.layers || []).some(l => l.id === e.id);
+  const hubLyr = (S.hub.layers || []).find(l => l.id === e.id), onHub = !!hubLyr;
+  const canEditHub = hubLyr && (S.hub.me?.scopes?.includes("admin") || (hubLyr.owner_key_id && hubLyr.owner_key_id === S.hub.me?.key_id));
   const pushBox = v.pushAsk === e.id ? `<div class="confirm-box calm" style="margin-top:10px" role="group" aria-label="Cache map to Hub">
     <span>Cache <b>${esc(e.name)}</b> permanently on the Hub server? Choose who on the Hub can see it:</span>
     <div class="row"><button class="btn small primary" data-act="hubPushOne" data-id="${esc(e.id)}" data-vis="hub">All Hub members</button>
       <button class="btn small" data-act="hubPushOne" data-id="${esc(e.id)}" data-vis="group">My group</button>
       <button class="btn small" data-act="hubPushOne" data-id="${esc(e.id)}" data-vis="private">Private</button>
       <button class="btn small" data-act="hubPushCancel">Cancel</button></div></div>` : "";
+  const delHubBox = v.delHubAsk === e.id ? `<div class="confirm-box" style="margin-top:10px" role="alertdialog" aria-label="Remove from Hub">
+    <span>Delete <b>${esc(e.name)}</b> from the Hub server for everyone? (Local copies on computers stay untouched.)</span>
+    <div class="row"><button class="btn small danger solid" data-act="hubDelLayer" data-id="${esc(e.id)}">Delete from Hub</button>
+      <button class="btn small" data-act="hubDelCancel">Keep on Hub</button></div></div>` : "";
   return `${headHTML(esc(e.name), `<span>${esc(e.years)} · ${esc(e.short)} · ${esc(e.series)}${lib?.adjusted ? " · adjusted" : ""}</span>`)}
-    ${e.hubStream ? `<div style="margin-top:8px"><span class="hub-badge">Streamed from Hub · viewed tiles cached forever</span></div>`
-      : onHub ? `<div style="margin-top:8px"><span class="hub-badge">Cached on Hub</span></div>` : ""}
+    ${e.hubStream ? `<div style="margin-top:8px"><span class="hub-badge">Streamed from Hub (${esc(hubLyr?.visibility || "hub")}) · viewed tiles cached forever</span></div>`
+      : onHub ? `<div style="margin-top:8px"><span class="hub-badge">Cached on Hub (${esc(hubLyr?.visibility || "hub")})</span></div>` : ""}
     <div class="row" style="margin-top:14px"><button class="btn small" data-act="fit" data-id="${e.id}">Zoom to coverage</button>
       ${S.eraA !== e.id ? `<button class="btn small primary" data-act="setEra" data-id="${e.id}">Show this map</button>` : ""}
-      ${e.hubStream ? `<button class="btn small" data-act="hubPull" data-id="${e.id}">${icon.dl}Keep full map offline</button>` : `
+      ${e.hubStream ? `${!hubLyr?.stream_only ? `<button class="btn small" data-act="hubPull" data-id="${e.id}">${icon.dl}Keep full map offline</button>` : ""}
+        ${canEditHub ? `<button class="btn small danger" data-act="hubDelAsk" data-id="${e.id}">${icon.trash}Delete from Hub</button>` : ""}` : `
         ${customScan ? `<button class="btn small" data-act="cmPlace" data-id="${e.id}">Place again</button>`
           : `<button class="btn small" data-act="alignMap" data-id="${e.id}">Adjust alignment</button>`}
         ${S.hub.connected ? `<button class="btn small" data-act="hubPushAsk" data-id="${e.id}">${onHub ? "Update on Hub" : "Cache to Hub"}</button>` : ""}
-        <button class="btn small danger" data-act="eraRemove" data-id="${e.id}">${icon.trash}Remove</button>`}</div>
-    ${pushBox}
+        ${canEditHub ? `<button class="btn small danger" data-act="hubDelAsk" data-id="${e.id}">Delete from Hub</button>` : ""}
+        <button class="btn small danger" data-act="eraRemove" data-id="${e.id}">${icon.trash}Remove locally</button>`}</div>
+    ${pushBox}${delHubBox}
     ${!eraInYears(e) ? `<p class="quiet-note">${icon.warn}<span>Outside your years (${esc(yearsText())}), so it is hidden on the map.</span></p>` : ""}
     <p class="small-t muted">Positions on old maps can be off by hundreds of metres or more. Check each sheet’s note.</p>
     <div class="group"><ul class="list">${e.layers.map(l => `<li style="display:block;padding:10px 14px"><div class="t" style="white-space:normal;font-weight:500">${esc(l.title)}</div>
@@ -2798,8 +2806,14 @@ function libDetail(m) {
   const licence = m.licence || ser.licence;
   // The row's own control (Add, Retry, Show / Hide, or the progress ring that stops it) is the main action; the
   // opened row adds only what the row cannot do.
+  const onHub = (S.hub.layers || []).some(l => l.id === m.id);
+  const hubActs = S.hub.connected
+    ? (m.state === "installed" ? `<button class="btn small" data-act="hubPushOne" data-id="${id}" data-vis="hub">${onHub ? "Update on Hub" : "Cache to Hub"}</button>`
+      : (!m.custom && m.state === "available" && !onHub ? `<button class="btn small" data-act="hubBuildMap" data-id="${id}">Build onto Hub</button>` : ""))
+    : "";
   const acts = (m.custom ? `<button class="btn small" data-act="cmManage" data-id="${id}">Edit or place again</button>`
     : m.state === "installed" ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : "")
+    + hubActs
     + (m.state === "installed" ? `<button class="btn small danger" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button>` : "");
   const confirm = S.view.confirm === "remove:" + m.id ? `<div class="confirm-box" role="alertdialog" aria-label="Remove ${t}">
       <span>Remove <b>${t}</b> from this computer? This frees ${fmtMB(m.disk_bytes) || "its space"}. You can add it again later.</span>
@@ -3930,8 +3944,12 @@ function openSettings(sel = null) {
   show("settings", { sel, confirm: null, keyOpen: false });
   if (from && from !== document.body && !$("#panel").contains(from)) S.opener = from;
   focusCard();
-  loadLibrary(); loadSettings(); loadHub();
+  loadLibrary(); loadSettings(); loadHub(); loadLocalKeys();
   if (sel) reveal($(`#view [data-lib-row="${CSS.escape(sel)}"]`));
+}
+async function loadLocalKeys() {
+  try { S.localKeys = { ...(await api("/api/local-keys")), loaded: true }; settingsRefresh(); }
+  catch { S.localKeys.loaded = true; }
 }
 async function loadSettings() {
   try { S.cm.disk = await api("/api/settings"); S.cm.diskErr = ""; }
@@ -3950,13 +3968,13 @@ function storageHTML() {
 
 const settingsSig = () => JSON.stringify([S.lib.loaded, S.lib.err, customMaps().map(m => [m.id, m.state, m.title, m.year, m.kind, !!m.bounds, m.error]),
   S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, store.get("theme", "auto"), scrollMode(), S.rec.key, S.eraA,
-  S.hub.configured, S.hub.connected, S.hub.url, S.hub.auto_push, S.hub.layers?.length || 0, S.hub.err]);
+  S.hub.configured, S.hub.connected, S.hub.url, S.hub.auto_push, S.hub.layers?.length || 0, S.hub.err, S.hub.admin, S.hub.justCreatedKey, S.localKeys]);
 let settingsLastSig = "";
 // Redraws the card when something it shows changed; otherwise only moves the progress rings. A field being typed in is
 // never torn out from under the caret.
 function settingsRefresh(force = false) {
   if (S.view.name !== "settings") return;
-  const typing = $("#view").contains(document.activeElement) && document.activeElement.matches("input");
+  const typing = $("#view").contains(document.activeElement) && document.activeElement.matches("input, textarea, select");
   // Unsaved text in a Name or Year box also holds the redraw back, whether or not it has focus.
   const dirty = [...document.querySelectorAll("#view .cm-edit input")].some(i => i.value !== i.defaultValue);
   if ((force || settingsSig() !== settingsLastSig) && !typing && !dirty) { rerenderKeepingFocus(); loadSettings(); }
@@ -4031,38 +4049,145 @@ function keySectionHTML() {
     <div class="row"><button class="btn small" data-act="setKeyAdd">${k.present ? "Replace the key" : "Add a Kaggle key"}</button>
     ${k.present && k.source === "env file" ? `<button class="btn small" data-act="recKeyForget">Forget the key</button>` : ""}</div>`;
 }
+function localKeysSectionHTML() {
+  const lk = S.localKeys || {};
+  return `<details><summary class="small-t" style="cursor:pointer;color:var(--accent)">USGS EarthExplorer, NASA Earthdata &amp; contact${lk.has_usgs_token || lk.has_earthdata_token ? " · saved" : ""}</summary>
+    <form id="localKeysForm" class="stack" style="margin-top:10px" autocomplete="off">
+      <p class="small-t muted" style="margin:0">Used only when you are not connected to a Hub server (when connected to a Hub, the Hub uses its own vaulted keys instead).</p>
+      <label class="field"><span>USGS EarthExplorer username</span><input type="text" name="uuser" value="${esc(lk.usgs_username || "")}" placeholder="EarthExplorer username"></label>
+      <label class="field"><span>USGS M2M token ${lk.has_usgs_token ? '<span class="hub-badge">Saved</span>' : ""}</span><input type="password" name="utok" placeholder="${lk.has_usgs_token ? "Leave blank to keep saved token" : "Paste M2M application token"}"></label>
+      <label class="field"><span>NASA Earthdata token ${lk.has_earthdata_token ? '<span class="hub-badge">Saved</span>' : ""}</span><input type="password" name="etok" placeholder="${lk.has_earthdata_token ? "Leave blank to keep saved token" : "Optional Bearer token"}"></label>
+      <label class="field"><span>Archive contact email / URL (optional)</span><input type="text" name="contact" value="${esc(lk.contact || "")}" placeholder="researcher@example.org"></label>
+      <div class="row"><button class="btn small primary" type="submit">Save local keys</button>
+        ${lk.has_usgs_token || lk.has_earthdata_token ? `<button class="btn small" type="button" data-act="clearLocalKeys">Clear tokens</button>` : ""}</div>
+      <div class="err" id="localKeysErr" role="alert"></div>
+    </form></details>`;
+}
+
+function hubAdminHTML() {
+  const adm = S.hub.admin;
+  if (!adm) return "";
+  const v = adm.vault || {}, keys = adm.keys || [], feeds = v.proprietary_sources || [];
+  const newKey = S.hub.justCreatedKey;
+  return `<div class="stack" style="gap:10px;margin-top:8px;padding-top:10px;border-top:1px solid var(--line)">
+    <div class="row" style="justify-content:space-between"><b class="small-t">Server Administration</b><span class="hub-badge">Admin access</span></div>
+    <p class="small-t muted" style="margin:0">Manage all Hub server keys, proprietary feeds, and user access directly from here — no Railway or server console needed.</p>
+
+    <details><summary class="small-t" style="cursor:pointer;font-weight:600">1. Server upstream archive keys (USGS, Kaggle, NASA)</summary>
+      <form id="hubSecretsForm" class="stack" style="margin-top:10px" autocomplete="off">
+        <label class="field"><span>USGS EarthExplorer username (CORONA / KH-7 / KH-9)</span><input type="text" name="usgs_u" value="${esc(v.usgs_username || "")}" placeholder="EROS username"></label>
+        <label class="field"><span>USGS M2M token ${v.has_usgs_token ? '<span class="hub-badge">Saved on Hub</span>' : ""}</span><input type="password" name="usgs_t" placeholder="${v.has_usgs_token ? "Leave blank to keep current token" : "Paste USGS M2M token"}"></label>
+        <label class="field"><span>Kaggle username (THOR air strikes)</span><input type="text" name="kag_u" value="${esc(v.kaggle_username || "")}" placeholder="Kaggle username"></label>
+        <label class="field"><span>Kaggle API key ${v.has_kaggle_key ? '<span class="hub-badge">Saved on Hub</span>' : ""}</span><input type="password" name="kag_k" placeholder="${v.has_kaggle_key ? "Leave blank to keep current key" : "Paste Kaggle key"}"></label>
+        <label class="field"><span>NASA Earthdata Bearer token ${v.has_earthdata_token ? '<span class="hub-badge">Saved on Hub</span>' : ""}</span><input type="password" name="ed_t" placeholder="${v.has_earthdata_token ? "Leave blank to keep current token" : "Paste Earthdata token"}"></label>
+        <label class="field"><span>Polite User-Agent contact email / URL</span><input type="text" name="contact" value="${esc(v.contact || "")}" placeholder="team@example.org"></label>
+        <label class="switch"><input type="checkbox" name="allow_nc" ${v.allow_nc_sources !== false ? "checked" : ""}><span class="tog" aria-hidden="true"></span><span>Serve non-commercial research maps (CNRS / SHD Indochina)</span></label>
+        <div class="row" style="flex-wrap:wrap"><button class="btn small primary" type="submit">Save server settings</button>
+          ${v.has_usgs_token ? `<button class="btn small" type="button" data-act="hubClearSecret" data-k="USGS_M2M_TOKEN">Clear USGS token</button>` : ""}
+          ${v.has_kaggle_key ? `<button class="btn small" type="button" data-act="hubClearSecret" data-k="KAGGLE_KEY">Clear Kaggle key</button>` : ""}
+          ${v.has_earthdata_token ? `<button class="btn small" type="button" data-act="hubClearSecret" data-k="EARTHDATA_TOKEN">Clear NASA token</button>` : ""}</div>
+        <div class="err" id="hubSecErr" role="alert"></div>
+      </form></details>
+
+    <details><summary class="small-t" style="cursor:pointer;font-weight:600">2. Proprietary &amp; keyed tile / LiDAR DEM feeds (${feeds.length})</summary>
+      <div class="stack" style="margin-top:10px">
+        ${feeds.length ? `<ul class="list">${feeds.map(f => `<li style="padding:8px 10px"><div class="grow">
+          <div class="t">${esc(f.title)} <span class="small-t muted mono">(${esc(f.id)})</span></div>
+          <div class="m mono" style="word-break:break-all">${esc(f.tiles_masked)}</div>
+          <div class="m">${f.encoding === "terrarium" ? "Elevation DEM (Terrarium)" : "Visual imagery"} · z${f.maxzoom} · ${f.stream_only ? "Stream only" : "Stream + offline"}</div></div>
+          <button class="btn small danger" data-act="hubDelProp" data-id="${esc(f.id)}">Remove</button></li>`).join("")}</ul>` : `<p class="small-t muted" style="margin:0">No custom tile feeds added yet. Add Planet, Maxar, Mapbox, or private LiDAR XYZ URLs here; the Hub vaults the API key and caches every viewed tile forever.</p>`}
+        <form id="hubPropForm" class="stack" autocomplete="off" style="padding-top:6px">
+          <div class="row" style="gap:8px"><label class="field grow"><span>Feed ID</span><input type="text" name="pid" required placeholder="planet_2025"></label>
+            <label class="field grow"><span>Display title</span><input type="text" name="ptitle" required placeholder="Planet Basemap 2025"></label></div>
+          <label class="field"><span>XYZ Tile URL template ({z}/{x}/{y} + secret key)</span><input type="text" name="ptiles" required placeholder="https://…/{z}/{x}/{y}.png?api_key=SECRET"></label>
+          <div class="row" style="gap:8px;flex-wrap:wrap">
+            <label class="field"><span>Kind</span><select name="penc"><option value="">Visual map / imagery</option><option value="terrarium">Elevation / LiDAR DEM (Terrarium)</option></select></label>
+            <label class="field"><span>Format</span><select name="pfmt"><option value="webp">WebP</option><option value="png">PNG</option><option value="jpg">JPEG</option></select></label>
+            <label class="field"><span>Max zoom</span><input type="number" name="pz" min="1" max="22" value="18" style="width:70px"></label>
+          </div>
+          <label class="field"><span>Credit / attribution</span><input type="text" name="pattr" placeholder="© Provider"></label>
+          <label class="switch"><input type="checkbox" name="pstream" checked><span class="tog" aria-hidden="true"></span><span>Stream only (prevent full pack download)</span></label>
+          <div class="row"><button class="btn small primary" type="submit">Save feed on Hub</button></div>
+          <div class="err" id="hubPropErr" role="alert"></div>
+        </form>
+      </div></details>
+
+    <details ${newKey ? "open" : ""}><summary class="small-t" style="cursor:pointer;font-weight:600">3. User &amp; collaborator API keys (${keys.filter(k => k.active).length} active)</summary>
+      <div class="stack" style="margin-top:10px">
+        ${newKey ? `<div class="confirm-box calm" role="status">
+          <span><b>New key created for ${esc(newKey.label)}:</b> copy it now — for security it is never shown again.</span>
+          <div class="mono" style="word-break:break-all;padding:6px 8px;background:var(--surface-2);border-radius:8px;font-size:12px">${esc(newKey.token)}</div>
+          <div class="row"><button class="btn small primary" data-act="copy" data-what="Hub API key" data-text="${esc(newKey.token)}">Copy API key</button>
+            <button class="btn small" data-act="hubDismissKey">Done</button></div></div>` : ""}
+        <form id="hubKeyForm" class="stack" autocomplete="off">
+          <label class="field"><span>Person or device name</span><input type="text" name="klabel" required placeholder="e.g. Field Laptop — Researcher A"></label>
+          <div class="row" style="gap:8px;flex-wrap:wrap">
+            <label class="field grow"><span>Access level</span><select name="krole">
+              <option value="read,request_build,upload">Contributor (view, build &amp; upload maps)</option>
+              <option value="read">Viewer (read &amp; stream only)</option>
+              <option value="read,request_build,upload,admin">Admin (full server control)</option>
+            </select></label>
+            <label class="field"><span>Group tag (optional)</span><input type="text" name="kgroup" placeholder="e.g. team1" style="width:110px"></label>
+          </div>
+          <div class="row"><button class="btn small primary" type="submit">Create API key</button></div>
+          <div class="err" id="hubKeyErr" role="alert"></div>
+        </form>
+        ${keys.length ? `<ul class="list">${keys.map(k => `<li style="padding:8px 10px"><div class="grow">
+          <div class="t">${esc(k.label)} <span class="small-t muted mono">(${esc(k.key_id)})</span></div>
+          <div class="m">${esc((k.scopes || []).join(", "))}${k.group_tag ? ` · group: ${esc(k.group_tag)}` : ""} · ${k.active ? "Active" : "Revoked"}</div></div>
+          ${k.active && k.key_id !== "adminenv" ? `<button class="btn small danger" data-act="hubRevokeKey" data-id="${esc(k.key_id)}">Revoke</button>`
+            : k.key_id === "adminenv" ? `<span class="small-t muted">Env password</span>` : ""}</li>`).join("")}</ul>` : ""}
+      </div></details>
+  </div>`;
+}
+
 function hubSectionHTML() {
   const h = S.hub;
   const localInstalled = S.lib.maps.filter(m => m.state === "installed");
-  const remoteOnly = (h.layers || []).filter(l => !l.installed_offline);
+  const allHubLayers = (h.layers || []).filter(l => !String(l.id).startsWith("prop_"));
   if (h.configured && h.connected) {
-    const caps = h.me?.capabilities || {};
-    const capBits = [caps.usgs_m2m ? "USGS M2M" : "", caps.kaggle ? "Kaggle" : "", caps.earthdata ? "NASA Earthdata" : ""].filter(Boolean);
+    const caps = h.me?.capabilities || {}, st = h.me?.stats || {};
+    const isAdmin = !!h.me?.scopes?.includes("admin");
+    const capBits = [caps.usgs_m2m ? "USGS M2M" : "", caps.kaggle ? "Kaggle" : "", caps.earthdata ? "NASA Earthdata" : "", caps.proprietary_count ? `${caps.proprietary_count} custom feed${caps.proprietary_count === 1 ? "" : "s"}` : ""].filter(Boolean);
     return `<div class="stack" style="gap:10px">
       <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-        <span class="hub-badge">Connected · ${esc(h.me?.client?.name || h.url)}</span>
+        <span class="hub-badge">Connected · ${esc(h.me?.label || h.url)}</span>
         <span class="small-t muted mono">${esc(h.url)}</span>
       </div>
-      <p class="small-t muted" style="margin:0">Shared infinite cache: old maps and aerials never expire. ${capBits.length ? `Server keys ready: <b>${esc(capBits.join(", "))}</b>. ` : ""}${h.cache_bytes ? `Local streamed tile cache: ${esc(sizeText(h.cache_bytes))}.` : ""}</p>
+      <p class="small-t muted" style="margin:0">Infinite server cache: <b>${st.layers || 0}</b> map/DEM packs (${esc(sizeText(st.layer_bytes))}), <b>${st.raw_blobs || 0}</b> archive responses (${esc(sizeText(st.raw_bytes))})${st.disk_free_bytes ? ` · <b>${esc(sizeText(st.disk_free_bytes))}</b> free on Hub disk` : ""}. ${capBits.length ? `Server keys ready: <b>${esc(capBits.join(", "))}</b>.` : ""}</p>
       <label class="switch"><input type="checkbox" data-act="hubAutoPush" ${h.auto_push ? "checked" : ""}><span class="tog" aria-hidden="true"></span><span>Automatically cache newly imported &amp; aligned local maps to Hub</span></label>
       <div class="row" style="flex-wrap:wrap;gap:8px">
         ${localInstalled.length ? `<label class="small-t muted" style="display:inline-flex;align-items:center;gap:6px">Share as
           <select id="hubVisSel" aria-label="Visibility on Hub"><option value="hub">All Hub members</option><option value="group">My group</option><option value="private">Private</option></select></label>
           <button class="btn small primary" data-act="hubPushAll">Cache all ${localInstalled.length} local map${localInstalled.length === 1 ? "" : "s"} to Hub</button>` : ""}
+        <button class="btn small" data-act="hubRefresh">Refresh</button>
         <button class="btn small" data-act="hubDisconnect">Disconnect</button>
       </div>
-      ${remoteOnly.length ? `<details><summary class="small-t" style="cursor:pointer;color:var(--accent)">${remoteOnly.length} map${remoteOnly.length === 1 ? "" : "s"} on Hub not yet saved offline</summary>
-        <ul class="list" style="margin-top:6px">${remoteOnly.slice(0, 25).map(l => `<li style="padding:6px 10px"><div class="grow"><div class="t">${esc(l.title)}</div><div class="m">${esc(l.series || "Hub archive")} · ${esc(sizeText(l.size_bytes || l.bytes))}</div></div>
-          <button class="btn small" data-act="hubPull" data-id="${esc(l.id)}">Keep offline</button></li>`).join("")}</ul></details>` : ""}
+      ${allHubLayers.length ? `<details><summary class="small-t" style="cursor:pointer;color:var(--accent)">Manage maps &amp; DEMs on Hub (${allHubLayers.length})</summary>
+        <ul class="list" style="margin-top:6px">${allHubLayers.slice(0, 60).map(l => {
+          const canEdit = isAdmin || (l.owner_key_id && l.owner_key_id === h.me?.key_id);
+          const isDem = l.encoding === "terrarium";
+          return `<li style="padding:8px 10px;flex-wrap:wrap;gap:6px"><div class="grow" style="min-width:160px">
+            <div class="t">${esc(l.title)}</div>
+            <div class="m">${esc(l.series || "Hub archive")} · ${esc(sizeText(l.size_bytes || l.bytes))} · ${l.installed_offline ? "Saved offline" : "Streaming"}</div></div>
+            <div class="row" style="gap:6px;flex-wrap:wrap">
+              <button class="btn small" data-act="${isDem ? "useDem" : "setEra"}" data-id="${esc(l.id)}">${isDem ? "Show relief" : "Show"}</button>
+              ${!l.installed_offline && !l.stream_only ? `<button class="btn small" data-act="hubPull" data-id="${esc(l.id)}">Keep offline</button>` : ""}
+              ${canEdit ? `<select aria-label="Visibility for ${esc(l.title)}" data-act="hubLayerVis" data-id="${esc(l.id)}" style="min-height:30px;font-size:12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);padding:0 6px">
+                ${["hub", "group", "private"].map(vv => `<option value="${vv}"${l.visibility === vv ? " selected" : ""}>${vv === "hub" ? "All Hub" : vv === "group" ? "Group" : "Private"}</option>`).join("")}</select>
+                <button class="btn small danger" data-act="hubDelLayer" data-id="${esc(l.id)}">${icon.trash}</button>` : ""}
+            </div></li>`;
+        }).join("")}</ul></details>` : ""}
+      ${isAdmin ? hubAdminHTML() : ""}
     </div>`;
   }
   return `<form id="hubForm" class="stack" autocomplete="off">
-    <p class="small-t muted" style="margin:0">Connect to a shared Map Vietnam Hub server (for example on Railway) to use vaulted API keys, polite shared caching, and bidirectional personal archive sync.</p>
+    <p class="small-t muted" style="margin:0">Enter your Hub server’s domain or IP address and its password (from <span class="mono">HUB_ADMIN_PASSWORD</span> on Railway) or a collaborator API key. Everything on the server can then be configured right here.</p>
     ${h.configured && !h.connected ? `<div class="err" role="alert">Saved Hub (${esc(h.url)}) could not be reached${h.err ? ": " + esc(h.err) : ""}.</div>` : ""}
-    <label class="field"><span>Hub URL</span><input type="url" name="hurl" required placeholder="https://map-vietnam-hub.up.railway.app" value="${esc(h.url || "")}"></label>
-    <label class="field"><span>API key</span><input type="password" name="hkey" ${h.configured ? "" : "required"} placeholder="${h.configured ? "Leave blank to keep saved key" : "mvhub_…"}"></label>
+    <label class="field"><span>Server domain or IP address</span><input type="text" name="hurl" required placeholder="my-hub.up.railway.app or 192.168.1.50:8780" value="${esc(h.url || "")}"></label>
+    <label class="field"><span>Password or API key</span><input type="password" name="hkey" ${h.configured ? "" : "required"} placeholder="${h.configured ? "Leave blank to keep saved password/key" : "Server password or mvhub_… key"}"></label>
     <label class="switch"><input type="checkbox" name="hauto" ${h.auto_push ? "checked" : ""}><span class="tog" aria-hidden="true"></span><span>Auto-cache local maps to Hub</span></label>
-    <div class="row"><button class="btn small primary" type="submit">Connect Hub</button>
+    <div class="row"><button class="btn small primary" type="submit">Connect</button>
       ${h.configured ? `<button class="btn small" type="button" data-act="hubDisconnect">Forget Hub</button>` : ""}</div>
     <div class="err" id="hubFormErr" role="alert"></div></form>`;
 }
@@ -4126,10 +4251,90 @@ ACTIONS.hubPull = async el => {
   } catch (e) { toast("Could not save offline: " + e.message, 5000); }
   finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
 };
+ACTIONS.hubRefresh = async () => { await loadHub(); toast("Refreshed Hub status"); };
+ACTIONS.hubDismissKey = () => { S.hub.justCreatedKey = null; settingsRefresh(true); };
+ACTIONS.hubDelAsk = el => { S.view.delHubAsk = el.dataset.id; render(); };
+ACTIONS.hubDelCancel = () => { S.view.delHubAsk = null; render(); };
+ACTIONS.hubDelLayer = async el => {
+  const id = el.dataset.id; if (!id || el.disabled) return;
+  el.disabled = true;
+  try {
+    const r = await api("/api/hub/layer/delete", { method: "POST", body: { id } });
+    if (S.view.delHubAsk) S.view.delHubAsk = null;
+    applyHub(r);
+    if (S.view.name === "era" && !eraById(id)) show("home");
+    else settingsRefresh(true);
+    toast("Removed layer from Hub");
+  } catch (e) { el.disabled = false; toast("Could not remove from Hub: " + e.message, 5000); }
+};
+ACTIONS.hubLayerVis = async el => {
+  const id = el.dataset.id, visibility = el.value;
+  if (!id) return;
+  try {
+    const r = await api("/api/hub/layer/update", { method: "POST", body: { id, visibility } });
+    applyHub(r);
+    toast(`Updated visibility to ${visibility}`);
+  } catch (e) { toast(e.message, 5000); loadHub(); }
+};
+ACTIONS.hubBuildMap = async el => {
+  const id = el.dataset.id; if (!id || el.disabled) return;
+  const prev = el.textContent; el.disabled = true; el.textContent = "Building on Hub…";
+  try {
+    const job = await api("/api/hub/build-map", { method: "POST", body: { id, visibility: "hub" } });
+    if (job.job_id && job.state !== "done") {
+      toast("Hub is downloading & tiling this map onto its disk…", 5000);
+      for (let i = 0; i < 120; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const st = await api(`/api/hub/job/${encodeURIComponent(job.job_id)}`);
+        if (st.state === "done") break;
+        if (st.state === "failed") throw new Error(st.error || "Hub build failed.");
+      }
+    }
+    await loadHub();
+    setEra(id);
+    toast("Map built and cached permanently on Hub");
+  } catch (e) { toast("Hub build failed: " + e.message, 5000); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.hubClearSecret = async el => {
+  const k = el.dataset.k; if (!k) return;
+  try {
+    const r = await api("/api/hub/admin/secrets", { method: "POST", body: { [k]: "" } });
+    applyHub(r);
+    settingsRefresh(true);
+    toast("Cleared secret on Hub");
+  } catch (e) { toast(e.message, 5000); }
+};
+ACTIONS.hubDelProp = async el => {
+  const id = el.dataset.id; if (!id) return;
+  try {
+    const r = await api("/api/hub/admin/proprietary/delete", { method: "POST", body: { id } });
+    applyHub(r);
+    settingsRefresh(true);
+    toast("Removed tile feed from Hub");
+  } catch (e) { toast(e.message, 5000); }
+};
+ACTIONS.hubRevokeKey = async el => {
+  const key_id = el.dataset.id; if (!key_id) return;
+  try {
+    const r = await api("/api/hub/admin/keys/revoke", { method: "POST", body: { key_id } });
+    applyHub(r);
+    settingsRefresh(true);
+    toast(`Revoked key ${key_id}`);
+  } catch (e) { toast(e.message, 5000); }
+};
+ACTIONS.clearLocalKeys = async () => {
+  try {
+    S.localKeys = { ...(await api("/api/local-keys", { method: "POST", body: { USGS_M2M_TOKEN: "", EARTHDATA_TOKEN: "" } })), loaded: true };
+    settingsRefresh(true);
+    toast("Cleared local tokens");
+  } catch (e) { toast(e.message, 5000); }
+};
+
 ACTIONS.useDem = el => {
   const id = el.dataset.id; if (!id) return;
   setTerrainSource(id);
-  const b = S.lib.byId.get(id)?.bounds;
+  const b = S.lib.byId.get(id)?.bounds || (S.hub.layers || []).find(l => l.id === id)?.bounds;
   if (b) primary().fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: mapPadding(), maxZoom: 14, duration: reduceMotion ? 0 : 600 });
   toast("Showing bare-earth relief");
 };
@@ -4146,8 +4351,8 @@ VIEWS.settings = v => {
     </div>
     <h3 class="sub-head">Intermediary Hub server</h3>
     <div class="set-block">${hubSectionHTML()}</div>
-    <h3 class="sub-head">Kaggle key</h3>
-    <div class="set-block">${keySectionHTML()}</div>
+    <h3 class="sub-head">Local archive keys (standalone)</h3>
+    <div class="set-block stack" style="gap:10px">${keySectionHTML()}${localKeysSectionHTML()}</div>
     <h3 class="sub-head">My maps &amp; LiDAR DEMs</h3>
     <div class="set-block">
       <p class="small-t muted">Add a map or elevation GeoTIFF from your computer. A GeoTIFF, float32 LiDAR DEM, or GeoPDF is placed for you. A photo or scan (JPG, PNG or PDF) is placed by matching spots to today’s map (8+ spots use Thin Plate Spline).</p>
@@ -4170,8 +4375,84 @@ VIEWS.settings.after = () => {
     try {
       const r = await api("/api/hub/config", { method: "POST", body: { url: f.hurl.value.trim(), api_key: f.hkey.value.trim(), auto_push: !!f.hauto.checked } });
       applyHub(r);
+      settingsRefresh(true);
       toast("Connected to Hub server");
-    } catch (x) { err.textContent = x.message; btn.disabled = false; btn.textContent = "Connect Hub"; }
+    } catch (x) { err.textContent = x.message; btn.disabled = false; btn.textContent = "Connect"; }
+  });
+  $("#hubSecretsForm")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.target, err = $("#hubSecErr"), btn = f.querySelector('button[type="submit"]');
+    err.textContent = ""; btn.disabled = true;
+    const body = {
+      USGS_USERNAME: f.usgs_u.value.trim(),
+      KAGGLE_USERNAME: f.kag_u.value.trim(),
+      MAPVIETNAM_CONTACT: f.contact.value.trim(),
+      ALLOW_NC_SOURCES: f.allow_nc.checked ? "true" : "false",
+    };
+    if (f.usgs_t.value.trim()) body.USGS_M2M_TOKEN = f.usgs_t.value.trim();
+    if (f.kag_k.value.trim()) body.KAGGLE_KEY = f.kag_k.value.trim();
+    if (f.ed_t.value.trim()) body.EARTHDATA_TOKEN = f.ed_t.value.trim();
+    try {
+      const r = await api("/api/hub/admin/secrets", { method: "POST", body });
+      applyHub(r);
+      settingsRefresh(true);
+      toast("Saved upstream settings on Hub");
+    } catch (x) { err.textContent = x.message; }
+    finally { if (btn.isConnected) btn.disabled = false; }
+  });
+  $("#hubPropForm")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.target, err = $("#hubPropErr"), btn = f.querySelector('button[type="submit"]');
+    err.textContent = ""; btn.disabled = true;
+    try {
+      const r = await api("/api/hub/admin/proprietary", {
+        method: "POST",
+        body: {
+          id: f.pid.value.trim(),
+          title: f.ptitle.value.trim(),
+          tiles: f.ptiles.value.trim(),
+          encoding: f.penc.value || null,
+          format: f.pfmt.value,
+          maxzoom: +f.pz.value || 18,
+          attribution: f.pattr.value.trim(),
+          stream_only: !!f.pstream.checked,
+        },
+      });
+      applyHub(r);
+      settingsRefresh(true);
+      toast("Added tile feed to Hub");
+    } catch (x) { err.textContent = x.message; }
+    finally { if (btn.isConnected) btn.disabled = false; }
+  });
+  $("#hubKeyForm")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.target, err = $("#hubKeyErr"), btn = f.querySelector('button[type="submit"]');
+    err.textContent = ""; btn.disabled = true;
+    try {
+      const r = await api("/api/hub/admin/keys", {
+        method: "POST",
+        body: { label: f.klabel.value.trim(), scopes: f.krole.value.split(","), group_tag: f.kgroup.value.trim() },
+      });
+      S.hub.justCreatedKey = r.created_key || null;
+      applyHub(r);
+      settingsRefresh(true);
+      toast("Created collaborator API key");
+    } catch (x) { err.textContent = x.message; }
+    finally { if (btn.isConnected) btn.disabled = false; }
+  });
+  $("#localKeysForm")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.target, err = $("#localKeysErr"), btn = f.querySelector('button[type="submit"]');
+    err.textContent = ""; btn.disabled = true;
+    const body = { USGS_USERNAME: f.uuser.value.trim(), MAPVIETNAM_CONTACT: f.contact.value.trim() };
+    if (f.utok.value.trim()) body.USGS_M2M_TOKEN = f.utok.value.trim();
+    if (f.etok.value.trim()) body.EARTHDATA_TOKEN = f.etok.value.trim();
+    try {
+      S.localKeys = { ...(await api("/api/local-keys", { method: "POST", body })), loaded: true };
+      settingsRefresh(true);
+      toast("Saved local archive keys");
+    } catch (x) { err.textContent = x.message; }
+    finally { if (btn.isConnected) btn.disabled = false; }
   });
   wireKeyBox();
 };

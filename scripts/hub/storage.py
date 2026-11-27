@@ -175,8 +175,9 @@ class HubStorage:
             db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 
     def allow_noncommercial(self):
-        """True unless the operator explicitly set `ALLOW_NC_SOURCES=false`."""
-        return (self.env.get("ALLOW_NC_SOURCES") or "true").strip().lower() not in ("0", "false", "no")
+        """True unless the operator disabled `ALLOW_NC_SOURCES` via the desktop Admin UI or env."""
+        raw = self.vault.get("ALLOW_NC_SOURCES") or "true"
+        return raw.strip().lower() not in ("0", "false", "no")
 
     # ---- infinite write-once raw upstream cache -------------------------------------------------
     def raw_blob_path(self, sha256_hex):
@@ -508,6 +509,46 @@ class HubStorage:
             raise AuthError("This API key does not have access to that layer.", status=403)
         return row
 
+    def update_layer_meta(self, layer_id, updates, principal):
+        """Update metadata or visibility of an existing Hub layer (owner or `admin`)."""
+        if not is_safe_id(layer_id):
+            raise HubStorageError("Invalid layer id.")
+        with self._tile_lock(f"layer:{layer_id}"), closing(self.connect()) as db:
+            row = db.execute("SELECT * FROM hub_layers WHERE id = ?", (layer_id,)).fetchone()
+            if row is None:
+                return None
+            if not (principal.has_scope("admin") or (row["owner_key_id"] and row["owner_key_id"] == principal.key_id)):
+                raise AuthError("Only the key that uploaded this layer (or an admin) can edit it.", status=403)
+            title = " ".join(str(updates.get("title") if "title" in updates else row["title"]).split())[:200]
+            if not title:
+                raise HubStorageError("Give the layer a title.")
+            date = str(updates.get("date") if "date" in updates else row["date"]).strip()[:32]
+            vis = str(updates.get("visibility") if "visibility" in updates else row["visibility"]).lower()
+            if vis not in VISIBILITIES:
+                raise HubStorageError(f"Visibility must be one of {', '.join(sorted(VISIBILITIES))}.")
+            policy = str(
+                updates.get("licence_policy") if "licence_policy" in updates else row["licence_policy"]
+            ).lower()
+            if policy not in LICENCE_POLICIES:
+                policy = row["licence_policy"]
+            if principal.has_scope("admin") and "group_tag" in updates:
+                group_tag = re.sub(r"[^A-Za-z0-9_.-]", "", str(updates.get("group_tag") or ""))[:64]
+            else:
+                group_tag = row["group_tag"] or principal.group_tag or ""
+            if vis == "group" and not group_tag:
+                raise HubStorageError("Assign a group tag before setting visibility to group.")
+            with db:
+                db.execute(
+                    """
+                    UPDATE hub_layers
+                    SET title = ?, date = ?, visibility = ?, group_tag = ?, licence_policy = ?, updated_at = ?
+                    WHERE id = ?
+                    """,
+                    (title, date, vis, group_tag, policy, utc_now(), layer_id),
+                )
+            updated = db.execute("SELECT * FROM hub_layers WHERE id = ?", (layer_id,)).fetchone()
+        return self.layer_to_dict(updated)
+
     def delete_layer(self, layer_id, principal):
         """Remove a layer from the Hub (allowed only for its owner or an `admin` key)."""
         if not is_safe_id(layer_id):
@@ -697,14 +738,35 @@ class HubStorage:
             )
         return {"type": "FeatureCollection", "features": features}
 
+    def delete_media(self, media_id, principal):
+        """Delete a geolocated media item from `hub_media` (owner or `admin`)."""
+        if not is_safe_id(media_id):
+            raise HubStorageError("Invalid media id.")
+        with closing(self.connect()) as db:
+            row = db.execute("SELECT owner_key_id FROM hub_media WHERE id = ?", (media_id,)).fetchone()
+            if row is None:
+                return False
+            if not (principal.has_scope("admin") or (row["owner_key_id"] and row["owner_key_id"] == principal.key_id)):
+                raise AuthError("Only the key that added this photo (or an admin) can remove it.", status=403)
+            with db:
+                db.execute("DELETE FROM hub_media WHERE id = ?", (media_id,))
+        return True
+
     def stats(self):
         """Disk and object counts on the Hub's persistent volume."""
+        import shutil
+
         with closing(self.connect()) as db:
             raw_count, raw_bytes = db.execute("SELECT COUNT(*), COALESCE(SUM(size_bytes), 0) FROM raw_cache").fetchone()
             layer_count, layer_bytes = db.execute(
                 "SELECT COUNT(*), COALESCE(SUM(size_bytes), 0) FROM hub_layers"
             ).fetchone()
             media_count = db.execute("SELECT COUNT(*) FROM hub_media").fetchone()[0]
+        try:
+            usage = shutil.disk_usage(self.root)
+            disk_total, disk_free = int(usage.total), int(usage.free)
+        except OSError:
+            disk_total, disk_free = 0, 0
         return {
             "volume_path": str(self.root),
             "cache_policy": "infinite_write_once",
@@ -713,4 +775,6 @@ class HubStorage:
             "layers": int(layer_count),
             "layer_bytes": int(layer_bytes),
             "media_items": int(media_count),
+            "disk_total_bytes": disk_total,
+            "disk_free_bytes": disk_free,
         }

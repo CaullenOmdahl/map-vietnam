@@ -37,8 +37,10 @@ UPSTREAM_SECRET_KEYS = (
     "KAGGLE_KEY",
     "EARTHDATA_TOKEN",
     "MAPVIETNAM_CONTACT",
+    "ALLOW_NC_SOURCES",
     "PROPRIETARY_SOURCES_JSON",
 )
+ADMIN_ENV_KEY_ID = "adminenv"
 
 
 class AuthError(PermissionError):
@@ -134,7 +136,7 @@ def parse_token(token):
     return m.group(1), m.group(2)
 
 
-def mint_key(db, label, scopes=DEFAULT_CLIENT_SCOPES, group_tag="", *, fixed_token=None):
+def mint_key(db, label, scopes=DEFAULT_CLIENT_SCOPES, group_tag="", *, fixed_token=None, fixed_key_id=None):
     """Create (or idempotently update when `fixed_token` is supplied) a Hub API key.
 
     Returns `{"key_id", "token", "label", "scopes", "group_tag", "created_at"}`.
@@ -145,16 +147,14 @@ def mint_key(db, label, scopes=DEFAULT_CLIENT_SCOPES, group_tag="", *, fixed_tok
 
     if fixed_token is not None:
         parsed_id, secret_part = parse_token(fixed_token)
-        if parsed_id and secret_part:
+        if parsed_id and secret_part and not fixed_key_id:
             key_id = parsed_id
             token = fixed_token.strip()
         else:
-            # Allow a human-chosen bootstrap secret in HUB_BOOTSTRAP_ADMIN_KEY by deriving a deterministic id
-            # while still hashing the full token secret with scrypt.
             raw = str(fixed_token).strip()
-            if len(raw) < 16:
-                raise ValueError("Bootstrap admin key must be at least 16 characters.")
-            key_id = hashlib.sha256(f"mvhub-id:{raw}".encode()).hexdigest()[:8]
+            if len(raw) < 8:
+                raise ValueError("Server admin password/key must be at least 8 characters.")
+            key_id = fixed_key_id or hashlib.sha256(f"mvhub-id:{raw}".encode()).hexdigest()[:8]
             secret_part = raw
             token = raw
     else:
@@ -191,39 +191,48 @@ def mint_key(db, label, scopes=DEFAULT_CLIENT_SCOPES, group_tag="", *, fixed_tok
 
 
 def ensure_bootstrap_admin(db, env=None):
-    """If `HUB_BOOTSTRAP_ADMIN_KEY` is set in `env` (or `os.environ`), register it as an admin key."""
+    """Register `HUB_ADMIN_PASSWORD` (or `HUB_BOOTSTRAP_ADMIN_KEY`) from `env` as the admin password.
+
+    Uses fixed `key_id='adminenv'` so rotating the password in Railway's environment variables
+    automatically replaces the previous bootstrap password on restart.
+    """
     env = os.environ if env is None else env
-    raw = (env.get("HUB_BOOTSTRAP_ADMIN_KEY") or "").strip()
+    raw = (env.get("HUB_ADMIN_PASSWORD") or env.get("HUB_BOOTSTRAP_ADMIN_KEY") or "").strip()
     if not raw:
         return None
-    return mint_key(db, "Bootstrap Admin", scopes=ALL_SCOPES, fixed_token=raw)
+    return mint_key(db, "Server Admin Password", scopes=ALL_SCOPES, fixed_token=raw, fixed_key_id=ADMIN_ENV_KEY_ID)
 
 
 def authenticate(db, auth_header):
-    """Verify an `Authorization: Bearer <token>` header and return a `Principal`, or raise AuthError."""
+    """Verify an `Authorization: Bearer <token_or_password>` header and return a `Principal`."""
     if not auth_header or not isinstance(auth_header, str):
-        raise AuthError("Missing Authorization Bearer token.", status=401)
+        raise AuthError("Missing Authorization Bearer token or password.", status=401)
     parts = auth_header.strip().split(None, 1)
     if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise AuthError("Use Authorization: Bearer <hub_api_key>.", status=401)
+        raise AuthError("Use Authorization: Bearer <password_or_api_key>.", status=401)
     raw_token = parts[1].strip()
     key_id, secret_part = parse_token(raw_token)
-    if not key_id:
-        # Support custom bootstrap secret hashed via `mvhub-id:<raw>`.
-        key_id = hashlib.sha256(f"mvhub-id:{raw_token}".encode()).hexdigest()[:8]
-        secret_part = raw_token
+    candidate_ids = (
+        [(key_id, secret_part)]
+        if key_id
+        else [
+            (ADMIN_ENV_KEY_ID, raw_token),
+            (hashlib.sha256(f"mvhub-id:{raw_token}".encode()).hexdigest()[:8], raw_token),
+        ]
+    )
 
-    row = db.execute(
-        "SELECT key_id, label, salt, digest, scopes, group_tag, revoked_at FROM api_keys WHERE key_id = ?",
-        (key_id,),
-    ).fetchone()
-    if row is None or row["revoked_at"] is not None:
-        raise AuthError("Invalid or revoked Hub API key.", status=401)
-    candidate = _derive(secret_part, bytes(row["salt"]))
-    if not hmac.compare_digest(candidate, bytes(row["digest"])):
-        raise AuthError("Invalid or revoked Hub API key.", status=401)
-    scopes = frozenset(s for s in row["scopes"].split(",") if s)
-    return Principal(key_id=row["key_id"], label=row["label"], scopes=scopes, group_tag=row["group_tag"] or "")
+    for cid, csecret in candidate_ids:
+        row = db.execute(
+            "SELECT key_id, label, salt, digest, scopes, group_tag, revoked_at FROM api_keys WHERE key_id = ?",
+            (cid,),
+        ).fetchone()
+        if row is None or row["revoked_at"] is not None:
+            continue
+        candidate = _derive(csecret, bytes(row["salt"]))
+        if hmac.compare_digest(candidate, bytes(row["digest"])):
+            scopes = frozenset(s for s in row["scopes"].split(",") if s)
+            return Principal(key_id=row["key_id"], label=row["label"], scopes=scopes, group_tag=row["group_tag"] or "")
+    raise AuthError("Invalid or revoked Hub password or API key.", status=401)
 
 
 def list_keys(db):
@@ -267,13 +276,13 @@ class UpstreamVault:
         self._env = os.environ if env is None else env
 
     def get(self, name):
-        """Return secret `name`, or `""` if not configured."""
-        env_val = (self._env.get(name) or "").strip()
-        if env_val:
-            return env_val
+        """Return secret `name` (preferring values saved from the desktop Admin UI in `vault_secrets`,
+        falling back to environment variables), or `""` if not configured."""
         with self._db_factory() as db:
             row = db.execute("SELECT value FROM vault_secrets WHERE name = ?", (name,)).fetchone()
-            return (row["value"] if row else "").strip()
+            if row is not None and row["value"].strip():
+                return row["value"].strip()
+        return (self._env.get(name) or "").strip()
 
     def set_many(self, updates):
         """Set or delete (`None` / `""`) allowed upstream secret names in `vault_secrets`."""
@@ -283,7 +292,9 @@ class UpstreamVault:
         now = utc_now()
         with self._db_factory() as db, db:
             for name, val in updates.items():
-                clean = "" if val is None else str(val).strip()
+                if val is None:
+                    continue
+                clean = str(val).strip()
                 if clean:
                     db.execute(
                         """
@@ -294,6 +305,120 @@ class UpstreamVault:
                     )
                 else:
                     db.execute("DELETE FROM vault_secrets WHERE name = ?", (name,))
+
+    @staticmethod
+    def _mask_tile_url(url):
+        import urllib.parse
+
+        raw = str(url or "").strip()
+        parsed = urllib.parse.urlparse(raw)
+        path_parts = []
+        for seg in (parsed.path or "").split("/"):
+            if seg and "{" not in seg and len(seg) >= 16 and re.search(r"[0-9]", seg) and re.search(r"[A-Za-z]", seg):
+                path_parts.append(seg[:4] + "••••")
+            else:
+                path_parts.append(seg)
+        masked_path = "/".join(path_parts)
+        if not parsed.query:
+            return f"{parsed.scheme}://{parsed.netloc}{masked_path}"
+        q_items = []
+        for qk, qv in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True):
+            if re.search(r"(?i)(key|token|secret|auth|sig|pass)", qk) or len(qv) >= 12:
+                q_items.append(f"{qk}=••••")
+            else:
+                q_items.append(f"{qk}={qv}")
+        return f"{parsed.scheme}://{parsed.netloc}{masked_path}?{'&'.join(q_items)}"
+
+    def admin_summary(self):
+        """Safe configuration state for desktop Admin UI (never exposes raw secret tokens)."""
+        allow_nc_raw = self.get("ALLOW_NC_SOURCES")
+        allow_nc = allow_nc_raw.lower() not in ("0", "false", "no") if allow_nc_raw else True
+        feeds = []
+        for src in self.proprietary_sources():
+            feeds.append(
+                {
+                    "id": src["id"],
+                    "title": src.get("title") or src["id"],
+                    "series": src.get("series") or "Hub Proprietary Sources",
+                    "encoding": src.get("encoding") or None,
+                    "format": src.get("format") or "webp",
+                    "maxzoom": int(src.get("maxzoom", 18)),
+                    "bounds": src.get("bounds") or [102.0, 8.0, 110.5, 23.6],
+                    "attribution": src.get("attribution") or "Proprietary Hub Source",
+                    "stream_only": bool(src.get("stream_only", True)),
+                    "tiles_masked": self._mask_tile_url(src.get("tiles", "")),
+                }
+            )
+        return {
+            "usgs_username": self.get("USGS_USERNAME"),
+            "has_usgs_token": bool(self.get("USGS_M2M_TOKEN")),
+            "kaggle_username": self.get("KAGGLE_USERNAME"),
+            "has_kaggle_key": bool(self.get("KAGGLE_KEY")),
+            "has_earthdata_token": bool(self.get("EARTHDATA_TOKEN")),
+            "contact": self.get("MAPVIETNAM_CONTACT"),
+            "allow_nc_sources": allow_nc,
+            "proprietary_sources": feeds,
+        }
+
+    def upsert_proprietary_source(self, spec):
+        """Add or update a single proprietary tile/DEM feed from the desktop Admin UI."""
+        import urllib.parse
+
+        from hub.polite import is_safe_id
+
+        if not isinstance(spec, dict):
+            raise ValueError("Feed definition must be a JSON object.")
+        sid = str(spec.get("id") or "").strip()
+        if not is_safe_id(sid):
+            raise ValueError(
+                "Feed ID must start with a letter or number and use only letters, digits, '_', '-' or '.'."
+            )
+        tiles = str(spec.get("tiles") or "").strip()
+        if "{z}" not in tiles or "{x}" not in tiles or "{y}" not in tiles:
+            raise ValueError("Tile URL template must include {z}, {x}, and {y} placeholders.")
+        sample = tiles.replace("{z}", "0").replace("{x}", "0").replace("{y}", "0")
+        parsed = urllib.parse.urlparse(sample)
+        allow_lb = (self._env.get("HUB_ALLOW_LOOPBACK_UPSTREAM") or "").strip() == "1"
+        host = (parsed.hostname or "").lower()
+        if parsed.scheme.lower() == "https" and host and host not in ("localhost", "127.0.0.1", "::1"):
+            pass
+        elif allow_lb and parsed.scheme.lower() == "http" and host in ("127.0.0.1", "localhost"):
+            pass
+        else:
+            raise ValueError("Proprietary tile feed URL must use https:// on a public host.")
+
+        fmt = str(spec.get("format") or "webp").lower()
+        if fmt not in ("webp", "png", "jpg", "jpeg"):
+            raise ValueError("Tile format must be webp, png, or jpg.")
+        enc = "terrarium" if spec.get("encoding") == "terrarium" else None
+        bounds = spec.get("bounds")
+        if isinstance(bounds, str) and bounds.strip():
+            bounds = [float(v) for v in bounds.split(",")]
+        if not (isinstance(bounds, list) and len(bounds) == 4 and bounds[0] < bounds[2] and bounds[1] < bounds[3]):
+            bounds = [102.0, 8.0, 110.5, 23.6]
+        entry = {
+            "id": sid,
+            "title": str(spec.get("title") or sid).strip()[:160],
+            "series": str(spec.get("series") or "Hub Proprietary Sources").strip()[:160],
+            "tiles": tiles,
+            "encoding": enc,
+            "format": "jpg" if fmt == "jpeg" else fmt,
+            "maxzoom": max(1, min(22, int(spec.get("maxzoom") or 18))),
+            "bounds": [round(float(v), 4) for v in bounds],
+            "attribution": str(spec.get("attribution") or "Proprietary Hub Source").strip()[:300],
+            "stream_only": bool(spec.get("stream_only", True)),
+        }
+        existing = [it for it in self.proprietary_sources() if it.get("id") != sid]
+        existing.append(entry)
+        self.set_many({"PROPRIETARY_SOURCES_JSON": json.dumps(existing, ensure_ascii=False)})
+        return self.admin_summary()
+
+    def delete_proprietary_source(self, source_id):
+        """Remove a proprietary tile/DEM feed by `id`."""
+        existing = self.proprietary_sources()
+        kept = [it for it in existing if it.get("id") != source_id]
+        self.set_many({"PROPRIETARY_SOURCES_JSON": json.dumps(kept, ensure_ascii=False) if kept else ""})
+        return self.admin_summary()
 
     def status(self):
         """Non-sensitive boolean capability summary safe to show authenticated clients."""
@@ -353,8 +478,18 @@ class UpstreamVault:
         if not out:
             return out
         sensitive = []
-        for k in ("USGS_M2M_TOKEN", "KAGGLE_KEY", "EARTHDATA_TOKEN", "HUB_BOOTSTRAP_ADMIN_KEY"):
-            val = self.get(k) if k != "HUB_BOOTSTRAP_ADMIN_KEY" else (self._env.get(k) or "").strip()
+        for k in (
+            "USGS_M2M_TOKEN",
+            "KAGGLE_KEY",
+            "EARTHDATA_TOKEN",
+            "HUB_ADMIN_PASSWORD",
+            "HUB_BOOTSTRAP_ADMIN_KEY",
+        ):
+            val = (
+                self.get(k)
+                if k not in ("HUB_ADMIN_PASSWORD", "HUB_BOOTSTRAP_ADMIN_KEY")
+                else (self._env.get(k) or "").strip()
+            )
             if val and len(val) >= 4:
                 sensitive.append(val)
         for src in self._raw_proprietary_items():

@@ -628,3 +628,187 @@ def test_security_guards_path_traversal_ssrf_group_spoofing_and_sea_level_lidar(
         ),
     )
     assert len(gedi["features"]) == 1 and gedi["features"][0]["properties"]["ground_m"] == 0.0
+
+
+def test_zero_touch_railway_password_and_full_desktop_admin_workflow(tmp_path, monkeypatch):
+    """Deploy Hub with ONLY `HUB_ADMIN_PASSWORD` set; configure 100% of upstream keys, proprietary
+    tile feeds, collaborator keys, and Hub layers directly through the desktop server API."""
+    import urllib.error
+    import urllib.request
+
+    import server
+    import store
+
+    archive = FakeArchive()
+    lib = make_library(tmp_path / "desktop", archive, monkeypatch)
+
+    vol = tmp_path / "railway_vol"
+    hub_srv = make_hub_server(
+        host="127.0.0.1",
+        port=0,
+        data_root=vol,
+        env={"HUB_ADMIN_PASSWORD": "client-master-pass-123"},
+        pacer=HostPacer(default_interval=0.0),
+        app_root=lib.app_root,
+    )
+    threading.Thread(target=hub_srv.serve_forever, daemon=True).start()
+    bare_ip_port = f"127.0.0.1:{hub_srv.server_address[1]}"  # No http:// prefix!
+
+    db_path = tmp_path / "desktop" / "e.sqlite"
+    store.connect(db_path).close()
+    desk_srv = server.make_server(0, db_path, map_library=lib)
+    threading.Thread(target=desk_srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{desk_srv.server_address[1]}"
+
+    def call(route, method="GET", body=None):
+        data = json.dumps(body).encode("utf-8") if body is not None else None
+        req = urllib.request.Request(
+            f"{base}{route}", data=data, method=method, headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return json.loads(r.read().decode("utf-8"))
+
+    try:
+        # 1. Connect using bare IP:port + HUB_ADMIN_PASSWORD -> receives full `admin` overview & disk stats.
+        st = call("/api/hub/config", "POST", {"url": bare_ip_port, "api_key": "client-master-pass-123"})
+        assert st["connected"] is True
+        assert "admin" in st["me"]["scopes"]
+        assert st["me"]["stats"]["disk_total_bytes"] > 0
+        assert st["admin"]["vault"]["has_usgs_token"] is False
+
+        # 2. Save upstream USGS / Kaggle / NASA secrets via desktop app -> active immediately, raw tokens never echoed.
+        st = call(
+            "/api/hub/admin/secrets",
+            "POST",
+            {
+                "USGS_USERNAME": "client_eros",
+                "USGS_M2M_TOKEN": "m2m_super_secret_token_abc",
+                "KAGGLE_USERNAME": "client_kag",
+                "KAGGLE_KEY": "kag_super_secret_xyz",
+                "EARTHDATA_TOKEN": "ed_bearer_token_999",
+                "MAPVIETNAM_CONTACT": "ops@client.org",
+                "ALLOW_NC_SOURCES": "true",
+            },
+        )
+        assert st["me"]["capabilities"]["usgs_m2m"] is True
+        assert st["me"]["capabilities"]["kaggle"] is True
+        assert st["me"]["capabilities"]["earthdata"] is True
+        assert st["admin"]["vault"]["usgs_username"] == "client_eros"
+        assert st["admin"]["vault"]["has_usgs_token"] is True
+        assert "m2m_super_secret_token_abc" not in json.dumps(st)
+
+        # 3. Add & remove a proprietary tile feed via point-and-click form (no raw JSON).
+        st = call(
+            "/api/hub/admin/proprietary",
+            "POST",
+            {
+                "id": "planet_2025",
+                "title": "Planet VN 2025",
+                "tiles": "https://tiles.planet.example/v1/{z}/{x}/{y}.png?api_key=planet_secret_key_55555",
+                "format": "png",
+                "maxzoom": 18,
+                "stream_only": True,
+            },
+        )
+        assert any(lyr["id"] == "prop_planet_2025" for lyr in st["layers"])
+        masked = st["admin"]["vault"]["proprietary_sources"][0]["tiles_masked"]
+        assert "planet_secret_key_55555" not in masked and "••••" in masked
+        st = call("/api/hub/admin/proprietary/delete", "POST", {"id": "planet_2025"})
+        assert not any(lyr["id"] == "prop_planet_2025" for lyr in st["layers"])
+
+        # 4. Mint a collaborator API key, verify `adminenv` cannot be revoked, then revoke the collaborator key.
+        st = call(
+            "/api/hub/admin/keys",
+            "POST",
+            {"label": "Field Researcher", "scopes": ["read", "request_build", "upload"], "group_tag": "delta"},
+        )
+        collab = st["created_key"]
+        assert collab["token"].startswith("mvhub_")
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            call("/api/hub/admin/keys/revoke", "POST", {"key_id": "adminenv"})
+        assert exc.value.code == 400
+        st = call("/api/hub/admin/keys/revoke", "POST", {"key_id": collab["key_id"]})
+        assert any(k["key_id"] == collab["key_id"] and k["active"] is False for k in st["admin"]["keys"])
+
+        # 5. Push a map, update its visibility & title on the Hub, then delete it from the Hub — all via desktop API!
+        tif = tmp_path / "m.tif"
+        with rasterio.open(
+            tif,
+            "w",
+            driver="GTiff",
+            width=16,
+            height=16,
+            count=3,
+            dtype="uint8",
+            crs="EPSG:4326",
+            transform=from_origin(105.6, 10.5, 0.005, 0.005),
+        ) as ds:
+            ds.write(np.full((3, 16, 16), 200, np.uint8))
+        part = lib.custom.incoming_path()
+        part.write_bytes(tif.read_bytes())
+        entry = lib.custom.ingest(part, "m.tif", "Client Sheet", "1969")
+        lib.add([entry["id"]])
+        lib.run_pending()
+
+        st = call("/api/hub/push", "POST", {"id": entry["id"], "visibility": "private"})
+        assert any(lyr["id"] == entry["id"] and lyr["visibility"] == "private" for lyr in st["layers"])
+        st = call(
+            "/api/hub/layer/update",
+            "POST",
+            {"id": entry["id"], "visibility": "hub", "title": "Renamed Client Sheet"},
+        )
+        assert any(
+            lyr["id"] == entry["id"] and lyr["visibility"] == "hub" and lyr["title"] == "Renamed Client Sheet"
+            for lyr in st["layers"]
+        )
+        st = call("/api/hub/layer/delete", "POST", {"id": entry["id"]})
+        assert not any(lyr["id"] == entry["id"] for lyr in st["layers"])
+
+        # 6. Build a standard catalog map directly onto the Hub via /api/hub/build-map!
+        job = call("/api/hub/build-map", "POST", {"id": "scan_test", "visibility": "hub"})
+        if job.get("job_id") and job["state"] != "done":
+            deadline = time.monotonic() + 25
+            while time.monotonic() < deadline:
+                polled = call(f"/api/hub/job/{job['job_id']}")
+                if polled["state"] in ("done", "failed"):
+                    assert polled["state"] == "done", polled.get("error")
+                    break
+                time.sleep(0.2)
+        st = call("/api/hub")
+        assert any(lyr["id"] == "scan_test" for lyr in st["layers"])
+
+        # 7. Standalone local archive keys (`/api/local-keys`) save to `.env` (`0600`) without echoing secrets.
+        lk = call(
+            "/api/local-keys",
+            "POST",
+            {"USGS_USERNAME": "local_u", "USGS_M2M_TOKEN": "local_secret_999", "EARTHDATA_TOKEN": "ed_loc_888"},
+        )
+        assert lk["usgs_username"] == "local_u" and lk["has_usgs_token"] is True and lk["has_earthdata_token"] is True
+        assert "local_secret_999" not in json.dumps(lk)
+
+        # 8. Rotating HUB_ADMIN_PASSWORD on Hub restart invalidates the old password cleanly.
+        hub_srv.stop_gracefully()
+        time.sleep(0.1)
+        hub_srv.server_close()
+        hub_srv2 = make_hub_server(
+            host="127.0.0.1",
+            port=0,
+            data_root=vol,
+            env={"HUB_ADMIN_PASSWORD": "rotated-new-password-456"},
+            pacer=HostPacer(default_interval=0.0),
+        )
+        threading.Thread(target=hub_srv2.serve_forever, daemon=True).start()
+        try:
+            new_ip_port = f"127.0.0.1:{hub_srv2.server_address[1]}"
+            with pytest.raises(urllib.error.HTTPError) as exc_old:
+                call("/api/hub/config", "POST", {"url": new_ip_port, "api_key": "client-master-pass-123"})
+            assert exc_old.value.code == 400
+            st_new = call("/api/hub/config", "POST", {"url": new_ip_port, "api_key": "rotated-new-password-456"})
+            assert st_new["connected"] is True and st_new["admin"]["vault"]["usgs_username"] == "client_eros"
+        finally:
+            hub_srv2.stop_gracefully()
+            hub_srv2.server_close()
+    finally:
+        desk_srv.quit()
+        hub_srv.stop_gracefully()
+        archive.close()

@@ -28,9 +28,11 @@ on your own computer and opens in its own window.
   satellite scenes, wartime `Landsat 1–2 MSS` scenes, `OpenAerialMap` drone orthomosaics, `Allmaps`
   IIIF sheets, and `NARA RG 373` 1°×1° aerial sortie overlay indexes
 - Optional Dockerized **Intermediary Hub Server** (ready for Railway with an attached persistent
-  disk): vault upstream API keys once, pace and deduplicate requests politely, cache old maps and
-  archive responses **infinitely**, and push locally imported or aligned maps back to the Hub to
-  share with collaborators or across your own machines
+  disk and a single `HUB_ADMIN_PASSWORD` environment variable): connect from the desktop app using
+  the server's domain or IP address and password, then configure upstream API keys, proprietary
+  feeds, collaborator keys, and all map/LiDAR data management inside the desktop app — with polite
+  request pacing, **infinite** caching, and bidirectional map sync without ever touching Railway
+  again
 - Adjust the alignment and scale of any installed old map (or uploaded GeoTIFF or GeoPDF) against
   today's map using the same two-pane Placement screen, and reset to the original at any time
 - Navigate with Apple Maps-style trackpad gestures (two-finger pan and pinch-to-zoom, plus macOS

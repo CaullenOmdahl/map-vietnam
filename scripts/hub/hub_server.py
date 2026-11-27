@@ -32,6 +32,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
+import paths  # noqa: E402
 import terrain_aerial  # noqa: E402
 import tiling  # noqa: E402
 
@@ -53,8 +54,10 @@ TILE_ROUTE_RE = re.compile(
 )
 PACK_ROUTE_RE = re.compile(r"^/hub/v1/packs/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})\.mbtiles$")
 LAYER_ROUTE_RE = re.compile(r"^/hub/v1/layers/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})$")
+MEDIA_ROUTE_RE = re.compile(r"^/hub/v1/media/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})$")
+PROP_ROUTE_RE = re.compile(r"^/hub/v1/admin/proprietary/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})$")
 JOB_ROUTE_RE = re.compile(r"^/hub/v1/jobs/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})$")
-KEY_ROUTE_RE = re.compile(r"^/hub/v1/admin/keys/([0-9a-f]{8})$")
+KEY_ROUTE_RE = re.compile(r"^/hub/v1/admin/keys/([A-Za-z0-9_-]{4,16})$")
 UPLOAD_CHUNK = 1 << 20
 MAX_JSON_BYTES = 2 << 20
 IMMUTABLE_CACHE_CONTROL = "private, max-age=31536000, immutable"
@@ -77,12 +80,24 @@ class HubJobRunner:
     """Bounded single-worker background job runner (`max_workers=1`) so COG/tile builds never
     exhaust Railway container RAM, with single-flight job deduplication and clean SIGTERM drain."""
 
-    def __init__(self, storage: HubStorage):
+    def __init__(self, storage: HubStorage, *, app_root=None):
         self.storage = storage
+        self.app_root = Path(app_root) if app_root else paths.APP_ROOT
         self._pool = concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="hub-build")
         self._lock = threading.Lock()
         self._active_by_target = {}  # target_id -> job_id
         self._stopping = False
+
+    def _make_catalog_library(self, scratch_dir):
+        import library
+
+        cat_lib = library.Library(
+            root=scratch_dir,
+            catalogue_path=self.app_root / "data" / "sources" / "map_library.json",
+        )
+        cat_lib.app_root = self.app_root
+        cat_lib.scans = self.app_root / "data" / "scans"
+        return cat_lib
 
     def stop(self):
         """Stop accepting new jobs and shut down cleanly on SIGTERM."""
@@ -198,6 +213,102 @@ class HubJobRunner:
             with self._lock:
                 self._active_by_target.pop(layer_id, None)
 
+    def submit_catalog_map(self, map_id, visibility, principal):
+        """Download and build one standard catalogue map (`data/sources/map_library.json`) directly
+        onto the Hub's `/data/tiles/` infinite cache."""
+        principal.require("request_build")
+        if not is_safe_id(map_id):
+            raise HubStorageError("Invalid map id.")
+
+        cat_lib = self._make_catalog_library(self.storage.work_dir / "cat_build")
+        entries = cat_lib.catalogue_entries()
+        if map_id not in entries:
+            raise HubStorageError(f"Unknown standard catalogue map {map_id!r}.")
+        if self.storage.tiles_path(map_id).is_file():
+            row = self.storage.get_layer_row(map_id, principal)
+            if row is not None:
+                return {"layer_id": map_id, "state": "done", "progress": 1.0}
+
+        vis = visibility if visibility in ("private", "group", "hub") else "hub"
+        with self._lock:
+            if self._stopping:
+                raise HubStorageError("The Hub server is restarting; try again in a moment.")
+            existing_job = self._active_by_target.get(map_id)
+            if existing_job:
+                return self.get_job(existing_job)
+            job_id = f"job_{hashlib.sha256(f'{map_id}:{utc_now()}'.encode()).hexdigest()[:12]}"
+            self._active_by_target[map_id] = job_id
+            now = utc_now()
+            with closing(self.storage.connect()) as db, db:
+                db.execute(
+                    """
+                    INSERT INTO hub_jobs (id, target_id, job_kind, state, progress, status_text, requested_by, created_at, updated_at)
+                    VALUES (?, ?, 'catalog_map', 'queued', 0.0, 'Queued on Hub', ?, ?, ?)
+                    """,
+                    (job_id, map_id, principal.key_id, now, now),
+                )
+            self._pool.submit(self._run_catalog_map_job, job_id, map_id, vis, principal)
+        return self.get_job(job_id)
+
+    def _run_catalog_map_job(self, job_id, map_id, visibility, principal):
+        from files import delete
+
+        from hub.auth import Principal
+
+        scratch = self.storage.work_dir / f"cat_{map_id}_{job_id}"
+        try:
+            self._update_job(job_id, state="running", progress=0.05, status_text=f"Downloading & building {map_id}")
+            cat_lib = self._make_catalog_library(scratch)
+            entry = cat_lib.entry(map_id)
+            cat_lib.add([map_id])
+
+            def _report(j):
+                p = j.progress if j.progress is not None else 0.1
+                frac = 0.05 + 0.45 * p if j.state == "downloading" else 0.5 + 0.45 * p
+                self._update_job(job_id, progress=frac, status_text=f"{j.state.capitalize()} {map_id}")
+
+            cat_lib.run_pending(report=_report)
+            built_mbt = cat_lib.tiles_path(map_id)
+            if not built_mbt.is_file():
+                j = cat_lib._jobs.get(map_id)
+                raise HubStorageError(j.error if j and j.error else f"Failed building {map_id} on Hub.")
+
+            tmeta = tiling.read_metadata(built_mbt)
+            series_id = entry.get("series") or "hub"
+            uploader = Principal(
+                key_id="system" if visibility == "hub" else principal.key_id,
+                label="Hub System" if visibility == "hub" else principal.label,
+                scopes=frozenset({"admin", "read", "request_build", "upload"})
+                if visibility == "hub"
+                else frozenset({*principal.scopes, "upload"}),
+                group_tag=principal.group_tag,
+            )
+            self.storage.ingest_pushed_pack(
+                built_mbt,
+                map_id,
+                {
+                    "title": entry.get("title") or tmeta.get("name") or map_id,
+                    "series": cat_lib.catalogue().get("series", {}).get(series_id, {}).get("name", "Historical maps"),
+                    "series_id": series_id,
+                    "kind": "map",
+                    "date": str(entry.get("date") or entry.get("year") or tmeta.get("date") or ""),
+                    "date_note": str(tmeta.get("date_note") or ""),
+                    "scale": str(entry.get("scale") or ""),
+                    "source": str(entry.get("page") or (entry.get("urls") or [""])[0] or ""),
+                    "attribution": str(entry.get("credit") or "Cached on Map Vietnam Hub"),
+                    "licence_policy": "noncommercial" if series_id == "sgi100k" else "open",
+                    "visibility": visibility,
+                },
+                uploader,
+            )
+            self._update_job(job_id, state="done", progress=1.0, status_text="Ready in infinite Hub cache")
+        except BaseException as e:
+            self._update_job(job_id, state="failed", status_text="Build failed", error=str(e))
+        finally:
+            delete(scratch)
+            with self._lock:
+                self._active_by_target.pop(map_id, None)
+
     def get_job(self, job_id):
         with closing(self.storage.connect()) as db:
             row = db.execute("SELECT * FROM hub_jobs WHERE id = ?", (job_id,)).fetchone()
@@ -260,6 +371,9 @@ class HubHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         self._handle("POST")
 
+    def do_PATCH(self):
+        self._handle("PATCH")
+
     def do_DELETE(self):
         self._handle("DELETE")
 
@@ -320,12 +434,18 @@ class HubHandler(BaseHTTPRequestHandler):
                 return self.receive_pushed_pack(p, q)
 
             m_layer = LAYER_ROUTE_RE.fullmatch(path)
-            if method == "DELETE" and m_layer:
+            if m_layer:
                 p = self.require_principal("upload")
-                deleted = self.storage.delete_layer(m_layer.group(1), p)
-                if not deleted:
-                    return self.send_json({"error": "Layer not found."}, HTTPStatus.NOT_FOUND)
-                return self.send_json({"deleted": m_layer.group(1)})
+                if method == "PATCH":
+                    updated = self.storage.update_layer_meta(m_layer.group(1), self.read_json_body(), p)
+                    if updated is None:
+                        return self.send_json({"error": "Layer not found."}, HTTPStatus.NOT_FOUND)
+                    return self.send_json({"layer": updated})
+                if method == "DELETE":
+                    deleted = self.storage.delete_layer(m_layer.group(1), p)
+                    if not deleted:
+                        return self.send_json({"error": "Layer not found."}, HTTPStatus.NOT_FOUND)
+                    return self.send_json({"deleted": m_layer.group(1)})
 
             if method == "POST" and path == "/hub/v1/jobs/build-dem":
                 p = self.require_principal("request_build")
@@ -333,6 +453,16 @@ class HubHandler(BaseHTTPRequestHandler):
                 job = self.jobs.submit_dem_pack(
                     str(b.get("pack") or "gedtm30"),
                     b.get("bbox"),
+                    str(b.get("visibility") or "hub"),
+                    p,
+                )
+                return self.send_json(job, HTTPStatus.ACCEPTED if job["state"] != "done" else HTTPStatus.OK)
+
+            if method == "POST" and path == "/hub/v1/jobs/build-map":
+                p = self.require_principal("request_build")
+                b = self.read_json_body()
+                job = self.jobs.submit_catalog_map(
+                    str(b.get("id") or "").strip(),
                     str(b.get("visibility") or "hub"),
                     p,
                 )
@@ -374,6 +504,38 @@ class HubHandler(BaseHTTPRequestHandler):
                     rec = self.storage.add_media(self.read_json_body(), p)
                     return self.send_json(rec, HTTPStatus.CREATED)
 
+            m_media = MEDIA_ROUTE_RE.fullmatch(path)
+            if method == "DELETE" and m_media:
+                p = self.require_principal("upload")
+                ok = self.storage.delete_media(m_media.group(1), p)
+                if not ok:
+                    return self.send_json({"error": "Media item not found."}, HTTPStatus.NOT_FOUND)
+                return self.send_json({"deleted": m_media.group(1)})
+
+            if method == "GET" and path == "/hub/v1/admin/overview":
+                self.require_principal("admin")
+                with closing(self.storage.connect()) as db:
+                    keys = list_keys(db)
+                return self.send_json(
+                    {
+                        "vault": self.storage.vault.admin_summary(),
+                        "keys": keys,
+                        "stats": self.storage.stats(),
+                    }
+                )
+
+            if path == "/hub/v1/admin/proprietary":
+                self.require_principal("admin")
+                if method == "POST":
+                    summary = self.storage.vault.upsert_proprietary_source(self.read_json_body())
+                    return self.send_json({"vault": summary, "capabilities": self.storage.vault.status()})
+
+            m_prop = PROP_ROUTE_RE.fullmatch(path)
+            if method == "DELETE" and m_prop:
+                self.require_principal("admin")
+                summary = self.storage.vault.delete_proprietary_source(m_prop.group(1))
+                return self.send_json({"vault": summary, "capabilities": self.storage.vault.status()})
+
             if path == "/hub/v1/admin/keys":
                 p = self.require_principal("admin")
                 with closing(self.storage.connect()) as db:
@@ -392,17 +554,24 @@ class HubHandler(BaseHTTPRequestHandler):
             m_key = KEY_ROUTE_RE.fullmatch(path)
             if method == "DELETE" and m_key:
                 self.require_principal("admin")
+                kid = m_key.group(1)
+                if kid == "adminenv":
+                    raise HubStorageError(
+                        "The server password comes from HUB_ADMIN_PASSWORD and cannot be revoked here."
+                    )
                 with closing(self.storage.connect()) as db:
-                    ok = revoke_key(db, m_key.group(1))
+                    ok = revoke_key(db, kid)
                 if not ok:
                     return self.send_json({"error": "Key not found or already revoked."}, HTTPStatus.NOT_FOUND)
-                return self.send_json({"revoked": m_key.group(1)})
+                return self.send_json({"revoked": kid})
 
             if method == "POST" and path == "/hub/v1/admin/secrets":
                 self.require_principal("admin")
                 b = self.read_json_body()
                 self.storage.vault.set_many(b)
-                return self.send_json({"capabilities": self.storage.vault.status()})
+                return self.send_json(
+                    {"capabilities": self.storage.vault.status(), "vault": self.storage.vault.admin_summary()}
+                )
 
             self.send_json({"error": "Route not found."}, HTTPStatus.NOT_FOUND)
         except AuthError as e:
@@ -731,10 +900,12 @@ class HubHTTPServer(ThreadingHTTPServer):
         threading.Thread(target=_drain, name="hub-stop", daemon=True).start()
 
 
-def make_hub_server(host="0.0.0.0", port=8780, data_root=None, env=None, pacer=None, *, allow_loopback=False):
+def make_hub_server(
+    host="0.0.0.0", port=8780, data_root=None, env=None, pacer=None, *, allow_loopback=False, app_root=None
+):
     """Construct a bound `HubHTTPServer` ready for `serve_forever()`."""
     storage = HubStorage(root=data_root, env=env, pacer=pacer, allow_loopback=allow_loopback)
-    jobs = HubJobRunner(storage)
+    jobs = HubJobRunner(storage, app_root=app_root)
     handler = type("BoundHubHandler", (HubHandler,), {"storage": storage, "jobs": jobs})
     return HubHTTPServer((host, int(port)), handler, storage, jobs)
 

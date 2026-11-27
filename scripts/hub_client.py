@@ -55,24 +55,46 @@ class _SameOriginHubRedirect(urllib.request.HTTPRedirectHandler):
 _HUB_OPENER = urllib.request.build_opener(_SameOriginHubRedirect())
 
 
-def clean_hub_url(url):
-    """Normalize and validate an HTTP(S) Hub base URL (stripping any trailing `/hub/v1` or `/`).
+def _is_ip_literal(host):
+    import ipaddress
 
-    Requires `https://` for remote hosts so Bearer API keys are never sent in cleartext; `http://`
-    is allowed only for loopback (`127.0.0.1`, `localhost`, `::1`) or `.railway.internal`.
-    """
+    try:
+        ipaddress.ip_address(host.strip("[]"))
+        return True
+    except ValueError:
+        return False
+
+
+def _is_private_or_local_host(host):
+    import ipaddress
+
+    h = (host or "").strip("[]").lower()
+    if h in ("localhost", "127.0.0.1", "::1") or h.endswith((".local", ".railway.internal", ".ts.net")):
+        return True
+    try:
+        ip = ipaddress.ip_address(h)
+        cgnat = ipaddress.ip_network("100.64.0.0/10")
+        return bool(ip.is_loopback or ip.is_private or (ip.version == 4 and ip in cgnat))
+    except ValueError:
+        return False
+
+
+def clean_hub_url(url):
+    """Normalize and validate an HTTP(S) Hub base URL from a domain name or IP address."""
     raw = str(url or "").strip()
     if not raw:
-        raise HubClientError("Enter the Hub server's web address (for example https://my-hub.up.railway.app).")
+        raise HubClientError("Enter the Hub server's domain or IP address (e.g. my-hub.up.railway.app).")
     if not re.match(r"^https?://", raw, re.IGNORECASE):
-        raw = "https://" + raw
+        probe_host = raw.split("/", 1)[0].rsplit(":", 1)[0] if not raw.startswith("[") else raw.split("]", 1)[0] + "]"
+        default_scheme = "http" if _is_private_or_local_host(probe_host) else "https"
+        raw = f"{default_scheme}://{raw}"
     parsed = urllib.parse.urlparse(raw)
     scheme = parsed.scheme.lower()
     host = (parsed.hostname or "").lower()
     if scheme not in ("http", "https") or not parsed.netloc or not host:
-        raise HubClientError("That does not look like a valid http:// or https:// Hub address.")
-    if scheme == "http" and host not in ("127.0.0.1", "localhost", "::1") and not host.endswith(".railway.internal"):
-        raise HubClientError("Remote Hub servers must use https:// so your API key stays encrypted.")
+        raise HubClientError("That does not look like a valid Hub domain or IP address.")
+    if scheme == "http" and not (_is_private_or_local_host(host) or _is_ip_literal(host)):
+        raise HubClientError("Public Hub domain names must use https:// so your password/key stays encrypted.")
     path = parsed.path.rstrip("/")
     if path.endswith("/hub/v1"):
         path = path[: -len("/hub/v1")]
@@ -214,10 +236,15 @@ class HubClient:
             lyr["hub_stream"] = True
         with self._lock:
             self._remote_layers = {lyr["id"]: lyr for lyr in layers}
+        admin_info = None
+        if "admin" in (me.get("scopes") or []):
+            with contextlib.suppress(HubClientError):
+                admin_info = self._request_json(url, key, "/hub/v1/admin/overview", timeout=10)
         return {
             **cfg,
             "connected": True,
             "me": me,
+            "admin": admin_info,
             "layers": layers,
             "streaming_terrain": cat.get("streaming_terrain") or [],
             "buildable_packs": cat.get("buildable_packs") or {},
@@ -492,6 +519,105 @@ class HubClient:
             "/hub/v1/jobs/build-dem",
             method="POST",
             body={"pack": pack_key, "bbox": bbox, "visibility": visibility},
+        )
+
+    def request_hub_map_build(self, map_id, visibility="hub"):
+        if not is_safe_id(map_id):
+            raise HubClientError("Invalid map id.")
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        return self._request_json(
+            url,
+            key,
+            "/hub/v1/jobs/build-map",
+            method="POST",
+            body={"id": map_id, "visibility": visibility},
+        )
+
+    def update_remote_layer(self, layer_id, updates):
+        if not is_safe_id(layer_id):
+            raise HubClientError("Invalid layer id.")
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        res = self._request_json(
+            url, key, f"/hub/v1/layers/{urllib.parse.quote(str(layer_id), safe='')}", method="PATCH", body=updates
+        )
+        self.refresh_remote_layers()
+        return res
+
+    def delete_remote_layer(self, layer_id):
+        if not is_safe_id(layer_id):
+            raise HubClientError("Invalid layer id.")
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        res = self._request_json(
+            url, key, f"/hub/v1/layers/{urllib.parse.quote(str(layer_id), safe='')}", method="DELETE"
+        )
+        self.refresh_remote_layers()
+        return res
+
+    def delete_remote_media(self, media_id):
+        if not is_safe_id(media_id):
+            raise HubClientError("Invalid media id.")
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        return self._request_json(
+            url, key, f"/hub/v1/media/{urllib.parse.quote(str(media_id), safe='')}", method="DELETE"
+        )
+
+    def admin_save_secrets(self, updates):
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        return self._request_json(url, key, "/hub/v1/admin/secrets", method="POST", body=updates)
+
+    def admin_upsert_proprietary(self, spec):
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        res = self._request_json(url, key, "/hub/v1/admin/proprietary", method="POST", body=spec)
+        self.refresh_remote_layers()
+        return res
+
+    def admin_delete_proprietary(self, source_id):
+        if not is_safe_id(source_id):
+            raise HubClientError("Invalid proprietary source id.")
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        res = self._request_json(
+            url,
+            key,
+            f"/hub/v1/admin/proprietary/{urllib.parse.quote(str(source_id), safe='')}",
+            method="DELETE",
+        )
+        self.refresh_remote_layers()
+        return res
+
+    def admin_create_key(self, label, scopes, group_tag=""):
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        return self._request_json(
+            url,
+            key,
+            "/hub/v1/admin/keys",
+            method="POST",
+            body={"label": label, "scopes": scopes, "group_tag": group_tag},
+        )
+
+    def admin_revoke_key(self, key_id):
+        if not re.fullmatch(r"[A-Za-z0-9_-]{4,16}", str(key_id or "")):
+            raise HubClientError("Invalid key id.")
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        return self._request_json(
+            url, key, f"/hub/v1/admin/keys/{urllib.parse.quote(str(key_id), safe='')}", method="DELETE"
         )
 
     def poll_hub_job(self, job_id):

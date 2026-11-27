@@ -678,9 +678,11 @@ class Handler(SimpleHTTPRequestHandler):
                 self.transect_api()
             elif p == "lidar" and method == "GET":
                 self.lidar_api(q)
-            elif p == "media":
+            elif p == "media" or p == "media/delete":
                 with closing(self.db()) as db, db:
-                    self.media_api(method, q, db)
+                    self.media_api(method, p, q, db)
+            elif p == "local-keys":
+                self.local_keys_api(method)
             elif p == "settings" and method == "GET":
                 self.settings()
             elif p == "quit" and method == "POST":
@@ -1103,6 +1105,69 @@ class Handler(SimpleHTTPRequestHandler):
                 str(b.get("pack") or "gedtm30"), b.get("bbox"), str(b.get("visibility") or "hub")
             )
             return self.send_json(job)
+        if p == "hub/build-map":
+            job = hub.request_hub_map_build(str(b.get("id") or "").strip(), str(b.get("visibility") or "hub"))
+            return self.send_json(job)
+        if p == "hub/layer/update":
+            lid = str(b.get("id") or "").strip()
+            updates = {k: b[k] for k in ("title", "date", "visibility", "group_tag", "licence_policy") if k in b}
+            res = hub.update_remote_layer(lid, updates)
+            return self.send_json({**hub.status_and_catalog(), **res})
+        if p == "hub/layer/delete":
+            lid = str(b.get("id") or "").strip()
+            hub.delete_remote_layer(lid)
+            return self.send_json({**hub.status_and_catalog(), "deleted": lid})
+        if p == "hub/admin/secrets":
+            hub.admin_save_secrets(b)
+            return self.send_json(hub.status_and_catalog())
+        if p == "hub/admin/proprietary":
+            hub.admin_upsert_proprietary(b)
+            return self.send_json(hub.status_and_catalog())
+        if p == "hub/admin/proprietary/delete":
+            hub.admin_delete_proprietary(str(b.get("id") or "").strip())
+            return self.send_json(hub.status_and_catalog())
+        if p == "hub/admin/keys":
+            created = hub.admin_create_key(
+                b.get("label", "Client key"),
+                b.get("scopes", ["read", "request_build", "upload"]),
+                b.get("group_tag", ""),
+            )
+            return self.send_json({**hub.status_and_catalog(), "created_key": created})
+        if p == "hub/admin/keys/revoke":
+            kid = str(b.get("key_id") or "").strip()
+            hub.admin_revoke_key(kid)
+            return self.send_json({**hub.status_and_catalog(), "revoked": kid})
+        self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+
+    def local_keys_api(self, method):
+        """Manage standalone local `.env` archive credentials (`USGS_USERNAME`, `USGS_M2M_TOKEN`,
+        `EARTHDATA_TOKEN`, `MAPVIETNAM_CONTACT`) from the desktop Settings UI without echoing secrets."""
+        env_path = self.library.root / ".env"
+        if method == "GET":
+            fvals = records.read_env(env_path)
+            return self.send_json(
+                {
+                    "usgs_username": os.environ.get("USGS_USERNAME") or fvals.get("USGS_USERNAME") or "",
+                    "has_usgs_token": bool(os.environ.get("USGS_M2M_TOKEN") or fvals.get("USGS_M2M_TOKEN")),
+                    "has_earthdata_token": bool(os.environ.get("EARTHDATA_TOKEN") or fvals.get("EARTHDATA_TOKEN")),
+                    "contact": os.environ.get("MAPVIETNAM_CONTACT") or fvals.get("MAPVIETNAM_CONTACT") or "",
+                }
+            )
+        if method == "POST":
+            b = self.body()
+            allowed = {"USGS_USERNAME", "USGS_M2M_TOKEN", "EARTHDATA_TOKEN", "MAPVIETNAM_CONTACT"}
+            unknown = set(b) - allowed
+            if unknown:
+                raise ValueError(f"Unsupported key(s): {', '.join(sorted(unknown))}")
+            updates = {}
+            for k, v in b.items():
+                if v is None:
+                    continue
+                clean = str(v).strip()
+                updates[k] = clean if clean else None
+            env_path.parent.mkdir(parents=True, exist_ok=True)
+            records.write_env(env_path, updates)
+            return self.local_keys_api("GET")
         self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
     def terrain_api(self, method, p, q):
@@ -1326,8 +1391,19 @@ class Handler(SimpleHTTPRequestHandler):
             )
         self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
-    def media_api(self, method, q, db):
+    def media_api(self, method, p, q, db):
         """Geolocated oblique aerials and plot cards in `evidence.sqlite` (`media` table) + Hub sync."""
+        if method == "POST" and p == "media/delete":
+            b = self.body()
+            mid = str(b.get("id") or "").strip()
+            if mid.startswith("local_") and mid[6:].isdigit():
+                db.execute("delete from media where id = ?", (int(mid[6:]),))
+                db.commit()
+                return self.send_json({"deleted": mid})
+            if self.hub.config()["configured"]:
+                self.hub.delete_remote_media(mid)
+                return self.send_json({"deleted": mid})
+            raise ValueError("Media item not found.")
         if method == "GET":
             bbox = number_list(q["bbox"], 4, "bbox", "w,s,e,n") if q.get("bbox") else None
             sql = "select * from media where lon is not null and lat is not null"
