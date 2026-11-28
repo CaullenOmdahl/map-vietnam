@@ -6060,9 +6060,8 @@ async function runRemoteCommand(action, params = {}) {
   }
   if (action === "open_view") {
     const v = params.view || "home";
-    if (v === "aerials") {
-      if (params.tab) S.aerial.tab = params.tab;
-      openAerials();
+    if (v === "aerials" || v === "aerial") {
+      openAerial(params.tab || null);
     } else if (v === "library") openLibrary();
     else if (v === "settings") openSettings();
     else if (v === "cases") show("cases");
