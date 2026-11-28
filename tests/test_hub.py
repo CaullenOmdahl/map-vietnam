@@ -1046,3 +1046,69 @@ def test_rotating_secret_scrubbed_error_logs_desktop_and_hub(tmp_path, monkeypat
         desk_srv.quit()
         hub_srv.stop_gracefully()
         archive.close()
+
+
+def _synthetic_aerial_scene(seed=11, size=480):
+    """Field-and-road scene with enough corners for the NumPy matcher (stand-in for real imagery)."""
+    from PIL import Image, ImageDraw
+
+    img = Image.new("L", (size, size), 150)
+    draw = ImageDraw.Draw(img)
+    rng = np.random.default_rng(seed)
+    for _ in range(110):
+        x0, y0 = int(rng.integers(10, size - 50)), int(rng.integers(10, size - 50))
+        w, h = int(rng.integers(12, 44)), int(rng.integers(12, 44))
+        c = int(rng.integers(40, 220))
+        draw.rectangle([x0, y0, x0 + w, y0 + h], fill=c, outline=20, width=2)
+    draw.line([(0, 60), (size, 300)], fill=15, width=5)
+    draw.line([(300, 0), (120, size)], fill=235, width=4)
+    return img
+
+
+def test_auto_gcp_unrotate_points_round_trips_all_headings():
+    """Points found in `np.rot90(img, k)` map back to the same pixel of the un-rotated image."""
+    from hub import auto_gcp
+
+    img = np.zeros((30, 50))
+    img[7, 41] = 1.0  # (x=41, y=7)
+    for k in range(4):
+        rot = np.rot90(img, k)
+        ys, xs = np.nonzero(rot)
+        back = auto_gcp._unrotate_points(np.array([[xs[0], ys[0]]], dtype=float), k, rot.shape)
+        assert back.tolist() == [[41.0, 7.0]], k
+
+
+def test_auto_gcp_recovers_rotated_flight_heading_and_trims_film_border():
+    """A frame flown 90 degrees off north (with black film border + caption) still matches north-up."""
+    import io
+
+    from hub import auto_gcp
+    from PIL import ImageDraw, ImageOps
+
+    ref = _synthetic_aerial_scene()
+    # Scan = the same ground rotated a quarter turn, wrapped in a film border with a caption strip.
+    frame = ImageOps.expand(ref.rotate(90, expand=True), border=24, fill=5)
+    ImageDraw.Draw(frame).text((40, frame.height - 18), "EROM80.HV741.15.7.52 Strip 261", fill=235)
+
+    def jpg(im):
+        buf = io.BytesIO()
+        im.convert("RGB").save(buf, format="JPEG", quality=92)
+        return buf.getvalue()
+
+    trimmed, x0, y0 = auto_gcp._trim_film_border(np.asarray(frame, dtype=np.float32) / 255.0)
+    assert x0 >= 20 and y0 >= 20 and trimmed.shape[0] <= frame.height - 44
+
+    bounds = [105.40, 19.90, 105.50, 20.00]
+    res = auto_gcp.match_and_score(jpg(frame), jpg(ref), bounds, confidence_threshold=0.6)
+    assert res["search"]["rotation_deg"] in (90, 270), res["search"]
+    assert res["inliers"] >= 8, res
+    # GCP columns/rows are reported in the original (untrimmed, unrotated) frame pixels: the scan
+    # pixel (col, row) of a returned point must sit on the same ground as its lon/lat in the ref.
+    w, h = ref.size
+    for pt in res["points"]:
+        # Frame = ref rotated +90 deg (CCW) then padded by 24 px: ref(x, y) -> frame(y + 24, w - 1 - x + 24).
+        rx = w - 1 - (pt["row"] - 24)
+        ry = pt["col"] - 24
+        lon = bounds[0] + rx / w * (bounds[2] - bounds[0])
+        lat = bounds[3] - ry / h * (bounds[3] - bounds[1])  # linear is fine over 0.1 degree
+        assert abs(lon - pt["lon"]) < 0.0015 and abs(lat - pt["lat"]) < 0.0015, (pt, lon, lat)

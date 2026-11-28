@@ -3,9 +3,12 @@
 Designed to bridge historical aerial photos / scans (`scan_bytes`) onto either modern imagery or an
 earlier already-placed stepping-stone map (`ref_bytes` + `ref_bounds`):
 
-  1. Keypoint detection + cross-polarity multi-scale descriptor matching (pure NumPy fallback built
-     in so zero extra weights are required, plus optional ONNX Runtime GPU/CPU model acceleration
-     when `AUTO_GCP_MODEL_DIR` holds `aliked.onnx`/`superpoint.onnx` + `lightglue.onnx`).
+  1. Keypoint matching: learned SuperPoint + LightGlue (ONNX Runtime, CPU or GPU) when
+     `AUTO_GCP_MODEL_DIR` holds `superpoint_lightglue_pipeline.onnx`, else a pure-NumPy
+     cross-polarity descriptor fallback. Both search the four 90-degree flight headings; the learned
+     matcher also searches several scan-to-viewport scales, because survey strips are rarely flown
+     north-up and a frame rarely fills the Placement view. Dark film borders and caption strips are
+     trimmed before matching.
   2. Normalized 4-point DLT RANSAC projective homography verification (tolerating oblique camera
      tilt while rejecting mirror flips, collapsed quads, and outliers).
   3. 4-factor confidence scoring (inlier count, inlier ratio, 4-quadrant spatial spread, RMSE) and
@@ -45,8 +48,46 @@ def _unmerc_y(ym):
     return math.degrees(2.0 * math.atan(math.exp(ym)) - math.pi / 2.0)
 
 
-def _load_work_gray(img_bytes, max_side=MAX_WORK_SIDE):
-    """Return `(gray_float32, orig_w, orig_h)` with `max(work_w, work_h) <= max_side`."""
+def _trim_film_border(arr, dark=0.12, max_frac=0.15):
+    """Crop dark film-frame edges and caption strips (rows/cols whose median is near black).
+
+    Returns `(cropped, x0, y0)` so keypoints found in the crop can be shifted back.
+    """
+    h, w = arr.shape
+    lim_y, lim_x = int(h * max_frac), int(w * max_frac)
+    row_med = np.median(arr, axis=1)
+    col_med = np.median(arr, axis=0)
+    y0 = 0
+    while y0 < lim_y and row_med[y0] < dark:
+        y0 += 1
+    y1 = h
+    while h - y1 < lim_y and row_med[y1 - 1] < dark:
+        y1 -= 1
+    x0 = 0
+    while x0 < lim_x and col_med[x0] < dark:
+        x0 += 1
+    x1 = w
+    while w - x1 < lim_x and col_med[x1 - 1] < dark:
+        x1 -= 1
+    if y1 - y0 < 32 or x1 - x0 < 32:
+        return arr, 0, 0
+    return arr[y0:y1, x0:x1], x0, y0
+
+
+def _normalize_contrast(arr):
+    mu = float(arr.mean())
+    sd = float(arr.std())
+    if sd > 1e-5:
+        arr = np.clip((arr - mu) / (2.5 * sd) + 0.5, 0.0, 1.0)
+    return arr.astype(np.float32)
+
+
+def _load_work_gray(img_bytes, max_side=MAX_WORK_SIDE, *, trim_border=False):
+    """Return `(gray_float32, orig_w, orig_h, (x0, y0))` with `max(work_w, work_h) <= max_side`.
+
+    `(x0, y0)` is the work-pixel offset of the returned array inside the full work image (non-zero
+    only when `trim_border` removed a dark film frame or caption strip).
+    """
     with Image.open(io.BytesIO(img_bytes)) as raw:
         raw = ImageOps.exif_transpose(raw).convert("L")
         orig_w, orig_h = raw.size
@@ -56,11 +97,33 @@ def _load_work_gray(img_bytes, max_side=MAX_WORK_SIDE):
         if (work_w, work_h) != (orig_w, orig_h):
             raw = raw.resize((work_w, work_h), Image.Resampling.BILINEAR)
         arr = np.asarray(raw, dtype=np.float32) / 255.0
-    mu = float(arr.mean())
-    sd = float(arr.std())
-    if sd > 1e-5:
-        arr = np.clip((arr - mu) / (2.5 * sd) + 0.5, 0.0, 1.0)
-    return arr, orig_w, orig_h
+    off = (0, 0)
+    if trim_border:
+        arr, ox, oy = _trim_film_border(arr)
+        off = (ox, oy)
+    return _normalize_contrast(arr), orig_w, orig_h, off
+
+
+def _resize_gray(arr, factor):
+    if abs(factor - 1.0) < 1e-6:
+        return arr
+    h, w = arr.shape
+    nw, nh = max(32, int(round(w * factor))), max(32, int(round(h * factor)))
+    img = Image.fromarray(np.clip(arr * 255.0, 0, 255).astype(np.uint8))
+    return np.asarray(img.resize((nw, nh), Image.Resampling.LANCZOS), dtype=np.float32) / 255.0
+
+
+def _unrotate_points(pts, k, rot_shape):
+    """Map `(x, y)` points found in `np.rot90(img, k)` (shape `rot_shape`) back into `img` pixels."""
+    out = np.asarray(pts, dtype=np.float64).copy()
+    h, w = rot_shape
+    for _ in range(k % 4):
+        # np.rot90(a, 1)[i, j] == a[j, n - 1 - i]: undo one CCW quarter turn.
+        x, y = out[:, 0].copy(), out[:, 1].copy()
+        out[:, 0] = (h - 1) - y
+        out[:, 1] = x
+        h, w = w, h
+    return out
 
 
 def _sobel(gray):
@@ -234,48 +297,63 @@ def _match_numpy(scan_gray, ref_gray):
     return np.asarray(pts_s)[order], np.asarray(pts_r)[order], np.asarray(mscores)[order]
 
 
-def _try_onnx_match(scan_gray, ref_gray):
-    """Optional `AUTO_GCP_MODEL_DIR` (`aliked.onnx`/`superpoint.onnx` + `lightglue.onnx`) hook."""
+ONNX_MODEL_NAME = "superpoint_lightglue_pipeline.onnx"
+ONNX_REF_SIDE = 1024
+_ONNX_CACHE = {}
+
+
+def _onnx_session():
+    """Return `(session, backend_name)` for `AUTO_GCP_MODEL_DIR/superpoint_lightglue_pipeline.onnx`.
+
+    The model is fabio-sim/LightGlue-ONNX v2.0 (SuperPoint + LightGlue end-to-end, dynamic batch):
+    input `images` `(2N, 1, H, W)` in `[0, 1]`, outputs `keypoints` `(2N, K, 2)`, `matches`
+    `(M, 3)` as `[pair, idx0, idx1]`, and `mscores` `(M,)`. Returns `None` when unavailable.
+    """
     model_dir = os.environ.get("AUTO_GCP_MODEL_DIR", "").strip()
     if not model_dir:
         return None
-    mdir = Path(model_dir)
-    if not mdir.is_dir():
+    path = Path(model_dir) / ONNX_MODEL_NAME
+    if not path.is_file():
         return None
+    key = str(path)
+    if key in _ONNX_CACHE:
+        return _ONNX_CACHE[key]
     try:
         import onnxruntime as ort
     except ImportError:
         return None
-
     avail = ort.get_available_providers()
     providers = [p for p in ("CUDAExecutionProvider", "ROCMExecutionProvider", "CPUExecutionProvider") if p in avail]
-    extractor_path = next((p for p in (mdir / "aliked.onnx", mdir / "superpoint.onnx") if p.is_file()), None)
-    matcher_path = mdir / "lightglue.onnx"
-    if extractor_path is None or not matcher_path.is_file():
-        return None
-
-    using_gpu = any(p != "CPUExecutionProvider" for p in providers)
     try:
-        ext_sess = ort.InferenceSession(str(extractor_path), providers=providers or ["CPUExecutionProvider"])
-        mat_sess = ort.InferenceSession(str(matcher_path), providers=providers or ["CPUExecutionProvider"])
-        s_in = scan_gray[None, None, :, :].astype(np.float32)
-        r_in = ref_gray[None, None, :, :].astype(np.float32)
-        k0, s0, d0 = ext_sess.run(None, {ext_sess.get_inputs()[0].name: s_in})[:3]
-        k1, s1, d1 = ext_sess.run(None, {ext_sess.get_inputs()[0].name: r_in})[:3]
-        m_inputs = {mat_sess.get_inputs()[0].name: k0, mat_sess.get_inputs()[1].name: k1}
-        if len(mat_sess.get_inputs()) >= 4:
-            m_inputs[mat_sess.get_inputs()[2].name] = d0
-            m_inputs[mat_sess.get_inputs()[3].name] = d1
-        out = mat_sess.run(None, m_inputs)
-        matches = np.asarray(out[0])
-        mscores = np.asarray(out[1]).reshape(-1) if len(out) > 1 else np.full(len(matches), 0.85)
-        if matches.ndim == 2 and matches.shape[1] >= 2 and len(matches) >= 4:
-            pts_s = np.asarray(k0)[0, matches[:, 0], :2]
-            pts_r = np.asarray(k1)[0, matches[:, 1], :2]
-            return ("onnx_gpu" if using_gpu else "onnx_cpu"), pts_s, pts_r, np.clip(mscores, 0.1, 0.99)
+        sess = ort.InferenceSession(key, providers=providers or ["CPUExecutionProvider"])
     except Exception:
         return None
-    return None
+    gpu = any(p != "CPUExecutionProvider" for p in sess.get_providers())
+    _ONNX_CACHE[key] = (sess, "onnx_lightglue_gpu" if gpu else "onnx_lightglue_cpu")
+    return _ONNX_CACHE[key]
+
+
+def _match_onnx(sess, scan_gray, ref_gray):
+    """Run one SuperPoint+LightGlue pair; both images are zero-padded onto a shared canvas."""
+    h = max(scan_gray.shape[0], ref_gray.shape[0])
+    w = max(scan_gray.shape[1], ref_gray.shape[1])
+    batch = np.zeros((2, 1, h, w), dtype=np.float32)
+    batch[0, 0, : scan_gray.shape[0], : scan_gray.shape[1]] = scan_gray
+    batch[1, 0, : ref_gray.shape[0], : ref_gray.shape[1]] = ref_gray
+    kpts, matches, mscores = sess.run(None, {"images": batch})
+    matches = np.asarray(matches)
+    if matches.ndim != 2 or len(matches) == 0:
+        return np.zeros((0, 2)), np.zeros((0, 2)), np.zeros((0,))
+    pts_s = np.asarray(kpts[0], dtype=np.float64)[matches[:, 1]]
+    pts_r = np.asarray(kpts[1], dtype=np.float64)[matches[:, 2]]
+    # Drop keypoints that LightGlue placed on the zero padding.
+    keep = (
+        (pts_s[:, 0] < scan_gray.shape[1])
+        & (pts_s[:, 1] < scan_gray.shape[0])
+        & (pts_r[:, 0] < ref_gray.shape[1])
+        & (pts_r[:, 1] < ref_gray.shape[0])
+    )
+    return pts_s[keep], pts_r[keep], np.clip(np.asarray(mscores, dtype=np.float64)[keep], 0.05, 0.99)
 
 
 def _hartley_norm_2d(pts):
@@ -408,6 +486,71 @@ def _ransac_homography(pts_s, pts_r, scan_w, scan_h, ref_w, ref_h, *, iters=450,
     return best_H, best_mask, errs
 
 
+ROTATIONS = (0, 1, 2, 3)
+# Scan long side as a fraction of the reference long side. Aerial frames rarely fill the Placement
+# viewport, so the learned matcher also tries the frame shrunk to a portion of the view.
+ONNX_SCAN_FRACTIONS = (1.0, 0.6, 0.4, 0.25)
+NUMPY_SCAN_FRACTIONS = (1.0,)
+EARLY_EXIT_INLIERS = 40
+
+
+def _quadrants(pts, w, h):
+    return len({(0 if x < w / 2.0 else 1) + (0 if y < h / 2.0 else 2) for x, y in pts})
+
+
+def _search_hypotheses(matcher, scan_gray, ref_gray, fractions, *, inlier_px, rotations=ROTATIONS):
+    """Try each 90-degree heading x scan scale; return the best RANSAC hypothesis.
+
+    Points are returned in un-rotated, un-scaled scan work pixels so the homography and the
+    returned GCPs stay in the scan's own frame regardless of which heading matched.
+    """
+    sh, sw = scan_gray.shape
+    rh, rw = ref_gray.shape
+    best = None
+    tried = 0
+    for frac in fractions:
+        factor = min(1.0, frac * max(rw, rh) / float(max(sw, sh)))
+        if max(sw, sh) * factor < 96:
+            continue
+        scaled = _resize_gray(scan_gray, factor)
+        fx = sw / float(scaled.shape[1])
+        fy = sh / float(scaled.shape[0])
+        for k in rotations:
+            rot = np.rot90(scaled, k)
+            tried += 1
+            ps, pr, ms = matcher(np.ascontiguousarray(rot), ref_gray)
+            if len(ps) < 4:
+                continue
+            ps0 = _unrotate_points(ps, k, rot.shape)
+            ps0[:, 0] *= fx
+            ps0[:, 1] *= fy
+            H, mask, errs = _ransac_homography(ps0, pr, sw, sh, rw, rh, thresh_px=inlier_px)
+            n = int(mask.sum())
+            if H is None:
+                continue
+            rmse = math.sqrt(float(np.mean(errs[mask] ** 2))) if n else 999.0
+            cand = {
+                "pts_s": ps0,
+                "pts_r": pr,
+                "mscores": ms,
+                "H": H,
+                "mask": mask,
+                "errs": errs,
+                "n": n,
+                "rmse": rmse,
+                "rotation_deg": 90 * k,
+                "scan_factor": round(factor, 3),
+            }
+            if best is None or (n, -rmse) > (best["n"], -best["rmse"]):
+                best = cand
+            if n >= EARLY_EXIT_INLIERS and _quadrants(ps0[mask], sw, sh) >= 3:
+                best["tried"] = tried
+                return best
+    if best is not None:
+        best["tried"] = tried
+    return best
+
+
 def match_and_score(
     scan_bytes,
     ref_bytes,
@@ -430,33 +573,51 @@ def match_and_score(
     threshold = max(0.25, min(0.99, float(confidence_threshold)))
     max_points = max(4, min(32, int(max_points)))
 
-    scan_gray, orig_scan_w, orig_scan_h = _load_work_gray(scan_bytes)
-    ref_gray, _, _ = _load_work_gray(ref_bytes)
+    onnx = _onnx_session()
+    work_side = ONNX_REF_SIDE if onnx else MAX_WORK_SIDE
+    scan_gray, orig_scan_w, orig_scan_h, (off_x, off_y) = _load_work_gray(scan_bytes, work_side, trim_border=True)
+    ref_gray, _, _, _ = _load_work_gray(ref_bytes, work_side)
     work_scan_h, work_scan_w = scan_gray.shape
     work_ref_h, work_ref_w = ref_gray.shape
+    # Full (untrimmed) work-image size, used to convert work pixels back to scan pixels.
+    full_work_scale = min(1.0, float(work_side) / max(orig_scan_w, orig_scan_h, 1))
+    full_work_w = max(32, int(round(orig_scan_w * full_work_scale)))
+    full_work_h = max(32, int(round(orig_scan_h * full_work_scale)))
     target_w, target_h = orig_scan_w, orig_scan_h
     if scan_target_size and len(scan_target_size) == 2:
         target_w = max(1, int(scan_target_size[0]))
         target_h = max(1, int(scan_target_size[1]))
 
-    onnx_hit = _try_onnx_match(scan_gray, ref_gray)
-    if onnx_hit is not None:
-        backend, pts_s, pts_r, mscores = onnx_hit
+    if onnx is not None:
+        sess, backend = onnx
+        best = _search_hypotheses(
+            lambda s, r: _match_onnx(sess, s, r), scan_gray, ref_gray, ONNX_SCAN_FRACTIONS, inlier_px=inlier_px
+        )
     else:
         backend = "numpy_local"
-        pts_s, pts_r, mscores = _match_numpy(scan_gray, ref_gray)
+        best = _search_hypotheses(
+            lambda s, r: _match_numpy(s, r), scan_gray, ref_gray, NUMPY_SCAN_FRACTIONS, inlier_px=inlier_px
+        )
+
+    if best is None:
+        pts_s = np.zeros((0, 2))
+        pts_r = np.zeros((0, 2))
+        mscores = np.zeros((0,))
+        H, inlier_mask, errs = None, np.zeros(0, dtype=bool), np.zeros(0)
+        search = {"rotation_deg": None, "scan_factor": None}
+    else:
+        pts_s, pts_r, mscores = best["pts_s"], best["pts_r"], best["mscores"]
+        H, inlier_mask, errs = best["H"], best["mask"], best["errs"]
+        search = {"rotation_deg": best["rotation_deg"], "scan_factor": best["scan_factor"], "tried": best["tried"]}
 
     total_matches = int(len(pts_s))
-    H, inlier_mask, errs = _ransac_homography(
-        pts_s, pts_r, work_scan_w, work_scan_h, work_ref_w, work_ref_h, thresh_px=inlier_px
-    )
     inlier_idxs = np.nonzero(inlier_mask)[0]
     n_inliers = int(len(inlier_idxs))
 
     west, south, east, north = (float(v) for v in ref_bounds)
     ym_n, ym_s = _merc_y(north), _merc_y(south)
-    sx_scan = target_w / float(work_scan_w)
-    sy_scan = target_h / float(work_scan_h)
+    sx_scan = target_w / float(full_work_w)
+    sy_scan = target_h / float(full_work_h)
 
     if H is None or n_inliers < min_inliers:
         low_conf = round(min(0.25, 0.03 * total_matches), 3)
@@ -471,6 +632,7 @@ def match_and_score(
             "quadrants_covered": 0,
             "rmse_px": None,
             "backend": backend,
+            "search": search,
             "recommended_warp": "auto",
             "reason": "Too few geometrically consistent landmarks matched; zoom closer or align via an intermediate map.",
         }
@@ -488,8 +650,8 @@ def match_and_score(
         lat = _unmerc_y(ym_n - (ry / float(work_ref_h)) * (ym_n - ym_s))
         candidates.append(
             {
-                "col": round(sx * sx_scan, 1),
-                "row": round(sy * sy_scan, 1),
+                "col": round((sx + off_x) * sx_scan, 1),
+                "row": round((sy + off_y) * sy_scan, 1),
                 "lon": round(lon, 7),
                 "lat": round(lat, 7),
                 "confidence": pt_conf,
@@ -569,5 +731,6 @@ def match_and_score(
         "quadrants_covered": quadrants_covered,
         "rmse_px": round(rmse_px, 2),
         "backend": backend,
+        "search": search,
         "recommended_warp": recommended_warp,
     }
