@@ -599,6 +599,7 @@ body.settings-open #mapbar, body.settings-open #filterPill, body.settings-open #
 .set-row:first-child { border-top: 0; }
 .set-k { font-weight: 500; }
 .set-path { overflow-wrap: anywhere; font-size: 12.5px; color: var(--muted); text-align: right; }
+.set-sel { min-height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); padding: 0 10px; font: inherit; font-size: 14px; }
 .set-block { display: grid; gap: 10px; margin-top: 8px; justify-items: start; }
 .set-block > * { max-width: 100%; }
 .set-block p { margin: 0; }

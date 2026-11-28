@@ -41,8 +41,8 @@
 // ================================================================ constants
 // Today's base maps (raster XYZ tiles, Web Mercator).
 const BASES = {
-  osm: { name: "Street map", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors', maxzoom: 19 },
-  sat: { name: "Satellite", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], attribution: "Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community", maxzoom: 19 },
+  osm: { name: "Street map", tiles: ["/base/osm/{z}/{x}/{y}"], attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors', maxzoom: 19 },
+  sat: { name: "Satellite", tiles: ["/base/sat/{z}/{x}/{y}"], attribution: "Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community", maxzoom: 19 },
   oam: { name: "UAV aerial", tiles: ["https://global.imagery.hotosm.org/{z}/{x}/{y}.png"], attribution: "OpenAerialMap / Open Imagery Network (CC BY 4.0)", maxzoom: 20 },
 };
 // Each evidence kind gets its own colour and shape (shape paths are in a 24×24 box).
@@ -340,7 +340,7 @@ const isDark = () => { const t = document.documentElement.dataset.theme; return 
 function makeStyle() {
   return {
     version: 8,
-    glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
+    glyphs: "/fonts/{fontstack}/{range}.pbf",
     sources: Object.fromEntries(Object.entries(BASES).map(([k, b]) => [k, { type: "raster", tileSize: 256, tiles: b.tiles, attribution: b.attribution, maxzoom: b.maxzoom }])),
     layers: Object.keys(BASES).map(k => ({ id: `base-${k}`, type: "raster", source: k, layout: { visibility: k === S.base ? "visible" : "none" } })),
   };
@@ -4127,6 +4127,16 @@ const customMaps = () => S.lib.maps.filter(m => m.custom);
 const sizeText = b => fmtMB(b) || "0 MB";
 // up: the upload in flight ({ name, loaded, total, xhr }); err: why the last one failed; disk: GET /api/settings.
 S.cm = { up: null, err: "", disk: null, diskErr: "" };
+const CACHE_LIMITS = [
+  [250 * 1024 * 1024, "250 MB"],
+  [500 * 1024 * 1024, "500 MB"],
+  [1024 ** 3, "1 GB"],
+  [2 * 1024 ** 3, "2 GB"],
+  [5 * 1024 ** 3, "5 GB"],
+  [10 * 1024 ** 3, "10 GB"],
+  [20 * 1024 ** 3, "20 GB"],
+];
+S.cache = { data: null, err: "", clearAsk: false };
 
 function openSettings(sel = null) {
   const from = document.activeElement;
@@ -4134,7 +4144,7 @@ function openSettings(sel = null) {
   show("settings", { sel, confirm: null, keyOpen: false });
   if (from && from !== document.body && !$("#panel").contains(from)) S.opener = from;
   focusCard();
-  loadLibrary(); loadSettings(); loadHub(); loadLocalKeys(); loadLogs();
+  loadLibrary(); loadSettings(); loadHub(); loadLocalKeys(); loadLogs(); loadCacheStatus();
   if (sel) reveal($(`#view [data-lib-row="${CSS.escape(sel)}"]`));
 }
 async function loadLogs() {
@@ -4180,12 +4190,49 @@ async function loadSettings() {
   const el = $("#setDisk");
   if (el && S.view.name === "settings") el.innerHTML = storageHTML();
 }
+async function loadCacheStatus() {
+  try { S.cache.data = await api("/api/cache"); S.cache.err = ""; }
+  catch (e) { S.cache.err = e.message; }
+  renderCacheSection();
+}
+function renderCacheSection() {
+  const el = $("#setCache");
+  if (el && S.view.name === "settings") { el.innerHTML = cacheSectionHTML(); wire(el); wireCacheControls(el); }
+}
+// Street and satellite tiles are kept as they are viewed. Whole areas are never downloaded ahead of time: the
+// OpenStreetMap and Esri tile servers' usage policies forbid bulk downloading.
+function cacheSectionHTML() {
+  const c = S.cache.data;
+  if (!c) return `<p class="small-t muted">${S.cache.err ? "Could not read the offline cache: " + esc(S.cache.err) : "Checking…"}</p>`;
+  const by = c.by_base || {}, osm = by.osm || { tiles: 0 }, sat = by.sat || { tiles: 0 };
+  const seg = (label, inner) => `<div class="set-row"><span class="set-k">${label}</span><div class="seg" role="group" aria-label="${label}">${inner}</div></div>`;
+  return `<p class="small-t muted">Street and satellite tiles you look at are kept on this computer, so places you have already visited still show without internet. The map servers' rules don't allow downloading whole areas ahead of time.</p>
+    <div class="group" style="margin-top:0">
+      ${seg("Keep tiles you view", [[true, "On"], [false, "Off"]].map(([v, t]) => `<button data-act="cacheToggle" data-on="${v ? 1 : 0}" aria-pressed="${c.enabled === v}">${t}</button>`).join(""))}
+      <div class="set-row"><label class="set-k" for="cacheMaxSel">Maximum size</label>
+        <select id="cacheMaxSel" class="set-sel">${CACHE_LIMITS.map(([b, lbl]) => `<option value="${b}"${c.max_bytes === b ? " selected" : ""}>${lbl}</option>`).join("")}</select></div>
+      <div class="set-row"><span class="set-k">Stored now</span>
+        <span class="small-t muted">${esc(sizeText(c.used_bytes))} of ${esc(sizeText(c.max_bytes))} · Street ${fmtInt(osm.tiles)} · Satellite ${fmtInt(sat.tiles)} tiles</span></div>
+    </div>
+    <div class="err" id="cacheErr" role="alert">${esc(S.cache.err)}</div>
+    ${S.cache.clearAsk ? `<div class="confirm-box" role="alertdialog" aria-label="Clear the base-map cache">
+      <span>Delete all ${fmtInt(c.tile_count)} kept street and satellite tiles (${esc(sizeText(c.used_bytes))})? Your old maps and records stay.</span>
+      <div class="row"><button class="btn small danger solid" data-act="cacheClearYes">Delete tiles</button><button class="btn small" data-act="cacheClearNo">Keep them</button></div></div>`
+      : c.tile_count ? `<div class="row"><button class="btn small danger" data-act="cacheClearAsk">Clear base-map cache…</button></div>` : ""}`;
+}
+function wireCacheControls(root) {
+  $("#cacheMaxSel", root)?.addEventListener("change", async e => {
+    try { S.cache.data = await api("/api/cache/config", { method: "POST", body: { max_bytes: +e.target.value } }); S.cache.err = ""; }
+    catch (x) { S.cache.err = x.message; }
+    renderCacheSection(); loadSettings();
+  });
+}
 function storageHTML() {
   const s = S.cm.disk;
   if (!s) return `<p class="small-t muted">${S.cm.diskErr ? "Could not check the space used: " + esc(S.cm.diskErr) : "Checking…"}</p>`;
   const d = s.disk || {}, row = (k, v, cls = "") => `<div class="set-row"><span class="set-k">${k}</span><span class="${cls}">${v}</span></div>`;
   return `<div class="group">${row("Kept in", esc(s.data_folder), "mono set-path")}${row("Old maps", sizeText(d.maps))}${row("Records", sizeText(d.records))}
-    ${row("Downloads", sizeText(d.downloads))}${row("<b>Total</b>", `<b>${sizeText(d.total)}</b>`)}</div>
+    ${row("Downloads", sizeText(d.downloads))}${d.base_cache != null ? row("Base-map cache", sizeText(d.base_cache)) : ""}${row("<b>Total</b>", `<b>${sizeText(d.total)}</b>`)}</div>
     <p class="small-t muted">Downloads are the files maps were built from. Removing a map frees its space.</p>`;
 }
 
@@ -4689,6 +4736,10 @@ VIEWS.settings = v => {
           <div class="set-block stack" style="gap:10px;margin-top:0;width:100%">${keySectionHTML()}${localKeysSectionHTML()}</div>
         </section>
         <section class="settings-card">
+          <h3 class="sub-head">Offline base maps</h3>
+          <div id="setCache" class="set-block" style="margin-top:0;width:100%">${cacheSectionHTML()}</div>
+        </section>
+        <section class="settings-card">
           <h3 class="sub-head">Storage</h3>
           <div id="setDisk">${storageHTML()}</div>
           <p class="foot-note" style="margin-top:4px">Local data stays on this computer unless you connect a Hub server and choose to cache maps there.</p>
@@ -4798,6 +4849,20 @@ VIEWS.settings.after = () => {
     finally { if (btn.isConnected) btn.disabled = false; }
   });
   wireKeyBox();
+  wireCacheControls($("#setCache"));
+};
+ACTIONS.cacheToggle = async el => {
+  try { S.cache.data = await api("/api/cache/config", { method: "POST", body: { enabled: el.dataset.on === "1" } }); S.cache.err = ""; }
+  catch (x) { S.cache.err = x.message; }
+  renderCacheSection();
+};
+ACTIONS.cacheClearAsk = () => { S.cache.clearAsk = true; renderCacheSection(); $('#setCache [data-act="cacheClearNo"]')?.focus(); };
+ACTIONS.cacheClearNo = () => { S.cache.clearAsk = false; renderCacheSection(); };
+ACTIONS.cacheClearYes = async () => {
+  S.cache.clearAsk = false;
+  try { S.cache.data = await api("/api/cache/clear", { method: "POST", body: {} }); S.cache.err = ""; toast("Base-map cache cleared"); }
+  catch (x) { S.cache.err = x.message; }
+  renderCacheSection(); loadSettings();
 };
 
 // ================================================================ Aerial, LiDAR & Terrain Explorer

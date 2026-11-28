@@ -16,6 +16,14 @@ Bad input to the API gets a 400 with {"error": ...}; unknown routes a 404; a fai
 server itself a 500 with {"error": ...}, so the viewer can always say what happened.
 
   GET  /tiles/<map id>/<z>/<x>/<y>.webp                          a tile of an installed map
+  GET  /base/(osm|sat)/<z>/<x>/<y>                               cached street/satellite base tile
+  GET  /fonts/<fontstack>/<range>.pbf                            cached MapLibre font glyphs
+  GET  /api/cache                                                offline base-map cache status & job
+  POST /api/cache/config {"enabled", "max_bytes"}                toggle caching or set LRU size cap
+  POST /api/cache/estimate {"bases", "bounds", "min_z", "max_z"} estimate tile count & MB
+  POST /api/cache/prefetch {"bases", "bounds", "min_z", "max_z", "label"}  start background pre-cache
+  POST /api/cache/cancel {}                                      stop background pre-cache
+  POST /api/cache/clear {"base": optional}                       delete cached base-map tiles
   GET  /api/library     -> {maps: [catalogue entry + state, progress, error, disk_bytes], queue_bytes, series,
                             legacy: {count, bytes, state, error, converted}}   (legacy: maps made by older versions)
   POST /api/library/add {"ids": [...]}      queue maps from the catalogue (never arbitrary URLs)
@@ -98,9 +106,10 @@ from html import escape
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 import app_log
+import base_cache
 import custom_maps
 import gridref
 import hub_client
@@ -118,6 +127,8 @@ from hub.polite import HostPacer, SingleFlight, is_safe_id, polite_fetch_bytes
 WEB = paths.APP_ROOT / "web"  # the viewer, shipped with the app; the data under web/ is elsewhere (see Handler)
 EMPTY_TILE = tiling.empty_tile()
 TILE_PATH = re.compile(r"/tiles/([A-Za-z0-9_.-]+)/(\d{1,2})/(\d{1,10})/(\d{1,10})\.(webp|png|jpg)")
+BASE_TILE_PATH = re.compile(r"/base/(osm|sat)/(\d{1,2})/(\d{1,10})/(\d{1,10})")
+GLYPH_PATH = re.compile(r"/fonts/([^/]+)/(\d+-\d+)\.pbf")
 # Deeper than any map is tiled (z16), and far inside what SQLite's integers and the TMS row flip hold.
 MAX_TILE_ZOOM = 24
 # Sec-Fetch-Site values of requests made by this server's own pages (or typed by the user).
@@ -695,6 +706,7 @@ class Handler(SimpleHTTPRequestHandler):
     data_web = paths.DATA_ROOT / "web"  # where /catalog.json and /tiles/ live (set by make_server)
     library = None  # the map library (set by make_server)
     records = None  # the record sources (set by make_server)
+    base_cache = None  # the offline base-map cache (set by make_server)
     # Fixed types for what the viewer loads: on Windows the defaults come from the registry, where
     # .js or .css is sometimes text/plain, and browsers then refuse the file.
     extensions_map = {
@@ -857,6 +869,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.local_keys_api(method)
             elif p == "logs" or p.startswith("logs/"):
                 self.logs_api(method, p)
+            elif p == "cache" or p.startswith("cache/"):
+                self.cache_api(method, p)
             elif p == "settings" and method == "GET":
                 self.settings()
             elif p == "quit" and method == "POST":
@@ -1311,7 +1325,72 @@ class Handler(SimpleHTTPRequestHandler):
     def settings(self):
         """GET /api/settings: where the data is kept and how much space each kind takes."""
         lib = self.library
-        self.send_json({"data_folder": str(lib.root), "disk": lib.disk_usage(self.records.db_path)})
+        disk = lib.disk_usage(self.records.db_path)
+        cache_bytes = self.base_cache.disk_bytes() if self.base_cache is not None else 0
+        disk["base_cache"] = cache_bytes
+        disk["total"] = disk.get("total", 0) + cache_bytes
+        self.send_json({"data_folder": str(lib.root), "disk": disk})
+
+    def cache_api(self, method, p):
+        """The /api/cache routes for offline base-map tiles."""
+        cache = self.base_cache
+        if method == "GET" and p == "cache":
+            return self.send_json(cache.status())
+        if method != "POST":
+            return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+        b = self.body()
+        if p == "cache/config":
+            return self.send_json(cache.set_config(enabled=b.get("enabled"), max_bytes=b.get("max_bytes")))
+        if p == "cache/estimate":
+            return self.send_json(cache.estimate(b.get("bases"), b.get("bounds"), b.get("min_z", 0), b.get("max_z")))
+        if p == "cache/prefetch":
+            return self.send_json(
+                cache.start_prefetch(
+                    b.get("bases"), b.get("bounds"), b.get("min_z", 0), b.get("max_z"), b.get("label", "")
+                )
+            )
+        if p == "cache/cancel":
+            return self.send_json(cache.cancel())
+        if p == "cache/clear":
+            return self.send_json(cache.clear(b.get("base")))
+        self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+
+    def send_base_tile(self, base, z, x, y):
+        """Serve a street or satellite base tile via the local SQLite LRU cache."""
+        if not (z <= base_cache.BASES[base]["maxzoom"] and x < (1 << z) and y < (1 << z)):
+            self.send_error(HTTPStatus.BAD_REQUEST, "no such tile")
+            return
+        data, ctype = self.base_cache.get_tile(base, z, x, y)
+        if data is None:
+            self.send_response(HTTPStatus.SERVICE_UNAVAILABLE)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "public, max-age=86400")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def send_glyph(self, fontstack, range_name):
+        """Serve a MapLibre PBF font glyph range via the local SQLite cache."""
+        try:
+            data = self.base_cache.get_glyph(fontstack, range_name)
+        except ValueError:
+            self.send_error(HTTPStatus.BAD_REQUEST, "bad font request")
+            return
+        if data is None:
+            self.send_response(HTTPStatus.NOT_FOUND)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/x-protobuf")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "public, max-age=604800")
+        self.end_headers()
+        self.wfile.write(data)
 
     def records_api(self, method, p):
         """The /api/records routes (see the module docstring). Every change answers with the
@@ -1964,9 +2043,16 @@ class Handler(SimpleHTTPRequestHandler):
         # cannot read which maps are installed.
         if self.headers.get("Host") not in self.own_hosts():
             return self.send_error(HTTPStatus.FORBIDDEN, "this server only answers requests addressed to itself")
-        m = TILE_PATH.fullmatch(urlparse(self.path).path)
+        path = urlparse(self.path).path
+        m = TILE_PATH.fullmatch(path)
         if m:
             return self.send_tile(m[1], int(m[2]), int(m[3]), int(m[4]), m[5])
+        bm = BASE_TILE_PATH.fullmatch(path)
+        if bm:
+            return self.send_base_tile(bm[1], int(bm[2]), int(bm[3]), int(bm[4]))
+        gm = GLYPH_PATH.fullmatch(path)
+        if gm:
+            return self.send_glyph(unquote(gm[1]), gm[2])
         super().do_GET()
 
     def do_POST(self):
@@ -1984,6 +2070,7 @@ class MapServer(ThreadingHTTPServer):
 
     library = None  # set by make_server
     records = None
+    base_cache = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2012,6 +2099,8 @@ class MapServer(ThreadingHTTPServer):
         try:
             self.records.stop()
             self.library.stop()
+            if self.base_cache is not None:
+                self.base_cache.stop()
         finally:
             self.shutdown()
 
@@ -2025,6 +2114,7 @@ def make_server(
     hub=None,
     *,
     allow_loopback=False,
+    base_cache_store=None,
 ):
     """A threaded server on 127.0.0.1:`port` (0 picks a free port) over the store at `db_path`,
     serving the viewer's files in `web`, the maps of `map_library` (whose folder also holds
@@ -2032,6 +2122,7 @@ def make_server(
     lib = map_library or library.Library()
     rec = record_sources or records.Records(db_path=db_path)
     hc = hub or hub_client.HubClient(root=lib.root)
+    cache = base_cache_store or base_cache.BaseCache(lib.root)
     rec.on_change = forget_caches
 
     def _auto_push_installed(map_id):
@@ -2058,13 +2149,14 @@ def make_server(
             "records": rec,
             "hub": hc,
             "app_log": alog,
+            "base_cache": cache,
             "local_pacer": pacer,
             "local_flight": flight,
             "allow_loopback": bool(allow_loopback),
         },
     )
     srv = MapServer(("127.0.0.1", port), partial(handler, directory=str(web)))
-    srv.library, srv.records, srv.hub = lib, rec, hc
+    srv.library, srv.records, srv.hub, srv.base_cache = lib, rec, hc, cache
     return srv
 
 

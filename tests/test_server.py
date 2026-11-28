@@ -903,3 +903,50 @@ def test_evidence_by_thousands_of_ids_does_not_overflow_sqlites_variable_limit(b
         db.setlimit(sqlite3.SQLITE_LIMIT_VARIABLE_NUMBER, 999)
         found = server.query_evidence(db, {"ids": ",".join(str(i) for i in range(1, 5_000))})
     assert len(found["features"]) >= 1
+
+
+def test_base_cache_routes_and_settings_integration(maps, monkeypatch):
+    base, _ = maps
+    import base_cache
+
+    # Locate the running BaseCache instance attached by make_server via /api/cache -> works over HTTP.
+    st = call(f"{base}/api/cache")
+    assert st["enabled"] is True and st["tile_count"] == 0
+
+    # Offline / uncached base tile returns 503 and glyph returns 404.
+    monkeypatch.setattr(base_cache, "_default_fetch", lambda url: (_ for _ in ()).throw(OSError("offline")))
+    assert status_of(f"{base}/base/osm/5/25/14") == 503
+    assert status_of(f"{base}/fonts/Noto%20Sans%20Medium/0-255.pbf") == 404
+
+    # Online fetch populates cache and subsequent request hits cache even offline.
+    monkeypatch.setattr(
+        base_cache,
+        "_default_fetch",
+        lambda url: (b"PBFDATA", "application/x-protobuf") if url.endswith(".pbf") else (b"PNGTILE", "image/png"),
+    )
+    with urllib.request.urlopen(f"{base}/base/osm/5/25/14") as r:
+        assert r.status == 200 and r.read() == b"PNGTILE"
+    with urllib.request.urlopen(f"{base}/fonts/Noto%20Sans%20Medium/0-255.pbf") as r:
+        assert r.status == 200 and r.read() == b"PBFDATA"
+
+    monkeypatch.setattr(base_cache, "_default_fetch", lambda url: (_ for _ in ()).throw(OSError("offline")))
+    with urllib.request.urlopen(f"{base}/base/osm/5/25/14") as r:
+        assert r.status == 200 and r.read() == b"PNGTILE"
+    with urllib.request.urlopen(f"{base}/fonts/Noto%20Sans%20Medium/0-255.pbf") as r:
+        assert r.status == 200 and r.read() == b"PBFDATA"
+
+    # Settings reports base_cache disk usage.
+    settings_data = call(f"{base}/api/settings")
+    assert settings_data["disk"]["base_cache"] > 0
+
+    # Config, estimate, prefetch, and clear endpoints work end to end.
+    est = call(
+        f"{base}/api/cache/estimate",
+        "POST",
+        {"bases": ["osm"], "bounds": [105.5, 10.4, 105.7, 10.5], "min_z": 0, "max_z": 1},
+    )
+    assert est["total_tiles"] == 2
+    cfg = call(f"{base}/api/cache/config", "POST", {"enabled": False, "max_bytes": 250 * 1024 * 1024})
+    assert cfg["enabled"] is False and cfg["max_bytes"] == 250 * 1024 * 1024
+    cleared = call(f"{base}/api/cache/clear", "POST", {})
+    assert cleared["tile_count"] == 0
