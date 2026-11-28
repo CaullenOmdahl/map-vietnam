@@ -203,3 +203,62 @@ def test_landsat_mss_builds_geotiff_url_and_prefers_l1tp():
     assert [s["processing_level"] for s in res["scenes"]] == ["L1TP", "L1GS"]
     assert "/item/preview.tif?" in res["scenes"][0]["geotiff_url"]
     assert res["scenes"][0]["geotiff_url"].endswith("&max_size=2048")
+
+
+def test_aerial_image_proxy_caches_write_once_and_rejects_svg(tmp_path, monkeypatch):
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    hits = {"img": 0}
+    buf = io.BytesIO()
+    Image.new("RGB", (32, 24), (100, 120, 140)).save(buf, format="JPEG")
+    jpg = buf.getvalue()
+
+    class FakeUpstream(BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            return
+
+        def do_GET(self):
+            if self.path == "/thumb.jpg":
+                hits["img"] += 1
+                self.send_response(200)
+                self.send_header("Content-Type", "image/jpeg")
+                self.send_header("Content-Length", str(len(jpg)))
+                self.end_headers()
+                self.wfile.write(jpg)
+            else:
+                svg = b"<svg></svg>"
+                self.send_response(200)
+                self.send_header("Content-Type", "image/svg+xml")
+                self.send_header("Content-Length", str(len(svg)))
+                self.end_headers()
+                self.wfile.write(svg)
+
+    up = HTTPServer(("127.0.0.1", 0), FakeUpstream)
+    threading.Thread(target=up.serve_forever, daemon=True).start()
+    up_base = f"http://127.0.0.1:{up.server_address[1]}"
+
+    archive = FakeArchive()
+    lib = make_library(tmp_path / "desk", archive, monkeypatch)
+    db = tmp_path / "desk" / "e.sqlite"
+    store.connect(db).close()
+    srv = server.make_server(0, db, map_library=lib, allow_loopback=True)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{srv.server_address[1]}"
+    try:
+        q = urllib.parse.urlencode({"url": f"{up_base}/thumb.jpg"})
+        with urllib.request.urlopen(f"{base}/api/aerial/image?{q}", timeout=10) as r:
+            assert r.read() == jpg and r.headers["Content-Type"] == "image/jpeg"
+        # Second request must be served from local disk cache without hitting upstream again.
+        with urllib.request.urlopen(f"{base}/api/aerial/image?{q}", timeout=10) as r:
+            assert r.read() == jpg
+        assert hits["img"] == 1
+
+        bad_q = urllib.parse.urlencode({"url": f"{up_base}/evil.svg"})
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            urllib.request.urlopen(f"{base}/api/aerial/image?{bad_q}", timeout=10)
+        assert exc.value.code == 400
+    finally:
+        srv.quit()
+        up.shutdown()
+        up.server_close()
+        archive.close()

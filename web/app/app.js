@@ -5034,13 +5034,14 @@ function closeLightbox() {
   if (lightboxOpener?.isConnected) lightboxOpener.focus({ preventScroll: true });
   lightboxOpener = null;
 }
+const aerImg = u => safeUrl(u) ? `/api/aerial/image?url=${encodeURIComponent(u)}` : "";
 function openLightbox({ preview, full, title, year, sourceUrl, bounds = "", kind = "" }) {
   const opener = document.activeElement;
   closeLightbox();
   if (!safeUrl(preview)) return;
   lightboxOpener = opener;
   document.body.insertAdjacentHTML("beforeend", `<div class="aer-lightbox" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-    <img src="${esc(preview)}" alt="${esc(title)}">
+    <img src="${esc(aerImg(preview))}" alt="${esc(title)}">
     <div class="aer-lb-bar">
       <b>${esc(title)}</b>${year ? `<span>(${esc(year)})</span>` : ""}
       ${safeUrl(full) ? `<button class="btn small primary" data-act="importAerial" data-url="${esc(full)}" data-title="${esc(title)}" data-year="${esc(year)}" data-bounds="${esc(bounds)}"${kind ? ` data-kind="${esc(kind)}"` : ""}>Import &amp; place on map</button>` : ""}
@@ -5171,7 +5172,7 @@ VIEWS.aerial = () => {
                 : (pUrl ? `<button class="btn small primary" data-act="importAerial" data-url="${esc(pUrl)}" data-title="${esc(m.title + " FLIGHT INDEX")}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}" data-vicinity="${esc(vLbl)}" data-kind="map">1. Place ${esc(pLbl.toLowerCase())} first</button>` : "")}
             </div>` : ""}
             ${thumbs.length ? `<div class="aer-grid">${thumbs.map(f => `<div class="aer-card">
-              <div class="aer-thumb">${safeUrl(f.preview_url) ? `<img loading="lazy" src="${esc(f.preview_url)}" alt="${esc(f.label || f.name)}">` : ""}</div>
+              <div class="aer-thumb">${safeUrl(f.preview_url) ? `<img loading="lazy" src="${esc(aerImg(f.preview_url))}" alt="${esc(f.label || f.name)}">` : ""}</div>
               <div class="aer-cap"><span class="mono" title="${esc(f.name)}">${esc(f.label || (f.isPlot ? "Flight index" : f.name.slice(-14)))}</span>
                 <div class="aer-acts">
                   <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(f.preview_url)}" data-full="${esc(f.full_url)}" data-title="${esc(m.title + " — " + (f.label || f.name))}" data-year="${esc(yr)}" data-src="${esc(m.source_url)}" data-bounds="${esc(bStr)}">View</button>
@@ -5189,7 +5190,7 @@ VIEWS.aerial = () => {
             const pts = Array.isArray(s.footprint?.[0]) ? s.footprint[0] : (Array.isArray(s.footprint) ? s.footprint : []);
             const sb = pts.length >= 3 ? JSON.stringify([Math.min(...pts.map(p => p[0])), Math.min(...pts.map(p => p[1])), Math.max(...pts.map(p => p[0])), Math.max(...pts.map(p => p[1]))]) : "";
             return `<div class="aer-card">
-            <div class="aer-thumb">${safeUrl(s.browse_url) ? `<img loading="lazy" src="${esc(s.browse_url)}" alt="${esc(s.display_id)}">` : ""}</div>
+            <div class="aer-thumb">${safeUrl(s.browse_url) ? `<img loading="lazy" src="${esc(aerImg(s.browse_url))}" alt="${esc(s.display_id)}">` : ""}</div>
             <div class="aer-cap"><b class="mono">${esc(s.display_id)}</b><span>${esc(s.date || "Undated")} · ${s.download_available ? "Free scan ready" : "Browse preview"}</span>
               ${safeUrl(s.browse_url) ? `<div class="aer-acts"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.browse_url)}" data-full="${esc(s.browse_url)}" data-title="${esc(s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}" data-bounds="${esc(sb)}">Inspect</button>
                 <button class="linkish small-t" data-act="importAerial" data-url="${esc(s.browse_url)}" data-title="${esc("Keyhole " + s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}" data-bounds="${esc(sb)}">Place</button></div>` : ""}
@@ -5204,7 +5205,7 @@ VIEWS.aerial = () => {
           const impUrl = safeUrl(s.geotiff_url) ? s.geotiff_url : s.preview_url;
           const lvl = s.processing_level === "L1TP" ? "terrain-corrected" : s.processing_level === "L1GS" ? "uncorrected L1GS" : "";
           return `<div class="aer-card">
-          <div class="aer-thumb">${safeUrl(s.preview_url) ? `<img loading="lazy" src="${esc(s.preview_url)}" alt="${esc(s.id)}">` : ""}</div>
+          <div class="aer-thumb">${safeUrl(s.preview_url) ? `<img loading="lazy" src="${esc(aerImg(s.preview_url))}" alt="${esc(s.id)}">` : ""}</div>
           <div class="aer-cap"><b>${esc((s.datetime || "").slice(0, 10))}</b><span>${esc([`Cloud ${s.cloud_cover != null ? Math.round(s.cloud_cover) + "%" : "?"}`, lvl || s.platform].filter(Boolean).join(" · "))}</span>
             ${safeUrl(impUrl) ? `<div class="aer-acts"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.preview_url)}" data-full="${esc(impUrl)}" data-title="${esc(s.id)}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">View</button>
               <button class="linkish small-t" data-act="importAerial" data-url="${esc(impUrl)}" data-title="${esc("Landsat MSS " + (s.datetime || "").slice(0, 10))}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">${s.geotiff_url ? "Add GeoTIFF" : "Place"}</button></div>` : ""}
@@ -5222,7 +5223,7 @@ VIEWS.aerial = () => {
       const ms = res.maps || [];
       listHTML = `<p class="small-t muted" style="margin:8px 2px">${ms.length} community-georeferenced IIIF maps (Gallica, Rumsey, LoC) in this view. Importing applies their control points automatically.</p>` +
         (ms.length ? `<div class="aer-grid">${ms.map((m, idx) => `<div class="aer-card">
-          <div class="aer-thumb">${safeUrl(m.preview_url) ? `<img loading="lazy" src="${esc(m.preview_url)}" alt="IIIF map ${idx + 1}">` : ""}</div>
+          <div class="aer-thumb">${safeUrl(m.preview_url) ? `<img loading="lazy" src="${esc(aerImg(m.preview_url))}" alt="IIIF map ${idx + 1}">` : ""}</div>
           <div class="aer-cap"><span>${m.gcp_count} control points</span>
             <div class="aer-acts">
               <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(m.preview_url)}" data-full="${esc(m.full_url)}" data-title="${esc("IIIF Map " + m.id.slice(-6))}">View</button>

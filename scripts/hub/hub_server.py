@@ -963,6 +963,26 @@ class HubHandler(BaseHTTPRequestHandler):
         return self.send_json(res)
 
     def serve_aerial(self, provider, q):
+        if provider == "image":
+            img_url = str(q.get("url") or "").strip()
+            if not img_url.startswith("https://") and not (
+                self.storage.allow_loopback and img_url.startswith("http://127.0.0.1:")
+            ):
+                raise ValueError("Provide an https:// image URL.")
+            key = f"aer_img:{hashlib.sha256(img_url.encode('utf-8')).hexdigest()}"
+            body, ctype = self.storage.cached_fetch(img_url, cache_key=key, timeout=45)
+            mime = (ctype or "image/jpeg").split(";", 1)[0].strip().lower()
+            if mime not in ("image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif", "image/tiff"):
+                raise ValueError("Archive URL did not return a supported raster image.")
+            if mime == "image/jpg":
+                mime = "image/jpeg"
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", mime)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", IMMUTABLE_CACHE_CONTROL)
+            self.end_headers()
+            self.wfile.write(body)
+            return None
         if provider == "nakala":
             return self.send_json(
                 terrain_aerial.search_nakala_aerials(

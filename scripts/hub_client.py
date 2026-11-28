@@ -644,6 +644,14 @@ class HubClient:
         qs = f"?{urllib.parse.urlencode(params)}" if params else ""
         return self._request_json(url, key, f"{route}{qs}", timeout=30)
 
+    def proxy_raw(self, route, params=None, timeout=45):
+        url, key = self.credentials()
+        if not (url and key):
+            return None, ""
+        qs = f"?{urllib.parse.urlencode(params)}" if params else ""
+        body, ctype, _ = self._request_raw(url, key, f"{route}{qs}", timeout=timeout)
+        return body, ctype
+
     def auto_gcp(
         self,
         scan_bytes,

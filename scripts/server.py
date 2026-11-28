@@ -2003,6 +2003,58 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json(self.hub.proxy_get("/hub/v1/lidar", {"bbox": q["bbox"]}))
         self.send_json(terrain_aerial.query_sliderule_gedi(bbox, self._local_cached_fetch))
 
+    def serve_cached_aerial_image(self, q):
+        """GET /api/aerial/image?url=...: write-once local disk cache (backed by Hub cache when connected)
+        for aerial thumbnails and flight-index previews so viewed images are never re-fetched upstream."""
+        import hashlib
+
+        img_url = str(q.get("url") or "").strip()
+        allow_lb = getattr(self, "allow_loopback", False)
+        if not img_url.startswith("https://") and not (allow_lb and img_url.startswith("http://127.0.0.1:")):
+            raise ValueError("Provide an https:// image URL.")
+        cache_dir = self.library.root / "data" / "aerial_cache"
+        digest = hashlib.sha256(img_url.encode("utf-8")).hexdigest()
+        bin_path = cache_dir / f"{digest}.img"
+        meta_path = cache_dir / f"{digest}.ctype"
+
+        def _fetch():
+            if bin_path.is_file():
+                ct = meta_path.read_text(encoding="utf-8").strip() if meta_path.is_file() else "image/jpeg"
+                return bin_path.read_bytes(), ct
+            raw, ctype = None, ""
+            if self.hub.config().get("configured"):
+                try:
+                    raw, ctype = self.hub.proxy_raw("/hub/v1/aerial/image", {"url": img_url}, timeout=45)
+                except hub_client.HubClientError:
+                    raw = None
+            if raw is None:
+                raw, ctype = polite_fetch_bytes(
+                    img_url,
+                    pacer=self.local_pacer,
+                    flight=self.local_flight,
+                    max_bytes=12 << 20,
+                    allow_loopback=allow_lb,
+                )
+            mime = (ctype or "image/jpeg").split(";", 1)[0].strip().lower()
+            if mime == "image/jpg":
+                mime = "image/jpeg"
+            if mime not in ("image/jpeg", "image/png", "image/webp", "image/gif", "image/tiff"):
+                raise ValueError("Archive URL did not return a supported raster image.")
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            tmp = cache_dir / f".{digest}.{os.getpid()}.{threading.get_ident()}.part"
+            tmp.write_bytes(raw)
+            os.replace(tmp, bin_path)
+            meta_path.write_text(mime, encoding="utf-8")
+            return raw, mime
+
+        body, mime = self.local_flight.do(("aer_img", digest), _fetch)
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", mime)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "private, max-age=31536000, immutable")
+        self.end_headers()
+        self.wfile.write(body)
+
     def aerial_api(self, method, p, q):
         """Search historical overhead archives (proxying through Hub cache when connected) or import a frame."""
         if method == "POST" and p == "aerial/import":
@@ -2071,6 +2123,8 @@ class Handler(SimpleHTTPRequestHandler):
         if method != "GET":
             return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
         provider = p.removeprefix("aerial/")
+        if provider == "image":
+            return self.serve_cached_aerial_image(q)
         if self.hub.config()["configured"] and provider in ("nakala", "oam", "landsat", "allmaps", "usgs"):
             # The Hub keeps its answers forever; when it cannot be reached, ask the archive directly instead of
             # failing the search.
