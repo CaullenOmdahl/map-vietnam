@@ -748,13 +748,16 @@ def search_usgs_declass(
     # Login tokens are ephemeral session keys, so login itself bypasses the permanent raw cache.
     import urllib.request
 
+    from hub.polite import tls_context
+
+    tls = tls_context()
     login_req = urllib.request.Request(
         f"{base}/login-token",
         data=json.dumps({"username": username, "token": token}).encode("utf-8"),
         headers={"Content-Type": "application/json", "User-Agent": "MapVietnam-M2M/0.3"},
         method="POST",
     )
-    with urllib.request.urlopen(login_req, timeout=20) as resp:
+    with urllib.request.urlopen(login_req, timeout=20, context=tls) as resp:
         login_data = json.loads(resp.read().decode("utf-8"))
     api_key = login_data.get("data")
     if not api_key:
@@ -809,6 +812,6 @@ def search_usgs_declass(
             warnings.simplefilter("ignore")
             try:
                 logout = urllib.request.Request(f"{base}/logout", headers={"X-Auth-Token": api_key}, method="POST")
-                urllib.request.urlopen(logout, timeout=5).close()
+                urllib.request.urlopen(logout, timeout=5, context=tls).close()
             except Exception:
                 pass

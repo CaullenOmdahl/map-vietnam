@@ -9,11 +9,26 @@ minimum intervals between requests to any given host.
 import ipaddress
 import re
 import socket
+import ssl
 import threading
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+
+
+def tls_context():
+    """System trust store plus certifi's CA bundle so frozen macOS .app bundles verify HTTPS."""
+    ctx = ssl.create_default_context()
+    try:
+        import certifi
+    except ImportError:
+        return ctx
+    ctx.load_verify_locations(certifi.where())
+    return ctx
+
+
+_TLS_CTX = tls_context()
 
 SAFE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,95}$")
 DEFAULT_MAX_FETCH_BYTES = 256 << 20  # 256 MiB ceiling per upstream HTTP response
@@ -234,7 +249,10 @@ def polite_fetch_bytes(
     bounded body reads, single-flight deduplication, and 429 retry."""
     validate_fetch_url(url, allow_loopback=allow_loopback)
     req_headers = {"User-Agent": user_agent(contact), **(headers or {})}
-    opener = urllib.request.build_opener(_SafeRedirectHandler(allow_loopback=allow_loopback))
+    opener = urllib.request.build_opener(
+        urllib.request.HTTPSHandler(context=_TLS_CTX),
+        _SafeRedirectHandler(allow_loopback=allow_loopback),
+    )
 
     def _run():
         last_err = None

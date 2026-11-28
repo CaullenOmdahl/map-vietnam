@@ -29,7 +29,7 @@ import paths
 import records
 import tiling
 from files import delete, path_bytes, read_json
-from hub.polite import SingleFlight, is_safe_id, user_agent
+from hub.polite import SingleFlight, is_safe_id, tls_context, user_agent
 
 UPLOAD_BLOCK = 1 << 20
 
@@ -52,7 +52,10 @@ class _SameOriginHubRedirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-_HUB_OPENER = urllib.request.build_opener(_SameOriginHubRedirect())
+_HUB_OPENER = urllib.request.build_opener(
+    urllib.request.HTTPSHandler(context=tls_context()),
+    _SameOriginHubRedirect(),
+)
 
 
 def _is_ip_literal(host):
