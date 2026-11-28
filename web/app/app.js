@@ -1684,8 +1684,9 @@ function show(name, data = {}, { push = true } = {}) {
     if (S.opener.isConnected && !S.opener.closest("[hidden]")) S.opener.focus({ preventScroll: true });
     S.opener = null;
   }
-  // Phone: a card opens at half height (map stays visible above it), like Apple Maps.
-  if (name !== "home" && !isDesk() && S.sheet !== "half" && document.activeElement !== q) setSheet("half");
+  // Phone: a card opens at half height (map stays visible above it), like Apple Maps; Settings opens full screen.
+  if (name === "settings" && !isDesk() && S.sheet !== "full") setSheet("full");
+  else if (name !== "home" && name !== "settings" && !isDesk() && S.sheet !== "half" && document.activeElement !== q) setSheet("half");
   if (isDesk() && S.panelHidden && name !== "home") setPanelHidden(false);
   $("#panelScroll").scrollTop = 0;
 }
@@ -1722,6 +1723,7 @@ function render() {
   updateCounts();
   showFootprints(v.name === "library");
   document.body.classList.toggle("lib-open", v.name === "library");
+  document.body.classList.toggle("settings-open", v.name === "settings");
   $("#settingsBtn")?.setAttribute("aria-pressed", v.name === "settings");
   renderMapbar(); // its hints depend on whether the library card is open
   if (!isDesk()) requestAnimationFrame(() => setSheet(S.sheet));
@@ -1753,7 +1755,7 @@ const ACTIONS = {
   openCase: async el => { await selectCase(+el.dataset.id); show("case", { id: +el.dataset.id }); },
   preset: el => setYears(el.dataset.a ? [+el.dataset.a, +el.dataset.b] : null),
   layers: () => togglePopover("popLayers", $("#layersBtn")),
-  setEra: el => setEra(el.dataset.id),
+  setEra: el => { if (S.view.name === "settings") show("home"); setEra(el.dataset.id); },
   fit: el => { const e = eraById(el.dataset.id); if (e) primary().fitBounds([[e.bounds[0], e.bounds[1]], [e.bounds[2], e.bounds[3]]], { padding: mapPadding(), duration: reduceMotion ? 0 : 600 }); },
   theme: el => setTheme(el.dataset.theme),
 };
@@ -3006,7 +3008,11 @@ function stopMaps(ids) {
 }
 ACTIONS.libStop = el => stopMaps([el.dataset.id]);
 ACTIONS.libStopAll = () => stopMaps(libBusyMaps().map(m => m.id));
-ACTIONS.libShow = el => setEra(S.eraA === el.dataset.id ? "today" : el.dataset.id);
+ACTIONS.libShow = el => {
+  const next = S.eraA === el.dataset.id ? "today" : el.dataset.id;
+  if (S.view.name === "settings" && next !== "today") show("home");
+  setEra(next);
+};
 ACTIONS.libFit = el => { if (!isDesk()) setSheet("peek"); fitFootprintIfHidden(el.dataset.id, true); };
 ACTIONS.libKind = el => { S.view.kind = el.dataset.s; S.view.sel = null; S.view.open = null; S.view.confirm = null; setFpState("sel", null); rerenderKeepingFocus(); };
 ACTIONS.libSort = el => { S.view.sort = el.dataset.s; rerenderKeepingFocus(); };
@@ -4218,12 +4224,14 @@ function hubAdminHTML() {
 
     <details><summary class="small-t" style="cursor:pointer;font-weight:600">1. Server upstream archive keys (USGS, Kaggle, NASA)</summary>
       <form id="hubSecretsForm" class="stack" style="margin-top:10px" autocomplete="off">
-        <label class="field"><span>USGS EarthExplorer username (CORONA / KH-7 / KH-9)</span><input type="text" name="usgs_u" value="${esc(v.usgs_username || "")}" placeholder="EROS username"></label>
-        <label class="field"><span>USGS M2M token ${v.has_usgs_token ? '<span class="hub-badge">Saved on Hub</span>' : ""}</span><input type="password" name="usgs_t" placeholder="${v.has_usgs_token ? "Leave blank to keep current token" : "Paste USGS M2M token"}"></label>
-        <label class="field"><span>Kaggle username (THOR air strikes)</span><input type="text" name="kag_u" value="${esc(v.kaggle_username || "")}" placeholder="Kaggle username"></label>
-        <label class="field"><span>Kaggle API key ${v.has_kaggle_key ? '<span class="hub-badge">Saved on Hub</span>' : ""}</span><input type="password" name="kag_k" placeholder="${v.has_kaggle_key ? "Leave blank to keep current key" : "Paste Kaggle key"}"></label>
-        <label class="field"><span>NASA Earthdata Bearer token ${v.has_earthdata_token ? '<span class="hub-badge">Saved on Hub</span>' : ""}</span><input type="password" name="ed_t" placeholder="${v.has_earthdata_token ? "Leave blank to keep current token" : "Paste Earthdata token"}"></label>
-        <label class="field"><span>Polite User-Agent contact email / URL</span><input type="text" name="contact" value="${esc(v.contact || "")}" placeholder="team@example.org"></label>
+        <div class="set-grid-2">
+          <label class="field"><span>USGS EarthExplorer username (CORONA / KH-7 / KH-9)</span><input type="text" name="usgs_u" value="${esc(v.usgs_username || "")}" placeholder="EROS username"></label>
+          <label class="field"><span>USGS M2M token ${v.has_usgs_token ? '<span class="hub-badge">Saved on Hub</span>' : ""}</span><input type="password" name="usgs_t" placeholder="${v.has_usgs_token ? "Leave blank to keep current token" : "Paste USGS M2M token"}"></label>
+          <label class="field"><span>Kaggle username (THOR air strikes)</span><input type="text" name="kag_u" value="${esc(v.kaggle_username || "")}" placeholder="Kaggle username"></label>
+          <label class="field"><span>Kaggle API key ${v.has_kaggle_key ? '<span class="hub-badge">Saved on Hub</span>' : ""}</span><input type="password" name="kag_k" placeholder="${v.has_kaggle_key ? "Leave blank to keep current key" : "Paste Kaggle key"}"></label>
+          <label class="field"><span>NASA Earthdata Bearer token ${v.has_earthdata_token ? '<span class="hub-badge">Saved on Hub</span>' : ""}</span><input type="password" name="ed_t" placeholder="${v.has_earthdata_token ? "Leave blank to keep current token" : "Paste Earthdata token"}"></label>
+          <label class="field"><span>Polite User-Agent contact email / URL</span><input type="text" name="contact" value="${esc(v.contact || "")}" placeholder="team@example.org"></label>
+        </div>
         <label class="switch"><input type="checkbox" name="allow_nc" ${v.allow_nc_sources !== false ? "checked" : ""}><span class="tog" aria-hidden="true"></span><span>Serve non-commercial research maps (CNRS / SHD Indochina)</span></label>
         <div class="row" style="flex-wrap:wrap"><button class="btn small primary" type="submit">Save server settings</button>
           ${v.has_usgs_token ? `<button class="btn small" type="button" data-act="hubClearSecret" data-k="USGS_M2M_TOKEN">Clear USGS token</button>` : ""}
@@ -4327,8 +4335,10 @@ function hubSectionHTML() {
   return `<form id="hubForm" class="stack" autocomplete="off">
     <p class="small-t muted" style="margin:0">Enter your Hub server’s domain or IP address and its password (from <span class="mono">HUB_ADMIN_PASSWORD</span> on Railway) or a collaborator API key. Everything on the server can then be configured right here.</p>
     ${h.configured && !h.connected ? `<div class="err" role="alert">Saved Hub (${esc(h.url)}) could not be reached${h.err ? ": " + esc(h.err) : ""}.</div>` : ""}
-    <label class="field"><span>Server domain or IP address</span><input type="text" name="hurl" required placeholder="my-hub.up.railway.app or 192.168.1.50:8780" value="${esc(h.url || "")}"></label>
-    <label class="field"><span>Password or API key</span><input type="password" name="hkey" ${h.configured ? "" : "required"} placeholder="${h.configured ? "Leave blank to keep saved password/key" : "Server password or mvhub_… key"}"></label>
+    <div class="set-grid-2">
+      <label class="field"><span>Server domain or IP address</span><input type="text" name="hurl" required placeholder="my-hub.up.railway.app or 192.168.1.50:8780" value="${esc(h.url || "")}"></label>
+      <label class="field"><span>Password or API key</span><input type="password" name="hkey" ${h.configured ? "" : "required"} placeholder="${h.configured ? "Leave blank to keep saved password/key" : "Server password or mvhub_… key"}"></label>
+    </div>
     <label class="switch"><input type="checkbox" name="hauto" ${h.auto_push ? "checked" : ""}><span class="tog" aria-hidden="true"></span><span>Auto-cache local maps to Hub</span></label>
     <div class="row"><button class="btn small primary" type="submit">Connect</button>
       ${h.configured ? `<button class="btn small" type="button" data-act="hubDisconnect">Forget Hub</button>` : ""}</div>
@@ -4476,6 +4486,7 @@ ACTIONS.clearLocalKeys = async () => {
 
 ACTIONS.useDem = el => {
   const id = el.dataset.id; if (!id) return;
+  if (S.view.name === "settings") show("home");
   setTerrainSource(id);
   const b = S.lib.byId.get(id)?.bounds || (S.hub.layers || []).find(l => l.id === id)?.bounds;
   if (b) primary().fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: mapPadding(), maxZoom: 14, duration: reduceMotion ? 0 : 600 });
@@ -4486,27 +4497,46 @@ VIEWS.settings = v => {
   settingsLastSig = settingsSig();
   const theme = store.get("theme", "auto"), mode = scrollMode(), mine = customMaps();
   const seg = (label, inner) => `<div class="set-row"><span class="set-k">${label}</span><div class="seg" role="group" aria-label="${label}">${inner}</div></div>`;
-  return `${headHTML("Settings", "Preferences, Hub server, your own maps and storage")}
-    <h3 class="sub-head">Preferences</h3>
-    <div class="group">
-      ${seg("Appearance", ["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${theme === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join(""))}
-      ${seg("Scrolling", SCROLL_MODES.map(([k, label]) => `<button data-act="scrollMode" data-m="${k}" aria-pressed="${mode === k}">${label}</button>`).join(""))}
+  return `<div class="settings-wrap">
+    ${headHTML("Settings", "Preferences, Intermediary Hub server, archive keys, custom maps & storage")}
+    <div class="settings-grid">
+      <div class="settings-col">
+        <section class="settings-card">
+          <h3 class="sub-head">Intermediary Hub server</h3>
+          <div class="set-block" style="margin-top:0;width:100%">${hubSectionHTML()}</div>
+        </section>
+        <section class="settings-card">
+          <h3 class="sub-head">Local archive keys (standalone)</h3>
+          <div class="set-block stack" style="gap:10px;margin-top:0;width:100%">${keySectionHTML()}${localKeysSectionHTML()}</div>
+        </section>
+      </div>
+      <div class="settings-col">
+        <section class="settings-card">
+          <h3 class="sub-head">Preferences</h3>
+          <div class="group" style="margin-top:0">
+            ${seg("Appearance", ["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${theme === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join(""))}
+            ${seg("Scrolling", SCROLL_MODES.map(([k, label]) => `<button data-act="scrollMode" data-m="${k}" aria-pressed="${mode === k}">${label}</button>`).join(""))}
+          </div>
+          <p class="small-t muted" style="margin:0">Automatic pans on two-finger trackpad slides and zooms on notched scroll wheels. Pick Trackpad or Mouse wheel explicitly for smooth-scroll mice (like Magic Mouse) or remote desktop sessions.</p>
+        </section>
+        <section class="settings-card">
+          <h3 class="sub-head">My maps &amp; LiDAR DEMs</h3>
+          <div class="set-block" style="margin-top:0;width:100%">
+            <p class="small-t muted">Add a map or elevation GeoTIFF from your computer. A GeoTIFF, float32 LiDAR DEM, or GeoPDF is placed for you. A photo or scan (JPG, PNG or PDF) is placed by matching spots to today’s map (8+ spots use Thin Plate Spline).</p>
+            <div id="cmUp">${uploadHTML()}</div>
+            <div class="err" id="cmErr" role="alert">${esc(S.cm.err)}</div>
+            ${mine.length ? `<div class="group"><ul class="list lib-list" aria-label="Your own maps">${mine.map(cmRow).join("")}</ul></div>`
+              : S.lib.loaded ? `<p class="small-t muted">You have not added a map of your own yet.</p>` : ""}
+          </div>
+        </section>
+        <section class="settings-card">
+          <h3 class="sub-head">Storage</h3>
+          <div id="setDisk">${storageHTML()}</div>
+          <p class="foot-note" style="margin-top:4px">Local data stays on this computer unless you connect a Hub server and choose to cache maps there.</p>
+        </section>
+      </div>
     </div>
-    <h3 class="sub-head">Intermediary Hub server</h3>
-    <div class="set-block">${hubSectionHTML()}</div>
-    <h3 class="sub-head">Local archive keys (standalone)</h3>
-    <div class="set-block stack" style="gap:10px">${keySectionHTML()}${localKeysSectionHTML()}</div>
-    <h3 class="sub-head">My maps &amp; LiDAR DEMs</h3>
-    <div class="set-block">
-      <p class="small-t muted">Add a map or elevation GeoTIFF from your computer. A GeoTIFF, float32 LiDAR DEM, or GeoPDF is placed for you. A photo or scan (JPG, PNG or PDF) is placed by matching spots to today’s map (8+ spots use Thin Plate Spline).</p>
-      <div id="cmUp">${uploadHTML()}</div>
-      <div class="err" id="cmErr" role="alert">${esc(S.cm.err)}</div>
-      ${mine.length ? `<div class="group"><ul class="list lib-list" aria-label="Your own maps">${mine.map(cmRow).join("")}</ul></div>`
-        : S.lib.loaded ? `<p class="small-t muted">You have not added a map of your own yet.</p>` : ""}
-    </div>
-    <h3 class="sub-head">Storage</h3>
-    <div id="setDisk">${storageHTML()}</div>
-    <p class="foot-note">Local data stays on this computer unless you connect a Hub server and choose to cache maps there.</p>`;
+  </div>`;
 };
 VIEWS.settings.after = () => {
   $("#cmFile")?.addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) cmUpload(f); });
@@ -4873,6 +4903,7 @@ ACTIONS.cmSel = el => {
 ACTIONS.cmFit = el => {
   const b = S.lib.byId.get(el.dataset.id)?.bounds;
   if (!b) return;
+  if (S.view.name === "settings") show("home");
   if (!isDesk()) setSheet("peek");
   primary().fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: mapPadding(), maxZoom: 15, duration: reduceMotion ? 0 : 600 });
 };
@@ -5258,7 +5289,7 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { ap
 document.addEventListener("keydown", e => {
   if (placeOpen()) return; // the Placement screen has its own keys
   const typing = e.target.closest?.("input, textarea, select");
-  if (e.key === "/" && !typing) { e.preventDefault(); q.focus(); q.select(); }
+  if (e.key === "/" && !typing && S.view.name !== "settings") { e.preventDefault(); q.focus(); q.select(); }
   else if (e.key === "Escape") {
     if ($(".aer-lightbox")) { e.preventDefault(); closeLightbox(); return; }
     const open = ["popStyle", "popLayers", "popMaps"].find(id => !$("#" + id).hidden);
