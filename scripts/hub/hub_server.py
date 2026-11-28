@@ -35,6 +35,7 @@ if str(SCRIPTS_DIR) not in sys.path:
 import paths  # noqa: E402
 import terrain_aerial  # noqa: E402
 import tiling  # noqa: E402
+from app_log import AppLogger  # noqa: E402
 
 from hub import auto_gcp  # noqa: E402
 from hub.auth import (  # noqa: E402
@@ -332,6 +333,7 @@ class HubHandler(BaseHTTPRequestHandler):
 
     storage: HubStorage = None
     jobs: HubJobRunner = None
+    hub_log: AppLogger = None
 
     def log_message(self, fmt, *args):
         return  # Keep stdout clean and never log URLs or headers carrying tokens.
@@ -589,17 +591,31 @@ class HubHandler(BaseHTTPRequestHandler):
                     {"capabilities": self.storage.vault.status(), "vault": self.storage.vault.admin_summary()}
                 )
 
+            if method == "GET" and path == "/hub/v1/admin/logs":
+                self.require_principal("admin")
+                if self.hub_log is None:
+                    return self.send_json({"path": "", "lines": []})
+                return self.send_json({"path": str(self.hub_log.path), "lines": self.hub_log.tail(120)})
+
             self.send_json({"error": "Route not found."}, HTTPStatus.NOT_FOUND)
         except AuthError as e:
+            if e.status >= 403 and self.hub_log is not None:
+                self.hub_log.log("WARN", f"{method} {path}", self.storage.vault.scrub(str(e)))
             self.send_json({"error": str(e)}, e.status)
         except (HubStorageError, ValueError, KeyError) as e:
             msg = f"{e.args[0]} is missing" if isinstance(e, KeyError) else str(e)
-            self.send_json({"error": self.storage.vault.scrub(msg)}, HTTPStatus.BAD_REQUEST)
+            clean_msg = self.storage.vault.scrub(msg)
+            if self.hub_log is not None:
+                self.hub_log.log("WARN", f"{method} {path}", clean_msg)
+            self.send_json({"error": clean_msg}, HTTPStatus.BAD_REQUEST)
         except ConnectionError:
             return
         except Exception as e:
+            clean_msg = self.storage.vault.scrub(f"Hub error: {e}")
+            if self.hub_log is not None:
+                self.hub_log.log("ERROR", f"{method} {path}", clean_msg, exc=e)
             self.send_json(
-                {"error": self.storage.vault.scrub(f"Hub error: {e}")},
+                {"error": clean_msg},
                 HTTPStatus.INTERNAL_SERVER_ERROR,
             )
 
@@ -922,7 +938,8 @@ def make_hub_server(
     """Construct a bound `HubHTTPServer` ready for `serve_forever()`."""
     storage = HubStorage(root=data_root, env=env, pacer=pacer, allow_loopback=allow_loopback)
     jobs = HubJobRunner(storage, app_root=app_root)
-    handler = type("BoundHubHandler", (HubHandler,), {"storage": storage, "jobs": jobs})
+    hub_log = AppLogger(storage.root / "logs" / "hub.log", echo_stderr=True)
+    handler = type("BoundHubHandler", (HubHandler,), {"storage": storage, "jobs": jobs, "hub_log": hub_log})
     return HubHTTPServer((host, int(port)), handler, storage, jobs)
 
 

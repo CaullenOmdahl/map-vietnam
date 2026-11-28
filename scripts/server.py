@@ -96,6 +96,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+import app_log
 import custom_maps
 import gridref
 import hub_client
@@ -753,19 +754,28 @@ class Handler(SimpleHTTPRequestHandler):
             raise ValueError("send a JSON object")
         return data
 
-    def _scrub_local(self, text):
-        out = str(text or "")
-        if not out:
-            return out
+    def _extra_secrets(self):
         env_vals = records.read_env(self.library.root / ".env") if self.library else {}
+        out = []
         for k in ("USGS_M2M_TOKEN", "KAGGLE_KEY", "HUB_API_KEY", "EARTHDATA_TOKEN"):
             for v in (os.environ.get(k), env_vals.get(k)):
                 if v and len(v) >= 4:
-                    out = out.replace(v, "[REDACTED]")
-        return re.sub(r"mvhub_[0-9a-f]{8}_[0-9a-f]{16,96}", "mvhub_[REDACTED]", out)
+                    out.append(v)
+        return out
+
+    def _scrub_local(self, text):
+        return app_log.scrub_secrets(str(text or ""), self._extra_secrets())
 
     def send_failure(self, error):
         """Answer 500 for a failure of the server itself, logging the traceback for the console."""
+        if getattr(self, "app_log", None) is not None:
+            self.app_log.log(
+                "ERROR",
+                f"{self.command} {urlparse(self.path).path}",
+                str(error),
+                exc=error,
+                secrets=self._extra_secrets(),
+            )
         traceback.print_exception(error, file=sys.stderr)
         self.send_json({"error": f"the server failed: {self._scrub_local(error)}"}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
@@ -840,6 +850,8 @@ class Handler(SimpleHTTPRequestHandler):
                     self.media_api(method, p, q, db)
             elif p == "local-keys":
                 self.local_keys_api(method)
+            elif p == "logs" or p.startswith("logs/"):
+                self.logs_api(method, p)
             elif p == "settings" and method == "GET":
                 self.settings()
             elif p == "quit" and method == "POST":
@@ -857,6 +869,8 @@ class Handler(SimpleHTTPRequestHandler):
         except KeyError as e:  # a field or query value the request left out
             self.send_json({"error": f"{e.args[0]} is missing"}, HTTPStatus.BAD_REQUEST)
         except (ValueError, TypeError) as e:  # LibraryError is a ValueError
+            if getattr(self, "app_log", None) is not None and p != "logs/client":
+                self.app_log.log("WARN", f"{method} {url.path}", str(e), secrets=self._extra_secrets())
             self.send_json({"error": self._scrub_local(e)}, HTTPStatus.BAD_REQUEST)
         except OverflowError:  # a number too big for SQLite, e.g. an id of 30 digits
             self.send_json({"error": "a number in the request is too large"}, HTTPStatus.BAD_REQUEST)
@@ -1671,6 +1685,35 @@ class Handler(SimpleHTTPRequestHandler):
         )
         self.send_json(res)
 
+    def logs_api(self, method, p):
+        """Read or clear rotating local error logs (plus Hub admin logs when connected)."""
+        alog = getattr(self, "app_log", None)
+        if alog is None:
+            return self.send_json({"path": "", "lines": []})
+        if method == "POST" and p == "logs/client":
+            b = self.body()
+            src = str(b.get("source") or "viewer")[:80]
+            msg = str(b.get("message") or "Client error")[:800]
+            stack = str(b.get("stack") or "")[:2000]
+            combined = f"{msg}\n{stack}".strip() if stack else msg
+            alog.log("ERROR", f"ui:{src}", combined, secrets=self._extra_secrets())
+            return self.send_json({"ok": True})
+        if method == "POST" and p == "logs/clear":
+            self.body()
+            alog.clear()
+            return self.send_json({"path": str(alog.path), "lines": []})
+        if method == "GET" and p == "logs":
+            out = {"path": str(alog.path), "lines": alog.tail(120)}
+            if self.hub and self.hub.config().get("configured"):
+                try:
+                    hub_res = self.hub.admin_logs()
+                    out["hub_path"] = hub_res.get("path") or ""
+                    out["hub_lines"] = hub_res.get("lines") or []
+                except hub_client.HubClientError:
+                    pass
+            return self.send_json(out)
+        self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+
     def lidar_api(self, q):
         bbox = number_list(q["bbox"], 4, "bbox", "w,s,e,n")
         if self.hub.config()["configured"]:
@@ -1951,6 +1994,7 @@ def make_server(
     lib.on_installed = _auto_push_installed
     pacer = HostPacer()
     flight = SingleFlight()
+    alog = app_log.AppLogger(lib.root / "logs" / "app.log")
     handler = type(
         "BoundHandler",
         (Handler,),
@@ -1960,6 +2004,7 @@ def make_server(
             "library": lib,
             "records": rec,
             "hub": hc,
+            "app_log": alog,
             "local_pacer": pacer,
             "local_flight": flight,
             "allow_loopback": bool(allow_loopback),

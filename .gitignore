@@ -3,6 +3,7 @@ data/raw/
 data/work/
 data/evidence.sqlite
 data/evidence.sqlite-*
+logs/
 web/tiles/
 web/catalog.json
 

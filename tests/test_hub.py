@@ -964,3 +964,85 @@ def test_auto_gcp_perspective_match_confidence_gate_and_hub_endpoint(tmp_path, m
         desk_srv.quit()
         hub_srv.stop_gracefully()
         archive.close()
+
+
+def test_rotating_secret_scrubbed_error_logs_desktop_and_hub(tmp_path, monkeypatch):
+    """Verify AppLogger scrubs tokens/URL secrets and serves `/api/logs` + `/hub/v1/admin/logs`."""
+    import urllib.error
+    import urllib.request
+
+    import app_log
+    import server
+    import store
+    from fakeweb import FakeArchive, make_library
+
+    # 1. Secret scrubber redacts tokens and query secrets
+    raw = "Failed https://x.example/{z}/{x}/{y}.png?api_key=super_secret_99 with Bearer top_token_xyz and mvhub_1234abcd_0123456789abcdef0123"
+    scrubbed = app_log.scrub_secrets(raw, ["my_explicit_secret"])
+    assert "super_secret_99" not in scrubbed
+    assert "top_token_xyz" not in scrubbed
+    assert "0123456789abcdef0123" not in scrubbed
+    assert "[REDACTED]" in scrubbed
+
+    # 2. Desktop server + Hub admin logging end-to-end
+    hub_srv = make_hub_server(
+        host="127.0.0.1",
+        port=0,
+        data_root=tmp_path / "vol",
+        env={"HUB_ADMIN_PASSWORD": "log-admin-pass-123"},
+        pacer=HostPacer(default_interval=0.0),
+    )
+    threading.Thread(target=hub_srv.serve_forever, daemon=True).start()
+    archive = FakeArchive()
+    lib = make_library(tmp_path / "desk", archive, monkeypatch)
+    db_path = tmp_path / "desk" / "e.sqlite"
+    store.connect(db_path).close()
+    desk_srv = server.make_server(0, db_path, map_library=lib)
+    threading.Thread(target=desk_srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{desk_srv.server_address[1]}"
+    hub_base = f"http://127.0.0.1:{hub_srv.server_address[1]}"
+
+    def call(route, method="GET", body=None):
+        data = json.dumps(body).encode("utf-8") if body is not None else None
+        req = urllib.request.Request(
+            f"{base}{route}", data=data, method=method, headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return json.loads(r.read().decode("utf-8"))
+
+    try:
+        call(
+            "/api/hub/config",
+            "POST",
+            {"url": f"127.0.0.1:{hub_srv.server_address[1]}", "api_key": "log-admin-pass-123"},
+        )
+
+        # Mint a non-admin key and verify /hub/v1/admin/logs forbids it (403) while logging the denial
+        ro = call("/api/hub/admin/keys", "POST", {"label": "Reader", "scopes": ["read"]})["created_key"]
+        req_ro = urllib.request.Request(
+            f"{hub_base}/hub/v1/admin/logs",
+            headers={"Authorization": f"Bearer {ro['token']}"},
+        )
+        with pytest.raises(urllib.error.HTTPError) as exc_403:
+            urllib.request.urlopen(req_ro, timeout=10)
+        assert exc_403.value.code == 403
+
+        # Trigger a client error & verify scrubbed /api/logs + hub_lines
+        call(
+            "/api/logs/client",
+            "POST",
+            {"source": "window", "message": "Boom api_key=leak_me_not mvhub_abcd1234_99887766554433221100"},
+        )
+        logs = call("/api/logs")
+        assert logs["path"].endswith("app.log")
+        joined = "\n".join(logs["lines"])
+        assert "Boom" in joined and "leak_me_not" not in joined and "99887766554433221100" not in joined
+        assert any("hub.log" in str(logs.get("hub_path")) and ln for ln in logs.get("hub_lines") or [])
+
+        # Clear local logs
+        cleared = call("/api/logs/clear", "POST", {})
+        assert cleared["lines"] == []
+    finally:
+        desk_srv.quit()
+        hub_srv.stop_gracefully()
+        archive.close()

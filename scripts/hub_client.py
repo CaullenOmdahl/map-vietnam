@@ -623,6 +623,12 @@ class HubClient:
             url, key, f"/hub/v1/admin/keys/{urllib.parse.quote(str(key_id), safe='')}", method="DELETE"
         )
 
+    def admin_logs(self):
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        return self._request_json(url, key, "/hub/v1/admin/logs")
+
     def poll_hub_job(self, job_id):
         if not is_safe_id(job_id):
             raise HubClientError("Invalid Hub job id.")

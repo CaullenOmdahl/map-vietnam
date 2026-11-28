@@ -99,6 +99,21 @@ async function api(path, opts = {}) {
   if (!r.ok) throw Object.assign(new Error((data && data.error) || r.statusText), { data });
   return data;
 }
+let _lastClientLogAt = 0;
+function reportClientError(source, err) {
+  const now = Date.now();
+  if (now - _lastClientLogAt < 400) return;
+  _lastClientLogAt = now;
+  const message = err?.message || String(err || "Unknown browser error");
+  const stack = err?.stack ? String(err.stack).slice(0, 1800) : "";
+  fetch("/api/logs/client", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source, message, stack }),
+  }).catch(() => {});
+}
+addEventListener("error", e => reportClientError("window", e.error || `${e.message || "Error"} (${e.filename || ""}:${e.lineno || 0})`));
+addEventListener("unhandledrejection", e => reportClientError("promise", e.reason || "Unhandled promise rejection"));
 // A short status message; with an undo callback it shows an Undo button (or another label) and stays up for at least 6 s.
 let toastTimer;
 // Says something to screen readers only (a hidden polite region), for changes that have no toast. Progress is never
@@ -299,6 +314,7 @@ const S = {
   // Optional Intermediary Hub Server (shared infinite cache, vaulted keys, and bidirectional map sync).
   hub: { configured: false, connected: false, url: "", me: null, admin: null, layers: [], auto_push: false, loaded: false, err: "", justCreatedKey: null },
   localKeys: { usgs_username: "", has_usgs_token: false, has_earthdata_token: false, contact: "", loaded: false },
+  logs: { path: "", lines: [], hub_path: "", hub_lines: [], loaded: false },
   // Terrain, Bare-Earth LiDAR DEMs & Relief Shaders.
   terrain: { source: store.get("terrainSrc", "off"), mode: store.get("terrainMode", "hillshade"), pitch3d: store.get("pitch3d", false), sources: null },
   profilingFrom: null, transect: null,
@@ -4099,9 +4115,42 @@ function openSettings(sel = null) {
   show("settings", { sel, confirm: null, keyOpen: false });
   if (from && from !== document.body && !$("#panel").contains(from)) S.opener = from;
   focusCard();
-  loadLibrary(); loadSettings(); loadHub(); loadLocalKeys();
+  loadLibrary(); loadSettings(); loadHub(); loadLocalKeys(); loadLogs();
   if (sel) reveal($(`#view [data-lib-row="${CSS.escape(sel)}"]`));
 }
+async function loadLogs() {
+  try { S.logs = { ...(await api("/api/logs")), loaded: true }; }
+  catch { S.logs.loaded = true; }
+  const el = $("#setLogs");
+  if (el && S.view.name === "settings") el.innerHTML = logsHTML();
+}
+function logsHTML() {
+  const lg = S.logs || {}, lines = lg.lines || [], hlines = lg.hub_lines || [];
+  const allText = [...lines, ...(hlines.length ? ["--- HUB LOG ---", ...hlines] : [])].join("\n");
+  return `<div class="stack" style="gap:8px">
+    <div class="row" style="gap:6px;flex-wrap:wrap">
+      <button class="btn small" type="button" data-act="refreshLogs">Refresh logs</button>
+      ${allText ? `<button class="btn small" type="button" data-act="copyLogs">Copy logs</button>` : ""}
+      ${lines.length ? `<button class="btn small" type="button" data-act="clearLogs">Clear local log</button>` : ""}
+    </div>
+    ${lg.path ? `<div class="small-t muted mono" style="word-break:break-all">${esc(lg.path)}</div>` : ""}
+    <pre class="mono small-t" style="margin:0;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-word">${lines.length ? esc(lines.join("\n")) : "No local errors logged."}</pre>
+    ${lg.hub_path ? `<div class="small-t muted mono" style="word-break:break-all">${esc(lg.hub_path)} (Hub)</div>
+      <pre class="mono small-t" style="margin:0;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);max-height:180px;overflow:auto;white-space:pre-wrap;word-break:break-word">${hlines.length ? esc(hlines.join("\n")) : "No Hub errors logged."}</pre>` : ""}
+  </div>`;
+}
+ACTIONS.refreshLogs = async () => { await loadLogs(); toast("Refreshed error logs"); };
+ACTIONS.clearLogs = async () => {
+  try { S.logs = { ...(await api("/api/logs/clear", { method: "POST", body: {} })), loaded: true }; }
+  catch (e) { toast(e.message, 4000); return; }
+  const el = $("#setLogs"); if (el) el.innerHTML = logsHTML();
+  toast("Cleared local error log");
+};
+ACTIONS.copyLogs = () => {
+  const lg = S.logs || {};
+  const txt = [...(lg.lines || []), ...(lg.hub_lines?.length ? ["--- HUB LOG ---", ...lg.hub_lines] : [])].join("\n");
+  copyText(txt || "No errors logged.", "diagnostics");
+};
 async function loadLocalKeys() {
   try { S.localKeys = { ...(await api("/api/local-keys")), loaded: true }; settingsRefresh(); }
   catch { S.localKeys.loaded = true; }
@@ -4543,6 +4592,11 @@ VIEWS.settings = v => {
           <h3 class="sub-head">Storage</h3>
           <div id="setDisk">${storageHTML()}</div>
           <p class="foot-note" style="margin-top:4px">Local data stays on this computer unless you connect a Hub server and choose to cache maps there.</p>
+        </section>
+        <section class="settings-card">
+          <details><summary class="sub-head" style="cursor:pointer;list-style:none">Diagnostics &amp; error log</summary>
+            <div id="setLogs" style="margin-top:10px">${logsHTML()}</div>
+          </details>
         </section>
       </div>
     </div>
