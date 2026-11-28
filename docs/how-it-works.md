@@ -166,13 +166,13 @@ optionally sync entries with a connected Hub server.
 
 ## Intermediary Hub Server (Docker + Railway Volume)
 
-Map Vietnam works completely standalone on `127.0.0.1`, and can also connect (`Settings ->
-Intermediary Hub server`) to a self-hosted **Hub Server** (`scripts/hub/hub_server.py`, packaged in
+Map Vietnam works completely standalone on `127.0.0.1`, and can also connect (`Settings -> Hub
+server`) to a self-hosted **Hub Server** (`scripts/hub/hub_server.py`, packaged in
 `Dockerfile` + `railway.json` for Railway with an attached persistent volume at `/data`):
 
 1. **Zero-touch server setup (`HUB_ADMIN_PASSWORD`).** Set a single `HUB_ADMIN_PASSWORD` environment
    variable on Railway (with `/data` mounted as a persistent volume), then connect from the Map
-   Vietnam desktop app (`Settings -> Intermediary Hub server`) using the server's domain or IP
+   Vietnam desktop app (`Settings -> Hub server`) using the server's domain or IP
    address + that password. From inside the desktop app's **Server Administration** panel, the
    operator configures upstream archive credentials (`USGS_USERNAME`, `USGS_M2M_TOKEN`, `KAGGLE_KEY`,
    `EARTHDATA_TOKEN`, `MAPVIETNAM_CONTACT`), adds or removes proprietary tile/LiDAR feeds, mints and

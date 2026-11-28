@@ -605,7 +605,7 @@ const autoGcpThresh = () => {
   return Number.isFinite(v) ? Math.min(95, Math.max(50, Math.round(v))) : 80;
 };
 const autoGcpMode = () => store.get("autoGcpMode", "review") === "auto" ? "auto" : "review";
-const AUTO_GCP_MODES = [["review", "Review in Placement"], ["auto", "Auto-build ≥ threshold"]];
+const AUTO_GCP_MODES = [["review", "Let me check first"], ["auto", "Place it for me"]];
 function isMouseWheelEvent(e) {
   if (!e || e.ctrlKey || e.metaKey) return false;
   if ((e.deltaMode || 0) !== 0) return true;
@@ -877,14 +877,18 @@ function defaultEra() {
 
 // The primary map's credits. Its control sits above the comparison map, so while comparing it also carries the
 // right-hand old map's credit (MapLibre only lists the sources of its own map). Rebuilt only when that text changes.
+// The corner is part of the key: on a laptop the top left is under the sidebar, so a window resized across the
+// phone/laptop breakpoint must move the credits too (see the resize handler beside setSheet).
 let attribCtrl = null, attribExtra = null;
 function setAttribution(m, extra) {
-  const key = extra.join("|");
+  const corner = isDesk() ? "bottom-right" : "top-left";
+  const key = corner + "|" + extra.join("|");
   if (attribCtrl && key === attribExtra) return;
   if (attribCtrl) m.removeControl(attribCtrl);
   attribCtrl = new maplibregl.AttributionControl({ compact: true, customAttribution: extra.length ? extra : undefined });
+  attribCtrl._extra = extra;
   attribExtra = key;
-  m.addControl(attribCtrl, isDesk() ? "bottom-right" : "top-left");
+  m.addControl(attribCtrl, corner);
 }
 // On a laptop the credits sit at the bottom right and the map bar in the bottom middle, and a long old-map credit
 // would run under the bar. Keep them beside it, wrapping, or, when there is no room beside it, lift them above it.
@@ -1673,7 +1677,10 @@ function setSheet(state) {
   });
   let lastDesk = isDesk();
   addEventListener("resize", () => {
-    if (isDesk() !== lastDesk) { lastDesk = isDesk(); setSheet("half"); }
+    if (isDesk() !== lastDesk) {
+      lastDesk = isDesk(); setSheet("half");
+      if (attribCtrl && maps[0]) { setAttribution(maps[0], attribCtrl._extra || []); fitAttribution(); }
+    }
     else setSheet(S.sheet);
     syncMapLeft(); placeDivider(); closePopovers();
   });
@@ -1866,7 +1873,7 @@ function aerialHomeLine() {
   const parts = [];
   if (S.terrain.source && S.terrain.source !== "off") parts.push("Relief active");
   if (S.hub.connected) parts.push("Hub connected");
-  parts.push("1948–56 SHD aerials · Keyhole · bare-earth LiDAR");
+  parts.push("French aerials 1948–56 · spy satellites · LiDAR");
   return parts.join(" · ");
 }
 ACTIONS.newCaseToggle = () => { const f = $("#newCase"); if (!f) return; f.hidden = !f.hidden; if (!f.hidden) f.name.focus(); };
@@ -4381,7 +4388,7 @@ function hubSectionHTML() {
               ${!l.installed_offline && !l.stream_only ? `<button class="btn small" data-act="hubPull" data-id="${esc(l.id)}">Keep offline</button>` : ""}
               ${canEdit ? `<select aria-label="Visibility for ${esc(l.title)}" data-act="hubLayerVis" data-id="${esc(l.id)}" style="min-height:30px;font-size:12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);padding:0 6px">
                 ${["hub", "group", "private"].map(vv => `<option value="${vv}"${l.visibility === vv ? " selected" : ""}>${vv === "hub" ? "All Hub" : vv === "group" ? "Group" : "Private"}</option>`).join("")}</select>
-                <button class="btn small danger" data-act="hubDelLayer" data-id="${esc(l.id)}">${icon.trash}</button>` : ""}
+                <button class="btn small danger" data-act="hubDelLayer" data-id="${esc(l.id)}" aria-label="Delete ${esc(l.title)} from Hub" title="Delete from Hub">${icon.trash}</button>` : ""}
             </div></li>`;
         }).join("")}</ul></details>` : ""}
       ${isAdmin ? hubAdminHTML() : ""}
@@ -4391,7 +4398,7 @@ function hubSectionHTML() {
     <p class="small-t muted" style="margin:0">Enter your Hub server’s domain or IP address and its password (from <span class="mono">HUB_ADMIN_PASSWORD</span> on Railway) or a collaborator API key. Everything on the server can then be configured right here.</p>
     ${h.configured && !h.connected ? `<div class="err" role="alert">Saved Hub (${esc(h.url)}) could not be reached${h.err ? ": " + esc(h.err) : ""}.</div>` : ""}
     <div class="set-grid-2">
-      <label class="field"><span>Server domain or IP address</span><input type="text" name="hurl" required placeholder="my-hub.up.railway.app or 192.168.1.50:8780" value="${esc(h.url || "")}"></label>
+      <label class="field"><span>Server domain or IP address</span><input type="text" name="hurl" required placeholder="my-hub.up.railway.app" title="A domain, or an IP address and port such as 192.168.1.50:8780" value="${esc(h.url || "")}"></label>
       <label class="field"><span>Password or API key</span><input type="password" name="hkey" ${h.configured ? "" : "required"} placeholder="${h.configured ? "Leave blank to keep saved password/key" : "Server password or mvhub_… key"}"></label>
     </div>
     <label class="switch"><input type="checkbox" name="hauto" ${h.auto_push ? "checked" : ""}><span class="tog" aria-hidden="true"></span><span>Auto-cache local maps to Hub</span></label>
@@ -4554,29 +4561,19 @@ VIEWS.settings = v => {
   settingsLastSig = settingsSig();
   const theme = store.get("theme", "auto"), mode = scrollMode(), agMode = autoGcpMode(), agThresh = autoGcpThresh(), mine = customMaps();
   const seg = (label, inner) => `<div class="set-row"><span class="set-k">${label}</span><div class="seg" role="group" aria-label="${label}">${inner}</div></div>`;
+  // Everyday settings (look, scrolling, your own maps) in the wide first column; the optional Hub server, archive
+  // keys, storage and the error log, which most people never open, in the second.
   return `<div class="settings-wrap">
-    ${headHTML("Settings", "Preferences, Intermediary Hub server, archive keys, custom maps & storage")}
+    ${headHTML("Settings", "Appearance, your own maps, Hub server, archive keys and storage")}
     <div class="settings-grid">
-      <div class="settings-col">
-        <section class="settings-card">
-          <h3 class="sub-head">Intermediary Hub server</h3>
-          <div class="set-block" style="margin-top:0;width:100%">${hubSectionHTML()}</div>
-        </section>
-        <section class="settings-card">
-          <h3 class="sub-head">Local archive keys (standalone)</h3>
-          <div class="set-block stack" style="gap:10px;margin-top:0;width:100%">${keySectionHTML()}${localKeysSectionHTML()}</div>
-        </section>
-      </div>
       <div class="settings-col">
         <section class="settings-card">
           <h3 class="sub-head">Preferences</h3>
           <div class="group" style="margin-top:0">
             ${seg("Appearance", ["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${theme === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join(""))}
             ${seg("Scrolling", SCROLL_MODES.map(([k, label]) => `<button data-act="scrollMode" data-m="${k}" aria-pressed="${mode === k}">${label}</button>`).join(""))}
-            ${seg("Auto-GCP on match", AUTO_GCP_MODES.map(([k, label]) => `<button data-act="autoGcpMode" data-m="${k}" aria-pressed="${agMode === k}">${label}</button>`).join(""))}
-            <div class="set-row"><span class="set-k">Confidence threshold</span><div class="row" style="gap:8px;align-items:center"><input type="range" id="setThresh" min="50" max="95" step="5" value="${agThresh}" style="width:120px" aria-label="Auto-GCP confidence threshold"><span id="setThreshVal" class="mono small-t">${agThresh}%</span></div></div>
           </div>
-          <p class="small-t muted" style="margin:0">Automatic pans on two-finger trackpad slides and zooms on notched scroll wheels. Pick Trackpad or Mouse wheel explicitly for smooth-scroll mice or remote desktop sessions. Matches below ${agThresh}% always pause in Placement for human verification.</p>
+          <p class="small-t muted" style="margin:0">Automatic pans on two-finger trackpad slides and zooms on notched scroll wheels. Pick Trackpad or Mouse wheel for smooth-scrolling mice or remote desktop sessions.</p>
         </section>
         <section class="settings-card">
           <h3 class="sub-head">My maps &amp; LiDAR DEMs</h3>
@@ -4586,7 +4583,22 @@ VIEWS.settings = v => {
             <div class="err" id="cmErr" role="alert">${esc(S.cm.err)}</div>
             ${mine.length ? `<div class="group"><ul class="list lib-list" aria-label="Your own maps">${mine.map(cmRow).join("")}</ul></div>`
               : S.lib.loaded ? `<p class="small-t muted">You have not added a map of your own yet.</p>` : ""}
+            <div class="group">
+              ${seg("When spots are matched for you", AUTO_GCP_MODES.map(([k, label]) => `<button data-act="autoGcpMode" data-m="${k}" aria-pressed="${agMode === k}">${label}</button>`).join(""))}
+              <div class="set-row"><span class="set-k">Only when at least this sure</span><div class="row" style="gap:8px;align-items:center"><input type="range" id="setThresh" min="50" max="95" step="5" value="${agThresh}" style="width:120px" aria-label="Minimum match confidence for automatic placement"><span id="setThreshVal" class="mono small-t">${agThresh}%</span></div></div>
+            </div>
+            <p class="small-t muted">When a Hub server matches spots on a map for you, a match below <span id="setThreshNote">${agThresh}</span>% always stops in Placement so you can check it.</p>
           </div>
+        </section>
+      </div>
+      <div class="settings-col">
+        <section class="settings-card">
+          <h3 class="sub-head">Hub server (optional)</h3>
+          <div class="set-block" style="margin-top:0;width:100%">${hubSectionHTML()}</div>
+        </section>
+        <section class="settings-card">
+          <h3 class="sub-head">Archive keys on this computer</h3>
+          <div class="set-block stack" style="gap:10px;margin-top:0;width:100%">${keySectionHTML()}${localKeysSectionHTML()}</div>
         </section>
         <section class="settings-card">
           <h3 class="sub-head">Storage</h3>
@@ -4594,7 +4606,7 @@ VIEWS.settings = v => {
           <p class="foot-note" style="margin-top:4px">Local data stays on this computer unless you connect a Hub server and choose to cache maps there.</p>
         </section>
         <section class="settings-card">
-          <details><summary class="sub-head" style="cursor:pointer;list-style:none">Diagnostics &amp; error log</summary>
+          <details class="set-disclose"><summary class="sub-head">Diagnostics &amp; error log</summary>
             <div id="setLogs" style="margin-top:10px">${logsHTML()}</div>
           </details>
         </section>
@@ -4607,6 +4619,7 @@ VIEWS.settings.after = () => {
     const v = Math.min(95, Math.max(50, Math.round(+e.target.value)));
     store.set("autoGcpThresh", v);
     const lbl = $("#setThreshVal"); if (lbl) lbl.textContent = v + "%";
+    const note = $("#setThreshNote"); if (note) note.textContent = v;
   });
   $("#cmFile")?.addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) cmUpload(f); });
   $$("#view .cm-edit").forEach(f => f.addEventListener("submit", cmSaveEdit));
@@ -4700,13 +4713,14 @@ VIEWS.settings.after = () => {
 };
 
 // ================================================================ Aerial, LiDAR & Terrain Explorer
+// [id, plain label, the archive's own name (shown as the tooltip)]
 const AER_TABS = [
-  ["nakala", "1948–56 SHD"],
-  ["usgs", "Keyhole Sat"],
-  ["landsat", "1972–75 MSS"],
-  ["oam", "UAV / Drone"],
-  ["allmaps", "Allmaps IIIF"],
-  ["terrain", "LiDAR & DEM"],
+  ["nakala", "French aerials 1948–56", "SHD Indochina missions on CNRS NAKALA"],
+  ["usgs", "Spy satellites", "Declassified CORONA, KH-7 and KH-9 (USGS EarthExplorer)"],
+  ["landsat", "Landsat 1972–75", "Landsat 1–2 MSS"],
+  ["oam", "Drone imagery", "OpenAerialMap UAV orthomosaics"],
+  ["allmaps", "Allmaps", "Community-georeferenced IIIF maps"],
+  ["terrain", "LiDAR & terrain", "GEDI laser shots and bare-earth DEMs"],
 ];
 function openAerial(tab = null) {
   closePopovers();
@@ -4794,10 +4808,21 @@ ACTIONS.aerPreview = el => openLightbox({
   bounds: el.dataset.bounds || "",
 });
 
-function closeLightbox() { $(".aer-lightbox")?.remove(); }
+// A modal: Tab stays inside it, and closing it (Close, Escape, a click on the backdrop) puts focus back on the
+// View button that opened it, so a keyboard user does not land at the top of the page.
+let lightboxOpener = null;
+function closeLightbox() {
+  const lb = $(".aer-lightbox");
+  if (!lb) return;
+  lb.remove();
+  if (lightboxOpener?.isConnected) lightboxOpener.focus({ preventScroll: true });
+  lightboxOpener = null;
+}
 function openLightbox({ preview, full, title, year, sourceUrl, bounds = "" }) {
+  const opener = document.activeElement;
   closeLightbox();
   if (!safeUrl(preview)) return;
+  lightboxOpener = opener;
   document.body.insertAdjacentHTML("beforeend", `<div class="aer-lightbox" role="dialog" aria-modal="true" aria-label="${esc(title)}">
     <img src="${esc(preview)}" alt="${esc(title)}">
     <div class="aer-lb-bar">
@@ -4811,7 +4836,18 @@ function openLightbox({ preview, full, title, year, sourceUrl, bounds = "" }) {
   $("#aerLbClose").focus();
   $("#aerLbClose").onclick = closeLightbox;
   lb.addEventListener("click", e => { if (e.target === lb) closeLightbox(); });
+  lb.addEventListener("keydown", e => {
+    if (e.key !== "Tab") return;
+    const f = $$("button, a[href]", lb);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
 }
+// Archive previews are hot-linked and some are refused: mark them so the card shows "No preview" instead of a
+// broken-image icon. (error does not bubble, hence the capture phase.)
+document.addEventListener("error", e => { if (e.target.matches?.(".aer-card img")) e.target.classList.add("broken"); }, true);
 
 async function runAerialSearch() {
   const tab = S.aerial.tab, b = viewBounds() || [105.4, 10.2, 105.9, 10.7];
@@ -4876,7 +4912,7 @@ VIEWS.aerial = () => {
       </div>`;
   } else {
     const controls = tab === "nakala"
-      ? `<form id="aerNakalaForm" class="row" style="margin-top:10px"><input class="grow" type="search" id="aerQ" placeholder="Place or mission (e.g. Dien Bien Phu, Saigon, Tourane)…" value="${esc(S.aerial.q || "")}" style="min-height:36px;border-radius:10px;border:1px solid var(--line);padding:0 10px;background:var(--surface-2)"><button class="btn small primary" type="submit">Search</button></form>`
+      ? `<form id="aerNakalaForm" class="row aer-search" role="search"><input class="txt grow" type="search" id="aerQ" placeholder="Place or mission" title="For example Dien Bien Phu, Saigon or Tourane" aria-label="Search French aerial missions by place or mission" value="${esc(S.aerial.q || "")}"><button class="btn primary" type="submit">Search</button></form>`
       : tab === "usgs"
       ? `<div class="row" style="margin-top:10px;flex-wrap:wrap"><select id="aerUsgsDs" aria-label="Declassified satellite dataset">
           <option value="corona"${(S.aerial.usgsDs || "corona") === "corona" ? " selected" : ""}>CORONA / ARGON / LANYARD (1960–72)</option>
@@ -4889,7 +4925,7 @@ VIEWS.aerial = () => {
     if (S.aerial.loading) listHTML = `<p class="muted" style="margin-top:12px">Searching archive${S.hub.connected ? " via Hub infinite cache" : ""}…</p>`;
     else if (tab === "nakala" && res) {
       const ms = res.missions || [];
-      listHTML = `<p class="small-t muted" style="margin:8px 2px">${fmtInt(res.total || ms.length)} French SHD Indochina aerial missions (1948–1956) on CNRS NAKALA. Open a <b>PLOT</b> index card first to locate frame numbers, then click any frame to inspect or place on the map.</p>` +
+      listHTML = `<p class="small-t muted" style="margin:8px 2px">${fmtInt(res.total || ms.length)} French SHD Indochina aerial missions (1948–1956) on CNRS NAKALA. Place its flight-index card first to see where each frame was taken, then view or place any frame.</p>` +
         (ms.length ? ms.map(m => {
           const yr = (m.date || "").slice(0, 4);
           const bStr = m.bounds ? JSON.stringify(m.bounds) : "";
@@ -4904,9 +4940,9 @@ VIEWS.aerial = () => {
               ${plot0 && safeUrl(plot0.full_url) ? `<button class="btn small" data-act="importAerial" data-url="${esc(plot0.full_url)}" data-title="${esc(m.title + " FLIGHT INDEX")}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}">Place flight-index card first</button>` : ""}
             </div>` : ""}
             ${thumbs.length ? `<div class="aer-grid">${thumbs.map(f => `<div class="aer-card">
-              ${safeUrl(f.preview_url) ? `<img loading="lazy" src="${esc(f.preview_url)}" alt="${esc(f.name)}">` : ""}
-              <div class="aer-cap"><span class="mono" style="overflow:hidden;text-overflow:ellipsis">${esc(f.isPlot ? "PLOT INDEX" : f.name.slice(-14))}</span>
-                <div class="row" style="gap:4px">
+              <div class="aer-thumb">${safeUrl(f.preview_url) ? `<img loading="lazy" src="${esc(f.preview_url)}" alt="${esc(f.name)}">` : ""}</div>
+              <div class="aer-cap"><span class="mono" title="${esc(f.isPlot ? "Flight-index card" : f.name)}">${esc(f.isPlot ? "Flight index" : f.name.slice(-14))}</span>
+                <div class="aer-acts">
                   <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(f.preview_url)}" data-full="${esc(f.full_url)}" data-title="${esc(m.title + " — " + f.name)}" data-year="${esc(yr)}" data-src="${esc(m.source_url)}" data-bounds="${esc(bStr)}">View</button>
                   <button class="linkish small-t" data-act="importAerial" data-url="${esc(f.full_url)}" data-title="${esc(m.title + " " + f.name)}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}">Place</button>
                 </div></div></div>`).join("")}</div>` : ""}
@@ -4921,9 +4957,9 @@ VIEWS.aerial = () => {
             const pts = Array.isArray(s.footprint?.[0]) ? s.footprint[0] : (Array.isArray(s.footprint) ? s.footprint : []);
             const sb = pts.length >= 3 ? JSON.stringify([Math.min(...pts.map(p => p[0])), Math.min(...pts.map(p => p[1])), Math.max(...pts.map(p => p[0])), Math.max(...pts.map(p => p[1]))]) : "";
             return `<div class="aer-card">
-            ${safeUrl(s.browse_url) ? `<img loading="lazy" src="${esc(s.browse_url)}" alt="${esc(s.display_id)}">` : ""}
+            <div class="aer-thumb">${safeUrl(s.browse_url) ? `<img loading="lazy" src="${esc(s.browse_url)}" alt="${esc(s.display_id)}">` : ""}</div>
             <div class="aer-cap"><b class="mono">${esc(s.display_id)}</b><span>${esc(s.date || "Undated")} · ${s.download_available ? "Free scan ready" : "Browse preview"}</span>
-              ${safeUrl(s.browse_url) ? `<div class="row" style="gap:6px"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.browse_url)}" data-full="${esc(s.browse_url)}" data-title="${esc(s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}" data-bounds="${esc(sb)}">Inspect</button>
+              ${safeUrl(s.browse_url) ? `<div class="aer-acts"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.browse_url)}" data-full="${esc(s.browse_url)}" data-title="${esc(s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}" data-bounds="${esc(sb)}">Inspect</button>
                 <button class="linkish small-t" data-act="importAerial" data-url="${esc(s.browse_url)}" data-title="${esc("Keyhole " + s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}" data-bounds="${esc(sb)}">Place</button></div>` : ""}
             </div></div>`;
           }).join("")}</div>` : `<p class="muted">No scenes found in this view.</p>`);
@@ -4934,9 +4970,9 @@ VIEWS.aerial = () => {
         (sc.length ? `<div class="aer-grid">${sc.map(s => {
           const lb = Array.isArray(s.bbox) && s.bbox.length === 4 ? JSON.stringify(s.bbox) : "";
           return `<div class="aer-card">
-          ${safeUrl(s.preview_url) ? `<img loading="lazy" src="${esc(s.preview_url)}" alt="${esc(s.id)}">` : ""}
+          <div class="aer-thumb">${safeUrl(s.preview_url) ? `<img loading="lazy" src="${esc(s.preview_url)}" alt="${esc(s.id)}">` : ""}</div>
           <div class="aer-cap"><b>${esc((s.datetime || "").slice(0, 10))}</b><span>Cloud ${s.cloud_cover != null ? Math.round(s.cloud_cover) + "%" : "?"} · ${esc(s.platform)}</span>
-            ${safeUrl(s.preview_url) ? `<div class="row" style="gap:6px"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.preview_url)}" data-full="${esc(s.preview_url)}" data-title="${esc(s.id)}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">View</button>
+            ${safeUrl(s.preview_url) ? `<div class="aer-acts"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.preview_url)}" data-full="${esc(s.preview_url)}" data-title="${esc(s.id)}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">View</button>
               <button class="linkish small-t" data-act="importAerial" data-url="${esc(s.preview_url)}" data-title="${esc("Landsat MSS " + (s.datetime || "").slice(0, 10))}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">Place</button></div>` : ""}
           </div></div>`;
         }).join("")}</div>` : `<p class="muted">No clear 1972–75 Landsat MSS scenes in this box.</p>`);
@@ -4952,9 +4988,9 @@ VIEWS.aerial = () => {
       const ms = res.maps || [];
       listHTML = `<p class="small-t muted" style="margin:8px 2px">${ms.length} community-georeferenced IIIF maps (Gallica, Rumsey, LoC) in this view. Importing applies their control points automatically.</p>` +
         (ms.length ? `<div class="aer-grid">${ms.map((m, idx) => `<div class="aer-card">
-          ${safeUrl(m.preview_url) ? `<img loading="lazy" src="${esc(m.preview_url)}" alt="IIIF map ${idx + 1}">` : ""}
+          <div class="aer-thumb">${safeUrl(m.preview_url) ? `<img loading="lazy" src="${esc(m.preview_url)}" alt="IIIF map ${idx + 1}">` : ""}</div>
           <div class="aer-cap"><span>${m.gcp_count} control points</span>
-            <div class="row" style="gap:6px">
+            <div class="aer-acts">
               <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(m.preview_url)}" data-full="${esc(m.full_url)}" data-title="${esc("IIIF Map " + m.id.slice(-6))}">View</button>
               <button class="linkish small-t" data-act="importAerial" data-url="${esc(m.full_url)}" data-title="${esc("Allmaps IIIF " + m.id.slice(-6))}" data-gcps="${esc(JSON.stringify(m.gcps))}" data-sw="${esc(m.width || "")}" data-sh="${esc(m.height || "")}">Auto-place</button>
             </div></div></div>`).join("")}</div>` : `<p class="muted">No Allmaps IIIF sheets indexed in this view.</p>`);
@@ -4963,8 +4999,8 @@ VIEWS.aerial = () => {
   }
 
   return `${headHTML("Aerial, LiDAR &amp; terrain", S.hub.connected ? `<span class="hub-badge">Hub infinite cache active</span>` : `<span>Historical overhead archives &amp; bare-earth relief</span>`)}
-    <div class="terrain-chips" role="tablist" aria-label="Archive and terrain sources">
-      ${AER_TABS.map(([k, lbl]) => `<button type="button" role="tab" data-act="aerTab" data-tab="${k}" aria-pressed="${tab === k}">${esc(lbl)}</button>`).join("")}
+    <div class="terrain-chips" role="group" aria-label="Archive and terrain sources">
+      ${AER_TABS.map(([k, lbl, tip]) => `<button type="button" data-act="aerTab" data-tab="${k}" aria-pressed="${tab === k}" title="${esc(tip)}">${esc(lbl)}</button>`).join("")}
     </div>
     ${S.aerial.err ? `<div class="err" role="alert" style="margin-top:8px">${esc(S.aerial.err)}</div>` : ""}
     ${body}`;
