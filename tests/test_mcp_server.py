@@ -379,10 +379,10 @@ def test_auto_match_map_captures_live_viewer_and_auto_places(tmp_path, monkeypat
     assert viewer_ready.wait(timeout=5)
 
     sample_points = [
-        [10.0, 10.0, 105.61, 10.48],
-        [190.0, 10.0, 105.65, 10.48],
-        [190.0, 150.0, 105.65, 10.44],
-        [10.0, 150.0, 105.61, 10.44],
+        {"col": 10.0, "row": 10.0, "lon": 105.61, "lat": 10.48, "confidence": 0.92, "error_px": 0.8},
+        {"col": 190.0, "row": 10.0, "lon": 105.65, "lat": 10.48, "confidence": 0.91, "error_px": 1.1},
+        {"col": 190.0, "row": 150.0, "lon": 105.65, "lat": 10.44, "confidence": 0.90, "error_px": 1.0},
+        {"col": 10.0, "row": 150.0, "lon": 105.61, "lat": 10.44, "confidence": 0.89, "error_px": 1.2},
     ]
     seen_bounds = []
 
@@ -393,6 +393,7 @@ def test_auto_match_map_captures_live_viewer_and_auto_places(tmp_path, monkeypat
             "confidence": 0.91,
             "meets_threshold": True,
             "points": sample_points,
+            "recommended_warp": "affine",
             "inliers": 28,
         }
 
@@ -466,3 +467,20 @@ def test_build_strip_mosaic_and_push_to_hub(monkeypatch):
     assert push_res["pushed"][0] == {"id": "custom_1", "visibility": "group"}
     assert len(push_res["errors"]) == 1
     assert push_res["errors"][0]["id"] == "bad_map"
+
+
+def test_query_elevation_routes_and_jsonrpc_validation(monkeypatch):
+    seen = []
+
+    def fake_api_json(method, route, *, body=None, params=None, timeout=30):
+        seen.append((method, route, body, params))
+        return {"ok": True}
+
+    monkeypatch.setattr(mcp_server, "_api_json", fake_api_json)
+    _call_json("query_elevation", {"lon": 105.6, "lat": 19.9})
+    _call_json("query_elevation", {"line": [[105.5, 19.9], [105.6, 19.95]]})
+    assert seen[0] == ("GET", "/api/elevation", None, {"lon": 105.6, "lat": 19.9})
+    assert seen[1] == ("POST", "/api/transect", {"start": [105.5, 19.9], "end": [105.6, 19.95]}, None)
+
+    bad_req = mcp_server.handle_rpc(["not", "a", "dict"])
+    assert bad_req["error"]["code"] == -32600

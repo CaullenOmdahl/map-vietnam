@@ -170,3 +170,47 @@ def test_build_strip_mosaic_handles_homography_and_rotated_frames(tmp_path):
         px = _sample_tile_rgb(mbtiles, 106.105, lat)
         assert px[3] == 255
         assert int(px[:3].mean()) > 140
+
+
+def test_mosaic_route_builds_composite_strip(tmp_path, monkeypatch):
+    import threading
+    import urllib.request
+
+    import server
+    import store
+    from fakeweb import FakeArchive, make_library
+
+    archive = FakeArchive()
+    lib = make_library(tmp_path / "desk", archive, monkeypatch)
+    monkeypatch.setattr(lib, "start_worker", lambda: None)
+
+    img1 = _make_frame_image(240, 240, (200, 180, 155), border=18, caption_bottom=30)
+    img2 = _make_frame_image(240, 240, (180, 200, 165), border=18, caption_bottom=30)
+    f1 = _ingest_placed_frame(
+        lib, 1, img1, [(105.50, 19.92), (105.512, 19.92), (105.512, 19.908), (105.50, 19.908)], mission="HV741"
+    )
+    _ingest_placed_frame(
+        lib, 2, img2, [(105.506, 19.92), (105.518, 19.92), (105.518, 19.908), (105.506, 19.908)], mission="HV741"
+    )
+
+    db = tmp_path / "desk" / "e.sqlite"
+    store.connect(db).close()
+    srv = server.make_server(0, db, map_library=lib)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{srv.server_address[1]}"
+    try:
+        req = urllib.request.Request(
+            f"{base}/api/library/custom/{f1['id']}/mosaic",
+            data=json.dumps({"title": "HV741 Stitched Strip"}).encode("utf-8"),
+            method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=60) as r:
+            res = json.load(r)
+        assert res["map"]["kind"] == "mosaic"
+        assert res["map"]["title"] == "HV741 Stitched Strip"
+        assert lib.tiles_path(res["map"]["id"]).is_file()
+        assert any(m["id"] == res["map"]["id"] and m["state"] == "installed" for m in res["library"]["maps"])
+    finally:
+        srv.quit()
+        archive.close()

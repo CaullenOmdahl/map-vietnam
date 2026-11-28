@@ -9,6 +9,7 @@ and refreshes `web/catalog.json`.
 
 import math
 import secrets
+import threading
 from pathlib import Path
 
 import custom_maps
@@ -32,6 +33,13 @@ FEATHER_PX = 50.0
 MIN_EDGE_WEIGHT = 1e-3
 # Share of total progress allocated to warping/blending frames; the rest is tiling.
 WARP_SHARE = 0.5
+_MOSAIC_LOCKS_GUARD = threading.Lock()
+_MOSAIC_LOCKS = {}
+
+
+def _mission_lock(mission_key):
+    with _MOSAIC_LOCKS_GUARD:
+        return _MOSAIC_LOCKS.setdefault(mission_key, threading.Lock())
 
 
 def trim_film_border_mask(img, *, dark=0.14, max_frac=0.18):
@@ -247,150 +255,157 @@ def build_strip_mosaic(lib, anchor_id, *, progress=None):
     """
     report = progress or (lambda _fraction: None)
     anchor = lib.custom.get(anchor_id)
-    all_custom = lib.custom.entries()
-    mission_key, placed_frames = _collect_placed_frames(all_custom, anchor)
-    if len(placed_frames) < 2:
-        raise ValueError(
-            f"Need at least 2 placed frames in mission {mission_key} to build a strip mosaic "
-            f"(found {len(placed_frames)})."
+    mission_key, _ = _collect_placed_frames([anchor], anchor)
+    with _mission_lock(mission_key):
+        all_custom = lib.custom.entries()
+        mission_key, placed_frames = _collect_placed_frames(all_custom, anchor)
+        if len(placed_frames) < 2:
+            raise ValueError(
+                f"Need at least 2 placed frames in mission {mission_key} to build a strip mosaic "
+                f"(found {len(placed_frames)})."
+            )
+
+        # Fit per-frame transforms and gather combined WGS84 bounds + native resolution estimate.
+        frame_specs = []
+        all_lons, all_lats = [], []
+        deg_per_px_samples = []
+        for frame_num, entry in placed_frames:
+            work_path = lib.custom.work_image(entry["id"])
+            if not work_path.exists():
+                raise FileNotFoundError(f"Working image missing for frame {entry['id']}: {work_path}")
+            mode, model = _fit_frame_model(entry)
+            img_meta = entry.get("image") or {}
+            if "width" in img_meta and "height" in img_meta:
+                fw, fh = int(img_meta["width"]), int(img_meta["height"])
+            else:
+                with Image.open(work_path) as im:
+                    fw, fh = im.size
+            corners = _project_corners(mode, model, 0, 0, fw, fh)
+            lons = [c[0] for c in corners]
+            lats = [c[1] for c in corners]
+            fb = (min(lons), min(lats), max(lons), max(lats))
+            all_lons.extend(lons)
+            all_lats.extend(lats)
+
+            mid_lat = 0.5 * (fb[1] + fb[3])
+            cos_f = max(0.2, math.cos(math.radians(mid_lat)))
+            edge_top = math.hypot((corners[1][0] - corners[0][0]) * cos_f, corners[1][1] - corners[0][1])
+            edge_left = math.hypot((corners[3][0] - corners[0][0]) * cos_f, corners[3][1] - corners[0][1])
+            if fw > 0 and edge_top > 0:
+                deg_per_px_samples.append(edge_top / fw)
+            if fh > 0 and edge_left > 0:
+                deg_per_px_samples.append(edge_left / fh)
+
+            frame_specs.append((frame_num, entry, work_path, mode, model, fb))
+
+        min_lon, max_lon = min(all_lons), max(all_lons)
+        min_lat, max_lat = min(all_lats), max(all_lats)
+        if not (max_lon > min_lon and max_lat > min_lat):
+            raise ValueError("Combined strip mosaic bounds are empty.")
+        mosaic_bounds = [min_lon, min_lat, max_lon, max_lat]
+
+        mid_lat = 0.5 * (min_lat + max_lat)
+        cos_lat = max(0.2, math.cos(math.radians(mid_lat)))
+        span_x = (max_lon - min_lon) * cos_lat
+        span_y = max_lat - min_lat
+        native_deg_per_px = float(np.median(deg_per_px_samples)) if deg_per_px_samples else max(span_x, span_y) / 1024.0
+        ideal_long = int(round(max(span_x, span_y) / max(native_deg_per_px, 1e-12)))
+        target_long = max(MIN_MOSAIC_SIDE, min(MAX_MOSAIC_SIDE, ideal_long))
+        if span_x >= span_y:
+            out_w = target_long
+            out_h = max(MIN_MOSAIC_SIDE, int(round(target_long * (span_y / span_x))))
+        else:
+            out_h = target_long
+            out_w = max(MIN_MOSAIC_SIDE, int(round(target_long * (span_x / span_y))))
+
+        dx = (max_lon - min_lon) / out_w
+        dy = (max_lat - min_lat) / out_h
+        mosaic_transform = Affine(dx, 0.0, min_lon, 0.0, -dy, max_lat)
+
+        acc_rgb = np.zeros((3, out_h, out_w), dtype=np.float32)
+        acc_w = np.zeros((out_h, out_w), dtype=np.float32)
+
+        n_frames = len(frame_specs)
+        for idx, (_frame_num, _entry, work_path, mode, model, fb) in enumerate(frame_specs):
+            with Image.open(work_path) as raw:
+                rgb = np.asarray(ImageOps.exif_transpose(raw).convert("RGB"), dtype=np.float32)
+            h, w = rgb.shape[:2]
+            left, top, right, bottom = trim_film_border_mask(rgb)
+            x0, y0 = left, top
+            x1, y1 = w - right, h - bottom
+            trimmed_rgb = rgb[y0:y1, x0:x1]
+            weight = _feather_weight(y1 - y0, x1 - x0)
+
+            # Restrict warping to the mosaic sub-window covered by this frame.
+            c0 = max(0, int(math.floor((fb[0] - min_lon) / dx)) - 1)
+            c1 = min(out_w, int(math.ceil((fb[2] - min_lon) / dx)) + 1)
+            r0 = max(0, int(math.floor((max_lat - fb[3]) / dy)) - 1)
+            r1 = min(out_h, int(math.ceil((max_lat - fb[1]) / dy)) + 1)
+            if c1 > c0 and r1 > r0:
+                sub_box = (r0, r1, c0, c1)
+                if mode == "homography":
+                    _warp_homography_into(acc_rgb, acc_w, trimmed_rgb, weight, model, x0, y0, mosaic_transform, sub_box)
+                else:
+                    _warp_affine_into(acc_rgb, acc_w, trimmed_rgb, weight, model, x0, y0, mosaic_transform, sub_box)
+
+            report(WARP_SHARE * (idx + 1) / n_frames)
+
+        valid = acc_w > 1e-5
+        bands = np.zeros((4, out_h, out_w), dtype=np.uint8)
+        if np.any(valid):
+            inv_w = np.zeros_like(acc_w, dtype=np.float32)
+            np.divide(np.float32(1.0), acc_w, out=inv_w, where=valid)
+            for ch in range(3):
+                acc_rgb[ch] *= inv_w
+                np.clip(np.rint(acc_rgb[ch]), 0, 255, out=acc_rgb[ch])
+                bands[ch] = acc_rgb[ch].astype(np.uint8)
+            bands[3, valid] = 255
+            del inv_w
+        del acc_rgb, acc_w
+
+        existing = next((e for e in all_custom if e.get("mosaic_mission") == mission_key), None)
+        map_id = existing["id"] if existing else f"custom_{secrets.token_hex(5)}"
+        folder = lib.custom.folder(map_id)
+        folder.mkdir(parents=True, exist_ok=True)
+
+        year = anchor.get("year") or next((e.get("year") for _, e in placed_frames if e.get("year")), None)
+        title = f"{_mission_label(mission_key)} strip mosaic ({n_frames} frames)"
+        max_zoom = min(custom_maps.MAX_ZOOM, tiling.native_zoom(mosaic_bounds, out_w))
+        out_path = Path(lib.tiles_path(map_id))
+
+        _written, tile_bounds, max_zoom = tiling.write_tiles(
+            bands,
+            CRS.from_epsg(4326),
+            out_path,
+            transform=mosaic_transform,
+            max_zoom=max_zoom,
+            bounds=mosaic_bounds,
+            name=title,
+            meta={"date": str(year) if year else ""},
+            progress=lambda frac: report(WARP_SHARE + (1.0 - WARP_SHARE) * frac),
         )
 
-    # Fit per-frame transforms and gather combined WGS84 bounds + native resolution estimate.
-    frame_specs = []
-    all_lons, all_lats = [], []
-    deg_per_px_samples = []
-    for frame_num, entry in placed_frames:
-        work_path = lib.custom.work_image(entry["id"])
-        if not work_path.exists():
-            raise FileNotFoundError(f"Working image missing for frame {entry['id']}: {work_path}")
-        mode, model = _fit_frame_model(entry)
-        img_meta = entry.get("image") or {}
-        if "width" in img_meta and "height" in img_meta:
-            fw, fh = int(img_meta["width"]), int(img_meta["height"])
-        else:
-            with Image.open(work_path) as im:
-                fw, fh = im.size
-        corners = _project_corners(mode, model, 0, 0, fw, fh)
-        lons = [c[0] for c in corners]
-        lats = [c[1] for c in corners]
-        fb = (min(lons), min(lats), max(lons), max(lats))
-        all_lons.extend(lons)
-        all_lats.extend(lats)
-
-        mid_lat = 0.5 * (fb[1] + fb[3])
-        cos_f = max(0.2, math.cos(math.radians(mid_lat)))
-        edge_top = math.hypot((corners[1][0] - corners[0][0]) * cos_f, corners[1][1] - corners[0][1])
-        edge_left = math.hypot((corners[3][0] - corners[0][0]) * cos_f, corners[3][1] - corners[0][1])
-        if fw > 0 and edge_top > 0:
-            deg_per_px_samples.append(edge_top / fw)
-        if fh > 0 and edge_left > 0:
-            deg_per_px_samples.append(edge_left / fh)
-
-        frame_specs.append((frame_num, entry, work_path, mode, model, fb))
-
-    min_lon, max_lon = min(all_lons), max(all_lons)
-    min_lat, max_lat = min(all_lats), max(all_lats)
-    if not (max_lon > min_lon and max_lat > min_lat):
-        raise ValueError("Combined strip mosaic bounds are empty.")
-    mosaic_bounds = [min_lon, min_lat, max_lon, max_lat]
-
-    mid_lat = 0.5 * (min_lat + max_lat)
-    cos_lat = max(0.2, math.cos(math.radians(mid_lat)))
-    span_x = (max_lon - min_lon) * cos_lat
-    span_y = max_lat - min_lat
-    native_deg_per_px = float(np.median(deg_per_px_samples)) if deg_per_px_samples else max(span_x, span_y) / 1024.0
-    ideal_long = int(round(max(span_x, span_y) / max(native_deg_per_px, 1e-12)))
-    target_long = max(MIN_MOSAIC_SIDE, min(MAX_MOSAIC_SIDE, ideal_long))
-    if span_x >= span_y:
-        out_w = target_long
-        out_h = max(MIN_MOSAIC_SIDE, int(round(target_long * (span_y / span_x))))
-    else:
-        out_h = target_long
-        out_w = max(MIN_MOSAIC_SIDE, int(round(target_long * (span_x / span_y))))
-
-    dx = (max_lon - min_lon) / out_w
-    dy = (max_lat - min_lat) / out_h
-    mosaic_transform = Affine(dx, 0.0, min_lon, 0.0, -dy, max_lat)
-
-    acc_rgb = np.zeros((3, out_h, out_w), dtype=np.float32)
-    acc_w = np.zeros((out_h, out_w), dtype=np.float32)
-
-    n_frames = len(frame_specs)
-    for idx, (_frame_num, _entry, work_path, mode, model, fb) in enumerate(frame_specs):
-        with Image.open(work_path) as raw:
-            rgb = np.asarray(ImageOps.exif_transpose(raw).convert("RGB"), dtype=np.float32)
-        h, w = rgb.shape[:2]
-        left, top, right, bottom = trim_film_border_mask(rgb)
-        x0, y0 = left, top
-        x1, y1 = w - right, h - bottom
-        trimmed_rgb = rgb[y0:y1, x0:x1]
-        weight = _feather_weight(y1 - y0, x1 - x0)
-
-        # Restrict warping to the mosaic sub-window covered by this frame.
-        c0 = max(0, int(math.floor((fb[0] - min_lon) / dx)) - 1)
-        c1 = min(out_w, int(math.ceil((fb[2] - min_lon) / dx)) + 1)
-        r0 = max(0, int(math.floor((max_lat - fb[3]) / dy)) - 1)
-        r1 = min(out_h, int(math.ceil((max_lat - fb[1]) / dy)) + 1)
-        if c1 > c0 and r1 > r0:
-            sub_box = (r0, r1, c0, c1)
-            if mode == "homography":
-                _warp_homography_into(acc_rgb, acc_w, trimmed_rgb, weight, model, x0, y0, mosaic_transform, sub_box)
-            else:
-                _warp_affine_into(acc_rgb, acc_w, trimmed_rgb, weight, model, x0, y0, mosaic_transform, sub_box)
-
-        report(WARP_SHARE * (idx + 1) / n_frames)
-
-    valid = acc_w > 1e-5
-    bands = np.zeros((4, out_h, out_w), dtype=np.uint8)
-    if np.any(valid):
-        inv_w = np.where(valid, 1.0 / np.where(valid, acc_w, 1.0), 0.0)
-        for ch in range(3):
-            bands[ch] = np.clip(np.rint(acc_rgb[ch] * inv_w), 0, 255).astype(np.uint8)
-        bands[3] = np.where(valid, 255, 0).astype(np.uint8)
-    del acc_rgb, acc_w
-
-    existing = next((e for e in all_custom if e.get("mosaic_mission") == mission_key), None)
-    map_id = existing["id"] if existing else f"custom_{secrets.token_hex(5)}"
-    folder = lib.custom.folder(map_id)
-    folder.mkdir(parents=True, exist_ok=True)
-
-    year = anchor.get("year") or next((e.get("year") for _, e in placed_frames if e.get("year")), None)
-    title = f"{_mission_label(mission_key)} strip mosaic ({n_frames} frames)"
-    max_zoom = min(custom_maps.MAX_ZOOM, tiling.native_zoom(mosaic_bounds, out_w))
-    out_path = Path(lib.tiles_path(map_id))
-
-    _written, tile_bounds, max_zoom = tiling.write_tiles(
-        bands,
-        CRS.from_epsg(4326),
-        out_path,
-        transform=mosaic_transform,
-        max_zoom=max_zoom,
-        bounds=mosaic_bounds,
-        name=title,
-        meta={"date": str(year) if year else ""},
-        progress=lambda frac: report(WARP_SHARE + (1.0 - WARP_SHARE) * frac),
-    )
-
-    entry = {
-        "id": map_id,
-        "title": title,
-        "year": year,
-        "date": str(year) if year else "",
-        "series": custom_maps.SERIES,
-        "kind": "mosaic",
-        "custom": True,
-        "filename": f"{mission_key}_mosaic.mbtiles",
-        "bytes": out_path.stat().st_size,
-        "bounds": [round(float(v), 6) for v in tile_bounds],
-        "region": "",
-        "scale": "",
-        "urls": [],
-        "sha256": None,
-        "points": [],
-        "mosaic_mission": mission_key,
-        "mosaic_frames": [{"id": e["id"], "frame": n} for n, e in placed_frames],
-    }
-    write_json(lib.custom.entry_path(map_id), entry)
-    lib.write_catalog()
-    report(1.0)
-    return entry
+        entry = {
+            "id": map_id,
+            "title": title,
+            "year": year,
+            "date": str(year) if year else "",
+            "series": custom_maps.SERIES,
+            "kind": "mosaic",
+            "custom": True,
+            "filename": f"{mission_key}_mosaic.mbtiles",
+            "bytes": out_path.stat().st_size,
+            "bounds": [round(float(v), 6) for v in tile_bounds],
+            "region": "",
+            "scale": "",
+            "urls": [],
+            "sha256": None,
+            "points": [],
+            "mosaic_mission": mission_key,
+            "mosaic_frames": [{"id": e["id"], "frame": n} for n, e in placed_frames],
+        }
+        with lib.custom._lock:
+            write_json(lib.custom.entry_path(map_id), entry)
+        lib.write_catalog()
+        report(1.0)
+        return entry

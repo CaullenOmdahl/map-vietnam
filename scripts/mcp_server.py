@@ -29,7 +29,7 @@ PROTOCOL_VERSION = "2024-11-05"
 SERVER_INFO = {"name": "map-vietnam", "version": "0.1.0"}
 URL_FILE = Path.home() / ".cache" / "map-vietnam" / "server_url"
 DEFAULT_URL = "http://127.0.0.1:8765"
-SUPPORTED_LOCAL_EXTS = frozenset({".jpg", ".jpeg", ".png", ".tif", ".tiff", ".pdf", ".webp"})
+SUPPORTED_LOCAL_EXTS = frozenset({".jpg", ".jpeg", ".png", ".tif", ".tiff", ".pdf"})
 ACTIVE_BUILD_STATES = frozenset({"queued", "downloading", "building"})
 POLL_INTERVAL_S = 1.0
 
@@ -384,7 +384,7 @@ TOOLS = [
     },
     {
         "name": "import_local_files",
-        "description": "Batch-import local map/aerial files or directories (.jpg, .jpeg, .png, .tif, .tiff, .pdf, .webp) into Map Vietnam.",
+        "description": "Batch-import local map/aerial files or directories (.jpg, .jpeg, .png, .tif, .tiff, .pdf) into Map Vietnam.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -448,8 +448,7 @@ TOOLS = [
                 },
                 "series": {
                     "type": "string",
-                    "enum": ["l7014", "sgi100k"],
-                    "description": "Optional catalogue series filter when adding by bbox",
+                    "description": "Optional catalogue series filter when adding by bbox (e.g. l7014, sgi100k, l701)",
                 },
                 "map_id": {"type": "string", "description": "Custom map id for action='edit'"},
                 "title": {"type": "string", "description": "New title for action='edit'"},
@@ -700,9 +699,12 @@ def call_tool(name, args):
 
     if name == "query_elevation":
         if args.get("line"):
-            return _text(_api_json("POST", "/api/terrain/transect", body={"line": args["line"]}))
+            pts = args["line"]
+            if not isinstance(pts, list) or len(pts) < 2:
+                raise ValueError("line must have at least two [lon, lat] points.")
+            return _text(_api_json("POST", "/api/transect", body={"start": pts[0], "end": pts[-1]}))
         if "lon" in args and "lat" in args:
-            return _text(_api_json("GET", "/api/terrain/elevation", params={"lon": args["lon"], "lat": args["lat"]}))
+            return _text(_api_json("GET", "/api/elevation", params={"lon": args["lon"], "lat": args["lat"]}))
         raise ValueError("Provide either lon & lat or line=[[lon, lat], ...].")
 
     if name == "import_local_files":
@@ -720,34 +722,44 @@ def call_tool(name, args):
         seen = set()
         errors = []
         for raw_p in raw_paths:
-            p = Path(str(raw_p)).expanduser()
-            if not p.exists():
-                errors.append({"path": str(raw_p), "error": "Path does not exist."})
-                continue
-            if p.is_dir():
-                candidates = sorted(p.rglob("*") if recursive else p.iterdir())
-                for f in candidates:
-                    if len(files) >= max_files:
-                        break
-                    if not f.is_file() or f.name.startswith("."):
-                        continue
-                    if f.suffix.lower() not in SUPPORTED_LOCAL_EXTS:
-                        continue
-                    rp = str(f.resolve())
-                    if rp not in seen:
-                        seen.add(rp)
-                        files.append(f)
-            elif p.is_file():
-                if p.suffix.lower() not in SUPPORTED_LOCAL_EXTS:
-                    errors.append({"path": str(p), "error": f"Unsupported file extension: {p.suffix or '(none)'}"})
+            try:
+                p = Path(str(raw_p)).expanduser()
+                if not p.exists():
+                    errors.append({"path": str(raw_p), "error": "Path does not exist."})
                     continue
-                if len(files) < max_files:
-                    rp = str(p.resolve())
-                    if rp not in seen:
-                        seen.add(rp)
-                        files.append(p)
-            else:
-                errors.append({"path": str(raw_p), "error": "Path is not a regular file or directory."})
+                if p.is_dir():
+                    it = p.rglob("*") if recursive else p.iterdir()
+                    matched = []
+                    for f in it:
+                        if f.name.startswith("."):
+                            continue
+                        try:
+                            if not f.is_file() or f.suffix.lower() not in SUPPORTED_LOCAL_EXTS:
+                                continue
+                            rp = str(f.resolve())
+                        except OSError as e:
+                            errors.append({"path": str(f), "error": str(e)})
+                            continue
+                        if rp not in seen:
+                            seen.add(rp)
+                            matched.append(f)
+                            if len(files) + len(matched) >= max_files:
+                                break
+                    matched.sort()
+                    files.extend(matched[: max_files - len(files)])
+                elif p.is_file():
+                    if p.suffix.lower() not in SUPPORTED_LOCAL_EXTS:
+                        errors.append({"path": str(p), "error": f"Unsupported file extension: {p.suffix or '(none)'}"})
+                        continue
+                    if len(files) < max_files:
+                        rp = str(p.resolve())
+                        if rp not in seen:
+                            seen.add(rp)
+                            files.append(p)
+                else:
+                    errors.append({"path": str(raw_p), "error": "Path is not a regular file or directory."})
+            except OSError as e:
+                errors.append({"path": str(raw_p), "error": str(e)})
 
         imported = []
         for f in files:
@@ -935,7 +947,15 @@ def call_tool(name, args):
         placed_map = None
         if bool(args.get("auto_place", False)) and res.get("meets_threshold") and res.get("points"):
             mid = urllib.parse.quote(map_id, safe="")
-            placed_res = _api_json("POST", f"/api/library/custom/{mid}/points", body={"points": res["points"]})
+            pts = [
+                [pt["col"], pt["row"], pt["lon"], pt["lat"]] if isinstance(pt, dict) else list(pt[:4])
+                for pt in res["points"]
+            ]
+            placed_res = _api_json(
+                "POST",
+                f"/api/library/custom/{mid}/points",
+                body={"points": pts, "warp_mode": res.get("recommended_warp", "auto")},
+            )
             placed_map = next((m for m in (placed_res.get("maps") or []) if m.get("id") == map_id), None)
             auto_placed = True
         out = {**res, "auto_placed": auto_placed}
@@ -973,6 +993,8 @@ def call_tool(name, args):
 
 def handle_rpc(msg):
     """Process one JSON-RPC 2.0 request dict; returns a response dict or None for notifications."""
+    if not isinstance(msg, dict):
+        return {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "Invalid Request"}}
     req_id = msg.get("id")
     method = msg.get("method")
     params = msg.get("params") or {}
@@ -1015,6 +1037,9 @@ def main(argv=None):
         try:
             msg = json.loads(line)
         except json.JSONDecodeError:
+            resp = {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "Parse error"}}
+            sys.stdout.write(json.dumps(resp, ensure_ascii=False) + "\n")
+            sys.stdout.flush()
             continue
         resp = handle_rpc(msg)
         if resp is not None:

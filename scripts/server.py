@@ -120,6 +120,7 @@ import records
 import scan_sync
 import store
 import strip_chain
+import strip_mosaic
 import terrain_aerial
 import tiling
 from hub import auto_gcp
@@ -138,7 +139,7 @@ MAX_BODY_BYTES = 1 << 20  # the API's JSON bodies are tiny; refuse anything bigg
 UPLOAD_PATH = "/api/library/custom"  # raw-file upload routes (not JSON)
 CASE_IMPORT_PATH = "/api/cases/import"
 UPLOAD_BLOCK = 1 << 20
-CUSTOM_PATH = re.compile(r"library/custom/(custom_[0-9a-f]{10})/(preview|points|edit|chain|hub-pull)")
+CUSTOM_PATH = re.compile(r"library/custom/(custom_[0-9a-f]{10})/(preview|points|edit|chain|hub-pull|mosaic)")
 ALIGN_PATH = re.compile(r"library/([A-Za-z0-9_-]+)/align/(prepare|preview|points|reset)")
 # How long a removal request waits for the removal to finish before it answers, so the answer
 # usually shows the source already gone; a removal queued behind a running job answers sooner.
@@ -1218,6 +1219,7 @@ class Handler(SimpleHTTPRequestHandler):
             ("POST", "edit"),
             ("POST", "chain"),
             ("POST", "hub-pull"),
+            ("POST", "mosaic"),
         ):
             return self.custom_map_api(m[1], m[2])
         am = ALIGN_PATH.fullmatch(p)
@@ -1290,6 +1292,17 @@ class Handler(SimpleHTTPRequestHandler):
             added = scan_sync.pull_mission(lib, self.hub, entry)
             lib.start_worker()
             return self.send_json({"pulled": len(added), "library": lib.listing()})
+        if action == "mosaic":
+            mosaic = strip_mosaic.build_strip_mosaic(lib, entry["id"])
+            if b.get("title") or b.get("year"):
+                mosaic = lib.custom.edit(
+                    mosaic["id"], b.get("title") or mosaic["title"], b.get("year") or mosaic.get("year") or ""
+                )
+                lib.write_catalog()
+            listing = lib.listing()
+            return self.send_json(
+                {"map": next((x for x in listing["maps"] if x["id"] == mosaic["id"]), mosaic), "library": listing}
+            )
         if action == "points":
             lib.place_custom(
                 map_id, b.get("points"), b.get("title"), b.get("year"), warp_mode=b.get("warp_mode", "auto")

@@ -2387,7 +2387,7 @@ VIEWS.era = v => {
       ${e.hubStream ? `${!hubLyr?.stream_only ? `<button class="btn small" data-act="hubPull" data-id="${e.id}">${icon.dl}Keep full map offline</button>` : ""}
         ${canEditHub ? `<button class="btn small danger" data-act="hubDelAsk" data-id="${e.id}">${icon.trash}Delete from Hub</button>` : ""}` : `
         ${customScan ? `<button class="btn small" data-act="cmPlace" data-id="${e.id}">Place again</button>`
-          : `<button class="btn small" data-act="alignMap" data-id="${e.id}">Adjust alignment</button>`}
+          : (e.kind !== "mosaic" ? `<button class="btn small" data-act="alignMap" data-id="${e.id}">Adjust alignment</button>` : "")}
         ${S.hub.connected ? `<button class="btn small" data-act="hubPushAsk" data-id="${e.id}">${onHub ? "Update on Hub" : "Cache to Hub"}</button>` : ""}
         ${canEditHub ? `<button class="btn small danger" data-act="hubDelAsk" data-id="${e.id}">Delete from Hub</button>` : ""}
         <button class="btn small danger" data-act="eraRemove" data-id="${e.id}">${icon.trash}Remove locally</button>`}</div>
@@ -4307,7 +4307,7 @@ function cmDetail(m) {
       <div class="row"><button class="btn small primary" type="submit">Save</button></div>
       <div class="err" role="alert"></div></form>
     <div class="row lib-acts">${ready && m.bounds ? `<button class="btn small" data-act="cmFit" data-id="${id}">Zoom to map</button>` : ""}
-      ${m.state === "needs_points" ? "" : m.kind === "scan" ? `<button class="btn small" data-act="cmPlace" data-id="${id}">Place again</button>` : ready && m.kind !== "dem" ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : ""}
+      ${m.state === "needs_points" ? "" : m.kind === "scan" ? `<button class="btn small" data-act="cmPlace" data-id="${id}">Place again</button>` : ready && m.kind !== "dem" && m.kind !== "mosaic" ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : ""}
       ${ready && m.kind === "dem" ? `<button class="btn small primary" data-act="useDem" data-id="${id}">Show relief</button>` : ""}
       ${ready && S.hub.connected ? `<button class="btn small" data-act="hubPushOne" data-id="${id}" data-vis="hub">Cache to Hub</button>` : ""}
       <button class="btn small danger push-end" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button></div>
@@ -4431,6 +4431,7 @@ ACTIONS.stripMosaic = async el => {
   chainRefresh();
   try {
     const res = await api(`/api/library/custom/${encodeURIComponent(id)}/mosaic`, { method: "POST", body: {} });
+    if (res?.map?.id) awaitingRebuild.add(res.map.id);
     if (res?.library) applyLibrary(res.library);
     else if (res?.maps) applyLibrary(res);
     toast("Composite strip mosaic is ready.", 5000);
@@ -5645,6 +5646,7 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   $$("#place .pl-mark").forEach(btn => btn.onclick = () => btn.dataset.pl === "scan" ? plClickScan(pl.scan.getCenter()) : plClickToday(pl.today.getCenter()));
   $("#plPairs").onclick = e => { const x = e.target.closest("[data-del]"); if (x) { pl.pairs.splice(+x.dataset.del, 1); pl.autoMatch = null; plRender(); } };
   pl.keys = e => {
+    if ($(".aer-lightbox")) return;
     if (e.key === "Escape") {
       e.preventDefault(); e.stopImmediatePropagation();
       const menu = $("#plStonesMenu");
@@ -5654,7 +5656,7 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
       return;
     }
     if ((e.code === "Space" || e.key === " ") && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      if (e.target.closest?.("input, textarea, select")) return;
+      if (e.target.closest?.("input, textarea, select, button:not(#plBlink), a, summary, [role='button'], [contenteditable]")) return;
       if (plFit()) {
         e.preventDefault();
         if (!e.repeat) plSetBlink(true);
@@ -5737,7 +5739,12 @@ function plRefreshRefOptions() {
   const refOpts = plRefLayers(pl.entry.id);
   sel.innerHTML = `<option value="today">Ref: Today’s map (2026)</option>`
     + refOpts.map(l => `<option value="${esc(l.id)}">Ref: ${esc(l.years || l.date || "")} ${esc(l.title)}</option>`).join("");
-  sel.value = refOpts.some(l => l.id === cur) ? cur : "today";
+  if (cur !== "today" && !refOpts.some(l => l.id === cur)) {
+    sel.value = "today";
+    plSetRef("today");
+  } else {
+    sel.value = cur;
+  }
 }
 function plUpdateStones() {
   if (!pl) return;
@@ -5751,11 +5758,15 @@ function plUpdateStones() {
   if (!stones.length) {
     wrap.hidden = true;
     menu.hidden = true;
+    menu.dataset.key = "";
     btn.setAttribute("aria-expanded", "false");
     return;
   }
   wrap.hidden = false;
   btn.textContent = `Stepping stones (${stones.length})`;
+  const key = stones.map(m => `${m.id}:${pl.addingStones.has(m.id) || LIB_BUSY.has(m.state) ? 1 : 0}`).join(",");
+  if (!menu.hidden && menu.dataset.key === key) return;
+  menu.dataset.key = key;
   menu.innerHTML = stones.map(m => {
     const busy = pl.addingStones.has(m.id) || LIB_BUSY.has(m.state);
     const sub = [libYear(m), libScale(m) || SERIES_WORDS[m.series] || ""].filter(Boolean).join(" · ");
@@ -6309,7 +6320,11 @@ async function runRemoteCommand(action, params = {}) {
       target.triggerRepaint();
       setTimeout(grab, 400);
     });
-    return { image_b64: dataUrl };
+    const tb = target.getBounds();
+    return {
+      image_b64: dataUrl,
+      bounds: [+tb.getWest().toFixed(6), +tb.getSouth().toFixed(6), +tb.getEast().toFixed(6), +tb.getNorth().toFixed(6)],
+    };
   }
   throw new Error(`Unknown remote action: ${action}`);
 }
