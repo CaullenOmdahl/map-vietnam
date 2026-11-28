@@ -142,6 +142,71 @@ def _box_sum(arr, radius=2):
     return cs[k:, k:] - cs[:-k, k:] - cs[k:, :-k] + cs[:-k, :-k]
 
 
+def _structure_weight_map(gray):
+    """Compute a per-pixel stability weight map in `[0.25, 1.0]` favoring man-made structure.
+
+    Rewards high-contrast edges and corners (road intersections, bridges, canal junctions,
+    village blocks) using Sobel gradients and a 7x7 box-filtered Harris structure tensor, while
+    down-weighting flat/uniform regions (open paddies) and extreme-luminance zones (dark water,
+    bright cloud glare).
+    """
+    arr = np.asarray(gray)
+    if arr.size == 0:
+        return np.full(arr.shape, 0.25, dtype=np.float32)
+    g = arr.astype(np.float32)
+    if np.issubdtype(arr.dtype, np.integer) or float(np.max(g)) > 1.5:
+        g = g / 255.0
+    g = np.clip(g, 0.0, 1.0)
+
+    gx, gy = _sobel(g)
+    win_area = 49.0  # 7x7 window (radius=3)
+    ixx = _box_sum(gx * gx, 3) / win_area
+    iyy = _box_sum(gy * gy, 3) / win_area
+    ixy = _box_sum(gx * gy, 3) / win_area
+
+    tr = np.maximum(0.0, ixx + iyy)
+    det = np.maximum(0.0, ixx * iyy - ixy * ixy)
+    harris = np.maximum(0.0, det - 0.04 * tr * tr)
+
+    grad_energy = np.sqrt(tr)
+    corner_energy = np.power(harris, 0.25)
+
+    g_scale = max(float(np.percentile(grad_energy, 95)), 0.10)
+    c_scale = max(float(np.percentile(corner_energy, 95)), 0.06)
+    g_norm = np.clip(grad_energy / g_scale, 0.0, 1.0)
+    c_norm = np.clip(corner_energy / c_scale, 0.0, 1.0)
+    raw = 0.40 * g_norm + 0.60 * c_norm
+
+    # Attenuate locally very dark (water) and very bright (cloud glare) regions
+    local_mean = _box_sum(g, 3) / win_area
+    dark_att = np.clip((local_mean - 0.04) / 0.11, 0.15, 1.0)
+    bright_att = np.clip((0.96 - local_mean) / 0.11, 0.15, 1.0)
+    raw = raw * np.minimum(dark_att, bright_att)
+
+    return np.clip(0.25 + 0.75 * raw, 0.25, 1.0).astype(np.float32)
+
+
+def _sample_weights(wmap, pts):
+    """Sample structure weights from `wmap` at `(x, y)` coordinates via clamped bilinear interpolation."""
+    pts_arr = np.asarray(pts, dtype=np.float64)
+    if len(pts_arr) == 0:
+        return np.zeros((0,), dtype=np.float64)
+    if wmap.size == 0:
+        return np.full((len(pts_arr),), 0.25, dtype=np.float64)
+    h, w = wmap.shape
+    x = np.clip(pts_arr[:, 0], 0.0, float(w - 1))
+    y = np.clip(pts_arr[:, 1], 0.0, float(h - 1))
+    x0 = np.floor(x).astype(np.intp)
+    y0 = np.floor(y).astype(np.intp)
+    x1 = np.minimum(x0 + 1, w - 1)
+    y1 = np.minimum(y0 + 1, h - 1)
+    wx = x - x0
+    wy = y - y0
+    top = wmap[y0, x0] * (1.0 - wx) + wmap[y0, x1] * wx
+    bot = wmap[y1, x0] * (1.0 - wx) + wmap[y1, x1] * wx
+    return (top * (1.0 - wy) + bot * wy).astype(np.float64)
+
+
 def _extract_patch_desc(gx, gy, xs, ys):
     """Build 96-dim contrast-polarity-tolerant multi-scale unsigned-gradient descriptors."""
     h, w = gx.shape
@@ -430,19 +495,31 @@ def _reproject(H, pts):
     return proj[:, :2] / w[:, None]
 
 
-def _ransac_homography(pts_s, pts_r, scan_w, scan_h, ref_w, ref_h, *, iters=450, thresh_px=6.5):
+def _ransac_homography(pts_s, pts_r, scan_w, scan_h, ref_w, ref_h, *, iters=450, thresh_px=6.5, weights=None):
     n = len(pts_s)
     if n < 4:
         return None, np.zeros(n, dtype=bool), np.full(n, 999.0)
+    w = None
+    if weights is not None:
+        w_arr = np.asarray(weights, dtype=np.float64)
+        if len(w_arr) == n:
+            w = np.clip(w_arr, 0.05, 10.0)
     rng = random.Random(42)
     best_H = None
     best_score = -1.0
     best_mask = np.zeros(n, dtype=bool)
     thresh2 = thresh_px * thresh_px
     idxs = list(range(n))
+    high_idxs = None
+    if w is not None:
+        w_med = float(np.median(w))
+        cand_high = [i for i in idxs if w[i] >= w_med]
+        if 4 <= len(cand_high) < n:
+            high_idxs = cand_high
 
-    for _ in range(min(iters, max(40, n * 18))):
-        sample = rng.sample(idxs, 4)
+    for it in range(min(iters, max(40, n * 18))):
+        pool = high_idxs if (high_idxs is not None and (it % 2 == 0)) else idxs
+        sample = rng.sample(pool, 4)
         s_sub = pts_s[sample]
         # Skip nearly collinear 3-of-4 subsets
         p0, p1, p2 = s_sub[0], s_sub[1], s_sub[2]
@@ -460,7 +537,8 @@ def _ransac_homography(pts_s, pts_r, scan_w, scan_h, ref_w, ref_h, *, iters=450,
         cnt = int(inliers.sum())
         if cnt < 4:
             continue
-        msac = float(np.sum(np.where(inliers, 1.0 - 0.5 * (d2 / thresh2), 0.0)))
+        inlier_terms = np.where(inliers, 1.0 - 0.5 * (d2 / thresh2), 0.0)
+        msac = float(np.sum(inlier_terms * w)) if w is not None else float(np.sum(inlier_terms))
         if msac > best_score:
             best_score = msac
             best_H = H
@@ -474,9 +552,13 @@ def _ransac_homography(pts_s, pts_r, scan_w, scan_h, ref_w, ref_h, *, iters=450,
         polished = _fit_homography_dlt(pts_s[best_mask], pts_r[best_mask])
         if _homography_valid(polished, scan_w, scan_h, ref_w, ref_h):
             pred = _reproject(polished, pts_s)
-            errs = np.hypot(pred[:, 0] - pts_r[:, 0], pred[:, 1] - pts_r[:, 1])
-            mask2 = errs <= thresh_px
-            if int(mask2.sum()) >= int(best_mask.sum()):
+            d2 = np.sum((pred - pts_r) ** 2, axis=1)
+            mask2 = d2 <= thresh2
+            if w is not None:
+                terms2 = np.where(mask2, 1.0 - 0.5 * (d2 / thresh2), 0.0)
+                if int(mask2.sum()) >= 4 and float(np.sum(terms2 * w)) >= best_score:
+                    best_H, best_mask = polished, mask2
+            elif int(mask2.sum()) >= int(best_mask.sum()):
                 best_H, best_mask = polished, mask2
     except np.linalg.LinAlgError:
         pass
@@ -521,7 +603,9 @@ def _hull_fraction(pts, w, h):
     return min(1.0, area / float(w * h))
 
 
-def _search_hypotheses(matcher, scan_gray, ref_gray, fractions, *, inlier_px, rotations=ROTATIONS):
+def _search_hypotheses(
+    matcher, scan_gray, ref_gray, fractions, *, inlier_px, rotations=ROTATIONS, scan_wmap=None, ref_wmap=None
+):
     """Try each 90-degree heading x scan scale; return the best RANSAC hypothesis.
 
     Points are returned in un-rotated, un-scaled scan work pixels so the homography and the
@@ -547,24 +631,32 @@ def _search_hypotheses(matcher, scan_gray, ref_gray, fractions, *, inlier_px, ro
             ps0 = _unrotate_points(ps, k, rot.shape)
             ps0[:, 0] *= fx
             ps0[:, 1] *= fy
-            H, mask, errs = _ransac_homography(ps0, pr, sw, sh, rw, rh, thresh_px=inlier_px)
+            weights = None
+            if scan_wmap is not None and ref_wmap is not None:
+                ws = _sample_weights(scan_wmap, ps0)
+                wr = _sample_weights(ref_wmap, pr)
+                weights = np.sqrt(np.maximum(0.0, ws * wr))
+            H, mask, errs = _ransac_homography(ps0, pr, sw, sh, rw, rh, thresh_px=inlier_px, weights=weights)
             n = int(mask.sum())
             if H is None:
                 continue
             rmse = math.sqrt(float(np.mean(errs[mask] ** 2))) if n else 999.0
+            w_score = float(np.sum(weights[mask])) if weights is not None else float(n)
             cand = {
                 "pts_s": ps0,
                 "pts_r": pr,
                 "mscores": ms,
+                "weights": weights,
                 "H": H,
                 "mask": mask,
                 "errs": errs,
                 "n": n,
+                "w_score": w_score,
                 "rmse": rmse,
                 "rotation_deg": 90 * k,
                 "scan_factor": round(factor, 3),
             }
-            if best is None or (n, -rmse) > (best["n"], -best["rmse"]):
+            if best is None or (round(w_score, 4), n, -rmse) > (round(best["w_score"], 4), best["n"], -best["rmse"]):
                 best = cand
             if n >= EARLY_EXIT_INLIERS and _quadrants(ps0[mask], sw, sh) >= 3:
                 best["tried"] = tried
@@ -776,6 +868,9 @@ def match_and_score(
         target_w = max(1, int(scan_target_size[0]))
         target_h = max(1, int(scan_target_size[1]))
 
+    scan_wmap = _structure_weight_map(scan_gray)
+    ref_wmap = _structure_weight_map(ref_gray)
+
     if onnx is not None:
         sess, backend = onnx
         best = _search_hypotheses(
@@ -785,6 +880,8 @@ def match_and_score(
             ONNX_SCAN_FRACTIONS,
             inlier_px=inlier_px,
             rotations=rotations,
+            scan_wmap=scan_wmap,
+            ref_wmap=ref_wmap,
         )
     else:
         backend = "numpy_local"
@@ -795,16 +892,24 @@ def match_and_score(
             NUMPY_SCAN_FRACTIONS,
             inlier_px=inlier_px,
             rotations=rotations,
+            scan_wmap=scan_wmap,
+            ref_wmap=ref_wmap,
         )
 
     if best is None:
         pts_s = np.zeros((0, 2))
         pts_r = np.zeros((0, 2))
         mscores = np.zeros((0,))
+        struct_weights = np.zeros((0,))
         H, inlier_mask, errs = None, np.zeros(0, dtype=bool), np.zeros(0)
         search = {"rotation_deg": None, "scan_factor": None}
     else:
         pts_s, pts_r, mscores = best["pts_s"], best["pts_r"], best["mscores"]
+        struct_weights = best.get("weights")
+        if struct_weights is None:
+            ws = _sample_weights(scan_wmap, pts_s)
+            wr = _sample_weights(ref_wmap, pts_r)
+            struct_weights = np.sqrt(np.maximum(0.0, ws * wr))
         H, inlier_mask, errs = best["H"], best["mask"], best["errs"]
         search = {"rotation_deg": best["rotation_deg"], "scan_factor": best["scan_factor"], "tried": best["tried"]}
 
@@ -832,17 +937,22 @@ def match_and_score(
             "backend": backend,
             "search": search,
             "recommended_warp": "auto",
+            "structure_weighted": True,
             "reason": "Too few geometrically consistent landmarks matched; zoom closer or align via an intermediate map.",
         }
 
-    # Build candidate records with per-point confidence
+    # Build candidate records with per-point confidence weighted by local structural stability
     candidates = []
     for i in inlier_idxs:
         sx, sy = float(pts_s[i, 0]), float(pts_s[i, 1])
         rx, ry = float(pts_r[i, 0]), float(pts_r[i, 1])
         err_i = float(errs[i])
         m_conf = float(mscores[i])
-        pt_conf = round(max(0.1, min(0.99, 0.45 * m_conf + 0.55 * math.exp(-0.35 * (err_i * err_i)))), 3)
+        sw_i = float(struct_weights[i]) if i < len(struct_weights) else 1.0
+        pt_conf = round(
+            max(0.1, min(0.99, 0.35 * m_conf + 0.45 * math.exp(-0.35 * (err_i * err_i)) + 0.20 * sw_i)),
+            3,
+        )
         q_id = (0 if sx < work_scan_w / 2.0 else 1) + (0 if sy < work_scan_h / 2.0 else 2)
         lon = west + (rx / float(work_ref_w)) * (east - west)
         lat = _unmerc_y(ym_n - (ry / float(work_ref_h)) * (ym_n - ym_s))
@@ -853,6 +963,7 @@ def match_and_score(
                 "lon": round(lon, 7),
                 "lat": round(lat, 7),
                 "confidence": pt_conf,
+                "structure_weight": round(sw_i, 3),
                 "error_px": round(err_i, 2),
                 "quadrant": q_id,
                 "_wx": sx,
@@ -860,7 +971,7 @@ def match_and_score(
             }
         )
 
-    candidates.sort(key=lambda c: (-c["confidence"], c["error_px"]))
+    candidates.sort(key=lambda c: (-c["confidence"], -c["structure_weight"], c["error_px"]))
 
     # Quadrant-aware selection with minimum spacing so matched GCPs don't bunch up
     picked = []
@@ -890,7 +1001,7 @@ def match_and_score(
             if cand not in picked:
                 picked.append(cand)
 
-    picked.sort(key=lambda c: (-c["confidence"], c["error_px"]))
+    picked.sort(key=lambda c: (-c["confidence"], -c["structure_weight"], c["error_px"]))
     for c in picked:
         c.pop("_wx", None)
         c.pop("_wy", None)
@@ -927,6 +1038,7 @@ def match_and_score(
             "search": search,
             "recommended_warp": "auto",
             "shape_problem": shape_problem,
+            "structure_weighted": True,
             "reason": (
                 f"The landmarks that matched would leave your {'map' if is_map else 'photo'} {shape_problem} out of shape, "
                 "so they are chance look-alikes. Zoom the reference map to roughly the area the picture covers, "
@@ -953,4 +1065,5 @@ def match_and_score(
         "backend": backend,
         "search": search,
         "recommended_warp": recommended_warp,
+        "structure_weighted": True,
     }
