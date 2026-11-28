@@ -814,6 +814,40 @@ def test_zero_touch_railway_password_and_full_desktop_admin_workflow(tmp_path, m
         archive.close()
 
 
+def test_shdai_vicinity_compatibility_and_four_inlier_guard(monkeypatch):
+    """Verify SHDAI spatial compatibility resolver and 4-inlier zero-DOF confidence cap."""
+    import io
+
+    import terrain_aerial
+    from hub import auto_gcp
+    from PIL import Image
+
+    # 1. Explicit SGI 1:100k feuille lookup
+    v_sheet = terrain_aerial.resolve_shdai_vicinity("Mission photographique sur la feuille 19")
+    assert v_sheet is not None and v_sheet["source"] == "sgi100k_sheet" and len(v_sheet["bounds"]) == 4
+
+    # 2. First Indochina War placename resolver
+    v_dbp = terrain_aerial.resolve_shdai_vicinity("Reconnaissance aérienne Điện Biên Phủ (1954)")
+    assert v_dbp is not None and v_dbp["source"] == "placename" and v_dbp["label"] == "Điện Biên Phủ"
+
+    # 3. Tonkin / HV mission strip fallback
+    v_hv = terrain_aerial.resolve_shdai_vicinity("Photos aériennes de la mission HV741 : strip de 261 F9 à 271 B9")
+    assert v_hv is not None and v_hv["source"] == "region" and "Tonkin" in v_hv["label"]
+
+    # 4. 4-inlier zero-DOF guard in auto_gcp
+    img_buf = io.BytesIO()
+    Image.new("RGB", (200, 200), (140, 140, 140)).save(img_buf, format="JPEG")
+    dummy_bytes = img_buf.getvalue()
+    pts = np.array([[20.0, 20.0], [180.0, 20.0], [180.0, 180.0], [20.0, 180.0]], dtype=np.float64)
+    monkeypatch.setattr(auto_gcp, "_match_numpy", lambda _s, _r: (pts, pts, np.array([0.95, 0.95, 0.95, 0.95])))
+    capped = auto_gcp.match_and_score(dummy_bytes, dummy_bytes, [105.5, 10.4, 105.6, 10.5], min_inliers=4)
+    assert capped["inliers"] == 4
+    assert capped["confidence"] <= 0.35
+    assert capped["meets_threshold"] is False
+    rejected = auto_gcp.match_and_score(dummy_bytes, dummy_bytes, [105.5, 10.4, 105.6, 10.5])
+    assert rejected["points"] == [] and rejected["meets_threshold"] is False
+
+
 def test_auto_gcp_perspective_match_confidence_gate_and_hub_endpoint(tmp_path, monkeypatch):
     """Verify auto_gcp matches landmarks with confidence gating and runs across `/hub/v1/auto-gcp` and `/api/auto-gcp`."""
     import base64

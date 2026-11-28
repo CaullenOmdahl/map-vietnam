@@ -415,7 +415,7 @@ def match_and_score(
     *,
     confidence_threshold=DEFAULT_CONFIDENCE_THRESHOLD,
     max_points=12,
-    min_inliers=4,
+    min_inliers=5,
     inlier_px=6.5,
     scan_target_size=None,
 ):
@@ -540,8 +540,13 @@ def match_and_score(
     s_inliers = min(1.0, n_inliers / 12.0)
     s_ratio = min(1.0, (n_inliers / max(total_matches, 1)) / 0.45)
     s_spread = quadrants_covered / 4.0
-    s_rmse = max(0.0, 1.0 - (rmse_px / float(inlier_px)))
-    confidence = round(max(0.0, min(1.0, 0.32 * s_inliers + 0.18 * s_ratio + 0.28 * s_spread + 0.22 * s_rmse)), 3)
+    # A 4-point homography has 0 degrees of freedom (RMSE is identically ~0 for any 4 points).
+    dof_weight = 0.0 if n_inliers <= 4 else (0.4 if n_inliers == 5 else 1.0)
+    s_rmse = max(0.0, 1.0 - (rmse_px / float(inlier_px))) * dof_weight
+    raw_conf = 0.32 * s_inliers + 0.18 * s_ratio + 0.28 * s_spread + 0.22 * s_rmse
+    if n_inliers < 5:
+        raw_conf = min(raw_conf, 0.35)
+    confidence = round(max(0.0, min(1.0, raw_conf)), 3)
 
     # Check if homography has significant projective perspective skew (ratio of bottom vs top width)
     top_l = _reproject(H, np.array([[0.0, 0.0]]))[0]
@@ -557,7 +562,7 @@ def match_and_score(
         "points": picked,
         "confidence": confidence,
         "confidence_pct": round(confidence * 100.0, 1),
-        "meets_threshold": confidence >= threshold and len(picked) >= 4,
+        "meets_threshold": confidence >= threshold and n_inliers >= 5 and len(picked) >= 4,
         "threshold": threshold,
         "inliers": n_inliers,
         "total_matches": total_matches,

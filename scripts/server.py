@@ -1715,6 +1715,12 @@ class Handler(SimpleHTTPRequestHandler):
             elif self.library.custom.buildable(entry):
                 self.library.add([entry["id"]])
                 self.library.start_worker()
+            else:
+                vb = b.get("bounds")
+                if isinstance(vb, list) and len(vb) == 4:
+                    vals = [float(x) for x in vb]
+                    if vals[0] < vals[2] and vals[1] < vals[3]:
+                        self.library.custom.update(entry["id"], bounds=vals)
             listing = self.library.listing()
             return self.send_json(
                 {"map": next(m for m in listing["maps"] if m["id"] == entry["id"]), "library": listing}

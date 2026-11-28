@@ -4712,16 +4712,17 @@ ACTIONS.buildDem = async el => {
 ACTIONS.importAerial = async el => {
   const url = el.dataset.url, title = el.dataset.title || "Historical aerial", year = el.dataset.year || "";
   if (!url || el.disabled) return;
-  let gcps = null;
+  let gcps = null, bounds = null;
   if (el.dataset.gcps) { try { gcps = JSON.parse(el.dataset.gcps); } catch { gcps = null; } }
-  const body = { url, title, year, gcps, source_width: +el.dataset.sw || undefined, source_height: +el.dataset.sh || undefined };
+  if (el.dataset.bounds) { try { bounds = JSON.parse(el.dataset.bounds); } catch { bounds = null; } }
+  const body = { url, title, year, gcps, bounds, source_width: +el.dataset.sw || undefined, source_height: +el.dataset.sh || undefined };
   const prev = el.textContent; el.disabled = true; el.textContent = "Importing…";
   try {
     const r = await api("/api/aerial/import", { method: "POST", body });
     closeLightbox();
     applyLibrary(r.library);
     if (r.map.state === "needs_points") {
-      toast("Imported frame. Match 3+ spots (8+ for spline warp) on today’s map.", 5000);
+      toast("Imported frame. Match 3+ spots (4+ for oblique, 8+ for spline warp).", 5000);
       openPlacement(S.lib.byId.get(r.map.id) || r.map);
     } else {
       toast(`Imported & queued ${title}`, 5000);
@@ -4736,17 +4737,18 @@ ACTIONS.aerPreview = el => openLightbox({
   title: el.dataset.title || "Aerial frame",
   year: el.dataset.year || "",
   sourceUrl: el.dataset.src || "",
+  bounds: el.dataset.bounds || "",
 });
 
 function closeLightbox() { $(".aer-lightbox")?.remove(); }
-function openLightbox({ preview, full, title, year, sourceUrl }) {
+function openLightbox({ preview, full, title, year, sourceUrl, bounds = "" }) {
   closeLightbox();
   if (!safeUrl(preview)) return;
   document.body.insertAdjacentHTML("beforeend", `<div class="aer-lightbox" role="dialog" aria-modal="true" aria-label="${esc(title)}">
     <img src="${esc(preview)}" alt="${esc(title)}">
     <div class="aer-lb-bar">
       <b>${esc(title)}</b>${year ? `<span>(${esc(year)})</span>` : ""}
-      ${safeUrl(full) ? `<button class="btn small primary" data-act="importAerial" data-url="${esc(full)}" data-title="${esc(title)}" data-year="${esc(year)}">Import &amp; place on map</button>` : ""}
+      ${safeUrl(full) ? `<button class="btn small primary" data-act="importAerial" data-url="${esc(full)}" data-title="${esc(title)}" data-year="${esc(year)}" data-bounds="${esc(bounds)}">Import &amp; place on map</button>` : ""}
       ${safeUrl(sourceUrl) ? `<a class="btn small" href="${esc(sourceUrl)}" target="_blank" rel="noopener">Archive record</a>` : ""}
       <button class="btn small" id="aerLbClose">Close</button>
     </div></div>`);
@@ -4836,17 +4838,23 @@ VIEWS.aerial = () => {
       listHTML = `<p class="small-t muted" style="margin:8px 2px">${fmtInt(res.total || ms.length)} French SHD Indochina aerial missions (1948–1956) on CNRS NAKALA. Open a <b>PLOT</b> index card first to locate frame numbers, then click any frame to inspect or place on the map.</p>` +
         (ms.length ? ms.map(m => {
           const yr = (m.date || "").slice(0, 4);
+          const bStr = m.bounds ? JSON.stringify(m.bounds) : "";
+          const plot0 = (m.plots || [])[0];
           const thumbs = [...(m.plots || []).map(p => ({ ...p, isPlot: true })), ...(m.sample_frames || []).slice(0, 8)];
           return `<div class="group" style="margin-top:10px"><div class="inner">
             <div class="t" style="font-weight:600">${esc(m.title)}</div>
             <div class="small-t muted">${esc([m.date || "1948–56", m.squadron, `${m.frame_count} frames`, m.licence].filter(Boolean).join(" · "))}
               ${safeUrl(m.source_url) ? ` · <a href="${esc(m.source_url)}" target="_blank" rel="noopener">NAKALA DOI</a>` : ""}</div>
+            ${m.vicinity || plot0 ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:4px">
+              ${m.vicinity ? `<span class="hub-badge">Vicinity: ${esc(m.vicinity.label)}</span>` : ""}
+              ${plot0 && safeUrl(plot0.full_url) ? `<button class="btn small" data-act="importAerial" data-url="${esc(plot0.full_url)}" data-title="${esc(m.title + " FLIGHT INDEX")}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}">Place flight-index card first</button>` : ""}
+            </div>` : ""}
             ${thumbs.length ? `<div class="aer-grid">${thumbs.map(f => `<div class="aer-card">
               ${safeUrl(f.preview_url) ? `<img loading="lazy" src="${esc(f.preview_url)}" alt="${esc(f.name)}">` : ""}
               <div class="aer-cap"><span class="mono" style="overflow:hidden;text-overflow:ellipsis">${esc(f.isPlot ? "PLOT INDEX" : f.name.slice(-14))}</span>
                 <div class="row" style="gap:4px">
-                  <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(f.preview_url)}" data-full="${esc(f.full_url)}" data-title="${esc(m.title + " — " + f.name)}" data-year="${esc(yr)}" data-src="${esc(m.source_url)}">View</button>
-                  <button class="linkish small-t" data-act="importAerial" data-url="${esc(f.full_url)}" data-title="${esc(m.title + " " + f.name)}" data-year="${esc(yr)}">Place</button>
+                  <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(f.preview_url)}" data-full="${esc(f.full_url)}" data-title="${esc(m.title + " — " + f.name)}" data-year="${esc(yr)}" data-src="${esc(m.source_url)}" data-bounds="${esc(bStr)}">View</button>
+                  <button class="linkish small-t" data-act="importAerial" data-url="${esc(f.full_url)}" data-title="${esc(m.title + " " + f.name)}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}">Place</button>
                 </div></div></div>`).join("")}</div>` : ""}
           </div></div>`;
         }).join("") : `<p class="muted">No SHD missions matched that query.</p>`);
@@ -4855,22 +4863,29 @@ VIEWS.aerial = () => {
       else {
         const sc = res.scenes || [];
         listHTML = `<p class="small-t muted" style="margin:8px 2px">${sc.length} declassified reconnaissance scenes overlapping this view.</p>` +
-          (sc.length ? `<div class="aer-grid">${sc.map(s => `<div class="aer-card">
+          (sc.length ? `<div class="aer-grid">${sc.map(s => {
+            const pts = Array.isArray(s.footprint?.[0]) ? s.footprint[0] : (Array.isArray(s.footprint) ? s.footprint : []);
+            const sb = pts.length >= 3 ? JSON.stringify([Math.min(...pts.map(p => p[0])), Math.min(...pts.map(p => p[1])), Math.max(...pts.map(p => p[0])), Math.max(...pts.map(p => p[1]))]) : "";
+            return `<div class="aer-card">
             ${safeUrl(s.browse_url) ? `<img loading="lazy" src="${esc(s.browse_url)}" alt="${esc(s.display_id)}">` : ""}
             <div class="aer-cap"><b class="mono">${esc(s.display_id)}</b><span>${esc(s.date || "Undated")} · ${s.download_available ? "Free scan ready" : "Browse preview"}</span>
-              ${safeUrl(s.browse_url) ? `<div class="row" style="gap:6px"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.browse_url)}" data-full="${esc(s.browse_url)}" data-title="${esc(s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}">Inspect</button>
-                <button class="linkish small-t" data-act="importAerial" data-url="${esc(s.browse_url)}" data-title="${esc("Keyhole " + s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}">Place</button></div>` : ""}
-            </div></div>`).join("")}</div>` : `<p class="muted">No scenes found in this view.</p>`);
+              ${safeUrl(s.browse_url) ? `<div class="row" style="gap:6px"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.browse_url)}" data-full="${esc(s.browse_url)}" data-title="${esc(s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}" data-bounds="${esc(sb)}">Inspect</button>
+                <button class="linkish small-t" data-act="importAerial" data-url="${esc(s.browse_url)}" data-title="${esc("Keyhole " + s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}" data-bounds="${esc(sb)}">Place</button></div>` : ""}
+            </div></div>`;
+          }).join("")}</div>` : `<p class="muted">No scenes found in this view.</p>`);
       }
     } else if (tab === "landsat" && res) {
       const sc = res.scenes || [];
       listHTML = `<p class="small-t muted" style="margin:8px 2px">${sc.length} wartime Landsat 1–2 MSS multispectral scenes (1972–1975, ≤35% cloud).</p>` +
-        (sc.length ? `<div class="aer-grid">${sc.map(s => `<div class="aer-card">
+        (sc.length ? `<div class="aer-grid">${sc.map(s => {
+          const lb = Array.isArray(s.bbox) && s.bbox.length === 4 ? JSON.stringify(s.bbox) : "";
+          return `<div class="aer-card">
           ${safeUrl(s.preview_url) ? `<img loading="lazy" src="${esc(s.preview_url)}" alt="${esc(s.id)}">` : ""}
           <div class="aer-cap"><b>${esc((s.datetime || "").slice(0, 10))}</b><span>Cloud ${s.cloud_cover != null ? Math.round(s.cloud_cover) + "%" : "?"} · ${esc(s.platform)}</span>
-            ${safeUrl(s.preview_url) ? `<div class="row" style="gap:6px"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.preview_url)}" data-full="${esc(s.preview_url)}" data-title="${esc(s.id)}" data-year="${esc((s.datetime || "").slice(0, 4))}">View</button>
-              <button class="linkish small-t" data-act="importAerial" data-url="${esc(s.preview_url)}" data-title="${esc("Landsat MSS " + (s.datetime || "").slice(0, 10))}" data-year="${esc((s.datetime || "").slice(0, 4))}">Place</button></div>` : ""}
-          </div></div>`).join("")}</div>` : `<p class="muted">No clear 1972–75 Landsat MSS scenes in this box.</p>`);
+            ${safeUrl(s.preview_url) ? `<div class="row" style="gap:6px"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.preview_url)}" data-full="${esc(s.preview_url)}" data-title="${esc(s.id)}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">View</button>
+              <button class="linkish small-t" data-act="importAerial" data-url="${esc(s.preview_url)}" data-title="${esc("Landsat MSS " + (s.datetime || "").slice(0, 10))}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">Place</button></div>` : ""}
+          </div></div>`;
+        }).join("")}</div>` : `<p class="muted">No clear 1972–75 Landsat MSS scenes in this box.</p>`);
     } else if (tab === "oam" && res) {
       const items = res.items || [];
       listHTML = `<div class="row" style="margin:8px 0"><button class="btn small" data-act="useOamBase">Show global UAV mosaic on base map</button></div>` +
@@ -5085,7 +5100,7 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   const w = entry.image.width, h = entry.image.height;
   const url = entry.preview_url || `/api/library/custom/${encodeURIComponent(entry.id)}/preview`;
   const refOpts = plRefLayers(entry.id);
-  pl = { entry, mode, w, h, k: PL_SCALE / Math.max(w, h), url, refId: "today", refOpacity: 0.85, warpMode: entry.warp_mode || "auto",
+  pl = { entry, mode, w, h, k: PL_SCALE / Math.max(w, h), url, refId: "today", refOpacity: 0.85, refBase: mode === "custom" ? "sat" : S.base, warpMode: entry.warp_mode || "auto",
     autoMatch: null, autoBusy: false,
     pairs: (entry.points || []).map(([col, row, lon, lat]) => ({ col, row, lon, lat })), pending: null, opacity: 0.6, marks: [], todayReady: false, opener, discard: false };
   const dark = isDark();
@@ -5105,6 +5120,7 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
             <option value="today">Ref: Today’s map (2026)</option>
             ${refOpts.map(l => `<option value="${esc(l.id)}">Ref: ${esc(l.years || l.date || "")} ${esc(l.title)}</option>`).join("")}
           </select>
+          <button class="btn small" id="plBaseBtn" type="button" title="Switch reference base between Satellite imagery and Street map">${pl.refBase === "sat" ? "Street" : "Satellite"}</button>
           <label class="pl-refop" id="plRefOpWrap" hidden><span>Ref</span><input type="range" id="plRefOp" min="15" max="100" value="85" aria-label="Reference map opacity"></label>
         </div>
         <div class="pl-map" id="plToday"></div>
@@ -5145,7 +5161,7 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   pl.today.addControl(ctl(), "top-right");
   pl.today.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
   pl.today.on("click", e => plClickToday(e.lngLat));
-  pl.today.on("load", () => { pl.todayReady = true; setBasePaint(pl.today); plDrawSites(); plDraw(); });
+  pl.today.on("load", () => { pl.todayReady = true; setBasePaint(pl.today, pl.refBase); plDrawSites(); plDraw(); });
   [pl.scan, pl.today].forEach(m => { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation?.(); wireTrackpad(m, false); });
   const b = entry.bounds || (pl.pairs.length ? pl.pairs.reduce((a, p) => [Math.min(a[0], p.lon), Math.min(a[1], p.lat), Math.max(a[2], p.lon), Math.max(a[3], p.lat)], [180, 90, -180, -90]) : null);
   if (b && b[2] > b[0] && b[3] > b[1]) pl.today.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, duration: 0, maxZoom: 15 });
@@ -5158,6 +5174,11 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   $("#plAuto").onclick = plRunAutoMatch;
   if ($("#plReset")) $("#plReset").onclick = plReset;
   $("#plRefSel").onchange = e => plSetRef(e.target.value);
+  $("#plBaseBtn").onclick = () => {
+    pl.refBase = pl.refBase === "sat" ? "osm" : "sat";
+    $("#plBaseBtn").textContent = pl.refBase === "sat" ? "Street" : "Satellite";
+    if (pl.todayReady) setBasePaint(pl.today, pl.refBase);
+  };
   $("#plRefOp").oninput = e => {
     pl.refOpacity = +e.target.value / 100;
     if (pl.todayReady && pl.today.getLayer("pl-ref")) pl.today.setPaintProperty("pl-ref", "raster-opacity", pl.refOpacity);
@@ -5435,10 +5456,10 @@ async function plSave() {
 // bar, not Settings (which no longer shows it).
 function setBase(k) { S.base = k; store.set("base", k); applyBase(); renderMapbar(); }
 // Shows the chosen base map on one map, tuned for the theme. Also used by the Placement screen's map of today.
-function setBasePaint(m) {
+function setBasePaint(m, baseKey = S.base) {
   const dark = isDark();
   for (const b of Object.keys(BASES)) {
-    m.setLayoutProperty(`base-${b}`, "visibility", b === S.base ? "visible" : "none");
+    m.setLayoutProperty(`base-${b}`, "visibility", b === baseKey ? "visible" : "none");
     // Dark street map: invert lightness and rotate hue back, so land is dark and water stays blue (like Apple Maps).
     // Land ends up dark grey, not black, so the "Today" half of a comparison still reads.
     const inv = dark && b === "osm";

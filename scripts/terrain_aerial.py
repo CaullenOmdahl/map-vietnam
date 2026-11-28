@@ -21,12 +21,14 @@ infinite write-once cache and vaulted credentials when connected:
 import json
 import math
 import re
+import unicodedata
 import urllib.parse
 import warnings
 from pathlib import Path
 
 import datums
 import numpy as np
+import paths
 import rasterio
 import tiling
 from rasterio.enums import Resampling
@@ -523,6 +525,173 @@ def query_sliderule_gedi(bbox, fetch_fn):
 
 
 # ---- Historical Overhead & Satellite Catalogs ---------------------------------------------------
+_FIRST_INDOCHINA_PLACES = {
+    "dien bien phu": ([102.92, 21.25, 103.18, 21.52], "Điện Biên Phủ"),
+    "na san": ([103.85, 21.05, 104.22, 21.35], "Nà Sản (Sơn La)"),
+    "cao bang": ([106.10, 22.50, 106.45, 22.80], "Cao Bằng"),
+    "dong khe": ([106.30, 22.30, 106.60, 22.55], "Đông Khê (RC 4)"),
+    "that khe": ([106.35, 22.15, 106.62, 22.40], "Thất Khê (RC 4)"),
+    "lang son": ([106.62, 21.72, 106.90, 21.98], "Lạng Sơn"),
+    "hoa binh": ([105.20, 20.68, 105.50, 20.96], "Hòa Bình"),
+    "ha noi": ([105.72, 20.92, 105.98, 21.14], "Hà Nội"),
+    "hanoi": ([105.72, 20.92, 105.98, 21.14], "Hà Nội"),
+    "hai phong": ([106.56, 20.74, 106.82, 20.96], "Hải Phòng"),
+    "haiphong": ([106.56, 20.74, 106.82, 20.96], "Hải Phòng"),
+    "nam dinh": ([106.05, 20.30, 106.30, 20.54], "Nam Định"),
+    "thai binh": ([106.22, 20.32, 106.48, 20.58], "Thái Bình"),
+    "ninh binh": ([105.84, 20.14, 106.10, 20.38], "Ninh Bình"),
+    "phat diem": ([105.98, 20.02, 106.32, 20.28], "Phát Diệm / Bùi Chu"),
+    "bui chu": ([105.98, 20.02, 106.32, 20.28], "Phát Diệm / Bùi Chu"),
+    "phu ly": ([105.80, 20.44, 106.05, 20.66], "Phủ Lý"),
+    "hai duong": ([106.20, 20.82, 106.46, 21.06], "Hải Dương"),
+    "son tay": ([105.38, 21.02, 105.64, 21.26], "Sơn Tây"),
+    "vinh yen": ([105.48, 21.20, 105.74, 21.44], "Vĩnh Yên"),
+    "bac ninh": ([105.96, 21.08, 106.20, 21.30], "Bắc Ninh"),
+    "viet tri": ([105.30, 21.22, 105.54, 21.44], "Việt Trì"),
+    "tuyen quang": ([105.12, 21.70, 105.36, 21.94], "Tuyên Quang"),
+    "yen bai": ([104.76, 21.60, 105.02, 21.84], "Yên Bái"),
+    "lao cai": ([103.86, 22.38, 104.12, 22.62], "Lào Cai"),
+    "hue": ([107.46, 16.36, 107.72, 16.58], "Huế"),
+    "tourane": ([108.08, 15.96, 108.34, 16.18], "Đà Nẵng (Tourane)"),
+    "da nang": ([108.08, 15.96, 108.34, 16.18], "Đà Nẵng (Tourane)"),
+    "quang tri": ([107.06, 16.64, 107.32, 16.88], "Quảng Trị"),
+    "dong ha": ([106.96, 16.72, 107.22, 16.94], "Đông Hà"),
+    "dong hoi": ([106.48, 17.36, 106.74, 17.60], "Đồng Hới"),
+    "vinh": ([105.56, 18.56, 105.82, 18.80], "Vinh"),
+    "thanh hoa": ([105.66, 19.68, 105.92, 19.92], "Thanh Hóa"),
+    "qui nhon": ([109.10, 13.66, 109.34, 13.90], "Quy Nhơn"),
+    "quy nhon": ([109.10, 13.66, 109.34, 13.90], "Quy Nhơn"),
+    "nha trang": ([109.08, 12.14, 109.32, 12.36], "Nha Trang"),
+    "da lat": ([108.32, 11.82, 108.58, 12.06], "Đà Lạt"),
+    "dalat": ([108.32, 11.82, 108.58, 12.06], "Đà Lạt"),
+    "pleiku": ([107.88, 13.86, 108.14, 14.12], "Pleiku"),
+    "kontum": ([107.88, 14.24, 108.14, 14.48], "Kon Tum"),
+    "kon tum": ([107.88, 14.24, 108.14, 14.48], "Kon Tum"),
+    "ankhe": ([108.54, 13.84, 108.80, 14.08], "An Khê"),
+    "an khe": ([108.54, 13.84, 108.80, 14.08], "An Khê"),
+    "ban me thuot": ([107.92, 12.56, 108.18, 12.80], "Buôn Ma Thuột"),
+    "buon ma thuot": ([107.92, 12.56, 108.18, 12.80], "Buôn Ma Thuột"),
+    "saigon": ([106.54, 10.66, 106.82, 10.90], "Sài Gòn"),
+    "ho chi minh": ([106.54, 10.66, 106.82, 10.90], "Sài Gòn"),
+    "cho lon": ([106.54, 10.66, 106.82, 10.90], "Sài Gòn"),
+    "bien hoa": ([106.72, 10.86, 106.98, 11.08], "Biên Hòa"),
+    "tay ninh": ([106.00, 11.20, 106.26, 11.44], "Tây Ninh"),
+    "vung tau": ([107.00, 10.28, 107.22, 10.50], "Vũng Tàu"),
+    "cap saint jacques": ([107.00, 10.28, 107.22, 10.50], "Vũng Tàu (Cap Saint-Jacques)"),
+    "my tho": ([106.24, 10.26, 106.48, 10.48], "Mỹ Tho"),
+    "ben tre": ([106.26, 10.12, 106.50, 10.34], "Bến Tre"),
+    "can tho": ([105.66, 9.94, 105.90, 10.16], "Cần Thơ"),
+    "soc trang": ([105.86, 9.50, 106.10, 9.72], "Sóc Trăng"),
+    "rach gia": ([104.98, 9.90, 105.22, 10.12], "Rạch Giá"),
+    "ca mau": ([105.04, 9.06, 105.28, 9.28], "Cà Mau"),
+    "long xuyen": ([105.32, 10.26, 105.56, 10.50], "Long Xuyên"),
+    "chau doc": ([105.00, 10.60, 105.24, 10.82], "Châu Đốc"),
+    "cao lanh": ([105.52, 10.36, 105.74, 10.56], "Cao Lãnh"),
+}
+_SHDAI_REGIONS = (
+    (
+        re.compile(
+            r"\b(?:tonkin|fleuve\s+rouge|delta\s+du\s+fleuve|riviere\s+noire|riviere\s+claire|rc\s*[46]|hv\d{2,4})\b"
+        ),
+        [104.80, 19.90, 107.10, 22.10],
+        "Tonkin / Red River Delta",
+    ),
+    (
+        re.compile(r"\b(?:annam|centre\s+vietnam|demilitarized)\b"),
+        [106.40, 14.50, 109.40, 18.00],
+        "Annam / Central Vietnam",
+    ),
+    (
+        re.compile(r"\b(?:cochinchine|mekong|plaine\s+des\s+joncs)\b"),
+        [104.80, 9.00, 107.30, 11.40],
+        "Cochinchina / Mekong Delta",
+    ),
+)
+_SGI_INDEX_CACHE = {}
+
+
+def _fold_place(text):
+    s = unicodedata.normalize("NFD", str(text or "")).replace("đ", "d").replace("Đ", "D")
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn").lower()
+    return re.sub(r"[^a-z0-9]+", " ", s).strip()
+
+
+def _sgi_vicinity_index(catalogue_path=None):
+    cat_file = Path(catalogue_path) if catalogue_path else (paths.APP_ROOT / "data" / "sources" / "map_library.json")
+    key = str(cat_file)
+    if key in _SGI_INDEX_CACHE:
+        return _SGI_INDEX_CACHE[key]
+    sheets_by_num = {}
+    sheet_places = []
+    if cat_file.is_file():
+        data = json.loads(cat_file.read_text(encoding="utf-8"))
+        for entry in data.get("maps", []):
+            if entry.get("series") != "sgi100k":
+                continue
+            b = entry.get("bounds")
+            if not (isinstance(b, list) and len(b) == 4):
+                continue
+            title = str(entry.get("title") or "")
+            m = re.search(r"feuille\s+(\d+)", title, re.I)
+            if m:
+                num = int(m.group(1))
+                cur = sheets_by_num.get(num)
+                if cur is None:
+                    sheets_by_num[num] = {"bounds": list(b), "label": title, "ids": [entry["id"]]}
+                else:
+                    cb = cur["bounds"]
+                    cur["bounds"] = [min(cb[0], b[0]), min(cb[1], b[1]), max(cb[2], b[2]), max(cb[3], b[3])]
+                    cur["ids"].append(entry["id"])
+            clean_name = re.sub(r"\([^)]*\)", "", title)
+            folded = _fold_place(clean_name)
+            for suf in (" est", " ouest", " nord", " sud"):
+                if folded.endswith(suf):
+                    folded = folded[: -len(suf)].strip()
+            if len(folded) >= 5:
+                sheet_places.append((folded, list(b), clean_name.strip() or title, entry["id"]))
+    _SGI_INDEX_CACHE[key] = (sheets_by_num, sheet_places)
+    return _SGI_INDEX_CACHE[key]
+
+
+def resolve_shdai_vicinity(title, description="", *, catalogue_path=None):
+    """Best-effort geographic vicinity resolver for un-georeferenced NAKALA `SHDAI` missions."""
+    combined = f"{title or ''} {description or ''}"
+    sheets_by_num, sheet_places = _sgi_vicinity_index(catalogue_path)
+
+    # 1. Explicit SGI 1:100k sheet references (feuille N / carte N)
+    sheet_nums = []
+    for m in re.finditer(r"\b(?:feuille|feuilles|carte|sgi|sheet)s?\s*[:#]?\s*(\d{1,3})\b", combined, re.I):
+        num = int(m.group(1))
+        if num in sheets_by_num:
+            sheet_nums.append(num)
+    if sheet_nums:
+        bs = [sheets_by_num[n]["bounds"] for n in sheet_nums]
+        merged = [min(b[0] for b in bs), min(b[1] for b in bs), max(b[2] for b in bs), max(b[3] for b in bs)]
+        ids = [i for n in sheet_nums for i in sheets_by_num[n]["ids"]]
+        return {
+            "bounds": [round(v, 4) for v in merged],
+            "label": ", ".join(sheets_by_num[n]["label"] for n in dict.fromkeys(sheet_nums)),
+            "source": "sgi100k_sheet",
+            "sheet_ids": ids,
+        }
+
+    # 2. Boundary-matched town / province placenames
+    folded = f" {_fold_place(combined)} "
+    for name in sorted(_FIRST_INDOCHINA_PLACES, key=len, reverse=True):
+        if f" {name} " in folded:
+            bounds, label = _FIRST_INDOCHINA_PLACES[name]
+            return {"bounds": bounds, "label": label, "source": "placename", "sheet_ids": []}
+    for pname, bounds, label, sid in sorted(sheet_places, key=lambda x: len(x[0]), reverse=True):
+        if f" {pname} " in folded:
+            return {"bounds": bounds, "label": label, "source": "placename", "sheet_ids": [sid]}
+
+    # 3. Regional / operational mission-code fallback (e.g. Tonkin / HV-series / Cochinchina)
+    for pat, bounds, label in _SHDAI_REGIONS:
+        if pat.search(folded):
+            return {"bounds": bounds, "label": label, "source": "region", "sheet_ids": []}
+    return None
+
+
 def _nakala_meta_values(item, prop_name):
     out = []
     for m in item.get("metas", []):
@@ -570,16 +739,21 @@ def search_nakala_aerials(query="", page=1, size=15, *, fetch_fn):
                 plots.append(entry)
             else:
                 frames.append(entry)
+        title = titles[0] if titles else doi
+        desc = descs[-1] if descs else ""
+        vicinity = resolve_shdai_vicinity(title, desc)
         missions.append(
             {
                 "doi": doi,
-                "title": titles[0] if titles else doi,
+                "title": title,
                 "date": dates[0] if dates else "",
                 "squadron": creators[0] if creators else "Armée de l'Air / SHD",
-                "description": descs[-1] if descs else "",
+                "description": desc,
                 "licence": licences[0] if licences else (item.get("license") or "CC-BY-NC-SA-4.0"),
                 "source_url": f"https://nakala.fr/{doi}",
                 "frame_count": len(frames),
+                "vicinity": vicinity,
+                "bounds": vicinity["bounds"] if vicinity else None,
                 "plots": plots,
                 "sample_frames": frames[:24],
             }
