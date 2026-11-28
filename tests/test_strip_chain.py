@@ -166,7 +166,7 @@ def test_chain_route_plans_and_places_neighbour(tmp_path, monkeypatch):
 
         listing = post(f"/api/library/custom/{ids[0]}/chain", {"apply": [{"id": prop["id"], "points": prop["points"]}]})
         placed = next(m for m in listing["maps"] if m["id"] == ids[1])
-        assert len(placed["points"]) == len(prop["points"]) and placed["warp_mode"] == "homography"
+        assert len(placed["points"]) == len(prop["points"]) and placed["warp_mode"] == "affine"
         # The renamed anchor kept its strip identity.
         anchor = next(m for m in listing["maps"] if m["id"] == ids[0])
         assert anchor["title"] == "f1" and "SHDAI__AI_75_E_1_HV999__0001" in anchor["original_title"]

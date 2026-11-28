@@ -122,7 +122,7 @@ def sync_mission(lib, hub, anchor, *, push=True):
         elif not local_placed and len(r["points"]) >= 3:
             pts = scale_points(r["points"], (r["image"]["width"], r["image"]["height"]), _size(e))
             with contextlib.suppress(ValueError):  # being built right now, or the points no longer fit
-                lib.place_custom(e["id"], pts, e["title"], e.get("year"), warp_mode="homography")
+                lib.place_custom(e["id"], pts, e["title"], e.get("year"), warp_mode="affine")
                 lib.custom.update(e["id"], chain=(r.get("chain") or [])[-1:] or None, placed_by=r.get("placed_by"))
                 placed += 1
         if e.get("hub_scan_id") != hid:
@@ -195,7 +195,7 @@ def pull_mission(lib, hub, anchor):
             entry = lib.custom.update(entry["id"], original_title=f"{s['mission']}__{s['frame']:04d}__")
         if len(s["points"]) >= 3:
             pts = scale_points(s["points"], (s["image"]["width"], s["image"]["height"]), _size(entry))
-            lib.place_custom(entry["id"], pts, entry["title"], entry.get("year"), warp_mode="homography")
+            lib.place_custom(entry["id"], pts, entry["title"], entry.get("year"), warp_mode="affine")
             entry = lib.custom.update(entry["id"], chain=(s.get("chain") or [])[-1:] or None, placed_by=s["placed_by"])
         added.append(entry)
     return added

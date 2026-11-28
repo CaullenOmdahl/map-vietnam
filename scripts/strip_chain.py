@@ -33,12 +33,13 @@ def strip_key(entry):
 
 
 def _placement_fn(points):
-    """Pixel -> (lon, lat) function fitted to a frame's control points (homography for 4+)."""
+    """Pixel -> (lon, lat) affine transform fitted to a frame's control points.
+
+    Consecutive frames only overlap on one half (~60%): fitting an 8-DOF projective homography to
+    points on one half extrapolates wildly into the other half and blows up scale exponentially over
+    a 10-frame strip, whereas an affine fit preserves scale and straight lines cleanly across hops.
+    """
     pts = np.asarray(points, dtype=np.float64)
-    if len(pts) >= 4:
-        H = _dlt(pts[:, :2], pts[:, 2:4])
-        if H is not None:
-            return lambda c, r: _apply(H, c, r)
     coef = affine_from_points(pts.tolist())
     if coef is None:
         return None

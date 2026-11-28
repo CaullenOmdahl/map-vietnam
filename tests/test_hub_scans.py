@@ -222,7 +222,7 @@ def test_cross_device_hub_chaining_and_pull(hub_instance, tmp_path, monkeypatch)
         assert pulled["pulled"] == 1
         f2_local = next(m for m in pulled["library"]["maps"] if "0002" in m["title"])
         assert len(f2_local["points"]) >= 4
-        assert f2_local["warp_mode"] == "homography"
+        assert f2_local["warp_mode"] == "affine"
 
         # B syncs the mission -> B's local unplaced frame 2 receives the points from the Hub.
         sync_b = scan_sync.sync_mission(lib_b, hc_b, e2, push=False)

@@ -1383,9 +1383,7 @@ class Handler(SimpleHTTPRequestHandler):
         for item, target in local:
             if target.get("points"):
                 continue  # never overwrite a frame someone placed meanwhile
-            lib.place_custom(
-                target["id"], item.get("points"), target["title"], target.get("year"), warp_mode="homography"
-            )
+            lib.place_custom(target["id"], item.get("points"), target["title"], target.get("year"), warp_mode="affine")
             history = {
                 "from_id": str(item.get("from_id") or anchor["id"]),
                 "from_frame": item.get("from_frame"),
