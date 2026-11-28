@@ -107,9 +107,9 @@ def title_from_filename(filename):
 
 
 # ---- reading an upload -----------------------------------------------------------------------
-def geotiff_bounds(path):
-    """WGS84 [w, s, e, n] of a GeoTIFF, or None if the file has no coordinate system and
-    position (so it is a plain picture, or not a TIFF rasterio can read)."""
+def geotiff_info(path):
+    """(kind, WGS84 [w, s, e, n]) of a GeoTIFF: kind is "dem" for single-band float elevation
+    rasters and "geotiff" for visual rasters; returns (None, None) when the TIFF is unplaced."""
     import rasterio
     from rasterio.errors import RasterioError
     from rasterio.transform import array_bounds
@@ -121,12 +121,20 @@ def geotiff_bounds(path):
             ds = rasterio.open(path)
         with ds:
             if ds.crs is None or ds.transform.is_identity:
-                return None
-            return list(transform_bounds(ds.crs, "EPSG:4326", *array_bounds(ds.height, ds.width, ds.transform)))
+                return None, None
+            bounds = list(transform_bounds(ds.crs, "EPSG:4326", *array_bounds(ds.height, ds.width, ds.transform)))
+            kind = "dem" if ds.count == 1 and str(ds.dtypes[0]) in ("float32", "float64") else "geotiff"
+            return kind, bounds
     except RasterioError:
-        return None
+        return None, None
     except Exception as e:  # a coordinate system PROJ cannot work with
         raise CustomMapError(f"The GeoTIFF's coordinate system could not be used ({e}).") from None
+
+
+def geotiff_bounds(path):
+    """WGS84 [w, s, e, n] of a GeoTIFF, or None if the file has no coordinate system and
+    position (so it is a plain picture, or not a TIFF rasterio can read)."""
+    return geotiff_info(path)[1]
 
 
 def is_geopdf(path):
@@ -220,8 +228,8 @@ def sniff(path):
             )
         return "scan", None
     if head.startswith(TIFF_MAGIC):
-        bounds = geotiff_bounds(path)
-        return ("geotiff", bounds) if bounds else ("scan", None)
+        kind, bounds = geotiff_info(path)
+        return (kind, bounds) if bounds else ("scan", None)
     if head.startswith((b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n")):
         return "scan", None
     raise CustomMapError(NOT_A_MAP)
@@ -421,13 +429,16 @@ class CustomMaps:
         year = parse_year(year)
         return self.update(map_id, title=clean_title(title, entry["title"]), year=year, date=str(year) if year else "")
 
-    def save_points(self, map_id, points, title, year):
+    def save_points(self, map_id, points, title, year, warp_mode="auto"):
         """Save a scan's control points and its control file; returns the new entry. The caller
         queues the build."""
         entry = self.get(map_id)
         if entry["kind"] != "scan":
             raise CustomMapError("This map was placed automatically from its own file; it has no points to set.")
         points = clean_points(points, entry["image"])
+        wmode = str(warp_mode or "auto").lower()
+        if wmode not in ("auto", "homography", "tps", "affine"):
+            wmode = "auto"
         year = parse_year(year)
         title = clean_title(title, entry["title"])
         bounds = placed_bounds(points, entry["image"]["width"], entry["image"]["height"])
@@ -435,6 +446,7 @@ class CustomMaps:
             "image": self.work_image(map_id).relative_to(self.data_root).as_posix(),
             "crs": "EPSG:4326",
             "gcps": points,
+            "warp_mode": wmode,
             "max_zoom": min(MAX_ZOOM, native_zoom_for(bounds, entry["image"]["width"])),
             "meta": {
                 "title": title,
@@ -444,10 +456,24 @@ class CustomMaps:
                 "source": CREDIT,
             },
         }
-        if len(points) < POLYNOMIAL_POINTS:
+        if wmode == "affine" or (wmode == "auto" and len(points) < POLYNOMIAL_POINTS):
             control["order"] = 1
+        elif wmode == "tps" or (wmode == "auto" and len(points) >= 8):
+            control["tps"] = True
         write_json(self.control_path(map_id), control)
-        return self.update(map_id, points=points, bounds=bounds, title=title, year=year, date=str(year) if year else "")
+        # Keep the imported title once renamed: it can carry identity (e.g. a survey strip's
+        # mission and frame number) that strip chaining still needs.
+        original = entry.get("original_title") or (entry["title"] if title != entry["title"] else None)
+        return self.update(
+            map_id,
+            points=points,
+            bounds=bounds,
+            title=title,
+            **({"original_title": original} if original else {}),
+            year=year,
+            date=str(year) if year else "",
+            warp_mode=wmode,
+        )
 
     def record_built(self, map_id, bounds):
         """Remember the extent the build actually covers (None keeps what the entry has)."""
@@ -493,7 +519,7 @@ def native_zoom_for(bounds, width):
 
 def extension_of(path, kind):
     """The file extension the stored upload gets, from what it is (not from the name it came with)."""
-    if kind == "geotiff":
+    if kind in ("geotiff", "dem"):
         return ".tif"
     if kind == "geopdf" or is_pdf(path):
         return ".pdf"

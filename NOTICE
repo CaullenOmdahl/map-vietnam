@@ -142,7 +142,7 @@ Vietnam Helicopter Pilots Association (VHPA), optional
 Viewer
 ======
 
-MapLibre GL JS (loaded from unpkg.com at run time, not included here)
+MapLibre GL JS 5.5.0 (bundled under web/app/vendor/, with its LICENSE.txt)
   Copyright (c) 2023 MapLibre contributors; Copyright (c) 2020 Mapbox, Inc.
   Licensed under the 3-Clause BSD License (https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt).
 

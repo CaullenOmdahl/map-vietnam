@@ -270,8 +270,23 @@ has no `robots.txt`; the ingester reads one page every 3 seconds, so a full down
 hours. It needs the `gns`, `hes_gazetteer` and `wikidata_osm` parts first, and adds them if they
 are missing. Add it from the viewer's Records card or with `python3 start.py setup --only vhpa`.
 
-## Background maps
+## Background maps, terrain, LiDAR and historical aerials
 
 Today's map under the old ones comes straight from the tile servers while you browse: the street
-map from OpenStreetMap (© OpenStreetMap contributors) and the satellite view from Esri World
-Imagery. These are never downloaded.
+map from OpenStreetMap (© OpenStreetMap contributors), the satellite view from Esri World Imagery,
+and optional UAV orthomosaics from OpenAerialMap / Open Imagery Network (CC BY 4.0).
+
+Terrain, LiDAR and overhead imagery sources integrated in the viewer (`scripts/terrain_aerial.py`):
+
+| Capability | Source | Licence | Notes |
+| --- | --- | --- | --- |
+| Streaming surface terrain | Mapterhorn (Copernicus GLO-30) & AWS Open Terrain (SRTM) | Copernicus / Public domain | Zero-download Terrarium tiles for multidirectional hillshade, color-relief & 3D tilt |
+| 30 m bare-earth terrain + uncertainty | OpenGeoHub `GEDTM30` (calibrated with NASA GEDI & ICESat-2 LiDAR) | CC BY 4.0 | Windowed COG range reads (`0.1 m` vertical precision) + per-pixel `std` uncertainty |
+| Flood & micro-topography | Alaska Satellite Facility `GLO-30 HAND` (Height Above Nearest Drainage) | CC0 1.0 | Highlights Mekong/Red River levees, dikes, canal banks and high ground |
+| Canopy height | ETH Zürich 10 m Global Canopy Height & Meta/WRI 1 m Canopy Height COGs | CC BY 4.0 / Open Data | LiDAR-calibrated tree canopy height |
+| Spaceborne LiDAR footprints | NASA `GEDI L2A` via SlideRule Earth (`slideruleearth.io`) | Public domain (NASA) | On-demand ~25 m bare-earth (`elev_lowestmode`) & canopy (`rh98`) laser shots |
+| 1948–1956 Indochina aerials | Service Historique de la Défense / CNRS `NAKALA` (`SHDAI`, 1,255 missions) | Per-mission (mostly CC BY-NC-SA 4.0) | Digitized vertical frames + `__PLOT` flight-index cards via IIIF |
+| Declassified spy satellites | USGS EarthExplorer M2M (`CORONA`, `GAMBIT KH-7`, `HEXAGON KH-9`) | Public domain (US Gov) | Uses vaulted Hub or local `USGS_USERNAME` + `USGS_M2M_TOKEN`; free scans flagged |
+| 1972–1975 multispectral satellite | `Landsat 1–2 MSS` via Planetary Computer STAC | Public domain (USGS/NASA) | Wartime scenes including near-infrared bands |
+| Community IIIF maps | `Allmaps` Annotations API (BnF Gallica, Rumsey, LoC) | CC0 control points + source licence | Auto-placed from community ground control points |
+| Wartime sortie overlay indexes | US National Archives `NARA Record Group 373` | Public domain | 1°×1° southwest degree-square lookup (for example `10N105E`) |

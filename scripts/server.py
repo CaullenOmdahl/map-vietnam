@@ -16,6 +16,14 @@ Bad input to the API gets a 400 with {"error": ...}; unknown routes a 404; a fai
 server itself a 500 with {"error": ...}, so the viewer can always say what happened.
 
   GET  /tiles/<map id>/<z>/<x>/<y>.webp                          a tile of an installed map
+  GET  /base/(osm|sat)/<z>/<x>/<y>                               cached street/satellite base tile
+  GET  /fonts/<fontstack>/<range>.pbf                            cached MapLibre font glyphs
+  GET  /api/cache                                                offline base-map cache status & job
+  POST /api/cache/config {"enabled", "max_bytes"}                toggle caching or set LRU size cap
+  POST /api/cache/estimate {"bases", "bounds", "min_z", "max_z"} estimate tile count & MB
+  POST /api/cache/prefetch {"bases", "bounds", "min_z", "max_z", "label"}  start background pre-cache
+  POST /api/cache/cancel {}                                      stop background pre-cache
+  POST /api/cache/clear {"base": optional}                       delete cached base-map tiles
   GET  /api/library     -> {maps: [catalogue entry + state, progress, error, disk_bytes], queue_bytes, series,
                             legacy: {count, bytes, state, error, converted}}   (legacy: maps made by older versions)
   POST /api/library/add {"ids": [...]}      queue maps from the catalogue (never arbitrary URLs)
@@ -32,6 +40,10 @@ GET /api/library, and GET /api/settings reports where the data is kept and how m
   POST /api/library/custom/<id>/points {"points": [[col, row, lon, lat], ...], "title", "year"}
         col/row are pixels of the full-size working image; 3 or more points; queues the build
   POST /api/library/custom/<id>/edit {"title", "year"}                    rename / re-date a map
+  POST /api/library/custom/<id>/chain {"confidence_threshold"} -> strip-chaining plan from this
+        placed survey frame: {"mission", "anchor", "proposals": [...], "stops": [...]}
+  POST /api/library/custom/<id>/chain {"apply": [{"id", "points"}, ...]} places those frames
+        (warp "homography") and queues their builds -> the library listing
   GET  /api/settings -> {"data_folder", "disk": {"maps", "records", "downloads", "total"}} (bytes)
 
 Record sources (scripts/records.py). Nothing is downloaded unless one of these asks for it, only
@@ -76,6 +88,7 @@ Usage: .venv/bin/python scripts/server.py [--port 8765] [--db data/evidence.sqli
 """
 
 import argparse
+import contextlib
 import json
 import math
 import os
@@ -93,20 +106,31 @@ from html import escape
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
+import app_log
+import base_cache
 import custom_maps
 import gridref
+import hub_client
 import kml
 import library
 import paths
 import records
+import scan_sync
 import store
+import strip_chain
+import strip_mosaic
+import terrain_aerial
 import tiling
+from hub import auto_gcp
+from hub.polite import HostPacer, SingleFlight, is_safe_id, polite_fetch_bytes
 
 WEB = paths.APP_ROOT / "web"  # the viewer, shipped with the app; the data under web/ is elsewhere (see Handler)
 EMPTY_TILE = tiling.empty_tile()
-TILE_PATH = re.compile(r"/tiles/([A-Za-z0-9_.-]+)/(\d{1,2})/(\d{1,10})/(\d{1,10})\.webp")
+TILE_PATH = re.compile(r"/tiles/([A-Za-z0-9_.-]+)/(\d{1,2})/(\d{1,10})/(\d{1,10})\.(webp|png|jpg)")
+BASE_TILE_PATH = re.compile(r"/base/(osm|sat)/(\d{1,2})/(\d{1,10})/(\d{1,10})")
+GLYPH_PATH = re.compile(r"/fonts/([^/]+)/(\d+-\d+)\.pbf")
 # Deeper than any map is tiled (z16), and far inside what SQLite's integers and the TMS row flip hold.
 MAX_TILE_ZOOM = 24
 # Sec-Fetch-Site values of requests made by this server's own pages (or typed by the user).
@@ -115,7 +139,7 @@ MAX_BODY_BYTES = 1 << 20  # the API's JSON bodies are tiny; refuse anything bigg
 UPLOAD_PATH = "/api/library/custom"  # raw-file upload routes (not JSON)
 CASE_IMPORT_PATH = "/api/cases/import"
 UPLOAD_BLOCK = 1 << 20
-CUSTOM_PATH = re.compile(r"library/custom/(custom_[0-9a-f]{10})/(preview|points|edit)")
+CUSTOM_PATH = re.compile(r"library/custom/(custom_[0-9a-f]{10})/(preview|points|edit|chain|hub-pull|mosaic)")
 ALIGN_PATH = re.compile(r"library/([A-Za-z0-9_-]+)/align/(prepare|preview|points|reset)")
 # How long a removal request waits for the removal to finish before it answers, so the answer
 # usually shows the source already gone; a removal queued behind a running job answers sooner.
@@ -389,11 +413,35 @@ def title_index(db):
     return rows
 
 
+COORD_RE = re.compile(r"^\s*(-?\d{1,3}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)\s*$")
+
+
+def parse_coordinates(q):
+    """(lon, lat) from decimal degrees typed as "lat, lon" (the usual order) or "lon, lat"; None otherwise.
+
+    Over Vietnam the two orders cannot be confused: latitudes are 8-24 and longitudes 102-110, so a pair
+    whose first number is over 90 is read as lon, lat."""
+    m = COORD_RE.match(q or "")
+    if not m or "." not in q:
+        return None
+    a, b = float(m.group(1)), float(m.group(2))
+    if abs(a) <= 90 and abs(b) <= 180 and not (abs(a) > abs(b) and abs(b) <= 90):
+        return b, a
+    if abs(b) <= 90 and abs(a) <= 180:
+        return a, b
+    return None
+
+
 def search(db, q, limit=20, near=None):
-    """One box for everything: a grid reference, or a name among the evidence titles.
+    """One box for everything: decimal coordinates, a grid reference, a built-in place (wartime towns and French
+    sheet names, which work before any records are downloaded), or a name among the evidence titles.
     Names are ranked nearest-first to `near` (lon, lat), prefix matches ahead of the rest."""
     q = q.strip()
     out = []
+    ll = parse_coordinates(q)
+    if ll:
+        out.append({"type": "coord", "label": f"{ll[1]:.5f}, {ll[0]:.5f}", "lon": ll[0], "lat": ll[1]})
+        return out
     try:
         lon, lat, r = gridref.to_wgs84(q, datum="indian1960")
         out.append(
@@ -408,6 +456,7 @@ def search(db, q, limit=20, near=None):
         )
     except ValueError:
         pass  # not a grid reference: a name search only
+    builtin = [{"type": "place", **p} for p in terrain_aerial.builtin_places(q, limit=6)]
     if len(q) >= 2:
         fq = fold(q)
         # At most 2,000 candidates are ranked; ids are fetched 500 at a time to stay well under
@@ -442,6 +491,9 @@ def search(db, q, limit=20, near=None):
                 )
             )
         out += [h for _, h in sorted(hits, key=lambda t: t[0])[:limit]]
+    # Built-in places stand in for the place-name records until those are downloaded.
+    if not any(h.get("kind") == "placename" for h in out):
+        out += builtin
     return out
 
 
@@ -684,6 +736,7 @@ class Handler(SimpleHTTPRequestHandler):
     data_web = paths.DATA_ROOT / "web"  # where /catalog.json and /tiles/ live (set by make_server)
     library = None  # the map library (set by make_server)
     records = None  # the record sources (set by make_server)
+    base_cache = None  # the offline base-map cache (set by make_server)
     # Fixed types for what the viewer loads: on Windows the defaults come from the registry, where
     # .js or .css is sometimes text/plain, and browsers then refuse the file.
     extensions_map = {
@@ -731,27 +784,47 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", ctype)
         if filename:
-            safe = re.sub(r'[^A-Za-z0-9._ -]+', "_", filename).strip() or "export.kmz"
+            safe = re.sub(r"[^A-Za-z0-9._ -]+", "_", filename).strip() or "export.kmz"
             self.send_header("Content-Disposition", f'attachment; filename="{safe}"')
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
 
-    def body(self):
+    def body(self, max_bytes=MAX_BODY_BYTES):
         """The request's JSON body, which must be an object ({} if empty)."""
         n = int(self.headers.get("Content-Length") or 0)
-        if not 0 <= n <= MAX_BODY_BYTES:
+        if not 0 <= n <= max_bytes:
             raise ValueError("request body too large" if n > 0 else "bad Content-Length")
         data = json.loads(self.rfile.read(n) or b"{}")
         if not isinstance(data, dict):
             raise ValueError("send a JSON object")
         return data
 
+    def _extra_secrets(self):
+        env_vals = records.read_env(self.library.root / ".env") if self.library else {}
+        out = []
+        for k in ("USGS_M2M_TOKEN", "KAGGLE_KEY", "HUB_API_KEY", "EARTHDATA_TOKEN"):
+            for v in (os.environ.get(k), env_vals.get(k)):
+                if v and len(v) >= 4:
+                    out.append(v)
+        return out
+
+    def _scrub_local(self, text):
+        return app_log.scrub_secrets(str(text or ""), self._extra_secrets())
+
     def send_failure(self, error):
         """Answer 500 for a failure of the server itself, logging the traceback for the console."""
+        if getattr(self, "app_log", None) is not None:
+            self.app_log.log(
+                "ERROR",
+                f"{self.command} {urlparse(self.path).path}",
+                str(error),
+                exc=error,
+                secrets=self._extra_secrets(),
+            )
         traceback.print_exception(error, file=sys.stderr)
-        self.send_json({"error": f"the server failed: {error}"}, HTTPStatus.INTERNAL_SERVER_ERROR)
+        self.send_json({"error": f"the server failed: {self._scrub_local(error)}"}, HTTPStatus.INTERNAL_SERVER_ERROR)
 
     def own_hosts(self):
         """The Host header values that name this server: 127.0.0.1, localhost or [::1] on its port."""
@@ -779,7 +852,11 @@ class Handler(SimpleHTTPRequestHandler):
         ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
         # A file upload is raw bytes. Like JSON, that type cannot be sent by a plain cross-site
         # form, and a script on another site needs a CORS preflight this server never grants.
-        if method == "POST" and urlparse(self.path).path in (UPLOAD_PATH, CASE_IMPORT_PATH) and ctype == "application/octet-stream":
+        if (
+            method == "POST"
+            and urlparse(self.path).path in (UPLOAD_PATH, CASE_IMPORT_PATH)
+            and ctype == "application/octet-stream"
+        ):
             return None
         if method == "POST" and ctype != "application/json":
             return HTTPStatus.UNSUPPORTED_MEDIA_TYPE, "send the request body as application/json"
@@ -801,6 +878,29 @@ class Handler(SimpleHTTPRequestHandler):
                 self.library_api(method, p)
             elif p == "records" or p.startswith("records/"):
                 self.records_api(method, p)
+            elif p == "hub" or p.startswith("hub/"):
+                self.hub_api(method, p, q)
+            elif p == "terrain" or p.startswith("terrain/"):
+                self.terrain_api(method, p, q)
+            elif p == "aerial" or p.startswith("aerial/"):
+                self.aerial_api(method, p, q)
+            elif p == "elevation" and method == "GET":
+                self.elevation_api(q)
+            elif p == "transect" and method == "POST":
+                self.transect_api()
+            elif p == "auto-gcp" and method == "POST":
+                self.auto_gcp_api()
+            elif p == "lidar" and method == "GET":
+                self.lidar_api(q)
+            elif p == "media" or p == "media/delete":
+                with closing(self.db()) as db, db:
+                    self.media_api(method, p, q, db)
+            elif p == "local-keys":
+                self.local_keys_api(method)
+            elif p == "logs" or p.startswith("logs/"):
+                self.logs_api(method, p)
+            elif p == "cache" or p.startswith("cache/"):
+                self.cache_api(method, p)
             elif p == "settings" and method == "GET":
                 self.settings()
             elif p == "quit" and method == "POST":
@@ -818,7 +918,9 @@ class Handler(SimpleHTTPRequestHandler):
         except KeyError as e:  # a field or query value the request left out
             self.send_json({"error": f"{e.args[0]} is missing"}, HTTPStatus.BAD_REQUEST)
         except (ValueError, TypeError) as e:  # LibraryError is a ValueError
-            self.send_json({"error": str(e)}, HTTPStatus.BAD_REQUEST)
+            if getattr(self, "app_log", None) is not None and p != "logs/client":
+                self.app_log.log("WARN", f"{method} {url.path}", str(e), secrets=self._extra_secrets())
+            self.send_json({"error": self._scrub_local(e)}, HTTPStatus.BAD_REQUEST)
         except OverflowError:  # a number too big for SQLite, e.g. an id of 30 digits
             self.send_json({"error": "a number in the request is too large"}, HTTPStatus.BAD_REQUEST)
         except sqlite3.IntegrityError as e:  # a duplicate name, or a record id that does not exist
@@ -874,6 +976,7 @@ class Handler(SimpleHTTPRequestHandler):
                     "lat": lat,
                     "mgrs_indian1960": gridref.from_lonlat(lon, lat, "indian1960", 10),
                     "mgrs_wgs84": gridref.from_lonlat(lon, lat, "wgs84", 10),
+                    "nara_rg373": terrain_aerial.nara_rg373_info(lon, lat),
                 }
             )
         if p == "cases" and method == "GET":
@@ -887,6 +990,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({"id": cur.lastrowid}, HTTPStatus.CREATED)
         if p == "cases/import" and method == "POST":
             return self.import_case_kml(q, db)
+        if p.startswith("remote/"):
+            return self.remote_api(method, p)
         if not m:
             return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
         cid, sub, sub_id, fmt = int(m[1]), m[2], m[3], m[4]
@@ -1108,7 +1213,14 @@ class Handler(SimpleHTTPRequestHandler):
         if method == "POST" and p == "library/custom":
             return self.upload_custom_map()
         m = CUSTOM_PATH.fullmatch(p)
-        if m and (method, m[2]) in (("GET", "preview"), ("POST", "points"), ("POST", "edit")):
+        if m and (method, m[2]) in (
+            ("GET", "preview"),
+            ("POST", "points"),
+            ("POST", "edit"),
+            ("POST", "chain"),
+            ("POST", "hub-pull"),
+            ("POST", "mosaic"),
+        ):
             return self.custom_map_api(m[1], m[2])
         am = ALIGN_PATH.fullmatch(p)
         if am and ((method == "GET" and am[2] == "preview") or (method == "POST" and am[2] != "preview")):
@@ -1172,14 +1284,161 @@ class Handler(SimpleHTTPRequestHandler):
             if entry["kind"] != "scan" or not path.exists():
                 raise custom_maps.NoSuchMap()
             return self.send_jpeg(path)
-        b = self.body()
-        if action == "points":
-            lib.place_custom(map_id, b.get("points"), b.get("title"), b.get("year"))
+        b = self.body(max_bytes=4 << 20) if action == "chain" else self.body()
+        if action == "chain":
+            return self.strip_chain_api(entry, b)
+        if action == "hub-pull":
+            # Teammates' frames of this strip that this computer does not have yet.
+            added = scan_sync.pull_mission(lib, self.hub, entry)
             lib.start_worker()
+            return self.send_json({"pulled": len(added), "library": lib.listing()})
+        if action == "mosaic":
+            mosaic = strip_mosaic.build_strip_mosaic(lib, entry["id"])
+            if b.get("title") or b.get("year"):
+                mosaic = lib.custom.edit(
+                    mosaic["id"], b.get("title") or mosaic["title"], b.get("year") or mosaic.get("year") or ""
+                )
+                lib.write_catalog()
+            listing = lib.listing()
+            return self.send_json(
+                {"map": next((x for x in listing["maps"] if x["id"] == mosaic["id"]), mosaic), "library": listing}
+            )
+        if action == "points":
+            lib.place_custom(
+                map_id, b.get("points"), b.get("title"), b.get("year"), warp_mode=b.get("warp_mode", "auto")
+            )
+            lib.start_worker()
+            if strip_chain.strip_key(entry):
+                self.hub_share_later(
+                    "share points", lambda: scan_sync.share_points(lib, self.hub, lib.custom.get(map_id))
+                )
         else:
             lib.custom.edit(map_id, b.get("title"), b.get("year"))
             lib.write_catalog()
         self.send_json(lib.listing())
+
+    def hub_share_later(self, what, fn):
+        """Run a Hub sharing step in the background when "share automatically" is on; failures are logged only
+        (the map is already saved on this computer)."""
+        cfg = self.hub.config()
+        if not (cfg.get("configured") and cfg.get("auto_push")):
+            return
+
+        def run():
+            try:
+                fn()
+            except Exception as e:  # best-effort: never break the local action
+                self.app_log.log("WARN", f"hub {what}", str(e), secrets=self._extra_secrets())
+
+        threading.Thread(target=run, name=f"hub-{what}", daemon=True).start()
+
+    def strip_chain_api(self, anchor, b):
+        """Plan (or apply) placing the neighbouring frames of `anchor`'s survey strip.
+
+        With a Hub connected the plan runs there over the whole team's frames of the mission (after sharing this
+        computer's frames when "share automatically" is on), falling back to matching here."""
+        lib = self.library
+        if b.get("apply") is not None:
+            return self.strip_chain_apply(anchor, b["apply"])
+
+        thresh = float(b.get("confidence_threshold", auto_gcp.DEFAULT_CONFIDENCE_THRESHOLD))
+        cfg = self.hub.config()
+        use_hub = bool(cfg.get("configured"))
+        if use_hub:
+            try:
+                sync = scan_sync.sync_mission(lib, self.hub, anchor, push=bool(cfg.get("auto_push")))
+                if sync["placed_from_hub"]:
+                    lib.start_worker()
+                return self.send_json(scan_sync.hub_plan(lib, self.hub, lib.custom.get(anchor["id"]), sync, thresh))
+            except hub_client.HubClientError as e:
+                self.app_log.log("WARN", "chain", f"Chaining here instead of on the Hub: {e}")
+
+        def image_of(entry):
+            path = lib.custom.preview_path(entry["id"])
+            if not path.is_file():
+                path = lib.custom.work_image(entry["id"])
+            if not path.is_file():
+                raise custom_maps.NoSuchMap("The scan preview image is missing.")
+            return path.read_bytes(), (entry["image"]["width"], entry["image"]["height"])
+
+        def match(b_entry, a_entry):
+            nonlocal use_hub
+            b_bytes, b_size = image_of(b_entry)
+            a_bytes, a_size = image_of(a_entry)
+            if use_hub:
+                try:
+                    return self.hub.match_pair(a_bytes, b_bytes, a_size=a_size, b_size=b_size)
+                except hub_client.HubClientError:
+                    use_hub = False  # fall back to the local matcher for the rest of the walk
+            return auto_gcp.match_pair(a_bytes, b_bytes, a_size=a_size, b_size=b_size)
+
+        plan = strip_chain.plan_chain(lib.custom.entries(), anchor["id"], match, threshold=thresh)
+        plan["threshold"] = thresh
+        self.send_json(plan)
+
+    def strip_chain_apply(self, anchor, items):
+        """Place chained frames here (recording where each placement came from) and, for frames only teammates
+        have, on the Hub."""
+        lib = self.library
+        if not isinstance(items, list) or not items:
+            raise ValueError("Send the frames to place.")
+        mission = strip_chain.strip_key(anchor)
+        local, remote = [], []
+        for item in items:
+            if item.get("remote"):
+                remote.append(item)
+                continue
+            target = lib.custom.get(str(item.get("id") or ""))
+            if mission is None or (strip_chain.strip_key(target) or (None,))[0] != mission[0]:
+                raise ValueError("Only frames of the same survey strip can be chained.")
+            local.append((item, target))
+        placed = []
+        for item, target in local:
+            if target.get("points"):
+                continue  # never overwrite a frame someone placed meanwhile
+            lib.place_custom(target["id"], item.get("points"), target["title"], target.get("year"), warp_mode="affine")
+            history = {
+                "from_id": str(item.get("from_id") or anchor["id"]),
+                "from_frame": item.get("from_frame"),
+                "confidence": item.get("confidence"),
+                "inliers": item.get("inliers"),
+                "at": store.now(),
+            }
+            lib.custom.update(target["id"], chain=history)
+            placed.append((target["id"], history))
+        lib.start_worker()
+
+        def share():
+            for map_id, history in placed:
+                from_entry = next((e for e in lib.custom.entries() if e["id"] == history["from_id"]), None)
+                hub_from = scan_sync.hub_id(from_entry) if from_entry else history["from_id"]
+                scan_sync.share_points(lib, self.hub, lib.custom.get(map_id), chain={**history, "from_id": hub_from})
+
+        if placed:
+            self.hub_share_later("share chain", share)
+        listing = lib.listing()
+        if remote:
+            try:
+                self.hub.chain_scans(
+                    scan_sync.hub_id(anchor),
+                    {
+                        "apply": [
+                            {
+                                "id": it.get("hub_id") or it.get("id"),
+                                "points": it.get("points"),
+                                "from_id": it.get("from_hub_id"),
+                                "from_frame": it.get("from_frame"),
+                                "confidence": it.get("confidence"),
+                                "inliers": it.get("inliers"),
+                            }
+                            for it in remote
+                        ]
+                    },
+                )
+                listing["hub_placed"] = len(remote)
+            except hub_client.HubClientError as e:
+                listing["hub_error"] = str(e)
+        return self.send_json(listing)
 
     def align_map_api(self, map_id, action):
         """The alignment routes of any installed map: prepare, preview, points, reset."""
@@ -1193,16 +1452,104 @@ class Handler(SimpleHTTPRequestHandler):
         if action == "prepare":
             return self.send_json(lib.prepare_alignment(map_id))
         if action == "points":
-            res = lib.save_alignment(map_id, b.get("points"))
+            res = lib.save_alignment(map_id, b.get("points"), warp_mode=b.get("warp_mode", "auto"))
         else:
             res = lib.reset_alignment(map_id)
         lib.start_worker()
         self.send_json(res)
 
+    def remote_api(self, method, p):
+        """Live viewer control bridge (`/api/remote/*`) for MCP/AI harnesses."""
+        bridge = self.remote
+        if method == "GET" and p == "remote/state":
+            return self.send_json(bridge.status())
+        if method == "GET" and p == "remote/poll":
+            return self.send_json(bridge.poll(timeout=15.0))
+        if method == "POST" and p == "remote/state":
+            bridge.update_state(self.body())
+            return self.send_json({"ok": True})
+        if method == "POST" and p == "remote/reply":
+            b = self.body(max_bytes=12 << 20)
+            return self.send_json(
+                bridge.reply(int(b["id"]), result=b.get("result"), error=b.get("error"), state=b.get("state"))
+            )
+        if method == "POST" and p == "remote/command":
+            b = self.body()
+            try:
+                return self.send_json(bridge.send_command(b.get("action") or "", b.get("params") or {}))
+            except (ConnectionError, TimeoutError) as e:
+                return self.send_json({"error": str(e)}, HTTPStatus.SERVICE_UNAVAILABLE)
+        return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+
     def settings(self):
         """GET /api/settings: where the data is kept and how much space each kind takes."""
         lib = self.library
-        self.send_json({"data_folder": str(lib.root), "disk": lib.disk_usage(self.records.db_path)})
+        disk = lib.disk_usage(self.records.db_path)
+        cache_bytes = self.base_cache.disk_bytes() if self.base_cache is not None else 0
+        disk["base_cache"] = cache_bytes
+        disk["total"] = disk.get("total", 0) + cache_bytes
+        self.send_json({"data_folder": str(lib.root), "disk": disk})
+
+    def cache_api(self, method, p):
+        """The /api/cache routes for offline base-map tiles."""
+        cache = self.base_cache
+        if method == "GET" and p == "cache":
+            return self.send_json(cache.status())
+        if method != "POST":
+            return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+        b = self.body()
+        if p == "cache/config":
+            return self.send_json(cache.set_config(enabled=b.get("enabled"), max_bytes=b.get("max_bytes")))
+        if p == "cache/estimate":
+            return self.send_json(cache.estimate(b.get("bases"), b.get("bounds"), b.get("min_z", 0), b.get("max_z")))
+        if p == "cache/prefetch":
+            return self.send_json(
+                cache.start_prefetch(
+                    b.get("bases"), b.get("bounds"), b.get("min_z", 0), b.get("max_z"), b.get("label", "")
+                )
+            )
+        if p == "cache/cancel":
+            return self.send_json(cache.cancel())
+        if p == "cache/clear":
+            return self.send_json(cache.clear(b.get("base")))
+        self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+
+    def send_base_tile(self, base, z, x, y):
+        """Serve a street or satellite base tile via the local SQLite LRU cache."""
+        if not (z <= base_cache.BASES[base]["maxzoom"] and x < (1 << z) and y < (1 << z)):
+            self.send_error(HTTPStatus.BAD_REQUEST, "no such tile")
+            return
+        data, ctype = self.base_cache.get_tile(base, z, x, y)
+        if data is None:
+            self.send_response(HTTPStatus.SERVICE_UNAVAILABLE)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "public, max-age=86400")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def send_glyph(self, fontstack, range_name):
+        """Serve a MapLibre PBF font glyph range via the local SQLite cache."""
+        try:
+            data = self.base_cache.get_glyph(fontstack, range_name)
+        except ValueError:
+            self.send_error(HTTPStatus.BAD_REQUEST, "bad font request")
+            return
+        if data is None:
+            self.send_response(HTTPStatus.NOT_FOUND)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/x-protobuf")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "public, max-age=604800")
+        self.end_headers()
+        self.wfile.write(data)
 
     def records_api(self, method, p):
         """The /api/records routes (see the module docstring). Every change answers with the
@@ -1244,17 +1591,28 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json(rec.listing())
         self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
-    def send_tile(self, map_id, z, x, y):
-        """One tile of an installed map, or an empty tile. Revalidated with an ETag rather than
-        cached blindly: a map removed and added again must not show stale tiles."""
+    def send_tile(self, map_id, z, x, y, ext="webp"):
+        """One tile of an installed map (or streamed Hub layer, cached infinitely in data/hub_cache),
+        or an empty tile. Revalidated with an ETag rather than cached blindly unless ?v= is present."""
         if not (z <= MAX_TILE_ZOOM and x < (1 << z) and y < (1 << z)):
             self.send_error(HTTPStatus.BAD_REQUEST, "no such tile")
             return
         path = self.library.tiles_path(map_id)
+        data = None
+        etag = None
+        ctype = "image/webp"
+        has_ver = "v=" in (urlparse(self.path).query or "")
         try:
             etag = f'"{path.stat().st_mtime_ns:x}"'
         except FileNotFoundError:
-            data, etag = None, None
+            if self.hub and self.hub.config()["configured"]:
+                try:
+                    data, hub_ct = self.hub.get_streamed_tile(map_id, z, x, y)
+                    if data is not None:
+                        ctype = hub_ct or ctype
+                        has_ver = True
+                except hub_client.HubClientError:
+                    data = None
         else:
             if self.headers.get("If-None-Match") == etag:
                 self.send_response(HTTPStatus.NOT_MODIFIED)
@@ -1269,13 +1627,651 @@ class Handler(SimpleHTTPRequestHandler):
                 data = None
         body = data or EMPTY_TILE
         self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", "image/webp")
+        self.send_header("Content-Type", ctype if data else "image/webp")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Cache-Control", "private, max-age=31536000, immutable" if (has_ver and data) else "no-cache")
         if etag:
             self.send_header("ETag", etag)
         self.end_headers()
         self.wfile.write(body)
+
+    def _local_cached_fetch(self, url, *, cache_key=None, headers=None, data=None, method=None, timeout=25):
+        """Infinite write-once disk cache (`data/raw/aerial_cache/`) for standalone desktop queries."""
+        import hashlib
+
+        cache_root = self.library.raw / "aerial_cache"
+        cache_root.mkdir(parents=True, exist_ok=True)
+        raw_key = cache_key or f"{method or 'GET'}:{url}:{hashlib.sha256(data or b'').hexdigest()[:12]}"
+        digest = hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
+        f_path = cache_root / f"{digest}.bin"
+        if f_path.is_file():
+            return f_path.read_bytes(), "application/octet-stream"
+
+        def _fetch_and_persist():
+            if f_path.is_file():
+                return f_path.read_bytes(), "application/octet-stream"
+            body, ctype = polite_fetch_bytes(
+                url,
+                pacer=self.local_pacer,
+                headers=headers,
+                data=data,
+                method=method,
+                timeout=timeout,
+                allow_loopback=getattr(self, "allow_loopback", False),
+            )
+            part = cache_root / f"{digest}.{os.getpid()}.{threading.get_ident()}.partial"
+            try:
+                part.write_bytes(body)
+                part.replace(f_path)
+            finally:
+                part.unlink(missing_ok=True)
+            return body, ctype
+
+        return self.local_flight.do(("local_cache", digest), _fetch_and_persist)
+
+    def _local_dem_paths(self):
+        dem_paths = []
+        hand_path = None
+        canopy_path = None
+        if self.library.tiles.is_dir():
+            for p in sorted(self.library.tiles.glob("*.mbtiles")):
+                meta = tiling.read_metadata(p)
+                if meta.get("encoding") != "terrarium":
+                    continue
+                lid = p.stem
+                if "glo30_hand" in lid and hand_path is None:
+                    hand_path = p
+                elif "canopy" in lid and canopy_path is None:
+                    canopy_path = p
+                else:
+                    dem_paths.append((meta.get("name") or lid, p))
+        return dem_paths, hand_path, canopy_path
+
+    def hub_api(self, method, p, q):
+        """Routes under `/api/hub`: connect/disconnect, pull offline, push local maps to Hub."""
+        hub = self.hub
+        if method == "GET" and p == "hub":
+            return self.send_json(hub.status_and_catalog())
+        if method == "DELETE" and p == "hub/config":
+            hub.disconnect()
+            return self.send_json(hub.status_and_catalog())
+        if method == "GET" and p.startswith("hub/job/"):
+            return self.send_json(hub.poll_hub_job(p.removeprefix("hub/job/")))
+        if method != "POST":
+            return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+        b = self.body()
+        if p == "hub/config":
+            hub.save_config(b.get("url"), b.get("api_key"), b.get("auto_push"))
+            return self.send_json(hub.status_and_catalog())
+        if p == "hub/auto-push":
+            hub.set_auto_push(bool(b.get("auto_push")))
+            return self.send_json(hub.status_and_catalog())
+        if p == "hub/push":
+            vis = str(b.get("visibility") or "hub")
+            ids = b.get("ids") if isinstance(b.get("ids"), list) else ([b["id"]] if b.get("id") else [])
+            if not ids:
+                raise ValueError('Send {"id": "<map_id>"} or {"ids": [...]}.')
+            pushed = [hub.push_local_layer(str(mid), self.library, visibility=vis)["layer"] for mid in ids]
+            return self.send_json({**hub.status_and_catalog(), "pushed": pushed})
+        if p == "hub/pull":
+            lid = str(b.get("id") or "").strip()
+            if not lid:
+                raise ValueError('Send {"id": "<layer_id>"}.')
+            hub.pull_pack_offline(lid)
+            self.library.write_catalog()
+            return self.send_json({**hub.status_and_catalog(), "pulled": lid})
+        if p == "hub/build-dem":
+            job = hub.request_hub_dem_build(
+                str(b.get("pack") or "gedtm30"), b.get("bbox"), str(b.get("visibility") or "hub")
+            )
+            return self.send_json(job)
+        if p == "hub/build-map":
+            job = hub.request_hub_map_build(str(b.get("id") or "").strip(), str(b.get("visibility") or "hub"))
+            return self.send_json(job)
+        if p == "hub/layer/update":
+            lid = str(b.get("id") or "").strip()
+            updates = {k: b[k] for k in ("title", "date", "visibility", "group_tag", "licence_policy") if k in b}
+            res = hub.update_remote_layer(lid, updates)
+            return self.send_json({**hub.status_and_catalog(), **res})
+        if p == "hub/layer/delete":
+            lid = str(b.get("id") or "").strip()
+            hub.delete_remote_layer(lid)
+            return self.send_json({**hub.status_and_catalog(), "deleted": lid})
+        if p == "hub/admin/secrets":
+            hub.admin_save_secrets(b)
+            return self.send_json(hub.status_and_catalog())
+        if p == "hub/admin/proprietary":
+            hub.admin_upsert_proprietary(b)
+            return self.send_json(hub.status_and_catalog())
+        if p == "hub/admin/proprietary/delete":
+            hub.admin_delete_proprietary(str(b.get("id") or "").strip())
+            return self.send_json(hub.status_and_catalog())
+        if p == "hub/admin/keys":
+            created = hub.admin_create_key(
+                b.get("label", "Client key"),
+                b.get("scopes", ["read", "request_build", "upload"]),
+                b.get("group_tag", ""),
+            )
+            return self.send_json({**hub.status_and_catalog(), "created_key": created})
+        if p == "hub/admin/keys/revoke":
+            kid = str(b.get("key_id") or "").strip()
+            hub.admin_revoke_key(kid)
+            return self.send_json({**hub.status_and_catalog(), "revoked": kid})
+        self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+
+    def local_keys_api(self, method):
+        """Manage standalone local `.env` archive credentials (`USGS_USERNAME`, `USGS_M2M_TOKEN`,
+        `EARTHDATA_TOKEN`, `MAPVIETNAM_CONTACT`) from the desktop Settings UI without echoing secrets."""
+        env_path = self.library.root / ".env"
+        if method == "GET":
+            fvals = records.read_env(env_path)
+            return self.send_json(
+                {
+                    "usgs_username": os.environ.get("USGS_USERNAME") or fvals.get("USGS_USERNAME") or "",
+                    "has_usgs_token": bool(os.environ.get("USGS_M2M_TOKEN") or fvals.get("USGS_M2M_TOKEN")),
+                    "has_earthdata_token": bool(os.environ.get("EARTHDATA_TOKEN") or fvals.get("EARTHDATA_TOKEN")),
+                    "contact": os.environ.get("MAPVIETNAM_CONTACT") or fvals.get("MAPVIETNAM_CONTACT") or "",
+                }
+            )
+        if method == "POST":
+            b = self.body()
+            allowed = {"USGS_USERNAME", "USGS_M2M_TOKEN", "EARTHDATA_TOKEN", "MAPVIETNAM_CONTACT"}
+            unknown = set(b) - allowed
+            if unknown:
+                raise ValueError(f"Unsupported key(s): {', '.join(sorted(unknown))}")
+            updates = {}
+            for k, v in b.items():
+                if v is None:
+                    continue
+                clean = str(v).strip()
+                updates[k] = clean if clean else None
+            env_path.parent.mkdir(parents=True, exist_ok=True)
+            records.write_env(env_path, updates)
+            return self.local_keys_api("GET")
+        self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+
+    def terrain_api(self, method, p, q):
+        """Routes under `/api/terrain`: list available/streaming/Hub DEMs or build a regional COG DEM."""
+        if method == "GET" and p == "terrain/sources":
+            local_dems = []
+            if self.library.tiles.is_dir():
+                for f in sorted(self.library.tiles.glob("*.mbtiles")):
+                    meta = tiling.read_metadata(f)
+                    if meta.get("encoding") == "terrarium":
+                        local_dems.append(
+                            {
+                                "id": f.stem,
+                                "title": meta.get("name") or f.stem,
+                                "bounds": [float(v) for v in meta["bounds"].split(",")] if meta.get("bounds") else None,
+                                "maxzoom": int(meta.get("maxzoom", 12)),
+                                "tiles": f"/tiles/{f.stem}/{{z}}/{{x}}/{{y}}.webp",
+                                "attribution": meta.get("attribution") or "Local Terrarium DEM",
+                                "local": True,
+                            }
+                        )
+            hub_dems = [
+                {
+                    "id": lyr["id"],
+                    "title": lyr["title"],
+                    "bounds": lyr["bounds"],
+                    "maxzoom": lyr["maxzoom"],
+                    "tiles": f"/tiles/{lyr['id']}/{{z}}/{{x}}/{{y}}.{lyr.get('format') or 'webp'}?v={lyr.get('revision', 1)}",
+                    "attribution": lyr.get("attribution") or "Hub Terrarium DEM",
+                    "local": False,
+                }
+                for lyr in self.hub.remote_layers().values()
+                if lyr.get("encoding") == "terrarium" and not any(x["id"] == lyr["id"] for x in local_dems)
+            ]
+            return self.send_json(
+                {
+                    "streaming": list(terrain_aerial.STREAMING_TERRAIN_SOURCES),
+                    "installed_dems": local_dems + hub_dems,
+                    "buildable_packs": {
+                        k: {"title": v["title"], "series": v["series"], "attribution": v["attribution"]}
+                        for k, v in terrain_aerial.BUILDABLE_COG_PACKS.items()
+                    },
+                }
+            )
+        if method == "POST" and p == "terrain/build":
+            b = self.body()
+            pack = str(b.get("pack") or "gedtm30")
+            bbox = terrain_aerial.check_dem_bbox(b.get("bbox"))
+            target = str(b.get("target") or ("hub" if self.hub.config()["configured"] else "local"))
+            if target == "hub" and self.hub.config()["configured"]:
+                return self.send_json(self.hub.request_hub_dem_build(pack, bbox, str(b.get("visibility") or "hub")))
+            slug = f"{bbox[0]:.2f}_{bbox[1]:.2f}_{bbox[2]:.2f}_{bbox[3]:.2f}".replace("-", "m").replace(".", "p")
+            lid = f"dem_{pack}_{slug}"
+            out_path = self.library.tiles_path(lid)
+            if not out_path.is_file():
+                terrain_aerial.build_cog_dem_pack(pack, bbox, out_path)
+                self.library.write_catalog()
+                if self.hub.config()["configured"] and self.hub.config()["auto_push"]:
+                    req_vis = str(b.get("visibility") or "hub")
+
+                    def _push_dem():
+                        with contextlib.suppress(Exception):
+                            self.hub.push_local_layer(lid, self.library, visibility=req_vis)
+
+                    threading.Thread(target=_push_dem, daemon=True).start()
+            return self.send_json({"layer_id": lid, "state": "done"})
+        self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+
+    def elevation_api(self, q):
+        lon, lat = float(q["lon"]), float(q["lat"])
+        remote = q.get("remote", "0") in ("1", "true")
+        dem_paths, hand_path, canopy_path = self._local_dem_paths()
+        local_res = terrain_aerial.sample_point_terrain(
+            lon, lat, dem_paths=dem_paths, hand_path=hand_path, canopy_path=canopy_path, remote_fallback=False
+        )
+        if local_res["ground_m"] is not None:
+            return self.send_json(local_res)
+        if self.hub.config()["configured"]:
+            try:
+                return self.send_json(
+                    self.hub.proxy_get("/hub/v1/elevation", {"lon": lon, "lat": lat, "remote": "1" if remote else "0"})
+                )
+            except hub_client.HubClientError:
+                pass
+        if remote:
+            local_res = terrain_aerial.sample_point_terrain(
+                lon, lat, dem_paths=(), hand_path=hand_path, canopy_path=canopy_path, remote_fallback=True
+            )
+        self.send_json(local_res)
+
+    def transect_api(self):
+        b = self.body()
+        start, end = b["start"], b["end"]
+        dem_paths, _, canopy_path = self._local_dem_paths()
+        chosen_dem = None
+        if b.get("dem_id"):
+            did = str(b["dem_id"])
+            if not is_safe_id(did):
+                raise ValueError("Invalid dem_id.")
+            cand = self.library.tiles_path(did)
+            if cand.is_file():
+                chosen_dem = cand
+        if chosen_dem is None:
+            for _, cand in dem_paths:
+                bounds = tiling.read_bounds(cand)
+                if tiling.bounds_cover(bounds, start[0], start[1]) and tiling.bounds_cover(bounds, end[0], end[1]):
+                    chosen_dem = cand
+                    break
+        if chosen_dem is None and self.hub.config()["configured"]:
+            try:
+                return self.send_json(self.hub.proxy_post("/hub/v1/transect", b))
+            except hub_client.HubClientError:
+                pass
+        res = terrain_aerial.compute_transect(
+            start,
+            end,
+            samples=b.get("samples", 64),
+            observer_height_m=b.get("observer_height_m", 1.7),
+            dem_path=chosen_dem,
+            canopy_path=canopy_path,
+            remote_cog=bool(b.get("remote_cog", False) and chosen_dem is None),
+        )
+        self.send_json(res)
+
+    def auto_gcp_api(self):
+        """POST /api/auto-gcp: match Placement scan against reference viewport on Hub or locally."""
+        b = self.body(max_bytes=12 << 20)
+        ref_b64 = b.get("ref_b64") or b.get("ref_image_b64")
+        ref_bytes = auto_gcp.decode_image_b64(ref_b64)
+        ref_bounds = b.get("ref_bounds")
+        if not isinstance(ref_bounds, list) or len(ref_bounds) != 4:
+            raise ValueError("ref_bounds must be [west, south, east, north].")
+        ref_bounds = [float(v) for v in ref_bounds]
+        thresh = float(b.get("confidence_threshold", auto_gcp.DEFAULT_CONFIDENCE_THRESHOLD))
+        max_pts = int(b.get("max_points", 12))
+
+        target_size = None
+        if b.get("scan_b64"):
+            scan_bytes = auto_gcp.decode_image_b64(b["scan_b64"])
+            if b.get("scan_target_size"):
+                target_size = b["scan_target_size"]
+        else:
+            map_id = str(b.get("id") or "").strip()
+            mode = str(b.get("mode") or "custom").lower()
+            lib = self.library
+            if mode == "align":
+                if not is_safe_id(map_id):
+                    raise ValueError("Invalid map id.")
+                img_path = lib.alignment_preview_path(map_id)
+                if not img_path.is_file():
+                    img_path = lib.alignment_work_path(map_id)
+                info = lib.prepare_alignment(map_id)
+                dims = info["image"]
+                target_size = (dims["width"], dims["height"])
+            else:
+                entry = lib.custom.get(map_id)
+                img_path = lib.custom.preview_path(map_id)
+                if not img_path.is_file():
+                    img_path = lib.custom.work_image(map_id)
+                dims = entry["image"]
+                target_size = (dims["width"], dims["height"])
+            if not img_path.is_file():
+                raise custom_maps.NoSuchMap("The scan preview image is missing.")
+            scan_bytes = img_path.read_bytes()
+
+        kind = "map" if str(b.get("kind") or "").lower() == "map" else "photo"
+        if self.hub.config().get("configured"):
+            try:
+                res = self.hub.auto_gcp(
+                    scan_bytes,
+                    ref_bytes,
+                    ref_bounds,
+                    confidence_threshold=thresh,
+                    max_points=max_pts,
+                    scan_target_size=target_size,
+                    kind=kind,
+                )
+                return self.send_json(res)
+            except hub_client.HubClientError:
+                pass
+        res = auto_gcp.match_and_score(
+            scan_bytes,
+            ref_bytes,
+            ref_bounds,
+            confidence_threshold=thresh,
+            max_points=max_pts,
+            scan_target_size=target_size,
+            kind=kind,
+        )
+        self.send_json(res)
+
+    def logs_api(self, method, p):
+        """Read or clear rotating local error logs (plus Hub admin logs when connected)."""
+        alog = getattr(self, "app_log", None)
+        if alog is None:
+            return self.send_json({"path": "", "lines": []})
+        if method == "POST" and p == "logs/client":
+            b = self.body()
+            src = str(b.get("source") or "viewer")[:80]
+            msg = str(b.get("message") or "Client error")[:800]
+            stack = str(b.get("stack") or "")[:2000]
+            combined = f"{msg}\n{stack}".strip() if stack else msg
+            alog.log("ERROR", f"ui:{src}", combined, secrets=self._extra_secrets())
+            return self.send_json({"ok": True})
+        if method == "POST" and p == "logs/clear":
+            self.body()
+            alog.clear()
+            return self.send_json({"path": str(alog.path), "lines": []})
+        if method == "GET" and p == "logs":
+            out = {"path": str(alog.path), "lines": alog.tail(120)}
+            if self.hub and self.hub.config().get("configured"):
+                try:
+                    hub_res = self.hub.admin_logs()
+                    out["hub_path"] = hub_res.get("path") or ""
+                    out["hub_lines"] = hub_res.get("lines") or []
+                except hub_client.HubClientError:
+                    pass
+            return self.send_json(out)
+        self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+
+    def lidar_api(self, q):
+        bbox = number_list(q["bbox"], 4, "bbox", "w,s,e,n")
+        if self.hub.config()["configured"]:
+            return self.send_json(self.hub.proxy_get("/hub/v1/lidar", {"bbox": q["bbox"]}))
+        self.send_json(terrain_aerial.query_sliderule_gedi(bbox, self._local_cached_fetch))
+
+    def serve_cached_aerial_image(self, q):
+        """GET /api/aerial/image?url=...: write-once local disk cache (backed by Hub cache when connected)
+        for aerial thumbnails and flight-index previews so viewed images are never re-fetched upstream."""
+        import hashlib
+
+        img_url = str(q.get("url") or "").strip()
+        allow_lb = getattr(self, "allow_loopback", False)
+        if not img_url.startswith("https://") and not (allow_lb and img_url.startswith("http://127.0.0.1:")):
+            raise ValueError("Provide an https:// image URL.")
+        cache_dir = self.library.root / "data" / "aerial_cache"
+        digest = hashlib.sha256(img_url.encode("utf-8")).hexdigest()
+        bin_path = cache_dir / f"{digest}.img"
+        meta_path = cache_dir / f"{digest}.ctype"
+
+        def _fetch():
+            if bin_path.is_file():
+                ct = meta_path.read_text(encoding="utf-8").strip() if meta_path.is_file() else "image/jpeg"
+                return bin_path.read_bytes(), ct
+            raw, ctype = None, ""
+            if self.hub.config().get("configured"):
+                try:
+                    raw, ctype = self.hub.proxy_raw("/hub/v1/aerial/image", {"url": img_url}, timeout=45)
+                except hub_client.HubClientError:
+                    raw = None
+            if raw is None:
+                raw, ctype = polite_fetch_bytes(
+                    img_url,
+                    pacer=self.local_pacer,
+                    flight=self.local_flight,
+                    max_bytes=12 << 20,
+                    allow_loopback=allow_lb,
+                )
+            mime = (ctype or "image/jpeg").split(";", 1)[0].strip().lower()
+            if mime == "image/jpg":
+                mime = "image/jpeg"
+            if mime not in ("image/jpeg", "image/png", "image/webp", "image/gif", "image/tiff"):
+                raise ValueError("Archive URL did not return a supported raster image.")
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            tmp = cache_dir / f".{digest}.{os.getpid()}.{threading.get_ident()}.part"
+            tmp.write_bytes(raw)
+            os.replace(tmp, bin_path)
+            meta_path.write_text(mime, encoding="utf-8")
+            return raw, mime
+
+        body, mime = self.local_flight.do(("aer_img", digest), _fetch)
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", mime)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "private, max-age=31536000, immutable")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def aerial_api(self, method, p, q):
+        """Search historical overhead archives (proxying through Hub cache when connected) or import a frame."""
+        if method == "POST" and p == "aerial/import":
+            b = self.body()
+            img_url = str(b.get("url") or "").strip()
+            allow_lb = getattr(self, "allow_loopback", False)
+            if not img_url.startswith("https://") and not (allow_lb and img_url.startswith("http://127.0.0.1:")):
+                raise ValueError("Provide an https:// image URL to import.")
+            raw, _ = polite_fetch_bytes(
+                img_url,
+                pacer=self.local_pacer,
+                flight=self.local_flight,
+                max_bytes=128 << 20,
+                allow_loopback=allow_lb,
+            )
+            part = self.library.custom.incoming_path()
+            try:
+                part.write_bytes(raw)
+                fname = Path(urlparse(img_url).path).name or "aerial.jpg"
+                entry = self.library.custom.ingest(
+                    part, fname, b.get("title") or "Historical aerial", b.get("year") or ""
+                )
+            except BaseException:
+                part.unlink(missing_ok=True)
+                raise
+            gcps = b.get("gcps")
+            if entry["kind"] == "scan" and isinstance(gcps, list) and len(gcps) >= 3:
+                # Scale Allmaps IIIF pixel coordinates if work.jpg differed from IIIF canvas size.
+                src_w, src_h = b.get("source_width"), b.get("source_height")
+                dst_w, dst_h = entry["image"]["width"], entry["image"]["height"]
+                sx = (dst_w / float(src_w)) if src_w else 1.0
+                sy = (dst_h / float(src_h)) if src_h else 1.0
+                scaled = [[pt[0] * sx, pt[1] * sy, pt[2], pt[3]] for pt in gcps]
+                self.library.place_custom(entry["id"], scaled, entry["title"], entry.get("year"))
+                self.library.start_worker()
+            elif self.library.custom.buildable(entry):
+                self.library.add([entry["id"]])
+                self.library.start_worker()
+            else:
+                # What the picture is (a printed map or flight-index card is matched north-up, an aerial frame in
+                # any heading) and where its mission was flown, so Placement opens in the right place.
+                changes = {"subject": "map" if b.get("kind") == "map" else "photo"}
+                vb = b.get("bounds")
+                if isinstance(vb, list) and len(vb) == 4:
+                    vals = [float(x) for x in vb]
+                    if vals[0] < vals[2] and vals[1] < vals[3]:
+                        changes["bounds"] = vals
+                v_lbl = str(b.get("vicinity_label") or "").strip()[:120]
+                if v_lbl:
+                    changes["vicinity_label"] = v_lbl
+                p_url = str(b.get("plot_url") or "").strip()[:800]
+                if p_url.startswith("https://") or (allow_lb and p_url.startswith("http://127.0.0.1:")):
+                    changes["plot_url"] = p_url
+                    changes["plot_label"] = str(b.get("plot_label") or "Flight index").strip()[:40]
+                entry = self.library.custom.update(entry["id"], **changes)
+            if strip_chain.strip_key(entry):
+                lib_ = self.library
+                self.hub_share_later(
+                    "share frame", lambda: scan_sync.push_frame(lib_, self.hub, lib_.custom.get(entry["id"]))
+                )
+            listing = self.library.listing()
+            return self.send_json(
+                {"map": next(m for m in listing["maps"] if m["id"] == entry["id"]), "library": listing}
+            )
+
+        if method != "GET":
+            return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+        provider = p.removeprefix("aerial/")
+        if provider == "image":
+            return self.serve_cached_aerial_image(q)
+        if self.hub.config()["configured"] and provider in ("nakala", "oam", "landsat", "allmaps", "usgs"):
+            # The Hub keeps its answers forever; when it cannot be reached, ask the archive directly instead of
+            # failing the search.
+            try:
+                return self.send_json(self.hub.proxy_get(f"/hub/v1/aerial/{provider}", q))
+            except hub_client.HubClientError as e:
+                self.app_log.log("WARN", f"aerial/{provider}", f"Hub unreachable, searching directly: {e}")
+        if provider == "nakala":
+            return self.send_json(
+                terrain_aerial.search_nakala_aerials(
+                    q.get("q", ""), int(q.get("page", 1)), int(q.get("size", 12)), fetch_fn=self._local_cached_fetch
+                )
+            )
+        if provider == "oam":
+            return self.send_json(
+                terrain_aerial.search_openaerialmap(
+                    number_list(q["bbox"], 4, "bbox", "w,s,e,n"), fetch_fn=self._local_cached_fetch
+                )
+            )
+        if provider == "landsat":
+            return self.send_json(
+                terrain_aerial.search_landsat_mss(
+                    number_list(q["bbox"], 4, "bbox", "w,s,e,n"),
+                    q.get("from", "1972-07-01"),
+                    q.get("to", "1975-12-31"),
+                    float(q.get("max_cloud", 35)),
+                    fetch_fn=self._local_cached_fetch,
+                )
+            )
+        if provider == "allmaps":
+            return self.send_json(
+                terrain_aerial.search_allmaps_iiif(
+                    number_list(q["bbox"], 4, "bbox", "w,s,e,n"), fetch_fn=self._local_cached_fetch
+                )
+            )
+        if provider == "usgs":
+            env_vals = records.read_env(self.library.root / ".env")
+            user = os.environ.get("USGS_USERNAME") or env_vals.get("USGS_USERNAME") or ""
+            tok = os.environ.get("USGS_M2M_TOKEN") or env_vals.get("USGS_M2M_TOKEN") or ""
+            return self.send_json(
+                terrain_aerial.search_usgs_declass(
+                    number_list(q["bbox"], 4, "bbox", "w,s,e,n"),
+                    q.get("dataset", "corona"),
+                    q.get("from", "1960-01-01"),
+                    q.get("to", "1984-12-31"),
+                    username=user,
+                    token=tok,
+                    fetch_fn=self._local_cached_fetch,
+                )
+            )
+        self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
+
+    def media_api(self, method, p, q, db):
+        """Geolocated oblique aerials and plot cards in `evidence.sqlite` (`media` table) + Hub sync."""
+        if method == "POST" and p == "media/delete":
+            b = self.body()
+            mid = str(b.get("id") or "").strip()
+            if mid.startswith("local_") and mid[6:].isdigit():
+                db.execute("delete from media where id = ?", (int(mid[6:]),))
+                db.commit()
+                return self.send_json({"deleted": mid})
+            if self.hub.config()["configured"]:
+                self.hub.delete_remote_media(mid)
+                return self.send_json({"deleted": mid})
+            raise ValueError("Media item not found.")
+        if method == "GET":
+            bbox = number_list(q["bbox"], 4, "bbox", "w,s,e,n") if q.get("bbox") else None
+            sql = "select * from media where lon is not null and lat is not null"
+            params = []
+            if bbox:
+                sql += " and lon between ? and ? and lat between ? and ?"
+                params = [bbox[0], bbox[2], bbox[1], bbox[3]]
+            rows = db.execute(sql + " order by id desc limit 500", params).fetchall()
+            features = []
+            for r in rows:
+                extra = {}
+                cap = r["caption"] or ""
+                if cap.startswith("{"):
+                    try:
+                        extra = json.loads(cap)
+                        cap = extra.get("title") or ""
+                    except ValueError:
+                        pass
+                features.append(
+                    {
+                        "type": "Feature",
+                        "geometry": {"type": "Point", "coordinates": [r["lon"], r["lat"]]},
+                        "properties": {
+                            "id": f"local_{r['id']}",
+                            "title": cap or "Aerial photo",
+                            "date": r["taken"] or "",
+                            "uncertainty_m": r["uncertainty_m"] or 100.0,
+                            "azimuth_deg": extra.get("azimuth_deg"),
+                            "fov_deg": extra.get("fov_deg"),
+                            "image_url": r["path"],
+                            "plot_url": extra.get("plot_url") or "",
+                            "licence": extra.get("licence") or "",
+                        },
+                    }
+                )
+            if self.hub.config()["configured"]:
+                try:
+                    hub_fc = self.hub.proxy_get("/hub/v1/media", {"bbox": q["bbox"]} if q.get("bbox") else None)
+                    if hub_fc and isinstance(hub_fc.get("features"), list):
+                        features.extend(hub_fc["features"])
+                except hub_client.HubClientError:
+                    pass
+            return self.send_json({"type": "FeatureCollection", "features": features}, ctype="application/geo+json")
+        if method == "POST":
+            b = self.body()
+            lon, lat = finite_number(b, "lon", -180, 180), finite_number(b, "lat", -90, 90)
+            unc = finite_number(b, "uncertainty_m")
+            if unc <= 0:
+                raise ValueError("uncertainty_m must be > 0")
+            img_url = text_field(b, "image_url")
+            title = text_field(b, "title", False) or "Oblique aerial photo"
+            meta_blob = json.dumps(
+                {
+                    "title": title,
+                    "azimuth_deg": b.get("azimuth_deg"),
+                    "fov_deg": b.get("fov_deg"),
+                    "plot_url": b.get("plot_url") or "",
+                    "licence": b.get("licence") or "",
+                },
+                ensure_ascii=False,
+            )
+            cur = db.execute(
+                "insert into media (path, kind, taken, lon, lat, uncertainty_m, caption, created_at) values (?,?,?,?,?,?,?,?)",
+                (img_url, "oblique_aerial", str(b.get("date") or "")[:32], lon, lat, unc, meta_blob, store.now()),
+            )
+            db.commit()
+            if b.get("push_to_hub") and self.hub.config()["configured"]:
+                with contextlib.suppress(hub_client.HubClientError):
+                    self.hub.proxy_post("/hub/v1/media", {**b, "title": title})
+            return self.send_json({"id": cur.lastrowid}, HTTPStatus.CREATED)
+        self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
     def do_GET(self):
         if self.route("GET"):
@@ -1284,9 +2280,16 @@ class Handler(SimpleHTTPRequestHandler):
         # cannot read which maps are installed.
         if self.headers.get("Host") not in self.own_hosts():
             return self.send_error(HTTPStatus.FORBIDDEN, "this server only answers requests addressed to itself")
-        m = TILE_PATH.fullmatch(urlparse(self.path).path)
+        path = urlparse(self.path).path
+        m = TILE_PATH.fullmatch(path)
         if m:
-            return self.send_tile(m[1], int(m[2]), int(m[3]), int(m[4]))
+            return self.send_tile(m[1], int(m[2]), int(m[3]), int(m[4]), m[5])
+        bm = BASE_TILE_PATH.fullmatch(path)
+        if bm:
+            return self.send_base_tile(bm[1], int(bm[2]), int(bm[3]), int(bm[4]))
+        gm = GLYPH_PATH.fullmatch(path)
+        if gm:
+            return self.send_glyph(unquote(gm[1]), gm[2])
         super().do_GET()
 
     def do_POST(self):
@@ -1304,6 +2307,7 @@ class MapServer(ThreadingHTTPServer):
 
     library = None  # set by make_server
     records = None
+    base_cache = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1330,26 +2334,170 @@ class MapServer(ThreadingHTTPServer):
 
     def _stop(self):
         try:
+            if getattr(self, "remote", None) is not None:
+                self.remote.stop()
+            if getattr(self, "_url_file", None) is not None:
+                with contextlib.suppress(OSError):
+                    self._url_file.unlink(missing_ok=True)
             self.records.stop()
             self.library.stop()
+            if self.base_cache is not None:
+                self.base_cache.stop()
         finally:
             self.shutdown()
 
 
-def make_server(port=8765, db_path=store.DB_PATH, map_library=None, web=WEB, record_sources=None):
+class RemoteBridge:
+    """In-memory command/state bridge between the open browser viewer and local AI/MCP clients."""
+
+    def __init__(self):
+        self._cond = threading.Condition()
+        self._state = None
+        self._state_at = 0.0
+        self._last_poll_at = 0.0
+        self._seq = 0
+        self._pending = None  # {"id", "action", "params"}
+        self._replies = {}  # id -> {"result", "error", "state"}
+        self._stopped = False
+
+    def stop(self):
+        with self._cond:
+            self._stopped = True
+            self._cond.notify_all()
+
+    def update_state(self, state):
+        import time
+
+        with self._cond:
+            if isinstance(state, dict):
+                self._state = state
+                self._state_at = time.monotonic()
+            self._last_poll_at = time.monotonic()
+
+    def status(self):
+        import time
+
+        with self._cond:
+            now = time.monotonic()
+            connected = (now - self._last_poll_at) < 25.0 and self._last_poll_at > 0
+            age = round(now - self._state_at, 1) if self._state_at else None
+            return {"connected": connected, "state": self._state, "age_s": age}
+
+    def poll(self, timeout=15.0):
+        import time
+
+        with self._cond:
+            self._last_poll_at = time.monotonic()
+            end = self._last_poll_at + timeout
+            while self._pending is None and not self._stopped:
+                rem = end - time.monotonic()
+                if rem <= 0:
+                    return {"cmd": None}
+                self._cond.wait(timeout=rem)
+            if self._stopped or self._pending is None:
+                return {"cmd": None}
+            cmd = self._pending
+            self._pending = None
+            return {"cmd": cmd}
+
+    def reply(self, cmd_id, *, result=None, error=None, state=None):
+        import time
+
+        with self._cond:
+            if isinstance(state, dict):
+                self._state = state
+                self._state_at = time.monotonic()
+            self._last_poll_at = time.monotonic()
+            self._replies[cmd_id] = {"result": result, "error": error, "state": self._state}
+            self._cond.notify_all()
+            return {"ok": True}
+
+    def send_command(self, action, params=None, timeout=12.0):
+        import time
+
+        with self._cond:
+            now = time.monotonic()
+            if self._last_poll_at <= 0 or (now - self._last_poll_at) > 25.0:
+                raise ConnectionError("No live Map Vietnam viewer tab is connected.")
+            self._seq += 1
+            cmd_id = self._seq
+            self._pending = {"id": cmd_id, "action": str(action), "params": params or {}}
+            self._cond.notify_all()
+            end = now + timeout
+            while cmd_id not in self._replies and not self._stopped:
+                rem = end - time.monotonic()
+                if rem <= 0:
+                    if self._pending and self._pending["id"] == cmd_id:
+                        self._pending = None
+                    raise TimeoutError("Timed out waiting for the live Map Vietnam viewer to respond.")
+                self._cond.wait(timeout=rem)
+            rep = self._replies.pop(cmd_id, None) or {"error": "Server stopped."}
+            if rep.get("error"):
+                raise ValueError(str(rep["error"]))
+            return {"ok": True, "result": rep.get("result"), "state": rep.get("state")}
+
+
+def make_server(
+    port=8765,
+    db_path=store.DB_PATH,
+    map_library=None,
+    web=WEB,
+    record_sources=None,
+    hub=None,
+    *,
+    allow_loopback=False,
+    base_cache_store=None,
+):
     """A threaded server on 127.0.0.1:`port` (0 picks a free port) over the store at `db_path`,
     serving the viewer's files in `web`, the maps of `map_library` (whose folder also holds
-    catalog.json and tiles/) and the record sources of `record_sources` (default: the app's)."""
+    catalog.json and tiles/), the record sources of `record_sources`, and an optional `hub` bridge."""
     lib = map_library or library.Library()
     rec = record_sources or records.Records(db_path=db_path)
+    hc = hub or hub_client.HubClient(root=lib.root)
+    cache = base_cache_store or base_cache.BaseCache(lib.root)
     rec.on_change = forget_caches
+
+    def _auto_push_installed(map_id):
+        if hc.config().get("configured") and hc.config().get("auto_push"):
+            vis = "private" if str(map_id).startswith("custom_") else "hub"
+
+            def _push():
+                with contextlib.suppress(Exception):
+                    hc.push_local_layer(map_id, lib, visibility=vis, preserve_visibility=True)
+
+            threading.Thread(target=_push, name=f"auto-push-{map_id}", daemon=True).start()
+
+    lib.on_installed = _auto_push_installed
+    pacer = HostPacer()
+    flight = SingleFlight()
+    alog = app_log.AppLogger(lib.root / "logs" / "app.log")
+    remote = RemoteBridge()
     handler = type(
         "BoundHandler",
         (Handler,),
-        {"db_path": Path(db_path), "data_web": lib.root / "web", "library": lib, "records": rec},
+        {
+            "db_path": Path(db_path),
+            "data_web": lib.root / "web",
+            "library": lib,
+            "records": rec,
+            "hub": hc,
+            "app_log": alog,
+            "base_cache": cache,
+            "remote": remote,
+            "local_pacer": pacer,
+            "local_flight": flight,
+            "allow_loopback": bool(allow_loopback),
+        },
     )
     srv = MapServer(("127.0.0.1", port), partial(handler, directory=str(web)))
-    srv.library, srv.records = lib, rec
+    srv.library, srv.records, srv.hub, srv.base_cache, srv.remote = lib, rec, hc, cache, remote
+    srv._url_file = None
+    if not os.environ.get("PYTEST_CURRENT_TEST"):
+        url_file = Path.home() / ".cache" / "map-vietnam" / "server_url"
+        with contextlib.suppress(OSError):
+            url_file.parent.mkdir(parents=True, exist_ok=True)
+            url_file.write_text(f"http://127.0.0.1:{srv.server_address[1]}\n", encoding="utf-8")
+            srv._url_file = url_file
     return srv
 
 

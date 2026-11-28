@@ -780,11 +780,27 @@ def test_slim_evidence_reads_only_what_the_map_draws(base):
 
 
 def test_search_follows_changes_to_the_store_made_behind_its_back(base):
-    assert [h["title"] for h in call(f"{base}/api/search?q=saigon")] == ["Saigon"]
+    def records(q):  # built-in places (always there) are not records
+        return [h["title"] for h in call(f"{base}/api/search?q={q}") if h["type"] == "evidence"]
+
+    assert records("saigon") == ["Saigon"]
     db = store.connect(DB["path"])
     store.sync_source(db, "t", [])  # another process (the command line) removes every record
     db.close()
-    assert call(f"{base}/api/search?q=saigon") == []
+    assert records("saigon") == []
+
+
+def test_search_finds_coordinates_and_built_in_places_without_records(base):
+    # Decimal degrees, in either order, become a spot to fly to.
+    for q in ("19.94,%20105.50", "105.50%2019.94"):
+        (hit,) = call(f"{base}/api/search?q={q}")
+        assert hit["type"] == "coord" and (hit["lon"], hit["lat"]) == (105.5, 19.94)
+    # Wartime towns and French sheet names work before any place-name records are downloaded.
+    hits = call(f"{base}/api/search?q=dien%20bien")
+    places = [h for h in hits if h["type"] == "place"]
+    assert places and places[0]["title"] == "Điện Biên Phủ"
+    w, s, e, n = places[0]["bounds"]
+    assert w < places[0]["lon"] < e and s < places[0]["lat"] < n
 
 
 def status_of(url, method="GET", body=None, headers=None):
@@ -903,3 +919,50 @@ def test_evidence_by_thousands_of_ids_does_not_overflow_sqlites_variable_limit(b
         db.setlimit(sqlite3.SQLITE_LIMIT_VARIABLE_NUMBER, 999)
         found = server.query_evidence(db, {"ids": ",".join(str(i) for i in range(1, 5_000))})
     assert len(found["features"]) >= 1
+
+
+def test_base_cache_routes_and_settings_integration(maps, monkeypatch):
+    base, _ = maps
+    import base_cache
+
+    # Locate the running BaseCache instance attached by make_server via /api/cache -> works over HTTP.
+    st = call(f"{base}/api/cache")
+    assert st["enabled"] is True and st["tile_count"] == 0
+
+    # Offline / uncached base tile returns 503 and glyph returns 404.
+    monkeypatch.setattr(base_cache, "_default_fetch", lambda url: (_ for _ in ()).throw(OSError("offline")))
+    assert status_of(f"{base}/base/osm/5/25/14") == 503
+    assert status_of(f"{base}/fonts/Noto%20Sans%20Medium/0-255.pbf") == 404
+
+    # Online fetch populates cache and subsequent request hits cache even offline.
+    monkeypatch.setattr(
+        base_cache,
+        "_default_fetch",
+        lambda url: (b"PBFDATA", "application/x-protobuf") if url.endswith(".pbf") else (b"PNGTILE", "image/png"),
+    )
+    with urllib.request.urlopen(f"{base}/base/osm/5/25/14") as r:
+        assert r.status == 200 and r.read() == b"PNGTILE"
+    with urllib.request.urlopen(f"{base}/fonts/Noto%20Sans%20Medium/0-255.pbf") as r:
+        assert r.status == 200 and r.read() == b"PBFDATA"
+
+    monkeypatch.setattr(base_cache, "_default_fetch", lambda url: (_ for _ in ()).throw(OSError("offline")))
+    with urllib.request.urlopen(f"{base}/base/osm/5/25/14") as r:
+        assert r.status == 200 and r.read() == b"PNGTILE"
+    with urllib.request.urlopen(f"{base}/fonts/Noto%20Sans%20Medium/0-255.pbf") as r:
+        assert r.status == 200 and r.read() == b"PBFDATA"
+
+    # Settings reports base_cache disk usage.
+    settings_data = call(f"{base}/api/settings")
+    assert settings_data["disk"]["base_cache"] > 0
+
+    # Config, estimate, prefetch, and clear endpoints work end to end.
+    est = call(
+        f"{base}/api/cache/estimate",
+        "POST",
+        {"bases": ["osm"], "bounds": [105.5, 10.4, 105.7, 10.5], "min_z": 0, "max_z": 1},
+    )
+    assert est["total_tiles"] == 2
+    cfg = call(f"{base}/api/cache/config", "POST", {"enabled": False, "max_bytes": 250 * 1024 * 1024})
+    assert cfg["enabled"] is False and cfg["max_bytes"] == 250 * 1024 * 1024
+    cleared = call(f"{base}/api/cache/clear", "POST", {})
+    assert cleared["tile_count"] == 0

@@ -43,7 +43,7 @@ def script_modules():
     --run-script are loaded by path at run time, so PyInstaller's own import tracing never sees
     their imports; naming them here makes it bundle them."""
     names = set()
-    for source in [*SCRIPTS.glob("*.py"), *(SCRIPTS / "ingest").glob("*.py")]:
+    for source in [*SCRIPTS.glob("*.py"), *(SCRIPTS / "ingest").glob("*.py"), *(SCRIPTS / "hub").glob("*.py")]:
         for node in ast.walk(ast.parse(source.read_text(encoding="utf-8"))):
             if isinstance(node, ast.Import):
                 names.update(alias.name for alias in node.names)

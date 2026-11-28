@@ -41,8 +41,9 @@
 // ================================================================ constants
 // Today's base maps (raster XYZ tiles, Web Mercator).
 const BASES = {
-  osm: { name: "Street map", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors', maxzoom: 19 },
-  sat: { name: "Satellite", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], attribution: "Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community", maxzoom: 19 },
+  osm: { name: "Street map", tiles: ["/base/osm/{z}/{x}/{y}"], attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors', maxzoom: 19 },
+  sat: { name: "Satellite", tiles: ["/base/sat/{z}/{x}/{y}"], attribution: "Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community", maxzoom: 19 },
+  oam: { name: "UAV aerial", tiles: ["https://global.imagery.hotosm.org/{z}/{x}/{y}.png"], attribution: "OpenAerialMap / Open Imagery Network (CC BY 4.0)", maxzoom: 20 },
 };
 // Each evidence kind gets its own colour and shape (shape paths are in a 24×24 box).
 const SHAPES = {
@@ -98,6 +99,21 @@ async function api(path, opts = {}) {
   if (!r.ok) throw Object.assign(new Error((data && data.error) || r.statusText), { data });
   return data;
 }
+let _lastClientLogAt = 0;
+function reportClientError(source, err) {
+  const now = Date.now();
+  if (now - _lastClientLogAt < 400) return;
+  _lastClientLogAt = now;
+  const message = err?.message || String(err || "Unknown browser error");
+  const stack = err?.stack ? String(err.stack).slice(0, 1800) : "";
+  fetch("/api/logs/client", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source, message, stack }),
+  }).catch(() => {});
+}
+addEventListener("error", e => reportClientError("window", e.error || `${e.message || "Error"} (${e.filename || ""}:${e.lineno || 0})`));
+addEventListener("unhandledrejection", e => reportClientError("promise", e.reason || "Unhandled promise rejection"));
 // A short status message; with an undo callback it shows an Undo button (or another label) and stays up for at least 6 s.
 let toastTimer;
 // Says something to screen readers only (a hidden polite region), for changes that have no toast. Progress is never
@@ -256,6 +272,7 @@ const icon = {
   back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
   search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  power: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8"/><path d="M6.6 6.6a7.5 7.5 0 1010.8 0"/></svg>',
   pin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
   grid: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="M4 12h16M12 4v16"/></svg>',
   plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
@@ -285,6 +302,7 @@ const startOpacity = () => Math.min(store.get("opacity", 0.6), 0.75);
 // target is the selection drawn on the map ({lon, lat, m: radius in metres, spot}); me is the device position.
 // kase is the open case (the name avoids the reserved word); view is the card shown, history the Back stack.
 const S = {
+  chain: null, // strip chaining: {id, busy, plan, err, applying}
   catalog: [], eras: [], eraA: null, eraB: "today", compare: false, opacity: startOpacity(),
   base: store.get("base", "osm"), years: null, hidden: new Set(store.get("hidden", [])), heat: store.get("heat", 0.5),
   ev: empty(), pn: empty(), sources: {}, target: null, me: null, watchId: null,
@@ -295,6 +313,14 @@ const S = {
   lib: { maps: [], byId: new Map(), series: {}, queueBytes: 0, legacy: null, loaded: false, err: null }, catalogLoaded: false,
   // The record sources (see "records" below): every source that can be added, by id, with its state.
   rec: { sources: [], byId: new Map(), key: {}, busy: false, firstRun: false, revision: null, loaded: false, err: null },
+  // Optional Intermediary Hub Server (shared infinite cache, vaulted keys, and bidirectional map sync).
+  hub: { configured: false, connected: false, url: "", me: null, admin: null, layers: [], auto_push: false, loaded: false, err: "", justCreatedKey: null },
+  localKeys: { usgs_username: "", has_usgs_token: false, has_earthdata_token: false, contact: "", loaded: false },
+  logs: { path: "", lines: [], hub_path: "", hub_lines: [], loaded: false },
+  // Terrain, Bare-Earth LiDAR DEMs & Relief Shaders.
+  terrain: { source: store.get("terrainSrc", "off"), mode: store.get("terrainMode", "hillshade"), pitch3d: store.get("pitch3d", false), sources: null },
+  profilingFrom: null, transect: null,
+  aerial: { tab: "nakala", q: "", loading: false, res: null, err: "" },
 };
 window.S = S; // console handle for debugging (with window.map, set in boot)
 // Resolves once the old-map catalogue is in S.catalog (set in boot); overlays are added only after it.
@@ -314,7 +340,7 @@ const isDark = () => { const t = document.documentElement.dataset.theme; return 
 function makeStyle() {
   return {
     version: 8,
-    glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
+    glyphs: "/fonts/{fontstack}/{range}.pbf",
     sources: Object.fromEntries(Object.entries(BASES).map(([k, b]) => [k, { type: "raster", tileSize: 256, tiles: b.tiles, attribution: b.attribution, maxzoom: b.maxzoom }])),
     layers: Object.keys(BASES).map(k => ({ id: `base-${k}`, type: "raster", source: k, layout: { visibility: k === S.base ? "visible" : "none" } })),
   };
@@ -332,6 +358,7 @@ function createMap(container, isPrimary) {
   // (padding is copied after creation so both halves of a comparison line up exactly)
   const m = new maplibregl.Map({
     container, style: makeStyle(), ...view, attributionControl: false, pitchWithRotate: false, maxPitch: 0, fadeDuration: reduceMotion ? 0 : 300,
+    preserveDrawingBuffer: !!isPrimary,
     // More tiles kept in memory, at more zoom levels: panning back, or zooming through a level already
     // seen, redraws without asking the network. This is all the remote base maps get (their tile policies
     // forbid prefetching); local old maps are prefetched as well, see "tile prefetch" below.
@@ -382,9 +409,9 @@ function shapeImage(kind) {
 // evidence, place names and selections. Layer order is draw order, so selections and position come last.
 function addOverlays(m) {
   for (const k of EV_KINDS) if (k !== "air_strike") { const im = shapeImage(k); m.addImage(`k-${k}`, im.data, { pixelRatio: im.pixelRatio }); }
-  for (const l of S.catalog) addEraLayer(m, l);
+  for (const l of visualLayers()) addEraLayer(m, l);
   addFootprintLayers(m);
-  for (const id of ["ev", "pn", "sel", "gridsq", "gridsq-c", "shapes", "sites", "draft", "near", "hover", "line", "meacc", "me", "spot"]) m.addSource(id, { type: "geojson", data: lastData[id] || empty() });
+  for (const id of ["ev", "pn", "sel", "gridsq", "gridsq-c", "shapes", "sites", "draft", "near", "hover", "line", "meacc", "me", "spot", "lidar", "transect-vis", "transect-occ"]) m.addSource(id, { type: "geojson", data: lastData[id] || empty() });
   const color = ["match", ["get", "kind"], ...Object.entries(KINDS).flatMap(([k, v]) => [k, v.color]), "#888"];
   const isStrike = ["==", ["get", "kind"], "air_strike"];
 
@@ -466,12 +493,15 @@ function addOverlays(m) {
   m.addLayer({ id: "meacc", type: "fill", source: "meacc", paint: { "fill-color": "#1d72f2", "fill-opacity": 0.12 } });
   m.addLayer({ id: "me", type: "circle", source: "me", paint: { "circle-radius": 8, "circle-color": "#1d72f2", "circle-stroke-color": "#fff", "circle-stroke-width": 3 } });
   m.addLayer({ id: "spot", type: "circle", source: "spot", paint: { "circle-radius": 7, "circle-color": "#fff", "circle-stroke-color": "#111", "circle-stroke-width": 4 } });
+  m.addLayer({ id: "lidar-shots", type: "circle", source: "lidar", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 2.5, 16, 6], "circle-color": "#10b981", "circle-stroke-color": "#064e3b", "circle-stroke-width": 1.2, "circle-opacity": 0.9 } });
+  m.addLayer({ id: "transect-occ-line", type: "line", source: "transect-occ", paint: { "line-color": "#dc2626", "line-width": 3, "line-dasharray": [2, 2] } });
+  m.addLayer({ id: "transect-vis-line", type: "line", source: "transect-vis", paint: { "line-color": "#16a34a", "line-width": 3.5 } });
 
   m.getSource("ev").setData(S.ev);
   m.getSource("pn").setData(S.pn);
   m.loadedOverlays = true;
   updateHeat();
-  applyBase(); applyEra(); applyFilters(); drawCase(); drawTarget(); drawMe(); drawNearRing();
+  applyBase(); applyTerrain(); applyEra(); applyFilters(); drawCase(); drawTarget(); drawMe(); drawNearRing();
   showFootprints(S.view.name === "library", true);
 }
 // One installed old map as a raster layer (hidden until chosen). Maps added later go in under the coverage outlines
@@ -573,6 +603,12 @@ function setScrollMode(m) {
   store.set("scrollMode", m === "trackpad" || m === "wheel" ? m : "auto");
   settingsRefresh(true);
 }
+const autoGcpThresh = () => {
+  const v = +store.get("autoGcpThresh", 80);
+  return Number.isFinite(v) ? Math.min(95, Math.max(50, Math.round(v))) : 80;
+};
+const autoGcpMode = () => store.get("autoGcpMode", "review") === "auto" ? "auto" : "review";
+const AUTO_GCP_MODES = [["review", "Let me check first"], ["auto", "Place it for me"]];
 function isMouseWheelEvent(e) {
   if (!e || e.ctrlKey || e.metaKey) return false;
   if ((e.deltaMode || 0) !== 0) return true;
@@ -774,9 +810,16 @@ function wireTrackpad(m, isMainMap = false) {
 
 // ================================================================ historical maps (eras)
 // Every sheet is its own choice: a map is picked for the place on screen, not merged with its neighbours by year.
+function visualLayers() {
+  const local = S.catalog.filter(l => l.encoding !== "terrarium");
+  const have = new Set(local.map(l => l.id));
+  const remote = (S.hub.layers || []).filter(l => l.encoding !== "terrarium" && !have.has(l.id))
+    .map(l => ({ ...l, tiles: `tiles/${l.id}/{z}/{x}/{y}.${l.format || "webp"}?v=${l.revision || 1}`, hubStream: true }));
+  return [...local, ...remote];
+}
 function buildEras(layers) {
-  const eras = [...layers].sort((a, b) => ((yearOf(a.date) || 9999) - (yearOf(b.date) || 9999)) || a.title.localeCompare(b.title))
-    .map(l => ({ id: l.id, series: l.series, layers: [l] }));
+  const eras = [...layers.filter(l => l.encoding !== "terrarium")].sort((a, b) => ((yearOf(a.date) || 9999) - (yearOf(b.date) || 9999)) || a.title.localeCompare(b.title))
+    .map(l => ({ id: l.id, series: l.series, layers: [l], hubStream: !!l.hubStream }));
   for (const e of eras) {
     const ys = e.layers.map(l => yearOf(l.date)).filter(Boolean);
     e.y0 = ys.length ? Math.min(...ys) : null; e.y1 = ys.length ? Math.max(...ys) : null;
@@ -837,14 +880,18 @@ function defaultEra() {
 
 // The primary map's credits. Its control sits above the comparison map, so while comparing it also carries the
 // right-hand old map's credit (MapLibre only lists the sources of its own map). Rebuilt only when that text changes.
+// The corner is part of the key: on a laptop the top left is under the sidebar, so a window resized across the
+// phone/laptop breakpoint must move the credits too (see the resize handler beside setSheet).
 let attribCtrl = null, attribExtra = null;
 function setAttribution(m, extra) {
-  const key = extra.join("|");
+  const corner = isDesk() ? "bottom-right" : "top-left";
+  const key = corner + "|" + extra.join("|");
   if (attribCtrl && key === attribExtra) return;
   if (attribCtrl) m.removeControl(attribCtrl);
   attribCtrl = new maplibregl.AttributionControl({ compact: true, customAttribution: extra.length ? extra : undefined });
+  attribCtrl._extra = extra;
   attribExtra = key;
-  m.addControl(attribCtrl, isDesk() ? "bottom-right" : "top-left");
+  m.addControl(attribCtrl, corner);
 }
 // On a laptop the credits sit at the bottom right and the map bar in the bottom middle, and a long old-map credit
 // would run under the bar. Keep them beside it, wrapping, or, when there is no room beside it, lift them above it.
@@ -868,8 +915,9 @@ function applyEra() {
     if (!m?.loadedOverlays) return;
     const want = i === 0 ? S.eraA : (S.eraB === "today" ? null : S.eraB);
     const era = eraById(want);
-    for (const l of S.catalog) {
-      const on = !!era && era.layers.includes(l) && eraInYears(era);
+    for (const l of visualLayers()) {
+      const on = !!era && era.layers.some(x => x.id === l.id) && eraInYears(era);
+      if (!m.getLayer(`ov-${l.id}`)) addEraLayer(m, l);
       m.setLayoutProperty(`ov-${l.id}`, "visibility", on ? "visible" : "none");
       // One opacity for every old map shown (both sides when comparing). Scans keep their own paper colours in dark
       // mode too: dimming them made the sheet, the evidence and the labels on it all muddy.
@@ -881,7 +929,7 @@ function applyEra() {
 }
 function setPeekOpacity(alpha) {
   eachMap(m => {
-    for (const l of S.catalog) {
+    for (const l of visualLayers()) {
       const id = `ov-${l.id}`;
       if (m.getLayer(id) && m.getLayoutProperty(id, "visibility") === "visible")
         m.setPaintProperty(id, "raster-opacity", alpha);
@@ -1053,7 +1101,7 @@ function setCompare(on) {
     const a = primary(), b = createMap("mapB", false);
     maps[1] = b;
     let lock = false;
-    const follow = (src, dst) => e => { if (lock) return; lock = true; dst.jumpTo({ center: src.getCenter(), zoom: src.getZoom(), bearing: src.getBearing(), padding: src.getPadding() }, e?.trackpadMove ? { trackpadMove: true } : undefined); lock = false; };
+    const follow = (src, dst) => e => { if (lock) return; lock = true; dst.jumpTo({ center: src.getCenter(), zoom: src.getZoom(), bearing: src.getBearing(), pitch: src.getPitch(), padding: src.getPadding() }, e?.trackpadMove ? { trackpadMove: true } : undefined); lock = false; };
     const fa = follow(a, b), fb = follow(b, a);
     a.on("move", fa); b.on("move", fb);
     b.on("moveend", e => { if (!e?.trackpadMove) scheduleLoad(); });
@@ -1487,6 +1535,7 @@ function onMapClick(m, e) {
   if (Date.now() - longPressAt < 600) return; // the long press already dropped a pin
   if (Date.now() - forceConsumedAt < 600) return; // a Force Click already handled this press
   if (S.placing) { endPlacing(); openSiteForm(e.lngLat.lng, e.lngLat.lat, 100, "", ""); return; }
+  if (S.profilingFrom) { const from = S.profilingFrom; endProfiling(); runTransect(from, [e.lngLat.lng, e.lngLat.lat]); return; }
   if (S.draft) return; // editing a site: drag the pin instead
   if (S.view.name === "library") {
     // The card shows coverage: a tap picks the map under it (the most detailed one where sheets overlap).
@@ -1631,7 +1680,10 @@ function setSheet(state) {
   });
   let lastDesk = isDesk();
   addEventListener("resize", () => {
-    if (isDesk() !== lastDesk) { lastDesk = isDesk(); setSheet("half"); }
+    if (isDesk() !== lastDesk) {
+      lastDesk = isDesk(); setSheet("half");
+      if (attribCtrl && maps[0]) { setAttribution(maps[0], attribCtrl._extra || []); fitAttribution(); }
+    }
     else setSheet(S.sheet);
     syncMapLeft(); placeDivider(); closePopovers();
   });
@@ -1664,8 +1716,9 @@ function show(name, data = {}, { push = true } = {}) {
     if (S.opener.isConnected && !S.opener.closest("[hidden]")) S.opener.focus({ preventScroll: true });
     S.opener = null;
   }
-  // Phone: a card opens at half height (map stays visible above it), like Apple Maps.
-  if (name !== "home" && !isDesk() && S.sheet !== "half" && document.activeElement !== q) setSheet("half");
+  // Phone: a card opens at half height (map stays visible above it), like Apple Maps; Settings opens full screen.
+  if (name === "settings" && !isDesk() && S.sheet !== "full") setSheet("full");
+  else if (name !== "home" && name !== "settings" && !isDesk() && S.sheet !== "half" && document.activeElement !== q) setSheet("half");
   if (isDesk() && S.panelHidden && name !== "home") setPanelHidden(false);
   $("#panelScroll").scrollTop = 0;
 }
@@ -1702,6 +1755,7 @@ function render() {
   updateCounts();
   showFootprints(v.name === "library");
   document.body.classList.toggle("lib-open", v.name === "library");
+  document.body.classList.toggle("settings-open", v.name === "settings");
   $("#settingsBtn")?.setAttribute("aria-pressed", v.name === "settings");
   renderMapbar(); // its hints depend on whether the library card is open
   if (!isDesk()) requestAnimationFrame(() => setSheet(S.sheet));
@@ -1733,7 +1787,7 @@ const ACTIONS = {
   openCase: async el => { await selectCase(+el.dataset.id); show("case", { id: +el.dataset.id }); },
   preset: el => setYears(el.dataset.a ? [+el.dataset.a, +el.dataset.b] : null),
   layers: () => togglePopover("popLayers", $("#layersBtn")),
-  setEra: el => setEra(el.dataset.id),
+  setEra: el => { if (S.view.name === "settings") show("home"); setEra(el.dataset.id); },
   fit: el => { const e = eraById(el.dataset.id); if (e) primary().fitBounds([[e.bounds[0], e.bounds[1]], [e.bounds[2], e.bounds[3]]], { padding: mapPadding(), duration: reduceMotion ? 0 : 600 }); },
   theme: el => setTheme(el.dataset.theme),
 };
@@ -1757,12 +1811,13 @@ const recentMeta = r => r.kind === "gridref" ? `Grid square · ${r.datum === "wg
   : [kindOne(r), r.date ? fmtDay(r.date) : "", r.rid ? `${srcShort(r.src).split(" ")[0]} ${r.rid}` : ""].filter(Boolean).join(" · ");
 VIEWS.home = v => {
   const rec = recent();
+  const otherCases = S.cases.filter(c => c.id !== S.kase?.id), noCases = !S.cases.length;
   homeLastSig = homeSig();
   return `
     ${welcomeHTML()}
     ${S.kase ? `<div class="case-pill"><span class="sw site"></span><div class="grow"><span class="small-t muted">Open case</span><b>${esc(S.kase.name)}</b></div>
       <button class="btn small" data-act="openCase" data-id="${S.kase.id}">Open</button></div>` : ""}
-    <h3 class="section-title">Cases <span class="right case-head-acts"><button class="linkish" data-act="importKmlHome">Import KML/KMZ</button><button class="linkish" data-act="newCaseToggle">New case</button></span></h3>
+    <h3 class="section-title">Cases ${noCases ? "" : `<span class="right case-head-acts"><button class="linkish" data-act="importKmlHome">Import KML/KMZ</button><button class="linkish" data-act="newCaseToggle">New case</button></span>`}</h3>
     <input type="file" id="kmlFileHome" hidden accept=".kml,.kmz,application/vnd.google-earth.kml+xml,application/vnd.google-earth.kmz">
     <div class="group">
       <form id="newCase" class="inner stack" hidden>
@@ -1770,10 +1825,11 @@ VIEWS.home = v => {
         <label class="field"><span>One-line summary (optional)</span><input type="text" name="summary"></label>
         <div class="row"><button class="btn primary small" type="submit">Create case</button><button class="btn small" type="button" data-act="newCaseToggle">Cancel</button></div>
         <div class="err" role="alert"></div></form>
-      <ul class="list">${S.cases.filter(c => c.id !== S.kase?.id).length ? S.cases.filter(c => c.id !== S.kase?.id).map(c => `<li><span class="sw site"></span>
+      <ul class="list">${otherCases.length ? otherCases.map(c => `<li><span class="sw site"></span>
         <button class="main" data-act="openCase" data-id="${c.id}"><span class="t">${esc(c.name)}</span>
         <span class="m">${esc(c.summary || "No summary")}</span></button>${icon.chevR.replace("<svg", '<svg style="color:var(--faint)"')}</li>`).join("")
-        : S.kase ? "" : `<li class="empty">No cases yet. A case gathers evidence, candidate sites and notes for one investigation, and exports them for a GPS.</li>`}</ul>
+        : S.kase ? "" : `<li class="empty case-empty"><span>No cases yet. A case gathers evidence, candidate sites and notes for one investigation, and exports them for a GPS.</span>
+          <span class="row"><button class="btn small primary" data-act="newCaseToggle">${icon.plus}New case</button><button class="btn small" data-act="importKmlHome">${icon.upload}Import KML/KMZ</button></span></li>`}</ul>
     </div>
     ${rec.length ? `<h3 class="section-title">Recently viewed <span class="right"><button class="linkish" data-act="clearRecent">Clear</button></span></h3>
       <div class="group"><ul class="list">${rec.map(r => r.kind === "gridref"
@@ -1790,12 +1846,14 @@ VIEWS.home = v => {
       <button class="summary-row" data-act="openLibrary"><span class="row-ico" aria-hidden="true">${icon.map}</span>
         <span class="grow"><span class="t">Old maps</span><span class="m">${esc(libHomeLine())}</span></span>${icon.chevR}</button>
       <button class="summary-row" data-act="openRecords"><span class="row-ico" aria-hidden="true">${S.rec.busy ? '<span class="spin"></span>' : icon.doc}</span>
-        <span class="grow"><span class="t">Records</span><span class="m" data-rec-line>${esc(recHomeLine())}</span></span>${icon.chevR}</button></div>
+        <span class="grow"><span class="t">Records</span><span class="m" data-rec-line>${esc(recHomeLine())}</span></span>${icon.chevR}</button>
+      <button class="summary-row" data-act="openAerial"><span class="row-ico" aria-hidden="true">${icon.near}</span>
+        <span class="grow"><span class="t">Aerial, LiDAR &amp; terrain</span><span class="m">${esc(aerialHomeLine())}</span></span>${icon.chevR}</button></div>
     <div class="foot-note"><span>${coarse ? "Touch and hold the map to drop a pin. " : "Click an empty spot (or right-click) to drop a pin. "}Runs on your computer only. Records can be wrong: check each source.</span></div>
     ${v.quit ? `<div class="confirm-box calm quit-box" role="alertdialog" aria-label="Quit Map Vietnam">
         <span>Quit Map Vietnam? The map stops working in this window until you start it again.${S.rec.busy || libBusyMaps().length ? " What is being added now stops; what was already downloaded is kept." : ""}</span>
         <div class="row"><button class="btn small primary" data-act="quit">Quit</button><button class="btn small" data-act="quitCancel">Cancel</button></div></div>`
-      : `<div class="home-links"><button class="linkish quit-link" data-act="openSettings">Settings</button><button class="linkish quit-link" data-act="quitAsk">Quit Map Vietnam</button></div>`}`;
+      : `<div class="home-links"><button class="btn small" data-act="openSettings">${icon.gear}Settings</button><button class="btn small" data-act="quitAsk">${icon.power}Quit Map Vietnam</button></div>`}`;
 };
 VIEWS.home.after = () => {
   $("#newCase")?.addEventListener("submit", async e => {
@@ -1812,10 +1870,24 @@ VIEWS.home.after = () => {
 // "2 on this computer · adding 1", or an invitation when there are none yet.
 function libHomeLine() {
   const have = S.lib.maps.filter(m => m.state === "installed").length || S.catalog.length, busy = libBusyMaps().length;
-  const parts = [have ? `${have} on this computer` : "Add old maps of any area", busy ? `adding ${busy}` : ""];
+  const hubN = (S.hub.layers || []).filter(l => l.encoding !== "terrarium" && !l.installed_offline).length;
+  const parts = [have ? `${have} on this computer` : "Add old maps of any area", hubN ? `${hubN} on Hub` : "", busy ? `adding ${busy}` : ""];
   return parts.filter(Boolean).join(" · ");
 }
-ACTIONS.newCaseToggle = () => { const f = $("#newCase"); if (!f) return; f.hidden = !f.hidden; if (!f.hidden) f.name.focus(); };
+function aerialHomeLine() {
+  const parts = [];
+  if (S.terrain.source && S.terrain.source !== "off") parts.push("Relief active");
+  if (S.hub.connected) parts.push("Hub connected");
+  parts.push("French aerials 1948–56 · spy satellites · LiDAR");
+  return parts.join(" · ");
+}
+ACTIONS.newCaseToggle = () => {
+  const f = $("#newCase"); if (!f) return;
+  f.hidden = !f.hidden;
+  // The empty state's own New case / Import buttons would repeat the open form, so they step aside while it is up.
+  const empty = $("#view .case-empty"); if (empty) empty.hidden = !f.hidden;
+  if (!f.hidden) f.name.focus(); else (empty?.querySelector('[data-act="newCaseToggle"]') || $('#view [data-act="newCaseToggle"]'))?.focus();
+};
 ACTIONS.importKmlHome = () => $("#kmlFileHome")?.click();
 ACTIONS.clearRecent = () => { store.set("recent", []); render(); };
 ACTIONS.recGrid = el => { q.value = el.dataset.ref; $("#qClear").hidden = false; openGridRef(el.dataset.ref, el.dataset.datum); };
@@ -2138,8 +2210,9 @@ VIEWS.multi.after = async v => {
 
 // ---------------------------------------------------------------- Clicked empty spot
 VIEWS.spot = v => `${headHTML("Dropped pin", `<span class="mono">${v.lat.toFixed(5)}, ${v.lon.toFixed(5)}</span>`)}
-  <div class="actions three">
+  <div class="actions">
     <button class="act primary" data-act="siteHere" data-lon="${v.lon}" data-lat="${v.lat}" data-m="100"><span class="ci">${icon.pin}</span><span>Place site</span></button>
+    <button class="act" data-act="profileFromSpot" data-lon="${v.lon}" data-lat="${v.lat}"><span class="ci">${icon.near}</span><span>Profile</span></button>
     <button class="act" data-act="copySpotGrid"><span class="ci">${icon.grid}</span><span>Copy grid ref</span></button>
     <button class="act" data-act="copy" data-what="position" data-text="${v.lat.toFixed(5)}, ${v.lon.toFixed(5)}"><span class="ci">${icon.copy}</span><span>Copy position</span></button>
   </div>
@@ -2147,20 +2220,106 @@ VIEWS.spot = v => `${headHTML("Dropped pin", `<span class="mono">${v.lat.toFixed
   <div class="group" id="grids">
     <div class="kv-row"><span class="k">Wartime grid · Indian 1960</span><span class="v mono">…</span></div>
     <div class="kv-row"><span class="k">GPS grid · WGS84</span><span class="v mono">…</span></div></div>
+  <div class="group" id="spotTerrain" style="margin-top:10px">
+    <div class="kv-row"><span class="k">Bare-earth ground elevation</span><span class="v muted">Sampling…</span></div></div>
+  <div id="transectSlot">${S.transect ? transectHTML(S.transect) : ""}</div>
   <p class="small-t muted" style="margin:8px 2px 0">The two grids differ by a few hundred metres. 1960s reports and sheets use the wartime grid.</p>`;
 VIEWS.spot.after = async v => {
   try {
     const r = v.grids || (v.grids = await api(`/api/lonlat?lon=${v.lon}&lat=${v.lat}`));
     if (S.view !== v) return;
-    $("#grids").innerHTML = gridRows(r); wire($("#grids"));
-  } catch (e) { $("#grids").innerHTML = `<div class="kv-row err">${esc(e.message)}</div>`; }
+    if ($("#grids")) { $("#grids").innerHTML = gridRows(r); wire($("#grids")); }
+  } catch (e) { if ($("#grids")) $("#grids").innerHTML = `<div class="kv-row err">${esc(e.message)}</div>`; }
+  try {
+    const t = v.terrain || (v.terrain = await api(`/api/elevation?lon=${v.lon}&lat=${v.lat}&remote=1`));
+    if (S.view !== v || !$("#spotTerrain")) return;
+    const rows = [];
+    if (t.ground_m != null) {
+      const unc = t.uncertainty_m != null ? ` ± ${t.uncertainty_m.toFixed(1)} m` : "";
+      rows.push(`<div class="kv-row"><span class="k">Bare-earth elevation</span><span class="v"><b>${t.ground_m.toFixed(1)} m</b>${esc(unc)}</span>
+        ${t.ground_source ? `<span class="v2">${esc(t.ground_source)}</span>` : ""}</div>`);
+    } else {
+      rows.push(`<div class="kv-row"><span class="k">Bare-earth elevation</span><span class="v muted">No land sample here</span></div>`);
+    }
+    if (t.hon_dau_m != null) rows.push(`<div class="kv-row"><span class="k">Vietnam Hòn Dấu MSL datum</span><span class="v mono">${t.hon_dau_m.toFixed(2)} m</span><span class="v2">Lowland flood-datum equivalent (~0.18 m offset from global geoid).</span></div>`);
+    if (t.hand_m != null) rows.push(`<div class="kv-row"><span class="k">Height above nearest drainage (HAND)</span><span class="v">${t.hand_m.toFixed(1)} m</span></div>`);
+    if (t.canopy_m != null) rows.push(`<div class="kv-row"><span class="k">Tree canopy height</span><span class="v">${t.canopy_m.toFixed(1)} m</span></div>`);
+    $("#spotTerrain").innerHTML = rows.join("");
+  } catch { if ($("#spotTerrain")) $("#spotTerrain").remove(); }
 };
 ACTIONS.copySpotGrid = () => { const g = S.view.grids; if (g) copyText(g.mgrs_indian1960, "Indian 1960 grid ref"); };
+ACTIONS.profileFromSpot = el => startProfiling([+el.dataset.lon, +el.dataset.lat]);
+ACTIONS.clearTransect = () => clearTransect();
 const gridRows = r => `
   <div class="kv-row"><span class="k">Wartime grid · Indian 1960 (wartime map datum)</span><span class="v"><span class="mono">${esc(r.mgrs_indian1960)}</span></span>
     <span class="inline-btns"><button class="linkish small-t" data-act="copy" data-what="Indian 1960 grid" data-text="${esc(r.mgrs_indian1960)}">Copy</button></span></div>
   <div class="kv-row"><span class="k">GPS grid · WGS84</span><span class="v"><span class="mono">${esc(r.mgrs_wgs84)}</span></span>
-    <span class="inline-btns"><button class="linkish small-t" data-act="copy" data-what="WGS84 grid" data-text="${esc(r.mgrs_wgs84)}">Copy</button></span></div>`;
+    <span class="inline-btns"><button class="linkish small-t" data-act="copy" data-what="WGS84 grid" data-text="${esc(r.mgrs_wgs84)}">Copy</button></span></div>
+  ${r.nara_rg373 ? `<div class="kv-row"><span class="k">NARA RG 373 aerial index square</span><span class="v"><span class="mono">${esc(r.nara_rg373.degree_square)}</span></span>
+    <span class="v2">1°×1° reconnaissance sortie overlay index (1935–1971)</span>
+    ${safeUrl(r.nara_rg373.catalog_url) ? `<span class="inline-btns"><a class="small-t" href="${esc(r.nara_rg373.catalog_url)}" target="_blank" rel="noopener">Search NARA RG 373</a></span>` : ""}</div>` : ""}`;
+
+function startProfiling(fromLonLat) {
+  if (S.compare) setCompare(false);
+  S.profilingFrom = fromLonLat;
+  document.body.classList.add("placing");
+  $("#placing").hidden = false;
+  $("#placing span").textContent = coarse ? "Tap a second spot for an elevation & sightline profile" : "Click a second spot on the map for an elevation & sightline profile";
+  if (!isDesk()) setSheet("peek");
+}
+function endProfiling() {
+  S.profilingFrom = null;
+  if (!S.placing) { document.body.classList.remove("placing"); $("#placing").hidden = true; }
+}
+function clearTransect() {
+  S.transect = null;
+  setData("transect-vis", empty());
+  setData("transect-occ", empty());
+  if ($("#transectSlot")) $("#transectSlot").innerHTML = "";
+}
+async function runTransect(start, end) {
+  toast("Computing bare-earth elevation & line-of-sight profile…");
+  try {
+    const tr = await api("/api/transect", { method: "POST", body: { start, end, samples: 64, observer_height_m: 1.7, remote_cog: true } });
+    S.transect = tr;
+    const visSegs = [], occSegs = [];
+    const pts = tr.points || [];
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i];
+      const seg = [[a.lon, a.lat], [b.lon, b.lat]];
+      (b.visible === false ? occSegs : visSegs).push(seg);
+    }
+    setData("transect-vis", visSegs.length ? { type: "Feature", geometry: { type: "MultiLineString", coordinates: visSegs }, properties: {} } : empty());
+    setData("transect-occ", occSegs.length ? { type: "Feature", geometry: { type: "MultiLineString", coordinates: occSegs }, properties: {} } : empty());
+    if (S.view.name !== "spot") openSpot(start[0], start[1]);
+    else if ($("#transectSlot")) { $("#transectSlot").innerHTML = transectHTML(tr); wire($("#transectSlot")); }
+    if (!isDesk()) setSheet("half");
+  } catch (e) { toast("Could not compute profile: " + e.message, 5000); }
+}
+function transectHTML(tr) {
+  const pts = (tr.points || []).filter(p => p.ground_m != null);
+  if (pts.length < 2) return `<div class="transect-box"><div class="row"><b class="small-t">Terrain profile</b><button class="linkish small-t" data-act="clearTransect">Clear</button></div><p class="small-t muted">No elevation samples available along this line.</p></div>`;
+  const W = 320, H = 110, padX = 8, padY = 14;
+  const minG = Math.min(...pts.map(p => p.ground_m)), maxG = Math.max(...pts.map(p => p.ground_m + (p.canopy_m || 0)));
+  const spanG = Math.max(5, maxG - minG), maxD = Math.max(1, tr.total_distance_m || pts.at(-1).distance_m || 1);
+  const xOf = d => padX + (d / maxD) * (W - padX * 2);
+  const yOf = h => H - padY - ((h - minG) / spanG) * (H - padY * 2);
+  const poly = pts.map(p => `${xOf(p.distance_m).toFixed(1)},${yOf(p.ground_m).toFixed(1)}`).join(" ");
+  const area = `${xOf(pts[0].distance_m).toFixed(1)},${H - padY} ${poly} ${xOf(pts.at(-1).distance_m).toFixed(1)},${H - padY}`;
+  const p0 = pts[0], pEnd = pts.at(-1);
+  const losY0 = yOf(p0.ground_m + (tr.observer_height_m || 1.7)), losY1 = yOf(pEnd.ground_m);
+  const clearEnd = pEnd.visible !== false;
+  return `<div class="transect-box" role="region" aria-label="Terrain elevation profile">
+    <div class="row" style="justify-content:space-between"><b class="small-t">Profile · ${esc(fmtM(tr.total_distance_m))}</b>
+      <button class="linkish small-t" data-act="clearTransect">Clear</button></div>
+    <div class="small-t muted">${minG.toFixed(1)} m to ${maxG.toFixed(1)} m · Sightline to end: <b style="color:${clearEnd ? "#16a34a" : "#dc2626"}">${clearEnd ? "Visible" : "Blocked by terrain"}</b></div>
+    <svg class="transect-svg" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+      <polygon points="${area}" fill="rgba(14,90,75,0.16)"/>
+      <polyline points="${poly}" fill="none" stroke="var(--accent)" stroke-width="2"/>
+      <line x1="${xOf(p0.distance_m).toFixed(1)}" y1="${losY0.toFixed(1)}" x2="${xOf(pEnd.distance_m).toFixed(1)}" y2="${losY1.toFixed(1)}"
+        stroke="${clearEnd ? "#16a34a" : "#dc2626"}" stroke-width="1.4" stroke-dasharray="${clearEnd ? "none" : "4 3"}"/>
+    </svg></div>`;
+}
 
 // ---------------------------------------------------------------- Grid reference square
 async function openGridRef(ref, datum = "indian1960") {
@@ -2208,12 +2367,32 @@ VIEWS.era = v => {
   const e = eraById(v.id);
   if (!e) return headHTML("Historical map") + `<p class="muted">No map selected.</p>`;
   const lib = S.lib.byId.get(e.id), customScan = lib?.custom && lib?.kind === "scan";
+  const hubLyr = (S.hub.layers || []).find(l => l.id === e.id), onHub = !!hubLyr;
+  const canEditHub = hubLyr && (S.hub.me?.scopes?.includes("admin") || (hubLyr.owner_key_id && hubLyr.owner_key_id === S.hub.me?.key_id));
+  const pushBox = v.pushAsk === e.id ? `<div class="confirm-box calm" style="margin-top:10px" role="group" aria-label="Cache map to Hub">
+    <span>Cache <b>${esc(e.name)}</b> permanently on the Hub server? Choose who on the Hub can see it:</span>
+    <div class="row"><button class="btn small primary" data-act="hubPushOne" data-id="${esc(e.id)}" data-vis="hub">All Hub members</button>
+      <button class="btn small" data-act="hubPushOne" data-id="${esc(e.id)}" data-vis="group">My group</button>
+      <button class="btn small" data-act="hubPushOne" data-id="${esc(e.id)}" data-vis="private">Private</button>
+      <button class="btn small" data-act="hubPushCancel">Cancel</button></div></div>` : "";
+  const delHubBox = v.delHubAsk === e.id ? `<div class="confirm-box" style="margin-top:10px" role="alertdialog" aria-label="Remove from Hub">
+    <span>Delete <b>${esc(e.name)}</b> from the Hub server for everyone? (Local copies on computers stay untouched.)</span>
+    <div class="row"><button class="btn small danger solid" data-act="hubDelLayer" data-id="${esc(e.id)}">Delete from Hub</button>
+      <button class="btn small" data-act="hubDelCancel">Keep on Hub</button></div></div>` : "";
   return `${headHTML(esc(e.name), `<span>${esc(e.years)} · ${esc(e.short)} · ${esc(e.series)}${lib?.adjusted ? " · adjusted" : ""}</span>`)}
+    ${e.hubStream ? `<div style="margin-top:8px"><span class="hub-badge">Streamed from Hub (${esc(hubLyr?.visibility || "hub")}) · viewed tiles cached forever</span></div>`
+      : onHub ? `<div style="margin-top:8px"><span class="hub-badge">Cached on Hub (${esc(hubLyr?.visibility || "hub")})</span></div>` : ""}
     <div class="row" style="margin-top:14px"><button class="btn small" data-act="fit" data-id="${e.id}">Zoom to coverage</button>
       ${S.eraA !== e.id ? `<button class="btn small primary" data-act="setEra" data-id="${e.id}">Show this map</button>` : ""}
-      ${customScan ? `<button class="btn small" data-act="cmPlace" data-id="${e.id}">Place again</button>`
-        : `<button class="btn small" data-act="alignMap" data-id="${e.id}">Adjust alignment</button>`}
-      <button class="btn small danger" data-act="eraRemove" data-id="${e.id}">${icon.trash}Remove</button></div>
+      ${e.hubStream ? `${!hubLyr?.stream_only ? `<button class="btn small" data-act="hubPull" data-id="${e.id}">${icon.dl}Keep full map offline</button>` : ""}
+        ${canEditHub ? `<button class="btn small danger" data-act="hubDelAsk" data-id="${e.id}">${icon.trash}Delete from Hub</button>` : ""}` : `
+        ${customScan ? `<button class="btn small" data-act="cmPlace" data-id="${e.id}">Place again</button>`
+          : (e.kind !== "mosaic" ? `<button class="btn small" data-act="alignMap" data-id="${e.id}">Adjust alignment</button>` : "")}
+        ${S.hub.connected ? `<button class="btn small" data-act="hubPushAsk" data-id="${e.id}">${onHub ? "Update on Hub" : "Cache to Hub"}</button>` : ""}
+        ${canEditHub ? `<button class="btn small danger" data-act="hubDelAsk" data-id="${e.id}">Delete from Hub</button>` : ""}
+        <button class="btn small danger" data-act="eraRemove" data-id="${e.id}">${icon.trash}Remove locally</button>`}</div>
+    ${pushBox}${delHubBox}
+    ${customScan && !e.hubStream ? chainHTML(lib) : ""}
     ${!eraInYears(e) ? `<p class="quiet-note">${icon.warn}<span>Outside your years (${esc(yearsText())}), so it is hidden on the map.</span></p>` : ""}
     <p class="small-t muted">Positions on old maps can be off by hundreds of metres or more. Check each sheet’s note.</p>
     <div class="group"><ul class="list">${e.layers.map(l => `<li style="display:block;padding:10px 14px"><div class="t" style="white-space:normal;font-weight:500">${esc(l.title)}</div>
@@ -2355,6 +2534,7 @@ function applyLibrary(r) {
   if (!first && !wasConverting && S.lib.legacy?.state === "converting") announce("Converting maps from an older version. You can keep using the map.");
   libWasBusy = nowBusy > 0;
   drawFootprints(); renderMapbar(); libRefreshView(); settingsRefresh(); scheduleLibraryPoll();
+  if (pl) plUpdateStones();
   if (S.view.name === "home") render();
 }
 async function libAdd(ids) {
@@ -2396,17 +2576,28 @@ async function refreshCatalog(tries = 0) {
 }
 // Swaps in a new list of installed maps: adds the new layers to every map, drops the removed ones, and moves off a
 // removed map if it was on screen.
-function setCatalog(layers, rebuiltIds = new Set()) {
-  const now = new Set(layers.map(l => l.id)), had = new Set(S.catalog.map(l => l.id));
-  for (const l of S.catalog) if (!now.has(l.id)) eachMap(m => removeEraLayer(m, l.id));
-  for (const id of rebuiltIds) if (had.has(id) && now.has(id)) eachMap(m => removeEraLayer(m, id));
-  for (const l of layers) if (!had.has(l.id) || rebuiltIds.has(l.id)) eachMap(m => addEraLayer(m, l));
-  S.catalog = layers; S.eras = buildEras(layers);
+function syncEraLayers(rebuiltIds = new Set()) {
+  const vis = visualLayers(), wantIds = new Set(vis.map(l => l.id));
+  eachMap(m => {
+    for (const l of S.catalog) if (!wantIds.has(l.id)) removeEraLayer(m, l.id);
+    for (const id of rebuiltIds) removeEraLayer(m, id);
+    for (const l of vis) addEraLayer(m, l);
+  });
+  S.eras = buildEras(vis);
   if (S.eraA && !eraById(S.eraA)) { S.eraA = null; store.set("era", "today"); }
   if (S.eraB !== "today" && !eraById(S.eraB)) S.eraB = "today";
   applyEra();
+}
+function setCatalog(layers, rebuiltIds = new Set()) {
+  const prevIds = S.catalog.map(l => l.id);
+  S.catalog = layers;
+  const nowSet = new Set(visualLayers().map(l => l.id));
+  for (const id of prevIds) if (!nowSet.has(id)) eachMap(m => removeEraLayer(m, id));
+  syncEraLayers(rebuiltIds);
+  loadTerrainSources();
   if (S.view.name === "library") libRefreshView(true);
   if (S.view.name === "era") render();
+  if (pl) plOnCatalogUpdate();
 }
 // A map has just finished: show it straight away if it is the first old map of the area on screen (that is what
 // adding it asked for), otherwise say it is ready and offer to show it.
@@ -2585,7 +2776,9 @@ function libModel() {
     words, kinds, kind, sort, shown,
     adding: S.lib.maps.filter(m => m.state in rank).sort((a, b) => rank[a.state] - rank[b.state]), // wherever they are
     installed: libGroup(shown.filter(m => m.state === "installed").sort(order)),
-    available: libGroup(shown.filter(m => m.state === "available").sort(order)),
+    // A map being added keeps its row where it was (with its progress ring), so the rows around it do not jump
+    // while someone is clicking Add down the list.
+    available: libGroup(shown.filter(m => m.state === "available" || LIB_BUSY.has(m.state)).sort(order)),
   };
 }
 // Rows from maps in order: a map alone, or the editions of one sheet together (newest first) at the place of the
@@ -2677,9 +2870,15 @@ function libDetail(m) {
   const licence = m.licence || ser.licence;
   // The row's own control (Add, Retry, Show / Hide, or the progress ring that stops it) is the main action; the
   // opened row adds only what the row cannot do.
+  const onHub = (S.hub.layers || []).some(l => l.id === m.id);
+  const hubActs = S.hub.connected
+    ? (m.state === "installed" ? `<button class="btn small" data-act="hubPushOne" data-id="${id}" data-vis="hub">${onHub ? "Update on Hub" : "Cache to Hub"}</button>`
+      : (!m.custom && m.state === "available" && !onHub ? `<button class="btn small" data-act="hubBuildMap" data-id="${id}">Build onto Hub</button>` : ""))
+    : "";
   const acts = (m.custom ? `<button class="btn small" data-act="cmManage" data-id="${id}">Edit or place again</button>`
     : m.state === "installed" ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : "")
-    + (m.state === "installed" ? `<button class="btn small danger" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button>` : "");
+    + hubActs
+    + (m.state === "installed" ? `<button class="btn small danger push-end" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button>` : "");
   const confirm = S.view.confirm === "remove:" + m.id ? `<div class="confirm-box" role="alertdialog" aria-label="Remove ${t}">
       <span>Remove <b>${t}</b> from this computer? This frees ${fmtMB(m.disk_bytes) || "its space"}. You can add it again later.</span>
       <div class="row"><button class="btn small danger solid" data-act="libRemove" data-id="${id}">Remove</button>
@@ -2689,7 +2888,7 @@ function libDetail(m) {
     ${maker ? `<p class="muted">${esc(maker)}</p>` : ""}
     ${size ? `<p class="muted">${esc(size)}</p>` : ""}
     ${m.error ? `<p class="err">${esc(m.error)}</p>` : ""}
-    <div class="row">${acts}<button class="btn small" data-act="libFit" data-id="${id}">Zoom to map</button></div>
+    <div class="row lib-acts"><button class="btn small" data-act="libFit" data-id="${id}">Zoom to map</button>${acts}</div>
     ${confirm}
     ${licence ? `<details><summary>Licence</summary><p class="muted">${esc(licence)}</p></details>` : ""}</div>`;
 }
@@ -2754,7 +2953,7 @@ VIEWS.library = v => {
   const list = (title, items) => items.length ? `<h3 class="sub-head">${title}</h3>${rows(items)}` : "";
   // "Add all": the newest edition of each sheet listed. A quiet button for a few maps; above BULK_ASK it asks first;
   // above BULK_MAX it asks to zoom in.
-  const av = md.available.map(r => r.group ? r.maps.find(m => m.state === "available") : r), avBytes = av.reduce((a, m) => a + (m.bytes || 0), 0);
+  const av = md.available.map(r => r.group ? r.maps.find(m => m.state === "available") : r).filter(m => m && m.state === "available"), avBytes = av.reduce((a, m) => a + (m.bytes || 0), 0);
   let bulk = "";
   if (av.length > BULK_MAX) bulk = "";
   else if (v.confirm === "bulk") bulk = `<div class="confirm-box calm" role="alertdialog" aria-label="Add ${av.length} maps">
@@ -2763,8 +2962,10 @@ VIEWS.library = v => {
   else if (av.length >= 2) bulk = `<button class="btn lib-bulk" data-act="libAddAll">${icon.plus}<span>Add all ${av.length} maps ${typed ? "listed" : "here"}</span><span class="muted">${fmtMB(avBytes)}</span></button>`;
   const used = S.lib.maps.filter(m => m.state === "installed").reduce((a, m) => a + (m.disk_bytes || 0), 0);
   const chip = (k, label, count) => `<button data-act="libKind" data-s="${k}" aria-pressed="${md.kind === k}">${esc(label)}${count != null ? ` <span class="n">${fmtInt(count)}</span>` : ""}</button>`;
-  // The filter, the scale chips and the sort come first and stay put; the maps on their way follow under one status
-  // line (it is their heading), then the ones that failed, then the rest.
+  // The filter, the scale chips and the sort come first and stay put; the maps that failed follow, then the rest.
+  // Maps on their way stay in their rows; their status line sticks to the bottom of the card, where appearing does
+  // not push anything down, with rows only for maps being added somewhere off screen.
+  const shownIds = new Set(md.shown.map(m => m.id)), busyElsewhere = busy.filter(m => !shownIds.has(m.id));
   return `${headHTML("Old maps", `<span>${esc(sub)}</span>`)}
     ${legacyHTML()}
     <div class="lib-tools">
@@ -2772,13 +2973,11 @@ VIEWS.library = v => {
         <input id="libQ" type="search" data-act="libQ" autocomplete="off" spellcheck="false" enterkeyhint="search"
           placeholder="Filter by place, sheet or year" aria-label="Filter old maps by place, sheet number or year" value="${esc(v.q || "")}"></label>
       ${md.kinds.length > 1 ? `<div class="seg lib-seg" role="group" aria-label="Show maps of one scale">${chip("all", "All", null)}${md.kinds.map(x => chip(x.k, x.label, x.n)).join("")}</div>` : ""}
-      ${n > 1 ? `<div class="lib-sort" role="group" aria-label="Order of the list"><span class="small-t muted">Order</span>
-        ${LIB_SORTS.map(([k, label]) => `<button class="linkish small-t" data-act="libSort" data-s="${k}" aria-pressed="${md.sort === k}">${k === "here" && typed ? "Nearest" : label}</button>`).join("")}</div>` : ""}
-      ${outlinesSeg()}
+      <div class="lib-opts">
+      ${n > 1 ? `<div class="lib-sort"><span class="small-t muted">Order</span><div class="seg small" role="group" aria-label="Order of the list">
+        ${LIB_SORTS.map(([k, label]) => `<button data-act="libSort" data-s="${k}" aria-pressed="${md.sort === k}">${k === "here" && typed ? "Nearest" : label}</button>`).join("")}</div></div>` : ""}
+      ${outlinesSeg()}</div>
     </div>
-    ${busy.length ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span>
-      <span class="grow"><b>Adding ${busy.length} map${busy.length === 1 ? "" : "s"}</b><span class="small-t muted" data-lib-left>${esc(leftText())}</span></span>
-      ${busy.length > 1 ? `<button class="linkish small-t" data-act="libStopAll">Stop all</button>` : ""}</div>${rows(busy)}` : ""}
     ${list("Could not be added", failed)}
     ${list("On this computer", installed)}
     ${available.length ? `<h3 class="sub-head">${typed ? "Can be added" : "Available here"}</h3>${bulk}${rows(available)}` : ""}
@@ -2786,7 +2985,10 @@ VIEWS.library = v => {
     ${hidden > 0 ? `<p class="small-t muted lib-bulk-note">${fmtInt(hidden)} more ${typed ? "match" : "cover this view"}. Zoom in, pick a scale or type a place to narrow the list.</p>` : ""}
     ${S.lib.loaded && !n && !S.lib.err && typed ? `<p class="muted">Check the spelling, or <button class="linkish" data-act="libClear">clear the filter</button> to see the maps on screen.</p>` : ""}
     ${S.lib.loaded && !n && !S.lib.err && !typed ? `<p class="muted">Move the map over Vietnam, or type a place above, to find old maps.</p>` : ""}
-    <p class="foot-note">Maps come from public archives and stay on this computer. Nothing downloads until you add it.${used ? ` Old maps use ${fmtMB(used)} here.` : ""}</p>`;
+    <p class="foot-note">Maps come from public archives and stay on this computer. Nothing downloads until you add it.${used ? ` Old maps use ${fmtMB(used)} here.` : ""}</p>
+    ${busy.length ? `<div class="lib-busy-bar">${busyElsewhere.length ? rows(busyElsewhere) : ""}<div class="lib-status"><span class="spin" aria-hidden="true"></span>
+      <span class="grow"><b>Adding ${busy.length} map${busy.length === 1 ? "" : "s"}</b><span class="small-t muted" data-lib-left>${esc(leftText())}</span></span>
+      ${busy.length > 1 ? `<button class="btn small" data-act="libStopAll">Stop all</button>` : ""}</div></div>` : ""}`;
 };
 let libQTimer = null;
 VIEWS.library.after = () => {
@@ -2854,7 +3056,11 @@ function stopMaps(ids) {
 }
 ACTIONS.libStop = el => stopMaps([el.dataset.id]);
 ACTIONS.libStopAll = () => stopMaps(libBusyMaps().map(m => m.id));
-ACTIONS.libShow = el => setEra(S.eraA === el.dataset.id ? "today" : el.dataset.id);
+ACTIONS.libShow = el => {
+  const next = S.eraA === el.dataset.id ? "today" : el.dataset.id;
+  if (S.view.name === "settings" && next !== "today") show("home");
+  setEra(next);
+};
 ACTIONS.libFit = el => { if (!isDesk()) setSheet("peek"); fitFootprintIfHidden(el.dataset.id, true); };
 ACTIONS.libKind = el => { S.view.kind = el.dataset.s; S.view.sel = null; S.view.open = null; S.view.confirm = null; setFpState("sel", null); rerenderKeepingFocus(); };
 ACTIONS.libSort = el => { S.view.sort = el.dataset.s; rerenderKeepingFocus(); };
@@ -3140,7 +3346,7 @@ VIEWS.records = () => {
   return `${headHTML("Records", `<span>${esc(sub)}</span>`)}
     ${busy.length ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span>
       <span class="grow"><b>${adding ? `Adding ${adding} source${adding === 1 ? "" : "s"}` : "Removing"}</b><span class="small-t muted">One at a time. You can keep using the map.</span></span>
-      ${adding > 1 ? `<button class="linkish small-t" data-act="recStopAll">Stop all</button>` : ""}</div>${rows(busy)}` : ""}
+      ${adding > 1 ? `<button class="btn small" data-act="recStopAll">Stop all</button>` : ""}</div>${rows(busy)}` : ""}
     ${!busy.length && S.rec.busy ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span><span class="grow"><b>Busy in another window</b><span class="small-t muted">Records are being changed from a terminal or another Map Vietnam window.</span></span></div>` : ""}
     ${list("Could not be added", failed)}
     ${list("On this computer", added)}
@@ -3523,8 +3729,8 @@ function startPlacing() {
   $("#placing span").textContent = coarse ? "Tap the map where the candidate site is" : "Click the map where the candidate site is";
   if (!isDesk()) setSheet("peek");
 }
-function endPlacing() { S.placing = false; document.body.classList.remove("placing"); $("#placing").hidden = true; }
-$("#placingCancel").addEventListener("click", endPlacing);
+function endPlacing() { S.placing = false; if (!S.profilingFrom) { document.body.classList.remove("placing"); $("#placing").hidden = true; } }
+$("#placingCancel").addEventListener("click", () => { endPlacing(); endProfiling(); });
 
 let draftMarker = null;
 async function openSiteForm(lon, lat, m, name, why = "") {
@@ -3651,9 +3857,10 @@ async function runSearch(pickFirst = false) {
     if (req !== qReq) return;
     const ft = fold(text);
     for (const it of raw) {
-      if (it.type === "gridref") { it.group = "grid"; continue; }
+      if (it.type === "gridref" || it.type === "coord") { it.group = "grid"; continue; }
       it.distance_km ??= distBearing([c.lng, c.lat], [it.lon, it.lat]).d / 1000;
       it.dir = compass(distBearing([c.lng, c.lat], [it.lon, it.lat]).b);
+      if (it.type === "place") { it.group = "place"; it.score = it.distance_km; continue; }
       const nameHit = fold(cleanTitle(it.title)).includes(ft);
       it.group = it.kind !== "placename" ? "rec" : nameHit ? "place" : "district";
       it.score = it.distance_km; // strictly nearest first within each group, as the distances on each row say
@@ -3671,6 +3878,11 @@ async function runSearch(pickFirst = false) {
       if (it.type === "gridref") { html += `<li role="option" id="res${i}" data-i="${i}"><span class="r-ico" style="background:#d97706">${icon.grid}</span>
         <div class="r-main"><div class="r-title mono">${esc(text.toUpperCase())}</div><div class="r-meta">Grid square · Indian 1960 (wartime map datum)</div></div>
         <span class="r-dist">${esc(fmtKm(it.distance_km))}</span></li>`; return; }
+      if (it.type === "coord") { html += `<li role="option" id="res${i}" data-i="${i}"><span class="r-ico" style="background:#d97706">${icon.pin}</span>
+        <div class="r-main"><div class="r-title mono">${esc(it.label)}</div><div class="r-meta">Latitude, longitude · WGS84</div></div></li>`; return; }
+      if (it.type === "place") { html += `<li role="option" id="res${i}" data-i="${i}"><span class="r-ico" style="background:var(--accent)">${icon.map}</span>
+        <div class="r-main"><div class="r-title">${esc(it.title)}</div><div class="r-meta">${it.source === "sgi100k" ? "Area of a French map sheet" : "Town"} · known without downloads</div></div>
+        <span class="r-dist">${esc(fmtKm(it.distance_km))}<span class="r-dir">${esc(it.dir || "")}</span></span></li>`; return; }
       const k = KINDS[it.kind] || KINDS.other;
       const ctx = it.context || "";
       const meta = [kindOne(it), ctx, it.date_start ? fmtDay(it.date_start) : ""].filter(Boolean).join(" · ");
@@ -3702,9 +3914,17 @@ function closeResults(clearItems = true) {
 }
 async function pickResult(it) {
   closeResults(); q.blur(); $("#qCancel").hidden = true;
-  if (it.type !== "gridref") q.value = cleanTitle(it.title); // like Apple Maps: the box shows what's open
+  if (it.type === "place") q.value = it.title;
+  else if (it.type === "coord") q.value = it.label;
+  else if (it.type !== "gridref") q.value = cleanTitle(it.title); // like Apple Maps: the box shows what's open
   if (!isDesk()) setSheet("half");
   if (it.type === "gridref") return openGridRef(q.value.trim());
+  if (it.type === "coord") { flyToTarget(it.lon, it.lat, 0); return openSpot(it.lon, it.lat); }
+  if (it.type === "place") {
+    const [w, s, e, n] = it.bounds;
+    primary().fitBounds([[w, s], [e, n]], { padding: mapPadding(), maxZoom: 13, duration: reduceMotion ? 0 : 700 });
+    return;
+  }
   openEvidence(it.id, { ...it, title: it.title }, { fly: true });
 }
 
@@ -3759,17 +3979,132 @@ function togglePopover(id, anchor) {
 // The Show/Hide pair for the sheet outlines, in the Old maps card (their only home: the outlines are
 // about the maps listed there, so they sit beside the list's other tools).
 function outlinesSeg() {
-  const on = outlinesOn(), b = (v, label) => `<button class="linkish small-t" data-act="outlines" data-on="${v}" aria-pressed="${on === !!v}">${label}</button>`;
-  return `<div class="lib-sort" role="group" aria-label="Sheet outlines on the map"><span class="small-t muted">Outlines</span>${b(1, "Show")}${b(0, "Hide")}</div>`;
+  const on = outlinesOn(), b = (v, label) => `<button data-act="outlines" data-on="${v}" aria-pressed="${on === !!v}">${label}</button>`;
+  return `<div class="lib-sort"><span class="small-t muted">Outlines</span><div class="seg small" role="group" aria-label="Sheet outlines on the map">${b(1, "Show")}${b(0, "Hide")}</div></div>`;
 }
 // The style popover holds only the base-map cards (switched often) and a way into Settings. Appearance,
 // the outlines and the Kaggle key each live in exactly one place instead: Settings for the first and
 // last, the Old maps card for the outlines.
+const TERRAIN_MODES = [
+  ["hillshade", "Multidirectional shade"],
+  ["delta", "Delta 0–5 m micro-relief"],
+  ["hypso", "Hypsometric tint"],
+  ["canopy", "Canopy / HAND ramp"],
+];
+async function loadTerrainSources() {
+  try {
+    S.terrain.sources = await api("/api/terrain/sources");
+    applyTerrain();
+    if (!$("#popStyle").hidden) renderStylePop();
+  } catch { /* optional */ }
+}
+function terrainSourceSpec(srcId) {
+  if (!srcId || srcId === "off") return null;
+  const st = S.terrain.sources;
+  const stream = st?.streaming?.find(s => s.id === srcId);
+  if (stream) return stream;
+  const inst = st?.installed_dems?.find(s => s.id === srcId);
+  if (inst) return { ...inst, tiles: [inst.tiles], tileSize: 256, encoding: "terrarium" };
+  // Fallback before /api/terrain/sources resolves so saved preference renders right away.
+  if (srcId === "mapterhorn_dsm") return { id: "mapterhorn_dsm", tiles: ["https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"], tileSize: 512, maxzoom: 15, encoding: "terrarium" };
+  if (srcId === "aws_terrarium_dsm") return { id: "aws_terrarium_dsm", tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 14, encoding: "terrarium" };
+  return null;
+}
+function terrainColorRamp(mode) {
+  if (mode === "delta") return ["interpolate", ["linear"], ["elevation"], -2, "rgba(14,116,144,0.55)", 0, "rgba(34,211,238,0.45)", 1.0, "rgba(134,239,172,0.48)", 2.2, "rgba(253,224,71,0.52)", 3.8, "rgba(249,115,22,0.52)", 6.0, "rgba(180,83,9,0.48)", 25, "rgba(120,113,108,0.22)"];
+  if (mode === "hypso") return ["interpolate", ["linear"], ["elevation"], -5, "rgba(30,64,175,0.45)", 0, "rgba(167,243,208,0.4)", 25, "rgba(134,239,172,0.42)", 150, "rgba(253,230,138,0.45)", 500, "rgba(251,146,60,0.45)", 1200, "rgba(180,83,9,0.5)", 2400, "rgba(245,245,244,0.55)"];
+  if (mode === "canopy") return ["interpolate", ["linear"], ["elevation"], 0, "rgba(254,249,195,0.1)", 2, "rgba(187,247,208,0.42)", 10, "rgba(34,197,94,0.5)", 22, "rgba(21,128,61,0.58)", 38, "rgba(6,78,59,0.65)"];
+  return null;
+}
+function terrainBeforeLayer(m) {
+  for (const l of visualLayers()) if (m.getLayer(`ov-${l.id}`)) return `ov-${l.id}`;
+  return m.getLayer("libfp-fill") ? "libfp-fill" : (m.getLayer("strike-heat") ? "strike-heat" : undefined);
+}
+function applyTerrain() {
+  const spec = terrainSourceSpec(S.terrain.source);
+  const ramp = spec ? terrainColorRamp(S.terrain.mode) : null;
+  eachMap(m => {
+    for (const lid of ["terrain-hs", "terrain-color"]) if (m.getLayer(lid)) m.removeLayer(lid);
+    try { m.setTerrain(null); } catch { /* ignore */ }
+    if (m.getSource("dem-active")) m.removeSource("dem-active");
+    if (!spec) {
+      m.setMaxPitch(0);
+      if (m.getPitch() > 0) m.easeTo({ pitch: 0, duration: reduceMotion ? 0 : 250 });
+      return;
+    }
+    const before = terrainBeforeLayer(m);
+    m.addSource("dem-active", {
+      type: "raster-dem",
+      tiles: spec.tiles,
+      tileSize: spec.tileSize || 256,
+      maxzoom: spec.maxzoom || 14,
+      bounds: spec.bounds || undefined,
+      encoding: "terrarium",
+      attribution: spec.attribution ? esc(spec.attribution) : undefined,
+    });
+    if (ramp) {
+      try {
+        m.addLayer({ id: "terrain-color", type: "color-relief", source: "dem-active", paint: { "color-relief-color": ramp, "color-relief-opacity": 0.55 } }, before);
+      } catch { /* older WebGL fallback keeps hillshade */ }
+    }
+    const hsPaint = { "hillshade-exaggeration": S.terrain.mode === "delta" ? 0.85 : 0.58, "hillshade-shadow-color": "#1c1917", "hillshade-accent-color": "#44403c" };
+    try { m.addLayer({ id: "terrain-hs", type: "hillshade", source: "dem-active", paint: { ...hsPaint, "hillshade-method": "multidirectional" } }, before); }
+    catch { m.addLayer({ id: "terrain-hs", type: "hillshade", source: "dem-active", paint: hsPaint }, before); }
+    m.setMaxPitch(S.terrain.pitch3d ? 60 : 0);
+    if (S.terrain.pitch3d) {
+      try { m.setTerrain({ source: "dem-active", exaggeration: 1.35 }); } catch { /* ignore */ }
+      if (m.getPitch() < 35) m.easeTo({ pitch: 48, duration: reduceMotion ? 0 : 400 });
+    } else if (m.getPitch() > 0) {
+      m.easeTo({ pitch: 0, duration: reduceMotion ? 0 : 250 });
+    }
+  });
+  if (S.view.name === "home") render();
+}
+function setTerrainSource(srcId) {
+  S.terrain.source = srcId || "off";
+  store.set("terrainSrc", S.terrain.source);
+  if (S.terrain.source === "off" && S.terrain.pitch3d) { S.terrain.pitch3d = false; store.set("pitch3d", false); }
+  applyTerrain();
+}
+function setTerrainMode(mode) { S.terrain.mode = mode; store.set("terrainMode", mode); applyTerrain(); }
+function setPitch3d(on) {
+  S.terrain.pitch3d = !!on; store.set("pitch3d", S.terrain.pitch3d);
+  if (S.terrain.pitch3d && (!S.terrain.source || S.terrain.source === "off")) { S.terrain.source = "mapterhorn_dsm"; store.set("terrainSrc", "mapterhorn_dsm"); }
+  applyTerrain();
+}
+
 function renderStylePop() {
+  const dems = S.terrain.sources?.installed_dems || [];
+  const streams = S.terrain.sources?.streaming || [
+    { id: "mapterhorn_dsm", title: "Mapterhorn Global Terrain (Surface DSM)" },
+    { id: "aws_terrarium_dsm", title: "AWS Open Terrain (SRTM Surface DSM)" },
+  ];
+  const curSrc = S.terrain.source || "off";
   $("#popStyle").innerHTML = `<div class="sec"><h3>Today’s map</h3><div class="style-cards">
       ${Object.entries(BASES).map(([k, b]) => `<button class="style-card" data-base="${k}" aria-pressed="${S.base === k}"><span class="thumb ${k}"></span><span>${b.name}</span></button>`).join("")}</div></div>
-    <div class="sec"><button class="linkish" data-act="openSettings">All settings</button></div>`;
-  $$("[data-base]", $("#popStyle")).forEach(b => b.addEventListener("click", () => { setBase(b.dataset.base); renderStylePop(); $(`#popStyle [data-base="${b.dataset.base}"]`).focus(); }));
+    <div class="sec"><h3>Terrain &amp; bare-earth relief</h3>
+      <label class="field"><span class="small-t muted">Elevation model</span>
+        <select id="terrainSrcSel" aria-label="Elevation model">
+          <option value="off"${curSrc === "off" ? " selected" : ""}>Off</option>
+          <optgroup label="Streaming global DSM (zero download)">
+            ${streams.map(s => `<option value="${esc(s.id)}"${curSrc === s.id ? " selected" : ""}>${esc(s.title)}</option>`).join("")}
+          </optgroup>
+          ${dems.length ? `<optgroup label="Bare-earth, LiDAR &amp; Hub DEMs">
+            ${dems.map(d => `<option value="${esc(d.id)}"${curSrc === d.id ? " selected" : ""}>${esc(d.title)}${d.local ? "" : " (Hub)"}</option>`).join("")}
+          </optgroup>` : ""}
+        </select></label>
+      ${curSrc !== "off" ? `<div class="terrain-chips" role="group" aria-label="Relief shader">
+        ${TERRAIN_MODES.map(([k, lbl]) => `<button type="button" data-tmode="${k}" aria-pressed="${S.terrain.mode === k}">${esc(lbl)}</button>`).join("")}
+        <button type="button" data-pitch3d="1" aria-pressed="${!!S.terrain.pitch3d}">3D tilt</button>
+      </div>` : `<div class="terrain-chips"><button type="button" data-pitch3d="1" aria-pressed="false">Turn on 3D terrain</button></div>`}
+    </div>
+    <div class="sec" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <button class="linkish" data-act="openAerial">Aerials, LiDAR &amp; DEMs</button>
+      <button class="linkish" data-act="openSettings">All settings</button></div>`;
+  $$("[data-base]", $("#popStyle")).forEach(b => b.addEventListener("click", () => { setBase(b.dataset.base); renderStylePop(); $(`#popStyle [data-base="${b.dataset.base}"]`)?.focus(); }));
+  $("#terrainSrcSel")?.addEventListener("change", e => { setTerrainSource(e.target.value); renderStylePop(); $("#terrainSrcSel")?.focus(); });
+  $$("[data-tmode]", $("#popStyle")).forEach(b => b.addEventListener("click", () => { setTerrainMode(b.dataset.tmode); renderStylePop(); $(`#popStyle [data-tmode="${b.dataset.tmode}"]`)?.focus(); }));
+  $$("[data-pitch3d]", $("#popStyle")).forEach(b => b.addEventListener("click", () => { setPitch3d(!S.terrain.pitch3d); renderStylePop(); }));
   wire($("#popStyle"));
 }
 function renderLayersPop(keepFocus = false) {
@@ -3807,12 +4142,22 @@ document.addEventListener("focusin", e => {
 // /api/library/custom/<id>/points saves the matched spots and queues the build, /edit renames, /api/settings reports
 // where data is kept and how much space it uses. Your own maps are library entries with series "custom" (S.lib), so
 // they show in the Old maps card and on the map like any other installed map.
-const CUSTOM_KIND_WORDS = { geotiff: "GeoTIFF", geopdf: "GeoPDF", scan: "Scan" };
+const CUSTOM_KIND_WORDS = { geotiff: "GeoTIFF", geopdf: "GeoPDF", scan: "Scan", dem: "Elevation / LiDAR DEM" };
 const UPLOAD_MAX = 2 * 1024 ** 3; // the server's limit
 const customMaps = () => S.lib.maps.filter(m => m.custom);
 const sizeText = b => fmtMB(b) || "0 MB";
 // up: the upload in flight ({ name, loaded, total, xhr }); err: why the last one failed; disk: GET /api/settings.
 S.cm = { up: null, err: "", disk: null, diskErr: "" };
+const CACHE_LIMITS = [
+  [250 * 1024 * 1024, "250 MB"],
+  [500 * 1024 * 1024, "500 MB"],
+  [1024 ** 3, "1 GB"],
+  [2 * 1024 ** 3, "2 GB"],
+  [5 * 1024 ** 3, "5 GB"],
+  [10 * 1024 ** 3, "10 GB"],
+  [20 * 1024 ** 3, "20 GB"],
+];
+S.cache = { data: null, err: "", clearAsk: false };
 
 function openSettings(sel = null) {
   const from = document.activeElement;
@@ -3820,8 +4165,45 @@ function openSettings(sel = null) {
   show("settings", { sel, confirm: null, keyOpen: false });
   if (from && from !== document.body && !$("#panel").contains(from)) S.opener = from;
   focusCard();
-  loadLibrary(); loadSettings();
+  loadLibrary(); loadSettings(); loadHub(); loadLocalKeys(); loadLogs(); loadCacheStatus();
   if (sel) reveal($(`#view [data-lib-row="${CSS.escape(sel)}"]`));
+}
+async function loadLogs() {
+  try { S.logs = { ...(await api("/api/logs")), loaded: true }; }
+  catch { S.logs.loaded = true; }
+  const el = $("#setLogs");
+  if (el && S.view.name === "settings") el.innerHTML = logsHTML();
+}
+function logsHTML() {
+  const lg = S.logs || {}, lines = lg.lines || [], hlines = lg.hub_lines || [];
+  const allText = [...lines, ...(hlines.length ? ["--- HUB LOG ---", ...hlines] : [])].join("\n");
+  return `<div class="stack" style="gap:8px">
+    <div class="row" style="gap:6px;flex-wrap:wrap">
+      <button class="btn small" type="button" data-act="refreshLogs">Refresh logs</button>
+      ${allText ? `<button class="btn small" type="button" data-act="copyLogs">Copy logs</button>` : ""}
+      ${lines.length ? `<button class="btn small" type="button" data-act="clearLogs">Clear local log</button>` : ""}
+    </div>
+    ${lg.path ? `<div class="small-t muted mono" style="word-break:break-all">${esc(lg.path)}</div>` : ""}
+    <pre class="mono small-t" style="margin:0;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-word">${lines.length ? esc(lines.join("\n")) : "No local errors logged."}</pre>
+    ${lg.hub_path ? `<div class="small-t muted mono" style="word-break:break-all">${esc(lg.hub_path)} (Hub)</div>
+      <pre class="mono small-t" style="margin:0;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);max-height:180px;overflow:auto;white-space:pre-wrap;word-break:break-word">${hlines.length ? esc(hlines.join("\n")) : "No Hub errors logged."}</pre>` : ""}
+  </div>`;
+}
+ACTIONS.refreshLogs = async () => { await loadLogs(); toast("Refreshed error logs"); };
+ACTIONS.clearLogs = async () => {
+  try { S.logs = { ...(await api("/api/logs/clear", { method: "POST", body: {} })), loaded: true }; }
+  catch (e) { toast(e.message, 4000); return; }
+  const el = $("#setLogs"); if (el) el.innerHTML = logsHTML();
+  toast("Cleared local error log");
+};
+ACTIONS.copyLogs = () => {
+  const lg = S.logs || {};
+  const txt = [...(lg.lines || []), ...(lg.hub_lines?.length ? ["--- HUB LOG ---", ...lg.hub_lines] : [])].join("\n");
+  copyText(txt || "No errors logged.", "diagnostics");
+};
+async function loadLocalKeys() {
+  try { S.localKeys = { ...(await api("/api/local-keys")), loaded: true }; settingsRefresh(); }
+  catch { S.localKeys.loaded = true; }
 }
 async function loadSettings() {
   try { S.cm.disk = await api("/api/settings"); S.cm.diskErr = ""; }
@@ -3829,23 +4211,61 @@ async function loadSettings() {
   const el = $("#setDisk");
   if (el && S.view.name === "settings") el.innerHTML = storageHTML();
 }
+async function loadCacheStatus() {
+  try { S.cache.data = await api("/api/cache"); S.cache.err = ""; }
+  catch (e) { S.cache.err = e.message; }
+  renderCacheSection();
+}
+function renderCacheSection() {
+  const el = $("#setCache");
+  if (el && S.view.name === "settings") { el.innerHTML = cacheSectionHTML(); wire(el); wireCacheControls(el); }
+}
+// Street and satellite tiles are kept as they are viewed. Whole areas are never downloaded ahead of time: the
+// OpenStreetMap and Esri tile servers' usage policies forbid bulk downloading.
+function cacheSectionHTML() {
+  const c = S.cache.data;
+  if (!c) return `<p class="small-t muted">${S.cache.err ? "Could not read the offline cache: " + esc(S.cache.err) : "Checking…"}</p>`;
+  const by = c.by_base || {}, osm = by.osm || { tiles: 0 }, sat = by.sat || { tiles: 0 };
+  const seg = (label, inner) => `<div class="set-row"><span class="set-k">${label}</span><div class="seg" role="group" aria-label="${label}">${inner}</div></div>`;
+  return `<p class="small-t muted">Street and satellite tiles you look at are kept on this computer, so places you have already visited still show without internet. The map servers' rules don't allow downloading whole areas ahead of time.</p>
+    <div class="group" style="margin-top:0">
+      ${seg("Keep tiles you view", [[true, "On"], [false, "Off"]].map(([v, t]) => `<button data-act="cacheToggle" data-on="${v ? 1 : 0}" aria-pressed="${c.enabled === v}">${t}</button>`).join(""))}
+      <div class="set-row"><label class="set-k" for="cacheMaxSel">Maximum size</label>
+        <select id="cacheMaxSel" class="set-sel">${CACHE_LIMITS.map(([b, lbl]) => `<option value="${b}"${c.max_bytes === b ? " selected" : ""}>${lbl}</option>`).join("")}</select></div>
+      <div class="set-row"><span class="set-k">Stored now</span>
+        <span class="small-t muted">${esc(sizeText(c.used_bytes))} of ${esc(sizeText(c.max_bytes))} · Street ${fmtInt(osm.tiles)} · Satellite ${fmtInt(sat.tiles)} tiles</span></div>
+    </div>
+    <div class="err" id="cacheErr" role="alert">${esc(S.cache.err)}</div>
+    ${S.cache.clearAsk ? `<div class="confirm-box" role="alertdialog" aria-label="Clear the base-map cache">
+      <span>Delete all ${fmtInt(c.tile_count)} kept street and satellite tiles (${esc(sizeText(c.used_bytes))})? Your old maps and records stay.</span>
+      <div class="row"><button class="btn small danger solid" data-act="cacheClearYes">Delete tiles</button><button class="btn small" data-act="cacheClearNo">Keep them</button></div></div>`
+      : c.tile_count ? `<div class="row"><button class="btn small danger" data-act="cacheClearAsk">Clear base-map cache…</button></div>` : ""}`;
+}
+function wireCacheControls(root) {
+  $("#cacheMaxSel", root)?.addEventListener("change", async e => {
+    try { S.cache.data = await api("/api/cache/config", { method: "POST", body: { max_bytes: +e.target.value } }); S.cache.err = ""; }
+    catch (x) { S.cache.err = x.message; }
+    renderCacheSection(); loadSettings();
+  });
+}
 function storageHTML() {
   const s = S.cm.disk;
   if (!s) return `<p class="small-t muted">${S.cm.diskErr ? "Could not check the space used: " + esc(S.cm.diskErr) : "Checking…"}</p>`;
   const d = s.disk || {}, row = (k, v, cls = "") => `<div class="set-row"><span class="set-k">${k}</span><span class="${cls}">${v}</span></div>`;
   return `<div class="group">${row("Kept in", esc(s.data_folder), "mono set-path")}${row("Old maps", sizeText(d.maps))}${row("Records", sizeText(d.records))}
-    ${row("Downloads", sizeText(d.downloads))}${row("<b>Total</b>", `<b>${sizeText(d.total)}</b>`)}</div>
+    ${row("Downloads", sizeText(d.downloads))}${d.base_cache != null ? row("Base-map cache", sizeText(d.base_cache)) : ""}${row("<b>Total</b>", `<b>${sizeText(d.total)}</b>`)}</div>
     <p class="small-t muted">Downloads are the files maps were built from. Removing a map frees its space.</p>`;
 }
 
 const settingsSig = () => JSON.stringify([S.lib.loaded, S.lib.err, customMaps().map(m => [m.id, m.state, m.title, m.year, m.kind, !!m.bounds, m.error]),
-  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, store.get("theme", "auto"), scrollMode(), S.rec.key, S.eraA]);
+  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, store.get("theme", "auto"), scrollMode(), autoGcpThresh(), autoGcpMode(), S.rec.key, S.eraA,
+  S.hub.configured, S.hub.connected, S.hub.url, S.hub.auto_push, S.hub.layers?.length || 0, S.hub.err, S.hub.admin, S.hub.justCreatedKey, S.localKeys]);
 let settingsLastSig = "";
 // Redraws the card when something it shows changed; otherwise only moves the progress rings. A field being typed in is
 // never torn out from under the caret.
 function settingsRefresh(force = false) {
   if (S.view.name !== "settings") return;
-  const typing = $("#view").contains(document.activeElement) && document.activeElement.matches("input");
+  const typing = $("#view").contains(document.activeElement) && document.activeElement.matches("input, textarea, select");
   // Unsaved text in a Name or Year box also holds the redraw back, whether or not it has focus.
   const dirty = [...document.querySelectorAll("#view .cm-edit input")].some(i => i.value !== i.defaultValue);
   if ((force || settingsSig() !== settingsLastSig) && !typing && !dirty) { rerenderKeepingFocus(); loadSettings(); }
@@ -3886,11 +4306,143 @@ function cmDetail(m) {
       <label class="field"><span>Year (optional)</span><input type="number" name="myear" min="1800" max="2100" inputmode="numeric" placeholder="e.g. 1968" value="${m.year ? esc(m.year) : ""}"></label>
       <div class="row"><button class="btn small primary" type="submit">Save</button></div>
       <div class="err" role="alert"></div></form>
-    <div class="row">${m.state === "needs_points" ? "" : m.kind === "scan" ? `<button class="btn small" data-act="cmPlace" data-id="${id}">Place again</button>` : ready ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : ""}
-      ${ready && m.bounds ? `<button class="btn small" data-act="cmFit" data-id="${id}">Zoom to map</button>` : ""}
-      <button class="btn small danger" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button></div>
+    <div class="row lib-acts">${ready && m.bounds ? `<button class="btn small" data-act="cmFit" data-id="${id}">Zoom to map</button>` : ""}
+      ${m.state === "needs_points" ? "" : m.kind === "scan" ? `<button class="btn small" data-act="cmPlace" data-id="${id}">Place again</button>` : ready && m.kind !== "dem" && m.kind !== "mosaic" ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : ""}
+      ${ready && m.kind === "dem" ? `<button class="btn small primary" data-act="useDem" data-id="${id}">Show relief</button>` : ""}
+      ${ready && S.hub.connected ? `<button class="btn small" data-act="hubPushOne" data-id="${id}" data-vis="hub">Cache to Hub</button>` : ""}
+      <button class="btn small danger push-end" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button></div>
+    ${m.kind === "scan" && ready ? chainHTML(m) : ""}
     ${confirm}</div>`;
 }
+// ---------------------------------------------------------------- strip chaining
+// A survey frame's title names its mission and frame number (SHD: "…HV741__0002__V.jpg").
+const STRIP_RE = /(SHDAI__[A-Z0-9_]+?)__(\d{3,5})__/i;
+const stripOf = m => { const r = STRIP_RE.exec(m?.title || "") || STRIP_RE.exec(m?.original_title || ""); return r ? { mission: r[1].toUpperCase(), frame: +r[2] } : null; };
+const placedFrame = m => (m?.points || []).length >= 3;
+function stripSiblingsToPlace(m) {
+  const k = stripOf(m);
+  if (!k) return 0;
+  return (S.lib.maps || []).filter(x => x.custom && x.kind === "scan" && !placedFrame(x) && stripOf(x)?.mission === k.mission).length;
+}
+function stripPlacedCount(m) {
+  const k = stripOf(m);
+  if (!k) return 0;
+  return (S.lib.maps || []).filter(x => x.custom && x.kind === "scan" && placedFrame(x) && stripOf(x)?.mission === k.mission).length;
+}
+const fmtFrame = n => String(n).padStart(4, "0");
+function chainRefresh() { if (S.view.name === "settings") settingsRefresh(true); else rerenderKeepingFocus(); }
+function chainHTML(m) {
+  if (!placedFrame(m) || !stripOf(m)) return "";
+  const c = S.chain?.id === m.id ? S.chain : null, todo = stripSiblingsToPlace(m), placed = stripPlacedCount(m);
+  const mosaicBtn = placed >= 2
+    ? `<button class="btn small" data-act="stripMosaic" data-id="${esc(m.id)}"${S.mosaicBusy === m.id ? " disabled" : ""}>${S.mosaicBusy === m.id ? "Building mosaic…" : "Build strip mosaic"}</button>`
+    : "";
+  if (!c) {
+    if (!todo && S.hub.connected) {
+      return `<div class="chain-box"><p class="small-t muted">Teammates may have shared more frames of this strip on the Hub. Chaining there places them from this one.</p>
+      <div class="row"><button class="btn small" data-act="chainPlan" data-id="${esc(m.id)}">Chain on the Hub</button>${mosaicBtn}</div></div>`;
+    }
+    if (todo) {
+      return `<div class="chain-box"><p class="small-t muted">${todo} other frame${todo === 1 ? "" : "s"} of this strip ${todo === 1 ? "is" : "are"} not placed yet. Neighbouring frames overlap, so they can be placed from this one.</p>
+      <div class="row"><button class="btn small" data-act="chainPlan" data-id="${esc(m.id)}">Place strip neighbours</button>${mosaicBtn}</div></div>`;
+    }
+    return mosaicBtn
+      ? `<div class="chain-box"><p class="small-t muted">${placed} frames of this strip are placed. Combine them into one composite mosaic.</p>
+      <div class="row">${mosaicBtn}</div></div>`
+      : "";
+  }
+  if (c.busy) return `<div class="chain-box" role="status"><p class="small-t">Matching neighbouring frames along the strip…</p></div>`;
+  if (c.err) return `<div class="chain-box"><p class="err" role="alert">${esc(c.err)}</p><div class="row">${mosaicBtn}<button class="btn small" data-act="chainClose">Close</button></div></div>`;
+  const plan = c.plan, ok = plan.proposals.filter(p => p.meets_threshold), low = plan.proposals.filter(p => !p.meets_threshold);
+  const name = id => S.lib.byId.get(id)?.title || id;
+  const row = p => `<li><b>Frame ${fmtFrame(p.frame)}</b> · ${p.confidence_pct}% · ${p.inliers} landmarks · from ${fmtFrame(p.from_frame)}${p.hops > 1 ? ` (${p.hops} hops)` : ""}${p.remote ? ` · <span class="muted">a teammate's frame, placed on the Hub</span>` : ""}
+      ${p.meets_threshold || p.remote ? "" : ` <button class="linkish small-t" data-act="chainReview" data-id="${esc(p.id)}" data-anchor="${esc(m.id)}">Review in Placement</button>`}</li>`;
+  const team = plan.hub ? `<p class="small-t muted">Matched on the Hub across the team's frames of this strip${plan.pushed ? `; shared ${plan.pushed} of yours` : ""}${plan.placed_from_hub ? `; ${plan.placed_from_hub} already placed by teammates` : ""}.</p>` : "";
+  const pull = plan.team_frames ? `<button class="btn small" data-act="chainPull" data-id="${esc(m.id)}"${c.pulling ? " disabled" : ""}>${c.pulling ? "Downloading…" : `Get ${plan.team_frames} team frame${plan.team_frames === 1 ? "" : "s"}`}</button>` : "";
+  const stops = plan.stops.filter(st => !low.some(p => p.id === st.id));
+  return `<div class="chain-box" role="group" aria-label="Place strip neighbours">
+    ${c.placed ? `<p class="small-t">Placed ${c.placed} frame${c.placed === 1 ? "" : "s"} from this one; ${c.placed === 1 ? "it is" : "they are"} being built.</p>` : ""}
+    ${team}
+    ${plan.proposals.length ? `<ul class="chain-list">${plan.proposals.map(row).join("")}</ul>` : c.placed ? "" : `<p class="small-t muted">No unplaced neighbouring frames could be matched.</p>`}
+    ${stops.map(st => `<p class="small-t muted">Stopped at frame ${fmtFrame(st.frame)} (${esc(name(st.id))}): ${esc(st.reason)} Place it by hand, then chain again.</p>`).join("")}
+    ${low.length ? `<p class="small-t muted">Below your ${Math.round(plan.threshold * 100)}% threshold: open it in Placement with the matched points filled in, check them, then save.</p>` : ""}
+    <div class="row">${ok.length ? `<button class="btn small primary" data-act="chainApply" data-id="${esc(m.id)}"${c.applying ? " disabled" : ""}>${c.applying ? "Placing…" : `Place ${ok.length} frame${ok.length === 1 ? "" : "s"}`}</button>` : ""}
+      ${pull}${mosaicBtn}<button class="btn small" data-act="chainClose">Close</button></div></div>`;
+}
+async function chainApply(anchorId, proposals) {
+  const keep = ["id", "points", "from_id", "from_frame", "confidence", "inliers", "remote", "hub_id", "from_hub_id"];
+  const apply = proposals.map(p => Object.fromEntries(keep.filter(k => p[k] !== undefined).map(k => [k, p[k]])));
+  const lib = await api(`/api/library/custom/${encodeURIComponent(anchorId)}/chain`, { method: "POST", body: { apply } });
+  applyLibrary(lib);
+  if (lib.hub_error) toast(`Placed here, but the Hub could not place the teammates' frames: ${lib.hub_error}`, 7000);
+  return proposals.length;
+}
+ACTIONS.chainPull = async el => {
+  const id = el.dataset.id, c = S.chain;
+  if (!c?.plan || c.id !== id) return;
+  S.chain = { ...c, pulling: true }; chainRefresh();
+  try {
+    const res = await api(`/api/library/custom/${encodeURIComponent(id)}/hub-pull`, { method: "POST", body: {} });
+    applyLibrary(res.library);
+    toast(`Downloaded ${res.pulled} team frame${res.pulled === 1 ? "" : "s"} of this strip.`, 5000);
+    S.chain = { ...c, pulling: false, plan: { ...c.plan, team_frames: 0 } };
+  } catch (e) { S.chain = { ...c, pulling: false, err: e.message || "Could not download the team's frames." }; }
+  chainRefresh();
+};
+ACTIONS.chainPlan = async el => {
+  const id = el.dataset.id;
+  S.chain = { id, busy: true }; chainRefresh();
+  try {
+    const plan = await api(`/api/library/custom/${encodeURIComponent(id)}/chain`, { method: "POST", body: { confidence_threshold: autoGcpThresh() / 100 } });
+    if (S.chain?.id !== id) return;
+    const ok = plan.proposals.filter(p => p.meets_threshold);
+    if (autoGcpMode() === "auto" && ok.length) {
+      S.chain = { id, plan, applying: true }; chainRefresh();
+      const n = await chainApply(id, ok);
+      if (S.chain?.id !== id) return;
+      S.chain = { id, placed: n, plan: { ...plan, proposals: plan.proposals.filter(p => !p.meets_threshold) } };
+      toast(`Placed ${n} strip frame${n === 1 ? "" : "s"} automatically — they are being built.`, 5000);
+    } else S.chain = { id, plan };
+  } catch (e) { if (S.chain?.id === id) S.chain = { id, err: e.message || "Chaining failed." }; }
+  chainRefresh();
+};
+ACTIONS.chainApply = async el => {
+  const id = el.dataset.id, c = S.chain;
+  if (!c?.plan || c.id !== id) return;
+  const ok = c.plan.proposals.filter(p => p.meets_threshold);
+  S.chain = { ...c, applying: true }; chainRefresh();
+  try {
+    const n = await chainApply(id, ok);
+    toast(`Placing ${n} strip frame${n === 1 ? "" : "s"} — they will appear in Old maps when built.`, 5000);
+    S.chain = { id, placed: n, plan: { ...c.plan, proposals: c.plan.proposals.filter(p => !p.meets_threshold) } };
+  } catch (e) { S.chain = { ...c, applying: false, err: e.message || "Could not place the frames." }; }
+  chainRefresh();
+};
+ACTIONS.chainReview = el => {
+  const p = S.chain?.plan?.proposals.find(x => x.id === el.dataset.id), m = S.lib.byId.get(el.dataset.id);
+  if (!p || !m) return;
+  openPlacement({ ...m, points: p.points, warp_mode: "homography" }, el);
+};
+ACTIONS.chainClose = () => { S.chain = null; chainRefresh(); };
+ACTIONS.stripMosaic = async el => {
+  const id = el.dataset.id;
+  if (!id || S.mosaicBusy) return;
+  S.mosaicBusy = id;
+  chainRefresh();
+  try {
+    const res = await api(`/api/library/custom/${encodeURIComponent(id)}/mosaic`, { method: "POST", body: {} });
+    if (res?.map?.id) awaitingRebuild.add(res.map.id);
+    if (res?.library) applyLibrary(res.library);
+    else if (res?.maps) applyLibrary(res);
+    toast("Composite strip mosaic is ready.", 5000);
+  } catch (e) {
+    toast(e.message || "Could not build strip mosaic.", 6000);
+  } finally {
+    S.mosaicBusy = null;
+    chainRefresh();
+  }
+};
+
 function cmRow(m) {
   const sel = S.view.sel === m.id, id = esc(m.id);
   return `<li class="lib-row${sel ? " sel" : ""}" data-lib-row="${id}">
@@ -3918,36 +4470,813 @@ function keySectionHTML() {
     <div class="row"><button class="btn small" data-act="setKeyAdd">${k.present ? "Replace the key" : "Add a Kaggle key"}</button>
     ${k.present && k.source === "env file" ? `<button class="btn small" data-act="recKeyForget">Forget the key</button>` : ""}</div>`;
 }
+function localKeysSectionHTML() {
+  const lk = S.localKeys || {};
+  return `<details><summary class="small-t" style="cursor:pointer;color:var(--accent)">USGS EarthExplorer, NASA Earthdata &amp; contact${lk.has_usgs_token || lk.has_earthdata_token ? " · saved" : ""}</summary>
+    <form id="localKeysForm" class="stack" style="margin-top:10px" autocomplete="off">
+      <p class="small-t muted" style="margin:0">Used only when you are not connected to a Hub server (when connected to a Hub, the Hub uses its own vaulted keys instead).</p>
+      <label class="field"><span>USGS EarthExplorer username</span><input type="text" name="uuser" value="${esc(lk.usgs_username || "")}" placeholder="EarthExplorer username"></label>
+      <label class="field"><span>USGS M2M token ${lk.has_usgs_token ? '<span class="hub-badge">Saved</span>' : ""}</span><input type="password" name="utok" placeholder="${lk.has_usgs_token ? "Leave blank to keep saved token" : "Paste M2M application token"}"></label>
+      <label class="field"><span>NASA Earthdata token ${lk.has_earthdata_token ? '<span class="hub-badge">Saved</span>' : ""}</span><input type="password" name="etok" placeholder="${lk.has_earthdata_token ? "Leave blank to keep saved token" : "Optional Bearer token"}"></label>
+      <label class="field"><span>Archive contact email / URL (optional)</span><input type="text" name="contact" value="${esc(lk.contact || "")}" placeholder="researcher@example.org"></label>
+      <div class="row"><button class="btn small primary" type="submit">Save local keys</button>
+        ${lk.has_usgs_token || lk.has_earthdata_token ? `<button class="btn small" type="button" data-act="clearLocalKeys">Clear tokens</button>` : ""}</div>
+      <div class="err" id="localKeysErr" role="alert"></div>
+    </form></details>`;
+}
+
+function hubAdminHTML() {
+  const adm = S.hub.admin;
+  if (!adm) return "";
+  const v = adm.vault || {}, keys = adm.keys || [], feeds = v.proprietary_sources || [];
+  const newKey = S.hub.justCreatedKey;
+  return `<div class="stack" style="gap:10px;margin-top:8px;padding-top:10px;border-top:1px solid var(--line)">
+    <div class="row" style="justify-content:space-between"><b class="small-t">Server Administration</b><span class="hub-badge">Admin access</span></div>
+    <p class="small-t muted" style="margin:0">Manage all Hub server keys, proprietary feeds, and user access directly from here — no Railway or server console needed.</p>
+
+    <details class="set-disclose"><summary class="sub-head">Archive keys on the server (USGS, Kaggle, NASA)</summary>
+      <form id="hubSecretsForm" class="stack" style="margin-top:10px" autocomplete="off">
+        <div class="set-grid-2">
+          <label class="field"><span>USGS EarthExplorer username (CORONA / KH-7 / KH-9)</span><input type="text" name="usgs_u" value="${esc(v.usgs_username || "")}" placeholder="EROS username"></label>
+          <label class="field"><span>USGS M2M token ${v.has_usgs_token ? '<span class="hub-badge">Saved on Hub</span>' : ""}</span><input type="password" name="usgs_t" placeholder="${v.has_usgs_token ? "Leave blank to keep current token" : "Paste USGS M2M token"}"></label>
+          <label class="field"><span>Kaggle username (THOR air strikes)</span><input type="text" name="kag_u" value="${esc(v.kaggle_username || "")}" placeholder="Kaggle username"></label>
+          <label class="field"><span>Kaggle API key ${v.has_kaggle_key ? '<span class="hub-badge">Saved on Hub</span>' : ""}</span><input type="password" name="kag_k" placeholder="${v.has_kaggle_key ? "Leave blank to keep current key" : "Paste Kaggle key"}"></label>
+          <label class="field"><span>NASA Earthdata Bearer token ${v.has_earthdata_token ? '<span class="hub-badge">Saved on Hub</span>' : ""}</span><input type="password" name="ed_t" placeholder="${v.has_earthdata_token ? "Leave blank to keep current token" : "Paste Earthdata token"}"></label>
+          <label class="field"><span>Polite User-Agent contact email / URL</span><input type="text" name="contact" value="${esc(v.contact || "")}" placeholder="team@example.org"></label>
+        </div>
+        <label class="switch"><input type="checkbox" name="allow_nc" ${v.allow_nc_sources !== false ? "checked" : ""}><span class="tog" aria-hidden="true"></span><span>Serve non-commercial research maps (CNRS / SHD Indochina)</span></label>
+        <div class="row" style="flex-wrap:wrap"><button class="btn small primary" type="submit">Save server settings</button>
+          ${v.has_usgs_token ? `<button class="btn small" type="button" data-act="hubClearSecret" data-k="USGS_M2M_TOKEN">Clear USGS token</button>` : ""}
+          ${v.has_kaggle_key ? `<button class="btn small" type="button" data-act="hubClearSecret" data-k="KAGGLE_KEY">Clear Kaggle key</button>` : ""}
+          ${v.has_earthdata_token ? `<button class="btn small" type="button" data-act="hubClearSecret" data-k="EARTHDATA_TOKEN">Clear NASA token</button>` : ""}</div>
+        <div class="err" id="hubSecErr" role="alert"></div>
+      </form></details>
+
+    <details class="set-disclose"><summary class="sub-head">Private tile &amp; LiDAR DEM feeds (${feeds.length})</summary>
+      <div class="stack" style="margin-top:10px">
+        ${feeds.length ? `<ul class="list">${feeds.map(f => `<li style="padding:8px 10px"><div class="grow">
+          <div class="t">${esc(f.title)} <span class="small-t muted mono">(${esc(f.id)})</span></div>
+          <div class="m mono" style="word-break:break-all">${esc(f.tiles_masked)}</div>
+          <div class="m">${f.encoding === "terrarium" ? "Elevation DEM (Terrarium)" : "Visual imagery"} · z${f.maxzoom} · ${f.stream_only ? "Stream only" : "Stream + offline"}</div></div>
+          <button class="btn small danger" data-act="hubDelProp" data-id="${esc(f.id)}">Remove</button></li>`).join("")}</ul>` : `<p class="small-t muted" style="margin:0">No custom tile feeds added yet. Add Planet, Maxar, Mapbox, or private LiDAR XYZ URLs here; the Hub vaults the API key and caches every viewed tile forever.</p>`}
+        <form id="hubPropForm" class="stack" autocomplete="off" style="padding-top:6px">
+          <div class="row" style="gap:8px"><label class="field grow"><span>Feed ID</span><input type="text" name="pid" required placeholder="planet_2025"></label>
+            <label class="field grow"><span>Display title</span><input type="text" name="ptitle" required placeholder="Planet Basemap 2025"></label></div>
+          <label class="field"><span>XYZ Tile URL template ({z}/{x}/{y} + secret key)</span><input type="text" name="ptiles" required placeholder="https://…/{z}/{x}/{y}.png?api_key=SECRET"></label>
+          <div class="row" style="gap:8px;flex-wrap:wrap">
+            <label class="field"><span>Kind</span><select name="penc"><option value="">Visual map / imagery</option><option value="terrarium">Elevation / LiDAR DEM (Terrarium)</option></select></label>
+            <label class="field"><span>Format</span><select name="pfmt"><option value="webp">WebP</option><option value="png">PNG</option><option value="jpg">JPEG</option></select></label>
+            <label class="field"><span>Max zoom</span><input type="number" name="pz" min="1" max="22" value="18" style="width:70px"></label>
+          </div>
+          <label class="field"><span>Credit / attribution</span><input type="text" name="pattr" placeholder="© Provider"></label>
+          <label class="switch"><input type="checkbox" name="pstream" checked><span class="tog" aria-hidden="true"></span><span>Stream only (prevent full pack download)</span></label>
+          <div class="row"><button class="btn small primary" type="submit">Save feed on Hub</button></div>
+          <div class="err" id="hubPropErr" role="alert"></div>
+        </form>
+      </div></details>
+
+    <details class="set-disclose" ${newKey ? "open" : ""}><summary class="sub-head">People &amp; API keys (${keys.filter(k => k.active).length} active)</summary>
+      <div class="stack" style="margin-top:10px">
+        ${newKey ? `<div class="confirm-box calm" role="status">
+          <span><b>New key created for ${esc(newKey.label)}:</b> copy it now — for security it is never shown again.</span>
+          <div class="mono" style="word-break:break-all;padding:6px 8px;background:var(--surface-2);border-radius:8px;font-size:12px">${esc(newKey.token)}</div>
+          <div class="row"><button class="btn small primary" data-act="copy" data-what="Hub API key" data-text="${esc(newKey.token)}">Copy API key</button>
+            <button class="btn small" data-act="hubDismissKey">Done</button></div></div>` : ""}
+        <form id="hubKeyForm" class="stack" autocomplete="off">
+          <label class="field"><span>Person or device name</span><input type="text" name="klabel" required placeholder="e.g. Field Laptop — Researcher A"></label>
+          <div class="row" style="gap:8px;flex-wrap:wrap">
+            <label class="field grow"><span>Access level</span><select name="krole">
+              <option value="read,request_build,upload">Contributor (view, build &amp; upload maps)</option>
+              <option value="read">Viewer (read &amp; stream only)</option>
+              <option value="read,request_build,upload,admin">Admin (full server control)</option>
+            </select></label>
+            <label class="field"><span>Group tag (optional)</span><input type="text" name="kgroup" placeholder="e.g. team1" style="width:110px"></label>
+          </div>
+          <div class="row"><button class="btn small primary" type="submit">Create API key</button></div>
+          <div class="err" id="hubKeyErr" role="alert"></div>
+        </form>
+        ${keys.length ? `<ul class="list">${keys.map(k => `<li style="padding:8px 10px"><div class="grow">
+          <div class="t">${esc(k.label)} <span class="small-t muted mono">(${esc(k.key_id)})</span></div>
+          <div class="m">${esc((k.scopes || []).join(", "))}${k.group_tag ? ` · group: ${esc(k.group_tag)}` : ""} · ${k.active ? "Active" : "Revoked"}</div></div>
+          ${k.active && k.key_id !== "adminenv" ? `<button class="btn small danger" data-act="hubRevokeKey" data-id="${esc(k.key_id)}">Revoke</button>`
+            : k.key_id === "adminenv" ? `<span class="small-t muted">Env password</span>` : ""}</li>`).join("")}</ul>` : ""}
+      </div></details>
+  </div>`;
+}
+
+function hubSectionHTML() {
+  const h = S.hub;
+  const localInstalled = S.lib.maps.filter(m => m.state === "installed");
+  const allHubLayers = (h.layers || []).filter(l => !String(l.id).startsWith("prop_"));
+  if (h.configured && h.connected) {
+    const caps = h.me?.capabilities || {}, st = h.me?.stats || {};
+    const isAdmin = !!h.me?.scopes?.includes("admin");
+    const capBits = [caps.usgs_m2m ? "USGS M2M" : "", caps.kaggle ? "Kaggle" : "", caps.earthdata ? "NASA Earthdata" : "", caps.proprietary_count ? `${caps.proprietary_count} custom feed${caps.proprietary_count === 1 ? "" : "s"}` : ""].filter(Boolean);
+    return `<div class="stack" style="gap:10px">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+        <span class="hub-badge">Connected · ${esc(h.me?.label || h.url)}</span>
+        <span class="small-t muted mono">${esc(h.url)}</span>
+      </div>
+      <p class="small-t muted" style="margin:0">Infinite server cache: <b>${st.layers || 0}</b> map/DEM packs (${esc(sizeText(st.layer_bytes))}), <b>${st.raw_blobs || 0}</b> archive responses (${esc(sizeText(st.raw_bytes))})${st.disk_free_bytes ? ` · <b>${esc(sizeText(st.disk_free_bytes))}</b> free on Hub disk` : ""}. ${capBits.length ? `Server keys ready: <b>${esc(capBits.join(", "))}</b>.` : ""}</p>
+      <label class="switch"><input type="checkbox" data-act="hubAutoPush" ${h.auto_push ? "checked" : ""}><span class="tog" aria-hidden="true"></span><span>Automatically cache newly imported &amp; aligned local maps to Hub</span></label>
+      <div class="row" style="flex-wrap:wrap;gap:8px">
+        ${localInstalled.length ? `<label class="small-t muted" style="display:inline-flex;align-items:center;gap:6px">Share as
+          <select class="txt compact" id="hubVisSel" aria-label="Visibility on Hub"><option value="hub">All Hub members</option><option value="group">My group</option><option value="private">Private</option></select></label>
+          <button class="btn small primary" data-act="hubPushAll">Cache all ${localInstalled.length} local map${localInstalled.length === 1 ? "" : "s"} to Hub</button>` : ""}
+        <button class="btn small" data-act="hubRefresh">Refresh</button>
+        <button class="btn small" data-act="hubDisconnect">Disconnect</button>
+      </div>
+      ${allHubLayers.length ? `<details class="set-disclose"><summary class="sub-head">Maps &amp; DEMs on the Hub (${allHubLayers.length})</summary>
+        <ul class="list" style="margin-top:6px">${allHubLayers.slice(0, 60).map(l => {
+          const canEdit = isAdmin || (l.owner_key_id && l.owner_key_id === h.me?.key_id);
+          const isDem = l.encoding === "terrarium";
+          return `<li style="padding:8px 10px;flex-wrap:wrap;gap:6px"><div class="grow" style="min-width:160px">
+            <div class="t">${esc(l.title)}</div>
+            <div class="m">${esc(l.series || "Hub archive")} · ${esc(sizeText(l.size_bytes || l.bytes))} · ${l.installed_offline ? "Saved offline" : "Streaming"}</div></div>
+            <div class="row" style="gap:6px;flex-wrap:wrap">
+              <button class="btn small" data-act="${isDem ? "useDem" : "setEra"}" data-id="${esc(l.id)}">${isDem ? "Show relief" : "Show"}</button>
+              ${!l.installed_offline && !l.stream_only ? `<button class="btn small" data-act="hubPull" data-id="${esc(l.id)}">Keep offline</button>` : ""}
+              ${canEdit ? `<select class="txt compact" aria-label="Visibility for ${esc(l.title)}" data-act="hubLayerVis" data-id="${esc(l.id)}">
+                ${["hub", "group", "private"].map(vv => `<option value="${vv}"${l.visibility === vv ? " selected" : ""}>${vv === "hub" ? "All Hub" : vv === "group" ? "Group" : "Private"}</option>`).join("")}</select>
+                <button class="btn small danger" data-act="hubDelLayer" data-id="${esc(l.id)}" aria-label="Delete ${esc(l.title)} from Hub" title="Delete from Hub">${icon.trash}</button>` : ""}
+            </div></li>`;
+        }).join("")}</ul></details>` : ""}
+      ${isAdmin ? hubAdminHTML() : ""}
+    </div>`;
+  }
+  return `<form id="hubForm" class="stack" autocomplete="off">
+    <p class="small-t muted" style="margin:0">Enter your Hub server’s domain or IP address and its password (from <span class="mono">HUB_ADMIN_PASSWORD</span> on Railway) or a collaborator API key. Everything on the server can then be configured right here.</p>
+    ${h.configured && !h.connected ? `<div class="err" role="alert">Saved Hub (${esc(h.url)}) could not be reached${h.err ? ": " + esc(h.err) : ""}.</div>` : ""}
+    <div class="set-grid-2">
+      <label class="field"><span>Server domain or IP address</span><input type="text" name="hurl" required placeholder="my-hub.up.railway.app" title="A domain, or an IP address and port such as 192.168.1.50:8780" value="${esc(h.url || "")}"></label>
+      <label class="field"><span>Password or API key</span><input type="password" name="hkey" ${h.configured ? "" : "required"} placeholder="${h.configured ? "Leave blank to keep saved password/key" : "Server password or mvhub_… key"}"></label>
+    </div>
+    <label class="switch"><input type="checkbox" name="hauto" ${h.auto_push ? "checked" : ""}><span class="tog" aria-hidden="true"></span><span>Auto-cache local maps to Hub</span></label>
+    <div class="row"><button class="btn small primary" type="submit">Connect</button>
+      ${h.configured ? `<button class="btn small" type="button" data-act="hubDisconnect">Forget Hub</button>` : ""}</div>
+    <div class="err" id="hubFormErr" role="alert"></div></form>`;
+}
+async function loadHub() {
+  try { applyHub(await api("/api/hub")); }
+  catch (e) { S.hub.err = e.message; S.hub.loaded = true; }
+}
+function applyHub(r) {
+  const prevIds = (S.hub.layers || []).map(l => l.id);
+  S.hub = { ...S.hub, ...r, err: r.error || "", loaded: true };
+  const visSet = new Set(visualLayers().map(l => l.id));
+  for (const id of prevIds) if (!visSet.has(id)) eachMap(m => removeEraLayer(m, id));
+  syncEraLayers();
+  loadTerrainSources();
+  settingsRefresh();
+  if (["home", "era"].includes(S.view.name)) render();
+}
+ACTIONS.hubAutoPush = async el => {
+  try { applyHub(await api("/api/hub/auto-push", { method: "POST", body: { auto_push: !!el.checked } })); toast(el.checked ? "Local maps will auto-cache to Hub" : "Auto-cache turned off"); }
+  catch (e) { el.checked = !el.checked; toast(e.message, 5000); }
+};
+ACTIONS.hubDisconnect = async () => {
+  try { applyHub(await api("/api/hub/config", { method: "DELETE" })); toast("Disconnected from Hub (cached tiles kept on disk)"); }
+  catch (e) { toast(e.message, 5000); }
+};
+ACTIONS.hubPushAsk = el => { S.view.pushAsk = el.dataset.id; render(); };
+ACTIONS.hubPushCancel = () => { S.view.pushAsk = null; render(); };
+ACTIONS.hubPushOne = async el => {
+  const id = el.dataset.id, vis = el.dataset.vis || $("#hubVisSel")?.value || "hub";
+  if (!id || el.disabled) return;
+  const prev = el.textContent; el.disabled = true; el.textContent = "Caching…";
+  try {
+    const r = await api("/api/hub/push", { method: "POST", body: { id, visibility: vis } });
+    if (S.view.pushAsk) S.view.pushAsk = null;
+    applyHub(r);
+    toast("Cached permanently on Hub");
+  } catch (e) { toast("Could not cache to Hub: " + e.message, 5000); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.hubPushAll = async el => {
+  const ids = S.lib.maps.filter(m => m.state === "installed").map(m => m.id);
+  const vis = $("#hubVisSel")?.value || "hub";
+  if (!ids.length || el.disabled) return;
+  const prev = el.textContent; el.disabled = true; el.textContent = "Caching…";
+  try {
+    const r = await api("/api/hub/push", { method: "POST", body: { ids, visibility: vis } });
+    applyHub(r);
+    toast(`Cached ${ids.length} map${ids.length === 1 ? "" : "s"} permanently on Hub`);
+  } catch (e) { toast("Could not cache all maps: " + e.message, 5000); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.hubPull = async el => {
+  const id = el.dataset.id; if (!id || el.disabled) return;
+  const prev = el.textContent; el.disabled = true; el.textContent = "Saving…";
+  try {
+    const r = await api("/api/hub/pull", { method: "POST", body: { id } });
+    applyHub(r);
+    await refreshCatalog();
+    await loadLibrary();
+    toast("Saved full map offline on this computer");
+  } catch (e) { toast("Could not save offline: " + e.message, 5000); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.hubRefresh = async () => { await loadHub(); toast("Refreshed Hub status"); };
+ACTIONS.hubDismissKey = () => { S.hub.justCreatedKey = null; settingsRefresh(true); };
+ACTIONS.hubDelAsk = el => { S.view.delHubAsk = el.dataset.id; render(); };
+ACTIONS.hubDelCancel = () => { S.view.delHubAsk = null; render(); };
+ACTIONS.hubDelLayer = async el => {
+  const id = el.dataset.id; if (!id || el.disabled) return;
+  el.disabled = true;
+  try {
+    const r = await api("/api/hub/layer/delete", { method: "POST", body: { id } });
+    if (S.view.delHubAsk) S.view.delHubAsk = null;
+    applyHub(r);
+    if (S.view.name === "era" && !eraById(id)) show("home");
+    else settingsRefresh(true);
+    toast("Removed layer from Hub");
+  } catch (e) { el.disabled = false; toast("Could not remove from Hub: " + e.message, 5000); }
+};
+ACTIONS.hubLayerVis = async el => {
+  const id = el.dataset.id, visibility = el.value;
+  if (!id) return;
+  try {
+    const r = await api("/api/hub/layer/update", { method: "POST", body: { id, visibility } });
+    applyHub(r);
+    toast(`Updated visibility to ${visibility}`);
+  } catch (e) { toast(e.message, 5000); loadHub(); }
+};
+ACTIONS.hubBuildMap = async el => {
+  const id = el.dataset.id; if (!id || el.disabled) return;
+  const prev = el.textContent; el.disabled = true; el.textContent = "Building on Hub…";
+  try {
+    const job = await api("/api/hub/build-map", { method: "POST", body: { id, visibility: "hub" } });
+    if (job.job_id && job.state !== "done") {
+      toast("Hub is downloading & tiling this map onto its disk…", 5000);
+      for (let i = 0; i < 120; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const st = await api(`/api/hub/job/${encodeURIComponent(job.job_id)}`);
+        if (st.state === "done") break;
+        if (st.state === "failed") throw new Error(st.error || "Hub build failed.");
+      }
+    }
+    await loadHub();
+    setEra(id);
+    toast("Map built and cached permanently on Hub");
+  } catch (e) { toast("Hub build failed: " + e.message, 5000); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.hubClearSecret = async el => {
+  const k = el.dataset.k; if (!k) return;
+  try {
+    const r = await api("/api/hub/admin/secrets", { method: "POST", body: { [k]: "" } });
+    applyHub(r);
+    settingsRefresh(true);
+    toast("Cleared secret on Hub");
+  } catch (e) { toast(e.message, 5000); }
+};
+ACTIONS.hubDelProp = async el => {
+  const id = el.dataset.id; if (!id) return;
+  try {
+    const r = await api("/api/hub/admin/proprietary/delete", { method: "POST", body: { id } });
+    applyHub(r);
+    settingsRefresh(true);
+    toast("Removed tile feed from Hub");
+  } catch (e) { toast(e.message, 5000); }
+};
+ACTIONS.hubRevokeKey = async el => {
+  const key_id = el.dataset.id; if (!key_id) return;
+  try {
+    const r = await api("/api/hub/admin/keys/revoke", { method: "POST", body: { key_id } });
+    applyHub(r);
+    settingsRefresh(true);
+    toast(`Revoked key ${key_id}`);
+  } catch (e) { toast(e.message, 5000); }
+};
+ACTIONS.clearLocalKeys = async () => {
+  try {
+    S.localKeys = { ...(await api("/api/local-keys", { method: "POST", body: { USGS_M2M_TOKEN: "", EARTHDATA_TOKEN: "" } })), loaded: true };
+    settingsRefresh(true);
+    toast("Cleared local tokens");
+  } catch (e) { toast(e.message, 5000); }
+};
+
+ACTIONS.useDem = el => {
+  const id = el.dataset.id; if (!id) return;
+  if (S.view.name === "settings") show("home");
+  setTerrainSource(id);
+  const b = S.lib.byId.get(id)?.bounds || (S.hub.layers || []).find(l => l.id === id)?.bounds;
+  if (b) primary().fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: mapPadding(), maxZoom: 14, duration: reduceMotion ? 0 : 600 });
+  toast("Showing bare-earth relief");
+};
+
+ACTIONS.autoGcpMode = el => { store.set("autoGcpMode", el.dataset.m === "auto" ? "auto" : "review"); settingsRefresh(true); };
+
 VIEWS.settings = v => {
   settingsLastSig = settingsSig();
-  const theme = store.get("theme", "auto"), mode = scrollMode(), mine = customMaps();
+  const theme = store.get("theme", "auto"), mode = scrollMode(), agMode = autoGcpMode(), agThresh = autoGcpThresh(), mine = customMaps();
   const seg = (label, inner) => `<div class="set-row"><span class="set-k">${label}</span><div class="seg" role="group" aria-label="${label}">${inner}</div></div>`;
-  // Preferences holds only what is set once and left alone: the base map is switched from the style popover,
-  // the outlines from the Old maps card.
-  return `${headHTML("Settings", "Preferences, your own maps and storage")}
-    <h3 class="sub-head">Preferences</h3>
-    <div class="group">
-      ${seg("Appearance", ["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${theme === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join(""))}
-      ${seg("Scrolling", SCROLL_MODES.map(([k, label]) => `<button data-act="scrollMode" data-m="${k}" aria-pressed="${mode === k}">${label}</button>`).join(""))}
+  // Everyday settings (look, scrolling, your own maps) in the wide first column; the optional Hub server, archive
+  // keys, storage and the error log, which most people never open, in the second.
+  return `<div class="settings-wrap">
+    ${headHTML("Settings", "Appearance, your own maps, Hub server, archive keys and storage")}
+    <div class="settings-grid">
+      <div class="settings-col">
+        <section class="settings-card">
+          <h3 class="sub-head">Preferences</h3>
+          <div class="group" style="margin-top:0">
+            ${seg("Appearance", ["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${theme === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join(""))}
+            ${seg("Scrolling", SCROLL_MODES.map(([k, label]) => `<button data-act="scrollMode" data-m="${k}" aria-pressed="${mode === k}">${label}</button>`).join(""))}
+          </div>
+          <p class="small-t muted" style="margin:0">Automatic pans on two-finger trackpad slides and zooms on notched scroll wheels. Pick Trackpad or Mouse wheel for smooth-scrolling mice or remote desktop sessions.</p>
+        </section>
+        <section class="settings-card">
+          <h3 class="sub-head">My maps &amp; LiDAR DEMs</h3>
+          <div class="set-block" style="margin-top:0;width:100%">
+            <p class="small-t muted">Add a map or elevation GeoTIFF from your computer. A GeoTIFF, float32 LiDAR DEM, or GeoPDF is placed for you. A photo or scan (JPG, PNG or PDF) is placed by matching spots to today’s map (8+ spots use Thin Plate Spline).</p>
+            <div id="cmUp">${uploadHTML()}</div>
+            <div class="err" id="cmErr" role="alert">${esc(S.cm.err)}</div>
+            ${mine.length ? `<div class="group"><ul class="list lib-list" aria-label="Your own maps">${mine.map(cmRow).join("")}</ul></div>`
+              : S.lib.loaded ? `<p class="small-t muted">You have not added a map of your own yet.</p>` : ""}
+            <div class="group">
+              ${seg("When spots are matched for you", AUTO_GCP_MODES.map(([k, label]) => `<button data-act="autoGcpMode" data-m="${k}" aria-pressed="${agMode === k}">${label}</button>`).join(""))}
+              <div class="set-row"><span class="set-k">Only when at least this sure</span><div class="row" style="gap:8px;align-items:center"><input type="range" id="setThresh" min="50" max="95" step="5" value="${agThresh}" style="width:120px" aria-label="Minimum match confidence for automatic placement"><span id="setThreshVal" class="mono small-t">${agThresh}%</span></div></div>
+            </div>
+            <p class="small-t muted">When a Hub server matches spots on a map for you, a match below <span id="setThreshNote">${agThresh}</span>% always stops in Placement so you can check it.</p>
+          </div>
+        </section>
+      </div>
+      <div class="settings-col">
+        <section class="settings-card">
+          <h3 class="sub-head">Hub server (optional)</h3>
+          <div class="set-block" style="margin-top:0;width:100%">${hubSectionHTML()}</div>
+        </section>
+        <section class="settings-card">
+          <h3 class="sub-head">Archive keys on this computer</h3>
+          <div class="set-block stack" style="gap:10px;margin-top:0;width:100%">${keySectionHTML()}${localKeysSectionHTML()}</div>
+        </section>
+        <section class="settings-card">
+          <h3 class="sub-head">Offline base maps</h3>
+          <div id="setCache" class="set-block" style="margin-top:0;width:100%">${cacheSectionHTML()}</div>
+        </section>
+        <section class="settings-card">
+          <h3 class="sub-head">Storage</h3>
+          <div id="setDisk">${storageHTML()}</div>
+          <p class="foot-note" style="margin-top:4px">Local data stays on this computer unless you connect a Hub server and choose to cache maps there.</p>
+        </section>
+        <section class="settings-card">
+          <details class="set-disclose"><summary class="sub-head">Diagnostics &amp; error log</summary>
+            <div id="setLogs" style="margin-top:10px">${logsHTML()}</div>
+          </details>
+        </section>
+      </div>
     </div>
-    <h3 class="sub-head">Kaggle key</h3>
-    <div class="set-block">${keySectionHTML()}</div>
-    <h3 class="sub-head">My maps</h3>
-    <div class="set-block">
-      <p class="small-t muted">Add a map from your computer. A GeoTIFF or GeoPDF is placed for you. A photo or scan (JPG, PNG or PDF) is placed by matching three or more spots on it to today’s map.</p>
-      <div id="cmUp">${uploadHTML()}</div>
-      <div class="err" id="cmErr" role="alert">${esc(S.cm.err)}</div>
-      ${mine.length ? `<div class="group"><ul class="list lib-list" aria-label="Your own maps">${mine.map(cmRow).join("")}</ul></div>`
-        : S.lib.loaded ? `<p class="small-t muted">You have not added a map of your own yet.</p>` : ""}
-    </div>
-    <h3 class="sub-head">Storage</h3>
-    <div id="setDisk">${storageHTML()}</div>
-    <p class="foot-note">Everything stays on this computer.</p>`;
+  </div>`;
 };
 VIEWS.settings.after = () => {
+  $("#setThresh")?.addEventListener("input", e => {
+    const v = Math.min(95, Math.max(50, Math.round(+e.target.value)));
+    store.set("autoGcpThresh", v);
+    const lbl = $("#setThreshVal"); if (lbl) lbl.textContent = v + "%";
+    const note = $("#setThreshNote"); if (note) note.textContent = v;
+  });
   $("#cmFile")?.addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) cmUpload(f); });
   $$("#view .cm-edit").forEach(f => f.addEventListener("submit", cmSaveEdit));
+  $("#hubForm")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.target, err = $("#hubFormErr"), btn = f.querySelector('button[type="submit"]');
+    err.textContent = ""; btn.disabled = true; btn.textContent = "Connecting…";
+    try {
+      const r = await api("/api/hub/config", { method: "POST", body: { url: f.hurl.value.trim(), api_key: f.hkey.value.trim(), auto_push: !!f.hauto.checked } });
+      applyHub(r);
+      settingsRefresh(true);
+      toast("Connected to Hub server");
+    } catch (x) { err.textContent = x.message; btn.disabled = false; btn.textContent = "Connect"; }
+  });
+  $("#hubSecretsForm")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.target, err = $("#hubSecErr"), btn = f.querySelector('button[type="submit"]');
+    err.textContent = ""; btn.disabled = true;
+    const body = {
+      USGS_USERNAME: f.usgs_u.value.trim(),
+      KAGGLE_USERNAME: f.kag_u.value.trim(),
+      MAPVIETNAM_CONTACT: f.contact.value.trim(),
+      ALLOW_NC_SOURCES: f.allow_nc.checked ? "true" : "false",
+    };
+    if (f.usgs_t.value.trim()) body.USGS_M2M_TOKEN = f.usgs_t.value.trim();
+    if (f.kag_k.value.trim()) body.KAGGLE_KEY = f.kag_k.value.trim();
+    if (f.ed_t.value.trim()) body.EARTHDATA_TOKEN = f.ed_t.value.trim();
+    try {
+      const r = await api("/api/hub/admin/secrets", { method: "POST", body });
+      applyHub(r);
+      settingsRefresh(true);
+      toast("Saved upstream settings on Hub");
+    } catch (x) { err.textContent = x.message; }
+    finally { if (btn.isConnected) btn.disabled = false; }
+  });
+  $("#hubPropForm")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.target, err = $("#hubPropErr"), btn = f.querySelector('button[type="submit"]');
+    err.textContent = ""; btn.disabled = true;
+    try {
+      const r = await api("/api/hub/admin/proprietary", {
+        method: "POST",
+        body: {
+          id: f.pid.value.trim(),
+          title: f.ptitle.value.trim(),
+          tiles: f.ptiles.value.trim(),
+          encoding: f.penc.value || null,
+          format: f.pfmt.value,
+          maxzoom: +f.pz.value || 18,
+          attribution: f.pattr.value.trim(),
+          stream_only: !!f.pstream.checked,
+        },
+      });
+      applyHub(r);
+      settingsRefresh(true);
+      toast("Added tile feed to Hub");
+    } catch (x) { err.textContent = x.message; }
+    finally { if (btn.isConnected) btn.disabled = false; }
+  });
+  $("#hubKeyForm")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.target, err = $("#hubKeyErr"), btn = f.querySelector('button[type="submit"]');
+    err.textContent = ""; btn.disabled = true;
+    try {
+      const r = await api("/api/hub/admin/keys", {
+        method: "POST",
+        body: { label: f.klabel.value.trim(), scopes: f.krole.value.split(","), group_tag: f.kgroup.value.trim() },
+      });
+      S.hub.justCreatedKey = r.created_key || null;
+      applyHub(r);
+      settingsRefresh(true);
+      toast("Created collaborator API key");
+    } catch (x) { err.textContent = x.message; }
+    finally { if (btn.isConnected) btn.disabled = false; }
+  });
+  $("#localKeysForm")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.target, err = $("#localKeysErr"), btn = f.querySelector('button[type="submit"]');
+    err.textContent = ""; btn.disabled = true;
+    const body = { USGS_USERNAME: f.uuser.value.trim(), MAPVIETNAM_CONTACT: f.contact.value.trim() };
+    if (f.utok.value.trim()) body.USGS_M2M_TOKEN = f.utok.value.trim();
+    if (f.etok.value.trim()) body.EARTHDATA_TOKEN = f.etok.value.trim();
+    try {
+      S.localKeys = { ...(await api("/api/local-keys", { method: "POST", body })), loaded: true };
+      settingsRefresh(true);
+      toast("Saved local archive keys");
+    } catch (x) { err.textContent = x.message; }
+    finally { if (btn.isConnected) btn.disabled = false; }
+  });
   wireKeyBox();
+  wireCacheControls($("#setCache"));
+};
+ACTIONS.cacheToggle = async el => {
+  try { S.cache.data = await api("/api/cache/config", { method: "POST", body: { enabled: el.dataset.on === "1" } }); S.cache.err = ""; }
+  catch (x) { S.cache.err = x.message; }
+  renderCacheSection();
+};
+ACTIONS.cacheClearAsk = () => { S.cache.clearAsk = true; renderCacheSection(); $('#setCache [data-act="cacheClearNo"]')?.focus(); };
+ACTIONS.cacheClearNo = () => { S.cache.clearAsk = false; renderCacheSection(); };
+ACTIONS.cacheClearYes = async () => {
+  S.cache.clearAsk = false;
+  try { S.cache.data = await api("/api/cache/clear", { method: "POST", body: {} }); S.cache.err = ""; toast("Base-map cache cleared"); }
+  catch (x) { S.cache.err = x.message; }
+  renderCacheSection(); loadSettings();
+};
+
+// ================================================================ Aerial, LiDAR & Terrain Explorer
+// [id, plain label, the archive's own name (shown as the tooltip)]
+const AER_TABS = [
+  ["nakala", "French aerials 1948–56", "SHD Indochina missions on CNRS NAKALA"],
+  ["usgs", "Spy satellites", "Declassified CORONA, KH-7 and KH-9 (USGS EarthExplorer)"],
+  ["landsat", "Landsat 1972–75", "Landsat 1–2 MSS"],
+  ["oam", "Drone imagery", "OpenAerialMap UAV orthomosaics"],
+  ["allmaps", "Allmaps", "Community-georeferenced IIIF maps"],
+  ["terrain", "LiDAR & terrain", "GEDI laser shots and bare-earth DEMs"],
+];
+function openAerial(tab = null) {
+  closePopovers();
+  if (tab) S.aerial.tab = tab;
+  show("aerial", {});
+  if (!S.aerial.res && S.aerial.tab !== "terrain") runAerialSearch();
+}
+ACTIONS.openAerial = () => openAerial();
+ACTIONS.aerTab = el => { S.aerial.tab = el.dataset.tab; S.aerial.err = ""; S.aerial.res = null; render(); if (S.aerial.tab !== "terrain") runAerialSearch(); };
+ACTIONS.aerSearch = () => runAerialSearch();
+ACTIONS.useOamBase = () => { setBase("oam"); toast("Switched base map to OpenAerialMap UAV imagery"); };
+ACTIONS.clearLidar = () => { setData("lidar", empty()); S.aerial.lidarCount = 0; render(); toast("Cleared LiDAR footprints"); };
+ACTIONS.queryLidar = async el => {
+  const b = viewBounds(); if (!b || el.disabled) return;
+  const prev = el.textContent; el.disabled = true; el.textContent = "Querying SlideRule…";
+  S.aerial.err = "";
+  try {
+    const fc = await api(`/api/lidar?bbox=${b.map(v => v.toFixed(4)).join(",")}`);
+    setData("lidar", fc);
+    S.aerial.lidarCount = (fc.features || []).length;
+    render();
+    toast(S.aerial.lidarCount ? `Plotted ${S.aerial.lidarCount} NASA GEDI laser footprints` : "No GEDI laser footprints inside this exact box");
+  } catch (e) { S.aerial.err = e.message; render(); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.buildDem = async el => {
+  const pack = el.dataset.pack, b = viewBounds();
+  if (!pack || !b || el.disabled) return;
+  const prev = el.textContent; el.disabled = true; el.textContent = "Building…";
+  S.aerial.err = "";
+  try {
+    const res = await api("/api/terrain/build", { method: "POST", body: { pack, bbox: b.map(v => +v.toFixed(3)) } });
+    if (res.job_id && res.state !== "done") {
+      toast("Hub is building regional terrain pack…", 5000);
+      let done = null;
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 1500));
+        const st = await api(`/api/hub/job/${encodeURIComponent(res.job_id)}`);
+        if (st.state === "done") { done = st; break; }
+        if (st.state === "failed") throw new Error(st.error || "Hub terrain build failed.");
+      }
+      await loadHub();
+      await loadTerrainSources();
+      const builtId = done?.layer_id || done?.result_layer_id || res.layer_id;
+      if (builtId) setTerrainSource(builtId);
+      toast("Terrain pack ready on Hub (cached forever)");
+    } else if (res.layer_id) {
+      await loadHub();
+      await loadTerrainSources();
+      setTerrainSource(res.layer_id);
+      toast("Bare-earth terrain pack ready and active");
+    }
+    render();
+  } catch (e) { S.aerial.err = e.message; render(); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.aerAllFrames = el => {
+  const doi = el.dataset.doi; if (!doi) return;
+  S.aerial.allFrames ??= new Set();
+  if (S.aerial.allFrames.has(doi)) S.aerial.allFrames.delete(doi); else S.aerial.allFrames.add(doi);
+  rerenderKeepingFocus();
+};
+ACTIONS.aerGoArea = el => {
+  let b = null;
+  try { b = JSON.parse(el.dataset.bounds || "null"); } catch { b = null; }
+  if (!Array.isArray(b) || b.length !== 4) return;
+  if (!isDesk()) setSheet("peek");
+  primary().fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: mapPadding(), maxZoom: 13, duration: reduceMotion ? 0 : 700 });
+};
+ACTIONS.importAerial = async el => {
+  const url = el.dataset.url, title = el.dataset.title || "Historical aerial", year = el.dataset.year || "";
+  if (!url || el.disabled) return;
+  let gcps = null, bounds = null;
+  if (el.dataset.gcps) { try { gcps = JSON.parse(el.dataset.gcps); } catch { gcps = null; } }
+  if (el.dataset.bounds) { try { bounds = JSON.parse(el.dataset.bounds); } catch { bounds = null; } }
+  const body = {
+    url, title, year, gcps, bounds,
+    kind: el.dataset.kind === "map" ? "map" : "photo",
+    vicinity_label: el.dataset.vicinity || undefined,
+    plot_url: el.dataset.plotUrl || undefined,
+    plot_label: el.dataset.plotLabel || undefined,
+    source_width: +el.dataset.sw || undefined,
+    source_height: +el.dataset.sh || undefined,
+  };
+  const prev = el.textContent; el.disabled = true; el.textContent = "Importing…";
+  try {
+    const r = await api("/api/aerial/import", { method: "POST", body });
+    closeLightbox();
+    if (pl) closePlacement(true);
+    applyLibrary(r.library);
+    if (r.map.state === "needs_points") {
+      toast("Imported frame. Match 3+ spots (4+ for oblique, 8+ for spline warp).", 5000);
+      openPlacement(S.lib.byId.get(r.map.id) || r.map);
+    } else {
+      toast(`Imported & queued ${title}`, 5000);
+      openSettings(r.map.id);
+    }
+  } catch (e) { toast("Could not import image: " + e.message, 5000); }
+  finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
+};
+ACTIONS.aerPreview = el => openLightbox({
+  preview: el.dataset.preview,
+  full: el.dataset.full || el.dataset.preview,
+  title: el.dataset.title || "Aerial frame",
+  year: el.dataset.year || "",
+  sourceUrl: el.dataset.src || "",
+  bounds: el.dataset.bounds || "",
+});
+
+// A modal: Tab stays inside it, and closing it (Close, Escape, a click on the backdrop) puts focus back on the
+// View button that opened it, so a keyboard user does not land at the top of the page.
+let lightboxOpener = null;
+function closeLightbox() {
+  const lb = $(".aer-lightbox");
+  if (!lb) return;
+  lb.remove();
+  if (lightboxOpener?.isConnected) lightboxOpener.focus({ preventScroll: true });
+  lightboxOpener = null;
+}
+const aerImg = u => safeUrl(u) ? `/api/aerial/image?url=${encodeURIComponent(u)}` : "";
+function openLightbox({ preview, full, title, year, sourceUrl, bounds = "", kind = "" }) {
+  const opener = document.activeElement;
+  closeLightbox();
+  if (!safeUrl(preview)) return;
+  lightboxOpener = opener;
+  document.body.insertAdjacentHTML("beforeend", `<div class="aer-lightbox" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <img src="${esc(aerImg(preview))}" alt="${esc(title)}">
+    <div class="aer-lb-bar">
+      <b>${esc(title)}</b>${year ? `<span>(${esc(year)})</span>` : ""}
+      ${safeUrl(full) ? `<button class="btn small primary" data-act="importAerial" data-url="${esc(full)}" data-title="${esc(title)}" data-year="${esc(year)}" data-bounds="${esc(bounds)}"${kind ? ` data-kind="${esc(kind)}"` : ""}>Import &amp; place on map</button>` : ""}
+      ${safeUrl(sourceUrl) ? `<a class="btn small" href="${esc(sourceUrl)}" target="_blank" rel="noopener">Archive record</a>` : ""}
+      <button class="btn small" id="aerLbClose">Close</button>
+    </div></div>`);
+  const lb = $(".aer-lightbox");
+  wire(lb);
+  $("#aerLbClose").focus();
+  $("#aerLbClose").onclick = closeLightbox;
+  lb.addEventListener("click", e => { if (e.target === lb) closeLightbox(); });
+  lb.addEventListener("keydown", e => {
+    if (e.key !== "Tab") return;
+    const f = $$("button, a[href]", lb);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+}
+// Archive previews are hot-linked and some are refused: mark them so the card shows "No preview" instead of a
+// broken-image icon. (error does not bubble, hence the capture phase.)
+document.addEventListener("error", e => { if (e.target.matches?.(".aer-card img")) e.target.classList.add("broken"); }, true);
+document.addEventListener("click", e => {
+  const th = e.target.closest?.(".aer-card .aer-thumb");
+  if (th && !th.querySelector("img.broken")) th.closest(".aer-card").querySelector('[data-act="aerPreview"]')?.click();
+});
+
+async function runAerialSearch() {
+  const tab = S.aerial.tab, b = viewBounds() || [105.4, 10.2, 105.9, 10.7];
+  const bbox = b.map(v => v.toFixed(3)).join(",");
+  S.aerial.loading = true; S.aerial.err = ""; S.aerial.allFrames = new Set(); render();
+  try {
+    if (tab === "nakala") S.aerial.res = await api(`/api/aerial/nakala?q=${encodeURIComponent(S.aerial.q || "")}&size=10`);
+    else if (tab === "usgs") S.aerial.res = await api(`/api/aerial/usgs?bbox=${bbox}&dataset=${encodeURIComponent(S.aerial.usgsDs || "corona")}`);
+    else if (tab === "landsat") S.aerial.res = await api(`/api/aerial/landsat?bbox=${bbox}`);
+    else if (tab === "oam") S.aerial.res = await api(`/api/aerial/oam?bbox=${bbox}`);
+    else if (tab === "allmaps") S.aerial.res = await api(`/api/aerial/allmaps?bbox=${bbox}`);
+  } catch (e) { S.aerial.err = e.message; }
+  finally { S.aerial.loading = false; if (S.view.name === "aerial") render(); }
+}
+
+function quadkeyAt(lon, lat, z = 9) {
+  const [tx, ty] = tileOf(lon, lat, z);
+  let qk = "";
+  for (let i = z; i > 0; i--) {
+    let d = 0, mask = 1 << (i - 1);
+    if (tx & mask) d += 1;
+    if (ty & mask) d += 2;
+    qk += d;
+  }
+  return qk;
+}
+
+VIEWS.aerial = () => {
+  const tab = S.aerial.tab, res = S.aerial.res, [lon, lat] = viewCenter();
+  const latI = Math.floor(lat), lonI = Math.floor(lon);
+  const rgCode = `${String(Math.abs(latI)).padStart(2, "0")}${latI >= 0 ? "N" : "S"}${String(Math.abs(lonI)).padStart(3, "0")}${lonI >= 0 ? "E" : "W"}`;
+  const rgUrl = `https://catalog.archives.gov/search?q=${encodeURIComponent(`"Overlay Indexes" "${rgCode}"`)}&recordGroupNumber=373`;
+  const metaCog = `https://dataforgood-fb-data.s3.amazonaws.com/forests/v1/alsgedi_global_v6_float/chm/${quadkeyAt(lon, lat, 9)}.tif`;
+
+  let body = "";
+  if (tab === "terrain") {
+    const packs = [
+      ["gedtm30", "GEDTM30 Bare-Earth Terrain (30 m)", "Removes tree canopy & buildings using NASA GEDI + ICESat-2 LiDAR fusion."],
+      ["glo30_hand", "GLO-30 HAND Flood / Drainage Relief (30 m)", "Height Above Nearest Drainage — highlights dikes, levees, canals & dry ground."],
+      ["eth_canopy_10m", "ETH Tree Canopy Height (10 m)", "Global canopy height calibrated with GEDI spaceborne LiDAR."],
+    ];
+    const buildCost = "Downloads the area on screen; takes from a few seconds to a few minutes, depending on its size.";
+    body = `
+      <h3 class="sub-head">Spaceborne LiDAR laser shots (NASA GEDI)</h3>
+      <div class="group"><div class="inner stack">
+        <p class="small-t muted" style="margin:0">Query discrete ~25 m GEDI L2A bare-earth &amp; canopy laser footprints inside the current view (zoom in to &le;12 km across).</p>
+        <div class="row">
+          <button class="btn small primary" data-act="queryLidar">Show GEDI LiDAR shots in view</button>
+          ${S.aerial.lidarCount ? `<button class="btn small" data-act="clearLidar">Clear (${S.aerial.lidarCount})</button>` : ""}
+        </div>
+      </div></div>
+      <h3 class="sub-head">Build regional bare-earth DEM (${S.hub.connected ? "cached on Hub" : "on this computer"})</h3>
+      <p class="small-t muted">Streams only the area on screen (up to 2.5° across) from Cloud-Optimized GeoTIFFs into lossless 1/256 m Terrarium tiles.</p>
+      <div class="group"><ul class="list">${packs.map(([k, t, desc]) => `<li style="padding:10px 14px;align-items:center">
+        <div class="grow"><div class="t">${esc(t)}</div><div class="m">${esc(desc)}</div></div>
+        <button class="btn small" data-act="buildDem" data-pack="${k}">Build here</button></li>`).join("")}</ul></div>
+      <p class="small-t muted" style="margin:6px 2px 0">${esc(buildCost)}</p>
+      <h3 class="sub-head">Direct LiDAR &amp; sortie index links at map centre</h3>
+      <div class="group">
+        <div class="kv-row"><span class="k">NARA RG 373 1°×1° aerial sortie index</span><span class="v mono">${esc(rgCode)}</span>
+          <span class="inline-btns"><a class="small-t" href="${esc(rgUrl)}" target="_blank" rel="noopener">Open NARA Catalog</a></span></div>
+        <div class="kv-row"><span class="k">Meta / WRI 1 m Canopy Height COG tile</span><span class="v mono">Quadkey ${esc(quadkeyAt(lon, lat, 9))}</span>
+          <span class="inline-btns"><a class="small-t" href="${esc(metaCog)}" target="_blank" rel="noopener">Download 1 m COG (.tif)</a></span></div>
+      </div>`;
+  } else {
+    const controls = tab === "nakala"
+      ? `<form id="aerNakalaForm" class="row aer-search" role="search"><input class="txt grow" type="search" id="aerQ" placeholder="Place or mission" title="For example Dien Bien Phu, Saigon or Tourane" aria-label="Search French aerial missions by place or mission" value="${esc(S.aerial.q || "")}"><button class="btn primary" type="submit">Search</button></form>`
+      : tab === "usgs"
+      ? `<div class="row" style="margin-top:10px;flex-wrap:wrap"><select id="aerUsgsDs" aria-label="Declassified satellite dataset">
+          <option value="corona"${(S.aerial.usgsDs || "corona") === "corona" ? " selected" : ""}>CORONA / ARGON / LANYARD (1960–72)</option>
+          <option value="gambit_kh9mc"${S.aerial.usgsDs === "gambit_kh9mc" ? " selected" : ""}>GAMBIT KH-7 (0.6 m) &amp; KH-9 Mapping</option>
+          <option value="hexagon_kh9pc"${S.aerial.usgsDs === "hexagon_kh9pc" ? " selected" : ""}>HEXAGON KH-9 Panoramic (1971–84, 0.6 m)</option>
+        </select><button class="btn small primary" data-act="aerSearch">Search map view</button></div>`
+      : `<div class="row" style="margin-top:10px;justify-content:space-between"><span class="small-t muted">Searching current map area</span><button class="btn small primary" data-act="aerSearch">Refresh for view</button></div>`;
+
+    let listHTML = "";
+    if (S.aerial.loading) listHTML = `<p class="muted" style="margin-top:12px">Searching archive${S.hub.connected ? " via Hub infinite cache" : ""}…</p>`;
+    else if (tab === "nakala" && res) {
+      const ms = res.missions || [];
+      listHTML = `<p class="small-t muted" style="margin:8px 2px">${fmtInt(res.total || ms.length)} French SHD Indochina aerial missions (1948–1956) on CNRS NAKALA. Place its flight-index card first to see where each frame was taken, then view or place any frame.</p>` +
+        (ms.length ? ms.map(m => {
+          const yr = (m.date || "").slice(0, 4);
+          const bStr = m.bounds ? JSON.stringify(m.bounds) : "";
+          const vLbl = m.vicinity?.label || "";
+          const plot0 = (m.plots || []).find(p => /__PLOT/i.test(p.name)) || (m.plots || [])[0];
+          const pUrl = plot0 && safeUrl(plot0.full_url) ? plot0.full_url : "";
+          const pLbl = plot0?.label || "Flight index";
+          const mCode = (m.title || "").match(/\b([A-Z]{1,4}\d{2,5}[A-Z]?)\b/)?.[1] || "";
+          const plotPlaced = mCode && (S.lib.maps || []).some(l => l.state === "installed" && /\b(plot|flight index)\b/i.test(l.title || "") && (l.title || "").includes(mCode));
+          const all = m.frames || m.sample_frames || [], open = S.aerial.allFrames?.has(m.doi);
+          const thumbs = [...(m.plots || []).map(p => ({ ...p, isPlot: true })), ...(open ? all : all.slice(0, 8))];
+          const more = all.length > 8 ? `<button class="btn small" data-act="aerAllFrames" data-doi="${esc(m.doi)}" aria-expanded="${!!open}">${open ? "Show fewer frames" : `Show all ${fmtInt(all.length)} frames`}</button>` : "";
+          return `<div class="group" style="margin-top:10px"><div class="inner">
+            <div class="t" style="font-weight:600">${esc(m.title)}</div>
+            <div class="small-t muted">${esc([m.date || "1948–56", m.squadron, `${m.frame_count} frames`, m.licence].filter(Boolean).join(" · "))}
+              ${safeUrl(m.source_url) ? ` · <a href="${esc(m.source_url)}" target="_blank" rel="noopener">NAKALA DOI</a>` : ""}</div>
+            ${m.vicinity || plot0 ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:4px">
+              ${m.vicinity ? `<span class="hub-badge" title="Worked out from the mission's title and description">Near ${esc(m.vicinity.label)}</span>
+                <button class="btn small" data-act="aerGoArea" data-bounds="${esc(bStr)}">Go to area</button>` : ""}
+              ${plotPlaced ? `<span class="hub-badge">Flight index placed</span>`
+                : (pUrl ? `<button class="btn small primary" data-act="importAerial" data-url="${esc(pUrl)}" data-title="${esc(m.title + " FLIGHT INDEX")}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}" data-vicinity="${esc(vLbl)}" data-kind="map">1. Place ${esc(pLbl.toLowerCase())} first</button>` : "")}
+            </div>` : ""}
+            ${thumbs.length ? `<div class="aer-grid">${thumbs.map(f => `<div class="aer-card">
+              <div class="aer-thumb">${safeUrl(f.preview_url) ? `<img loading="lazy" src="${esc(aerImg(f.preview_url))}" alt="${esc(f.label || f.name)}">` : ""}</div>
+              <div class="aer-cap"><span class="mono" title="${esc(f.name)}">${esc(f.label || (f.isPlot ? "Flight index" : f.name.slice(-14)))}</span>
+                <div class="aer-acts">
+                  <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(f.preview_url)}" data-full="${esc(f.full_url)}" data-title="${esc(m.title + " — " + (f.label || f.name))}" data-year="${esc(yr)}" data-src="${esc(m.source_url)}" data-bounds="${esc(bStr)}">View</button>
+                  <button class="linkish small-t" data-act="importAerial" data-url="${esc(f.full_url)}" data-title="${esc(m.title + " " + f.name)}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}" data-vicinity="${esc(vLbl)}"${f.isPlot ? ` data-kind="map"` : (pUrl ? ` data-plot-url="${esc(pUrl)}" data-plot-label="${esc(pLbl)}"` : "")}>Place</button>
+                </div></div></div>`).join("")}</div>` : ""}
+            ${more ? `<div class="row" style="margin-top:8px">${more}</div>` : ""}
+          </div></div>`;
+        }).join("") : `<p class="muted">No SHD missions matched that query.</p>`);
+    } else if (tab === "usgs" && res) {
+      if (res.needs_credentials) listHTML = `<div class="confirm-box calm" style="margin-top:12px"><span>${esc(res.message)}</span></div>`;
+      else {
+        const sc = res.scenes || [];
+        listHTML = `<p class="small-t muted" style="margin:8px 2px">${sc.length} declassified reconnaissance scenes overlapping this view.</p>` +
+          (sc.length ? `<div class="aer-grid">${sc.map(s => {
+            const pts = Array.isArray(s.footprint?.[0]) ? s.footprint[0] : (Array.isArray(s.footprint) ? s.footprint : []);
+            const sb = pts.length >= 3 ? JSON.stringify([Math.min(...pts.map(p => p[0])), Math.min(...pts.map(p => p[1])), Math.max(...pts.map(p => p[0])), Math.max(...pts.map(p => p[1]))]) : "";
+            return `<div class="aer-card">
+            <div class="aer-thumb">${safeUrl(s.browse_url) ? `<img loading="lazy" src="${esc(aerImg(s.browse_url))}" alt="${esc(s.display_id)}">` : ""}</div>
+            <div class="aer-cap"><b class="mono">${esc(s.display_id)}</b><span>${esc(s.date || "Undated")} · ${s.download_available ? "Free scan ready" : "Browse preview"}</span>
+              ${safeUrl(s.browse_url) ? `<div class="aer-acts"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.browse_url)}" data-full="${esc(s.browse_url)}" data-title="${esc(s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}" data-bounds="${esc(sb)}">Inspect</button>
+                <button class="linkish small-t" data-act="importAerial" data-url="${esc(s.browse_url)}" data-title="${esc("Keyhole " + s.display_id)}" data-year="${esc((s.date || "").slice(0, 4))}" data-bounds="${esc(sb)}">Place</button></div>` : ""}
+            </div></div>`;
+          }).join("")}</div>` : `<p class="muted">No scenes found in this view.</p>`);
+      }
+    } else if (tab === "landsat" && res) {
+      const sc = res.scenes || [];
+      listHTML = `<p class="small-t muted" style="margin:8px 2px">${sc.length} wartime Landsat 1–2 MSS multispectral scenes (1972–1975, ≤35% cloud).</p>` +
+        (sc.length ? `<div class="aer-grid">${sc.map(s => {
+          const lb = Array.isArray(s.bbox) && s.bbox.length === 4 ? JSON.stringify(s.bbox) : "";
+          const impUrl = safeUrl(s.geotiff_url) ? s.geotiff_url : s.preview_url;
+          const lvl = s.processing_level === "L1TP" ? "terrain-corrected" : s.processing_level === "L1GS" ? "uncorrected L1GS" : "";
+          return `<div class="aer-card">
+          <div class="aer-thumb">${safeUrl(s.preview_url) ? `<img loading="lazy" src="${esc(aerImg(s.preview_url))}" alt="${esc(s.id)}">` : ""}</div>
+          <div class="aer-cap"><b>${esc((s.datetime || "").slice(0, 10))}</b><span>${esc([`Cloud ${s.cloud_cover != null ? Math.round(s.cloud_cover) + "%" : "?"}`, lvl || s.platform].filter(Boolean).join(" · "))}</span>
+            ${safeUrl(impUrl) ? `<div class="aer-acts"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.preview_url)}" data-full="${esc(impUrl)}" data-title="${esc(s.id)}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">View</button>
+              <button class="linkish small-t" data-act="importAerial" data-url="${esc(impUrl)}" data-title="${esc("Landsat MSS " + (s.datetime || "").slice(0, 10))}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">${s.geotiff_url ? "Add GeoTIFF" : "Place"}</button></div>` : ""}
+          </div></div>`;
+        }).join("")}</div>` : `<p class="muted">No clear 1972–75 Landsat MSS scenes in this box.</p>`);
+    } else if (tab === "oam" && res) {
+      const items = res.items || [];
+      listHTML = `<div class="row" style="margin:8px 0"><button class="btn small" data-act="useOamBase">Show global UAV mosaic on base map</button></div>` +
+        (items.length ? `<div class="group"><ul class="list">${items.map(it => `<li style="padding:10px 14px"><div class="grow">
+          <div class="t">${esc(it.title)}</div>
+          <div class="m">${esc([(it.datetime || "").slice(0, 10), it.gsd_m ? `${(it.gsd_m * 100).toFixed(0)} cm/px` : "", it.platform].filter(Boolean).join(" · "))}</div></div>
+          ${safeUrl(it.cog_url) ? `<a class="btn small" href="${esc(it.cog_url)}" target="_blank" rel="noopener">COG</a>` : ""}</li>`).join("")}</ul></div>`
+          : `<p class="muted">No individual UAV orthomosaics indexed in this exact view.</p>`);
+    } else if (tab === "allmaps" && res) {
+      const ms = res.maps || [];
+      listHTML = `<p class="small-t muted" style="margin:8px 2px">${ms.length} community-georeferenced IIIF maps (Gallica, Rumsey, LoC) in this view. Importing applies their control points automatically.</p>` +
+        (ms.length ? `<div class="aer-grid">${ms.map((m, idx) => `<div class="aer-card">
+          <div class="aer-thumb">${safeUrl(m.preview_url) ? `<img loading="lazy" src="${esc(aerImg(m.preview_url))}" alt="IIIF map ${idx + 1}">` : ""}</div>
+          <div class="aer-cap"><span>${m.gcp_count} control points</span>
+            <div class="aer-acts">
+              <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(m.preview_url)}" data-full="${esc(m.full_url)}" data-title="${esc("IIIF Map " + m.id.slice(-6))}">View</button>
+              <button class="linkish small-t" data-act="importAerial" data-url="${esc(m.full_url)}" data-title="${esc("Allmaps IIIF " + m.id.slice(-6))}" data-gcps="${esc(JSON.stringify(m.gcps))}" data-sw="${esc(m.width || "")}" data-sh="${esc(m.height || "")}">Auto-place</button>
+            </div></div></div>`).join("")}</div>` : `<p class="muted">No Allmaps IIIF sheets indexed in this view.</p>`);
+    }
+    body = controls + listHTML;
+  }
+
+  return `${headHTML("Aerial, LiDAR &amp; terrain", S.hub.connected ? `<span class="hub-badge">Hub infinite cache active</span>` : `<span>Historical overhead archives &amp; bare-earth relief</span>`)}
+    <div class="terrain-chips" role="group" aria-label="Archive and terrain sources">
+      ${AER_TABS.map(([k, lbl, tip]) => `<button type="button" data-act="aerTab" data-tab="${k}" aria-pressed="${tab === k}" title="${esc(tip)}">${esc(lbl)}</button>`).join("")}
+    </div>
+    ${S.aerial.err ? `<div class="err" role="alert" style="margin-top:8px">${esc(S.aerial.err)}</div>` : ""}
+    ${body}`;
+};
+VIEWS.aerial.after = () => {
+  $("#aerNakalaForm")?.addEventListener("submit", e => { e.preventDefault(); S.aerial.q = $("#aerQ").value.trim(); runAerialSearch(); });
+  $("#aerUsgsDs")?.addEventListener("change", e => { S.aerial.usgsDs = e.target.value; runAerialSearch(); });
 };
 ACTIONS.openSettings = () => openSettings();
 ACTIONS.scrollMode = el => setScrollMode(el.dataset.m);
@@ -3963,6 +5292,7 @@ ACTIONS.cmSel = el => {
 ACTIONS.cmFit = el => {
   const b = S.lib.byId.get(el.dataset.id)?.bounds;
   if (!b) return;
+  if (S.view.name === "settings") show("home");
   if (!isDesk()) setSheet("peek");
   primary().fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: mapPadding(), maxZoom: 15, duration: reduceMotion ? 0 : 600 });
 };
@@ -4062,8 +5392,70 @@ function fitAffine(pairs, w, h) {
   const lon = solve(pairs.map(p => p.lon)), lat = solve(pairs.map(p => p.lat));
   if (!lon || !lat) return null;
   const at = (col, row) => [lon[0] * col / w + lon[1] * row / h + lon[2], lat[0] * col / w + lat[1] * row / h + lat[2]];
-  const sq = pairs.reduce((a, p) => { const [x, y] = at(p.col, p.row); return a + ((x - p.lon) * 111320 * Math.cos(p.lat * Math.PI / 180)) ** 2 + ((y - p.lat) * 110540) ** 2; }, 0);
-  return { at, rms: Math.sqrt(sq / pairs.length) };
+  const residuals = pairs.map(p => {
+    const [x, y] = at(p.col, p.row);
+    return Math.hypot((x - p.lon) * 111320 * Math.cos(p.lat * Math.PI / 180), (y - p.lat) * 110540);
+  });
+  const sq = residuals.reduce((a, r) => a + r * r, 0);
+  return { at, rms: Math.sqrt(sq / pairs.length), residuals };
+}
+
+// Solves n x n linear system M x = y via partial-pivoted Gaussian elimination.
+function solveLinearN(M, y) {
+  const n = y.length, A = M.map((r, i) => [...r, y[i]]);
+  for (let col = 0; col < n; col++) {
+    let piv = col;
+    for (let r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv = r;
+    if (!Number.isFinite(A[piv][col]) || Math.abs(A[piv][col]) < 1e-10) return null;
+    [A[col], A[piv]] = [A[piv], A[col]];
+    const d = A[col][col];
+    for (let c = col; c <= n; c++) A[col][c] /= d;
+    for (let r = 0; r < n; r++) if (r !== col && A[r][col]) {
+      const f = A[r][col];
+      for (let c = col; c <= n; c++) A[r][c] -= f * A[col][c];
+    }
+  }
+  return A.map(r => r[n]);
+}
+
+// Fits a normalized projective homography for 4+ GCPs (handles camera tilt / perspective keystone).
+function fitHomography(pairs, w, h) {
+  if (pairs.length < 4) return null;
+  const n = pairs.length;
+  const cx = pairs.reduce((s, p) => s + p.lon, 0) / n, cy = pairs.reduce((s, p) => s + p.lat, 0) / n;
+  const sp = Math.max(1e-5, ...pairs.map(p => Math.hypot(p.lon - cx, p.lat - cy)));
+  const M = Array.from({ length: 8 }, () => Array(8).fill(0)), b = Array(8).fill(0);
+  for (const p of pairs) {
+    const u = p.col / w, v = p.row / h, x = (p.lon - cx) / sp, y = (p.lat - cy) / sp;
+    const eqs = [
+      [[u, v, 1, 0, 0, 0, -u * x, -v * x], x],
+      [[0, 0, 0, u, v, 1, -u * y, -v * y], y],
+    ];
+    for (const [r, rhs] of eqs) {
+      for (let i = 0; i < 8; i++) {
+        b[i] += r[i] * rhs;
+        for (let j = 0; j < 8; j++) M[i][j] += r[i] * r[j];
+      }
+    }
+  }
+  const hVec = solveLinearN(M, b);
+  if (!hVec) return null;
+  const [h0, h1, h2, h3, h4, h5, h6, h7] = hVec;
+  const at = (col, row) => {
+    const u = col / w, v = row / h, d = h6 * u + h7 * v + 1;
+    if (!Number.isFinite(d) || Math.abs(d) < 1e-4) return [cx, cy];
+    return [cx + sp * (h0 * u + h1 * v + h2) / d, cy + sp * (h3 * u + h4 * v + h5) / d];
+  };
+  const residuals = pairs.map(p => {
+    const [x, y] = at(p.col, p.row);
+    return Math.hypot((x - p.lon) * 111320 * Math.cos(p.lat * Math.PI / 180), (y - p.lat) * 110540);
+  });
+  const sq = residuals.reduce((a, r) => a + r * r, 0);
+  return { at, rms: Math.sqrt(sq / n), residuals };
+}
+
+function plRefLayers(excludeId) {
+  return visualLayers().filter(l => l.id !== excludeId);
 }
 
 function openPlacement(entry, openerOrOpts = document.activeElement) {
@@ -4074,29 +5466,64 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   const opener = opts.opener || document.activeElement, mode = opts.mode || "custom", isAlign = mode === "align";
   const w = entry.image.width, h = entry.image.height;
   const url = entry.preview_url || `/api/library/custom/${encodeURIComponent(entry.id)}/preview`;
-  pl = { entry, mode, w, h, k: PL_SCALE / Math.max(w, h), url,
+  const refOpts = plRefLayers(entry.id);
+  // A printed map (or a flight-index card) is drawn north-up and flat: it is matched upright, against an old sheet
+  // or the street map. An aerial photo can face any way and is matched against satellite imagery.
+  const subject = entry.subject === "map" || entry.subject === "photo" ? entry.subject
+    : isAlign || /\b(plot|flight index|tape|feuille|carte|sheet|map)\b/i.test(entry.title || "") ? "map" : "photo";
+  pl = { entry, mode, w, h, k: PL_SCALE / Math.max(w, h), url, refId: "today", refOpacity: 0.85, subject,
+    refBase: subject === "photo" ? "sat" : S.base, warpMode: entry.warp_mode || "auto",
+    autoMatch: null, autoBusy: false, blinking: false, addingStones: new Set(), pendingStoneId: null,
     pairs: (entry.points || []).map(([col, row, lon, lat]) => ({ col, row, lon, lat })), pending: null, opacity: 0.6, marks: [], todayReady: false, opener, discard: false };
+  if (!S.lib.loaded) loadLibrary();
   const dark = isDark();
   document.body.insertAdjacentHTML("beforeend", `<div id="place" role="dialog" aria-modal="true" aria-labelledby="plTitle">
-    <header class="pl-bar"><div class="pl-head"><h2 id="plTitle" tabindex="-1">${isAlign ? "Adjust alignment" : "Place"} ${isAlign ? "— " : ""}${esc(entry.title)}</h2><p id="plStep" class="pl-step" role="status"></p></div>
-      <div class="pl-btns">${isAlign && entry.adjusted ? `<button class="btn danger" id="plReset">Reset to original</button>` : ""}
-        <button class="btn" id="plUndo">Undo last</button><button class="btn" id="plClear">Clear</button>
-        <button class="btn" id="plCancel">Cancel</button><button class="btn primary" id="plSave" disabled>${isAlign ? "Save alignment" : "Place map"}</button></div></header>
+    <header class="pl-bar"><div class="pl-head"><div class="row" style="gap:8px;flex-wrap:wrap"><h2 id="plTitle" tabindex="-1">${isAlign ? "Adjust alignment" : "Place"} ${isAlign ? "— " : ""}${esc(entry.title)}</h2><span id="plConf" class="pl-conf" hidden></span></div><p id="plStep" class="pl-step" role="status"></p></div>
+      <div class="pl-btns"><button class="btn" id="plCancel">Cancel</button><button class="btn primary" id="plSave" disabled>${isAlign ? "Save alignment" : "Place map"}</button></div></header>
     <div class="pl-panes">
       <section class="pl-pane" id="plScanPane" aria-label="${isAlign ? "Historical map" : "Your map"}"><span class="pl-tag">${isAlign ? "Historical map" : "Your map"}</span><div class="pl-map" id="plScan"></div>
         <svg class="pl-cross" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
         <button class="btn small pl-mark" data-pl="scan" aria-label="Mark the middle of this map (the + sign)">Mark the +</button></section>
-      <section class="pl-pane" id="plTodayPane" aria-label="Today’s map"><span class="pl-tag">Today’s map</span><div class="pl-map" id="plToday"></div>
+      <section class="pl-pane" id="plTodayPane" aria-label="Reference map">
+        <div class="pl-refbar">
+          <select id="plRefSel" aria-label="Reference layer for landmark alignment">
+            <option value="today">Ref: Today’s map (2026)</option>
+            ${refOpts.map(l => `<option value="${esc(l.id)}">Ref: ${esc(l.years || l.date || "")} ${esc(l.title)}</option>`).join("")}
+          </select>
+          <div class="pl-stones" id="plStones" hidden>
+            <button type="button" class="btn small" id="plStonesBtn" aria-expanded="false" aria-controls="plStonesMenu" title="Add an overlapping 1950s–60s map sheet as an intermediate reference">Stepping stones</button>
+            <div class="pl-stones-menu" id="plStonesMenu" role="menu" hidden></div>
+          </div>
+          <div class="seg pl-baseseg" role="group" aria-label="Reference base map">${[["sat", "Satellite"], ["osm", "Street"]].map(([k, l]) => `<button type="button" data-plbase="${k}" aria-pressed="${pl.refBase === k}">${l}</button>`).join("")}</div>
+          ${subject === "photo" && safeUrl(entry.plot_url) ? `<button type="button" class="btn small" id="plPlotBtn" style="pointer-events:auto" title="View this mission's flight-index card to see where each frame sits">${esc(entry.plot_label || "Flight index")}</button>` : ""}
+          <label class="pl-refop" id="plRefOpWrap" hidden><span>Ref</span><input type="range" id="plRefOp" min="15" max="100" value="85" aria-label="Reference map opacity"></label>
+        </div>
+        <div class="pl-map" id="plToday"></div>
         <svg class="pl-cross" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
-        <button class="btn small pl-mark" data-pl="today" aria-label="Mark the middle of today’s map (the + sign)">Mark the +</button></section>
+        <button class="btn small pl-mark" data-pl="today" aria-label="Mark the middle of reference map (the + sign)">Mark the +</button></section>
     </div>
     <div class="pl-tray">
+      <div class="pl-tools" role="group" aria-label="Matched spots">
+        <button class="btn small" id="plAuto" title="Automatically find landmarks matching the reference map view">Auto-match</button>
+        <button type="button" class="btn small" id="plBlink" disabled aria-pressed="false" title="Hold to hide your map and compare with the reference underneath (or hold Space)">Blink (Space)</button>
+        <button class="btn small" id="plUndo">Undo last</button>
+        <button class="btn small" id="plClear">Clear all…</button>
+        ${isAlign && entry.adjusted ? `<button class="btn small danger pl-reset" id="plReset">Reset to original…</button>` : ""}
+      </div>
+      <div class="confirm-box" id="plClearAsk" role="alertdialog" aria-label="Clear all matched spots" hidden>
+        <span>Remove all the spots you have matched? You start again from none.</span>
+        <div class="row"><button class="btn small danger solid" id="plClearYes">Clear all</button><button class="btn small" id="plClearNo">Keep them</button></div></div>
+      ${isAlign && entry.adjusted ? `<div class="confirm-box" id="plResetAsk" role="alertdialog" aria-label="Reset to the original alignment" hidden>
+        <span>Put this map back where it was first placed? Your saved adjustment is thrown away.</span>
+        <div class="row"><button class="btn small danger solid" id="plResetYes">Reset to original</button><button class="btn small" id="plResetNo">Keep my adjustment</button></div></div>` : ""}
       <ol id="plPairs" class="pl-pairs" aria-label="Matched spots"></ol>
-      <div class="pl-fields"${isAlign ? ` style="grid-template-columns:minmax(0,2fr) minmax(0,2fr)"` : ""}>
+      <div class="pl-fields${isAlign ? " align-mode" : ""}">
         ${isAlign ? `<div class="field"><span>Adjusting</span><div class="small-t muted" id="plMapInfo">${esc(entry.title)}${entry.year ? ` (${esc(entry.year)})` : ""}${entry.adjusted ? " · currently adjusted" : ""}</div></div>`
           : `<label class="field"><span>Name</span><input type="text" id="plName" maxlength="120" value="${esc(entry.title)}"></label>
              <label class="field"><span>Year (optional)</span><input type="number" id="plYear" min="1800" max="2100" inputmode="numeric" placeholder="e.g. 1968" value="${entry.year ? esc(entry.year) : ""}"></label>`}
-        <label class="field pl-op"><span>See-through <span id="plOpVal" class="mono">60%</span></span><input type="range" id="plOp" min="10" max="100" value="60" disabled aria-label="Opacity of your map over today’s map"></label>
+        <label class="field"><span>This picture is</span><select id="plSubject" aria-label="What the picture is"><option value="photo"${subject === "photo" ? " selected" : ""}>An aerial photo</option><option value="map"${subject === "map" ? " selected" : ""}>A printed map</option></select></label>
+        <label class="field"><span>Warp</span><select id="plWarp" aria-label="Warp model"><option value="auto"${pl.warpMode === "auto" ? " selected" : ""}>Auto (Affine / TPS)</option><option value="homography"${pl.warpMode === "homography" ? " selected" : ""}>Oblique / Perspective (4+ pts)</option><option value="tps"${pl.warpMode === "tps" ? " selected" : ""}>Thin Plate Spline (4+ pts)</option></select></label>
+        <label class="field pl-op"><span>See-through <span id="plOpVal" class="mono">60%</span></span><input type="range" id="plOp" min="10" max="100" value="60" disabled aria-label="Opacity of your map over reference map"></label>
       </div>
       <div class="err" id="plErr" role="alert"></div>
       <div class="confirm-box" id="plDiscard" role="alertdialog" aria-label="Discard your matched spots" hidden>
@@ -4117,38 +5544,135 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   pl.scan.on("error", e => { if (/image|Failed|404|decode/i.test(String(e?.error?.message || ""))) $("#plErr").textContent = "The picture of your map could not be loaded."; });
   const c = primary().getCenter();
   pl.today = new maplibregl.Map({
-    ...common, container: "plToday", style: makeStyle(), center: c, zoom: primary().getZoom(),
+    ...common, container: "plToday", style: makeStyle(), center: c, zoom: primary().getZoom(), preserveDrawingBuffer: true,
     maxTileCacheSize: isDesk() ? 512 : 128, maxTileCacheZoomLevels: 10,
   });
   pl.today.addControl(ctl(), "top-right");
   pl.today.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
   pl.today.on("click", e => plClickToday(e.lngLat));
-  pl.today.on("load", () => { pl.todayReady = true; setBasePaint(pl.today); plDraw(); });
+  pl.today.on("load", () => {
+    pl.todayReady = true; setBasePaint(pl.today, pl.refBase); plDrawSites(); plDraw();
+    // Draw a subtle dashed mission-area box while unplaced so the user sees the search region.
+    if (b && b[2] > b[0] && b[3] > b[1] && !pl.pairs.length) {
+      const [w0, s0, e0, n0] = b;
+      pl.today.addSource("pl-vicinity", { type: "geojson", data: { type: "Feature", geometry: { type: "LineString", coordinates: [[w0, s0], [e0, s0], [e0, n0], [w0, n0], [w0, s0]] } } });
+      pl.today.addLayer({ id: "pl-vicinity", type: "line", source: "pl-vicinity", paint: { "line-color": "#d97706", "line-width": 2, "line-dasharray": [4, 3], "line-opacity": 0.85 } });
+    }
+    // A map is best matched against an old sheet of the same area; an aerial photo against its mission's placed flight-index card.
+    if (pl.subject === "map" && b) {
+      const sheet = refOpts.find(l => Array.isArray(l.bounds) && boxesOverlap(l.bounds, b) && !String(l.id).startsWith("custom_") && l.encoding !== "terrarium");
+      if (sheet) { $("#plRefSel").value = sheet.id; plSetRef(sheet.id); }
+    } else if (pl.subject === "photo") {
+      const mCode = (entry.original_title || entry.title || "").match(/\b([A-Z]{1,4}\d{2,5}[A-Z]?)\b/)?.[1] || "";
+      const plotRef = mCode && refOpts.find(l => /\b(plot|flight index)\b/i.test(l.title || "") && (l.title || "").includes(mCode));
+      if (plotRef) { $("#plRefSel").value = plotRef.id; plSetRef(plotRef.id); }
+    }
+    plUpdateStones();
+  });
+  pl.today.on("moveend", () => plUpdateStones());
   [pl.scan, pl.today].forEach(m => { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation?.(); wireTrackpad(m, false); });
   const b = entry.bounds || (pl.pairs.length ? pl.pairs.reduce((a, p) => [Math.min(a[0], p.lon), Math.min(a[1], p.lat), Math.max(a[2], p.lon), Math.max(a[3], p.lat)], [180, 90, -180, -90]) : null);
   if (b && b[2] > b[0] && b[3] > b[1]) pl.today.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, duration: 0, maxZoom: 15 });
-  $("#plUndo").onclick = () => { if (pl.pending) pl.pending = null; else pl.pairs.pop(); plRender(); };
-  $("#plClear").onclick = () => { pl.pairs = []; pl.pending = null; plRender(); };
+  $("#plSubject").onchange = e => {
+    pl.subject = e.target.value === "map" ? "map" : "photo";
+    if (pl.subject === "map" && pl.warpMode === "homography") { pl.warpMode = "auto"; $("#plWarp").value = "auto"; plRender(); }
+  };
+  const plotBtn = $("#plPlotBtn");
+  if (plotBtn && safeUrl(entry.plot_url)) {
+    plotBtn.onclick = () => openLightbox({
+      preview: entry.plot_url,
+      full: entry.plot_url,
+      title: `${(entry.title || "").replace(/\s+SHDAI__.*$/, "")} FLIGHT INDEX`.trim(),
+      year: entry.year ? String(entry.year) : "",
+      bounds: b ? JSON.stringify(b) : "",
+      kind: "map",
+    });
+  }
+  $("#plUndo").onclick = () => { if (pl.pending) pl.pending = null; else pl.pairs.pop(); pl.autoMatch = null; plRender(); };
+  // Clear and Reset each ask first in a box beside them; its Cancel puts focus back on the button.
+  const ask = (box, from, on) => { $$("#place .pl-tray .confirm-box").forEach(b => { if (b.id !== "plDiscard") b.hidden = true; }); $(box).hidden = !on; if (on) $(box).querySelector(".solid").focus(); else $(from)?.focus(); };
+  $("#plClear").onclick = () => { if (pl.pairs.length + (pl.pending ? 1 : 0) < 2) { pl.pairs = []; pl.pending = null; pl.autoMatch = null; plRender(); } else ask("#plClearAsk", "#plClear", true); };
+  $("#plClearYes").onclick = () => { pl.pairs = []; pl.pending = null; pl.autoMatch = null; $("#plClearAsk").hidden = true; plRender(); $("#plAuto").focus(); };
+  $("#plClearNo").onclick = () => ask("#plClearAsk", "#plClear", false);
   $("#plCancel").onclick = plAskCancel;
   $("#plYes").onclick = () => closePlacement();
   $("#plNo").onclick = () => { $("#plDiscard").hidden = true; pl.discard = false; $("#plCancel").focus(); };
   $("#plSave").onclick = plSave;
-  $("#plSave").onclick = plSave;
-  if ($("#plReset")) $("#plReset").onclick = plReset;
+  $("#plAuto").onclick = plRunAutoMatch;
+  if ($("#plReset")) {
+    $("#plReset").onclick = () => ask("#plResetAsk", "#plReset", true);
+    $("#plResetYes").onclick = () => { $("#plResetAsk").hidden = true; plReset(); };
+    $("#plResetNo").onclick = () => ask("#plResetAsk", "#plReset", false);
+  }
+  $("#plRefSel").onchange = e => plSetRef(e.target.value);
+  $$("#place [data-plbase]").forEach(b => b.onclick = () => {
+    pl.refBase = b.dataset.plbase;
+    $$("#place [data-plbase]").forEach(x => x.setAttribute("aria-pressed", x === b));
+    if (pl.todayReady) setBasePaint(pl.today, pl.refBase);
+  });
+  $("#plRefOp").oninput = e => {
+    pl.refOpacity = +e.target.value / 100;
+    if (pl.todayReady && pl.today.getLayer("pl-ref")) pl.today.setPaintProperty("pl-ref", "raster-opacity", pl.refOpacity);
+  };
+  $("#plWarp").onchange = e => { pl.warpMode = e.target.value; plRender(); };
   let prevPlOp = Math.round(pl.opacity * 100);
   $("#plOp").oninput = e => {
     const v = Math.round(+e.target.value);
     if (v !== prevPlOp && [10, 50, 100].some(t => v === t || (prevPlOp < t && v > t) || (prevPlOp > t && v < t))) haptic("alignment");
     prevPlOp = v;
     pl.opacity = +e.target.value / 100; $("#plOpVal").textContent = e.target.value + "%";
-    if (pl.todayReady && pl.today.getLayer("pl-scan")) pl.today.setPaintProperty("pl-scan", "raster-opacity", pl.opacity);
+    if (pl.todayReady && !pl.blinking && pl.today.getLayer("pl-scan")) pl.today.setPaintProperty("pl-scan", "raster-opacity", pl.opacity);
   };
+  const blinkBtn = $("#plBlink");
+  blinkBtn.addEventListener("pointerdown", e => { if (blinkBtn.disabled) return; e.preventDefault(); plSetBlink(true); });
+  ["pointerup", "pointercancel", "pointerleave", "blur"].forEach(ev => blinkBtn.addEventListener(ev, () => plSetBlink(false)));
+  $("#plStonesBtn").onclick = () => {
+    const menu = $("#plStonesMenu"), open = menu.hidden;
+    menu.hidden = !open;
+    $("#plStonesBtn").setAttribute("aria-expanded", String(open));
+  };
+  $("#plStonesMenu").onclick = e => {
+    const b = e.target.closest("[data-stone]");
+    if (b) plAddStone(b.dataset.stone);
+  };
+  pl.outsideClick = e => {
+    const menu = $("#plStonesMenu");
+    if (menu && !menu.hidden && !e.target.closest?.("#plStones")) {
+      menu.hidden = true;
+      $("#plStonesBtn")?.setAttribute("aria-expanded", "false");
+    }
+  };
+  document.addEventListener("pointerdown", pl.outsideClick, true);
   $$("#place .pl-mark").forEach(btn => btn.onclick = () => btn.dataset.pl === "scan" ? plClickScan(pl.scan.getCenter()) : plClickToday(pl.today.getCenter()));
-  $("#plPairs").onclick = e => { const x = e.target.closest("[data-del]"); if (x) { pl.pairs.splice(+x.dataset.del, 1); plRender(); } };
-  pl.keys = e => { if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); plAskCancel(); } };
+  $("#plPairs").onclick = e => { const x = e.target.closest("[data-del]"); if (x) { pl.pairs.splice(+x.dataset.del, 1); pl.autoMatch = null; plRender(); } };
+  pl.keys = e => {
+    if ($(".aer-lightbox")) return;
+    if (e.key === "Escape") {
+      e.preventDefault(); e.stopImmediatePropagation();
+      const menu = $("#plStonesMenu");
+      if (menu && !menu.hidden) { menu.hidden = true; $("#plStonesBtn")?.setAttribute("aria-expanded", "false"); return; }
+      const open = $$("#plClearAsk, #plResetAsk").find(b => !b.hidden);
+      if (open) open.querySelector(".solid + .btn").click(); else plAskCancel();
+      return;
+    }
+    if ((e.code === "Space" || e.key === " ") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.target.closest?.("input, textarea, select, button:not(#plBlink), a, summary, [role='button'], [contenteditable]")) return;
+      if (plFit()) {
+        e.preventDefault();
+        if (!e.repeat) plSetBlink(true);
+      }
+    }
+  };
+  pl.keyup = e => {
+    if (e.code === "Space" || e.key === " ") plSetBlink(false);
+  };
+  pl.blur = () => plSetBlink(false);
   document.addEventListener("keydown", pl.keys, true);
+  document.addEventListener("keyup", pl.keyup, true);
+  addEventListener("blur", pl.blur);
   pl.resize = () => { pl.scan.resize(); pl.today.resize(); };
   addEventListener("resize", pl.resize);
+  plUpdateStones();
   plRender();
   $("#plTitle").focus({ preventScroll: true });
 }
@@ -4162,6 +5686,9 @@ function plAskCancel() {
 function closePlacement() {
   if (!pl) return;
   document.removeEventListener("keydown", pl.keys, true);
+  document.removeEventListener("keyup", pl.keyup, true);
+  document.removeEventListener("pointerdown", pl.outsideClick, true);
+  removeEventListener("blur", pl.blur);
   removeEventListener("resize", pl.resize);
   pl.marks.forEach(m => m.remove());
   pl.scan.remove(); pl.today.remove();
@@ -4170,6 +5697,118 @@ function closePlacement() {
   const back = pl.opener;
   pl = null;
   if (back?.isConnected && !back.closest("[hidden]")) back.focus({ preventScroll: true }); else focusCard();
+}
+function plSetBlink(on) {
+  if (!pl) return;
+  const next = !!on && !!plFit();
+  if (pl.blinking === next) return;
+  pl.blinking = next;
+  const btn = $("#plBlink");
+  if (btn) btn.setAttribute("aria-pressed", String(next));
+  if (pl.todayReady && pl.today.getLayer("pl-scan")) {
+    pl.today.setPaintProperty("pl-scan", "raster-opacity", next ? 0 : pl.opacity);
+  }
+}
+function plSteppingStones() {
+  if (!pl || !S.lib.maps?.length) return [];
+  let box = pl.entry.bounds;
+  if (pl.todayReady) {
+    const b = pl.today.getBounds();
+    box = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+  }
+  if (!Array.isArray(box) || box.length !== 4 || !(box[2] > box[0] && box[3] > box[1])) return [];
+  const tierOf = m => {
+    const s = `${m.series || ""} ${m.id || ""}`.toLowerCase();
+    if (/l7014/.test(s)) return 0;
+    if (/sgi100k/.test(s)) return 1;
+    if (/l701|topo/.test(s)) return 2;
+    return 99;
+  };
+  const overlapArea = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+  return S.lib.maps
+    .filter(m => m.state === "available" && Array.isArray(m.bounds) && m.bounds.length === 4 && boxesOverlap(m.bounds, box) && tierOf(m) < 99)
+    .map(m => ({ m, tier: tierOf(m), area: overlapArea(m.bounds, box) }))
+    .sort((a, b) => a.tier - b.tier || b.area - a.area)
+    .slice(0, 4)
+    .map(x => x.m);
+}
+function plRefreshRefOptions() {
+  const sel = $("#plRefSel");
+  if (!pl || !sel) return;
+  const cur = pl.refId || sel.value || "today";
+  const refOpts = plRefLayers(pl.entry.id);
+  sel.innerHTML = `<option value="today">Ref: Today’s map (2026)</option>`
+    + refOpts.map(l => `<option value="${esc(l.id)}">Ref: ${esc(l.years || l.date || "")} ${esc(l.title)}</option>`).join("");
+  if (cur !== "today" && !refOpts.some(l => l.id === cur)) {
+    sel.value = "today";
+    plSetRef("today");
+  } else {
+    sel.value = cur;
+  }
+}
+function plUpdateStones() {
+  if (!pl) return;
+  const wrap = $("#plStones"), btn = $("#plStonesBtn"), menu = $("#plStonesMenu");
+  if (!wrap || !btn || !menu) return;
+  if (pl.pendingStoneId) {
+    const pm = S.lib.byId.get(pl.pendingStoneId);
+    if (pm?.state === "failed") { pl.addingStones.delete(pl.pendingStoneId); pl.pendingStoneId = null; }
+  }
+  const stones = plSteppingStones();
+  if (!stones.length) {
+    wrap.hidden = true;
+    menu.hidden = true;
+    menu.dataset.key = "";
+    btn.setAttribute("aria-expanded", "false");
+    return;
+  }
+  wrap.hidden = false;
+  btn.textContent = `Stepping stones (${stones.length})`;
+  const key = stones.map(m => `${m.id}:${pl.addingStones.has(m.id) || LIB_BUSY.has(m.state) ? 1 : 0}`).join(",");
+  if (!menu.hidden && menu.dataset.key === key) return;
+  menu.dataset.key = key;
+  menu.innerHTML = stones.map(m => {
+    const busy = pl.addingStones.has(m.id) || LIB_BUSY.has(m.state);
+    const sub = [libYear(m), libScale(m) || SERIES_WORDS[m.series] || ""].filter(Boolean).join(" · ");
+    return `<div class="pl-stone-row" role="menuitem"><div class="pl-stone-info"><b>${esc(m.title)}</b>${sub ? `<span class="small-t muted">${esc(sub)}</span>` : ""}</div>
+      <button type="button" class="btn small primary" data-stone="${esc(m.id)}"${busy ? " disabled" : ""}>${busy ? "Adding…" : "Add & use"}</button></div>`;
+  }).join("");
+}
+async function plAddStone(id) {
+  if (!pl || !id || pl.addingStones.has(id)) return;
+  const cur = pl, m = S.lib.byId.get(id);
+  pl.addingStones.add(id);
+  pl.pendingStoneId = id;
+  plUpdateStones();
+  const menu = $("#plStonesMenu");
+  if (menu) { menu.hidden = true; $("#plStonesBtn")?.setAttribute("aria-expanded", "false"); }
+  toast(`Adding ${m?.title || id} — will select as reference once installed.`, 5000);
+  try {
+    const res = await api("/api/library/add", { method: "POST", body: { ids: [id] } });
+    applyLibrary(res);
+    if (pl === cur) plOnCatalogUpdate();
+  } catch (e) {
+    if (pl === cur) {
+      pl.addingStones.delete(id);
+      if (pl.pendingStoneId === id) pl.pendingStoneId = null;
+      plUpdateStones();
+    }
+    toast("Could not add stepping stone: " + (e.message || "request failed"), 5000);
+  }
+}
+function plOnCatalogUpdate() {
+  if (!pl) return;
+  plRefreshRefOptions();
+  if (pl.pendingStoneId && plRefLayers(pl.entry.id).some(l => l.id === pl.pendingStoneId)) {
+    const id = pl.pendingStoneId, m = S.lib.byId.get(id);
+    pl.pendingStoneId = null;
+    pl.addingStones.delete(id);
+    const sel = $("#plRefSel");
+    if (sel) sel.value = id;
+    plSetRef(id);
+    toast(`${m?.title || id} is ready and active as your reference layer.`, 5000);
+  }
+  plUpdateStones();
 }
 function plClickScan(ll) {
   const [col, row] = plFromLL(ll);
@@ -4187,41 +5826,192 @@ function plClickToday(ll) {
   plRender();
 }
 // A numbered pin; each pair has its own colour so the two halves of a pair are easy to match by eye.
-function plPin(n, pending = false) {
+function plPin(n, pending = false, conf = null) {
   const el = document.createElement("div");
-  el.className = "pl-pin" + (pending ? " pending" : "");
+  const cls = pending ? " pending" : (conf == null ? "" : conf >= 0.75 ? " conf-hi" : " conf-mid");
+  el.className = "pl-pin" + cls;
   el.style.setProperty("--pc", `hsl(${(n * 67) % 360} 65% 36%)`);
   el.textContent = n;
+  if (conf != null) el.title = `Match confidence: ${Math.round(conf * 100)}%`;
   return el;
 }
-function plFit() { return fitAffine(pl.pairs, pl.w, pl.h); }
+function plFitNote(n, fit) {
+  // A perspective warp passes exactly through any 4 spots (a plain one through any 3), so the leftover error
+  // only means something once there are more spots than the warp needs.
+  const exact = pl.warpMode === "homography" ? 4 : 3;
+  if (n <= exact) return `${n} spots always fit exactly, so add ${n === exact ? "another" : "more"} to check the fit. `;
+  return `Spots are off by about ${fit.rms < 10 ? "under 10" : Math.round(fit.rms)} m on average. `;
+}
+function plFit() {
+  if (!pl) return null;
+  if (pl.warpMode === "homography" && pl.pairs.length >= 4) return fitHomography(pl.pairs, pl.w, pl.h) || fitAffine(pl.pairs, pl.w, pl.h);
+  return fitAffine(pl.pairs, pl.w, pl.h);
+}
+function plDrawSites() {
+  if (!pl?.todayReady) return;
+  const m = pl.today, sites = S.kase?.sites || [];
+  const data = {
+    type: "FeatureCollection",
+    features: sites.map(s => ({ type: "Feature", geometry: { type: "Point", coordinates: [s.lon, s.lat] }, properties: { name: s.name || "Site" } })),
+  };
+  if (!m.getSource("pl-sites")) {
+    m.addSource("pl-sites", { type: "geojson", data });
+    m.addLayer({ id: "pl-sites-dot", type: "circle", source: "pl-sites", paint: { "circle-radius": 6, "circle-color": "#d97706", "circle-stroke-width": 2, "circle-stroke-color": "#fff" } });
+    m.addLayer({ id: "pl-sites-lbl", type: "symbol", source: "pl-sites", layout: { "text-field": ["get", "name"], "text-size": 12, "text-offset": [0, 1.1], "text-anchor": "top", "text-font": ["Noto Sans Medium"] },
+      paint: { "text-color": "#111", "text-halo-color": "#fff", "text-halo-width": 1.5 } });
+  } else {
+    m.getSource("pl-sites").setData(data);
+  }
+}
+function plSetRef(id) {
+  if (!pl) return;
+  pl.refId = id || "today";
+  const wrap = $("#plRefOpWrap"); if (wrap) wrap.hidden = pl.refId === "today";
+  if (!pl.todayReady) return;
+  const m = pl.today;
+  if (m.getLayer("pl-ref")) m.removeLayer("pl-ref");
+  if (m.getSource("pl-ref")) m.removeSource("pl-ref");
+  if (pl.refId === "today") return;
+  const era = eraById(pl.refId);
+  if (!era) return;
+  m.addSource("pl-ref", { type: "raster", tiles: [era.tiles], tileSize: 256, minzoom: era.minzoom ?? 0, maxzoom: era.maxzoom ?? 18, bounds: era.bounds });
+  const beforeId = m.getLayer("pl-scan") ? "pl-scan" : (m.getLayer("pl-sites-dot") ? "pl-sites-dot" : undefined);
+  m.addLayer({ id: "pl-ref", type: "raster", source: "pl-ref", paint: { "raster-opacity": pl.refOpacity, "raster-fade-duration": 0 } }, beforeId);
+  if (era.bounds && era.bounds[2] > era.bounds[0] && era.bounds[3] > era.bounds[1]) {
+    const b = m.getBounds();
+    const curB = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    if (!boxesOverlap(curB, era.bounds)) m.fitBounds([[era.bounds[0], era.bounds[1]], [era.bounds[2], era.bounds[3]]], { padding: 40, maxZoom: 15 });
+  }
+}
+async function plRunAutoMatch() {
+  if (!pl || pl.autoBusy || !pl.todayReady) return;
+  const btn = $("#plAuto"), err = $("#plErr"), cur = pl;
+  pl.autoBusy = true; err.textContent = ""; btn.disabled = true; btn.textContent = "Matching…";
+  const m = pl.today, scanVis = m.getLayer("pl-scan") ? m.getLayoutProperty("pl-scan", "visibility") : "none";
+  try {
+    if (m.getLayer("pl-scan")) m.setLayoutProperty("pl-scan", "visibility", "none");
+    if (m.getLayer("pl-vicinity")) m.setLayoutProperty("pl-vicinity", "visibility", "none");
+    if (m.getLayer("pl-sites-dot")) m.setLayoutProperty("pl-sites-dot", "visibility", "none");
+    if (m.getLayer("pl-sites-lbl")) m.setLayoutProperty("pl-sites-lbl", "visibility", "none");
+    await new Promise(res => { m.once("render", res); m.triggerRepaint(); setTimeout(res, 120); });
+    const srcCanvas = m.getCanvas(), scale = Math.min(1, 1280 / Math.max(srcCanvas.width, srcCanvas.height, 1));
+    const tmp = document.createElement("canvas");
+    tmp.width = Math.max(32, Math.round(srcCanvas.width * scale));
+    tmp.height = Math.max(32, Math.round(srcCanvas.height * scale));
+    tmp.getContext("2d").drawImage(srcCanvas, 0, 0, tmp.width, tmp.height);
+    const ref_b64 = tmp.toDataURL("image/jpeg", 0.86);
+    const b = m.getBounds();
+    const ref_bounds = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    if (m.getLayer("pl-scan") && scanVis !== "none") m.setLayoutProperty("pl-scan", "visibility", scanVis || "visible");
+    if (m.getLayer("pl-vicinity")) m.setLayoutProperty("pl-vicinity", "visibility", "visible");
+    if (m.getLayer("pl-sites-dot")) m.setLayoutProperty("pl-sites-dot", "visibility", "visible");
+    if (m.getLayer("pl-sites-lbl")) m.setLayoutProperty("pl-sites-lbl", "visibility", "visible");
+    const thresh = autoGcpThresh() / 100;
+    const res = await api("/api/auto-gcp", {
+      method: "POST",
+      body: { id: cur.entry.id, mode: cur.mode, ref_b64, ref_bounds, confidence_threshold: thresh, max_points: 12, kind: cur.subject },
+    });
+    if (pl !== cur) return;
+    pl.autoMatch = res;
+    if (res.points?.length) {
+      pl.pairs = res.points.map(pt => ({ col: pt.col, row: pt.row, lon: pt.lon, lat: pt.lat, conf: pt.confidence }));
+      pl.pending = null;
+      if (pl.subject === "photo" && pl.warpMode === "auto" && res.recommended_warp === "homography") {
+        pl.warpMode = "homography";
+        const wEl = $("#plWarp"); if (wEl) wEl.value = "homography";
+      }
+    }
+    plRender();
+    if (!res.points?.length) {
+      err.textContent = res.reason || "No reliable matching landmarks found here. Zoom closer, pick an intermediate reference layer, or place spots manually.";
+    } else if (res.meets_threshold && autoGcpMode() === "auto" && pl.pairs.length >= 4) {
+      toast(`Auto-matched ${res.confidence_pct}% (${res.inliers} landmarks) — building…`, 5000);
+      await plSave();
+    } else if (res.meets_threshold) {
+      toast(`High-confidence match (${res.confidence_pct}%, ${res.inliers} landmarks) — review points & click Save`, 5000);
+    } else {
+      toast(`Below ${Math.round(thresh * 100)}% threshold (${res.confidence_pct}%) — please verify or add corners manually`, 6000);
+    }
+  } catch (e) {
+    if (m.getLayer("pl-scan") && scanVis !== "none") m.setLayoutProperty("pl-scan", "visibility", scanVis || "visible");
+    if (m.getLayer("pl-sites-dot")) m.setLayoutProperty("pl-sites-dot", "visibility", "visible");
+    if (m.getLayer("pl-sites-lbl")) m.setLayoutProperty("pl-sites-lbl", "visibility", "visible");
+    if (pl === cur) err.textContent = e.message || "Auto-match failed.";
+  } finally {
+    if (pl === cur) pl.autoBusy = false;
+    if (btn.isConnected) { btn.disabled = false; btn.textContent = "Auto-match"; }
+  }
+}
 function plRender() {
   const n = pl.pairs.length, fit = plFit();
   pl.marks.forEach(m => m.remove()); pl.marks = [];
   pl.pairs.forEach((p, i) => {
-    pl.marks.push(new maplibregl.Marker({ element: plPin(i + 1) }).setLngLat(plToLL(p.col, p.row)).addTo(pl.scan));
-    pl.marks.push(new maplibregl.Marker({ element: plPin(i + 1) }).setLngLat([p.lon, p.lat]).addTo(pl.today));
+    const sm = new maplibregl.Marker({ element: plPin(i + 1, false, p.conf ?? null), draggable: true }).setLngLat(plToLL(p.col, p.row)).addTo(pl.scan);
+    const updateScan = () => {
+      const [col, row] = plFromLL(sm.getLngLat());
+      p.col = Math.max(0, Math.min(pl.w, col));
+      p.row = Math.max(0, Math.min(pl.h, row));
+      pl.autoMatch = null;
+    };
+    sm.on("drag", () => { updateScan(); plDraw(); });
+    sm.on("dragend", () => { updateScan(); plRender(); });
+    const tm = new maplibregl.Marker({ element: plPin(i + 1, false, p.conf ?? null), draggable: true }).setLngLat([p.lon, p.lat]).addTo(pl.today);
+    const updateRef = () => {
+      const ll = tm.getLngLat();
+      p.lon = ll.lng;
+      p.lat = ll.lat;
+      pl.autoMatch = null;
+    };
+    tm.on("drag", () => { updateRef(); plDraw(); });
+    tm.on("dragend", () => { updateRef(); plRender(); });
+    pl.marks.push(sm, tm);
   });
   if (pl.pending) pl.marks.push(new maplibregl.Marker({ element: plPin(n + 1, true) }).setLngLat(plToLL(pl.pending.col, pl.pending.row)).addTo(pl.scan));
+  const cBadge = $("#plConf");
+  if (cBadge) {
+    if (pl.autoMatch && pl.autoMatch.confidence != null) {
+      cBadge.hidden = false;
+      cBadge.classList.toggle("ok", !!pl.autoMatch.meets_threshold);
+      cBadge.textContent = `${pl.autoMatch.confidence_pct}% match · ${pl.autoMatch.inliers} inliers · ${pl.autoMatch.quadrants_covered}/4 corners`;
+    } else {
+      cBadge.hidden = true;
+    }
+  }
+  const minPts = pl.warpMode === "auto" ? 3 : 4;
+  const exact = pl.warpMode === "homography" ? 4 : 3;
   let step;
-  if (pl.pending) step = `<b>Spot ${n + 1}, step 2.</b> Now click the same spot on today’s map.`;
-  else if (n < 3) step = `<b>1.</b> Click a spot on your map. <b>2.</b> Click the same spot on today’s map. ${n ? `${n} matched, at least 3 needed. Spread them out.` : "Use corners, road crossings or bridges."}`;
+  if (pl.pending) step = `<b>Spot ${n + 1}, step 2.</b> Now click the same spot on the reference map.`;
+  else if (n < minPts) {
+    const hint = pl.subject === "photo" && !n && (pl.entry.vicinity_label || pl.entry.plot_url)
+      ? `${pl.entry.vicinity_label ? `<b>Mission area:</b> Near ${esc(pl.entry.vicinity_label)}. ` : ""}${pl.entry.plot_url ? `Click <b>${esc(pl.entry.plot_label || "Flight index")}</b> on the map to see where this frame sits on the flight track, zoom in to that spot, then ` : ""}`
+      : "";
+    step = `${hint}<b>1.</b> Click a spot on your map. <b>2.</b> Click the same spot on the reference map (or click <b>Auto-match</b>). ${n ? `${n} matched, ${minPts} needed.` : "Use corners, road crossings or trees."}`;
+  }
   else if (!fit) step = "Those spots are in a line or very close together. Add one further away from the others.";
-  else step = `Your map now lies over today’s map. Check the roads and rivers line up; drag the slider to compare. ${n >= 4 ? `Spots are off by about ${fit.rms < 10 ? "under 10" : Math.round(fit.rms)} m on average. ` : ""}Add more spots to improve it, then ${pl.mode === "align" ? "save the alignment" : "place the map"}.`;
+  else step = `Your map now lies over the reference map. Check the roads and rivers line up; drag pins to fine-tune or hold Space to blink. ${plFitNote(n, fit)}Add more spots to improve it, then ${pl.mode === "align" ? "save the alignment" : "place the map"}.`;
   $("#plStep").innerHTML = step;
   $("#plScanPane").classList.toggle("want", !pl.pending);
   $("#plTodayPane").classList.toggle("want", !!pl.pending);
-  $("#plPairs").innerHTML = pl.pairs.map((p, i) => `<li><span class="pl-pin sm" style="--pc:hsl(${((i + 1) * 67) % 360} 65% 36%)">${i + 1}</span>
-    <span class="mono">${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}</span>
-    <button class="round flat small" data-del="${i}" aria-label="Delete spot ${i + 1}">${icon.close}</button></li>`).join("");
+  $("#plPairs").innerHTML = pl.pairs.map((p, i) => {
+    const err = fit && fit.residuals && n > exact ? fit.residuals[i] : null;
+    const resHTML = err != null
+      ? `<span class="pl-res${err > 40 ? " warn" : ""}" title="Residual error for spot ${i + 1}">${err < 5 ? "&lt;5 m" : `${Math.round(err)} m`}</span>`
+      : "";
+    return `<li><span class="pl-pin sm" style="--pc:hsl(${((i + 1) * 67) % 360} 65% 36%)">${i + 1}</span>
+    <span class="mono">${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}</span>${resHTML}${p.conf != null ? `<span class="small-t muted">${Math.round(p.conf * 100)}%</span>` : ""}
+    <button class="round flat small" data-del="${i}" aria-label="Delete spot ${i + 1}">${icon.close}</button></li>`;
+  }).join("");
   $("#plUndo").disabled = !n && !pl.pending;
   $("#plClear").disabled = !n && !pl.pending;
-  $("#plSave").disabled = !fit;
+  $("#plSave").disabled = !fit || n < minPts;
   $("#plOp").disabled = !fit;
+  const blinkBtn = $("#plBlink");
+  if (blinkBtn) blinkBtn.disabled = !fit;
+  if (!fit && pl.blinking) plSetBlink(false);
   $("#plErr").textContent = "";
   plDraw();
 }
-// The live preview: the scan's four corners at the fitted places, as an image layer over today's map.
+// The live preview: the scan's four corners at the fitted places, as an image layer over the reference map.
 function plDraw() {
   if (!pl?.todayReady) return;
   const m = pl.today, fit = plFit();
@@ -4229,7 +6019,8 @@ function plDraw() {
   const coordinates = [fit.at(0, 0), fit.at(pl.w, 0), fit.at(pl.w, pl.h), fit.at(0, pl.h)];
   if (!m.getSource("pl-scan")) {
     m.addSource("pl-scan", { type: "image", url: pl.url, coordinates });
-    m.addLayer({ id: "pl-scan", type: "raster", source: "pl-scan", paint: { "raster-opacity": pl.opacity, "raster-fade-duration": 0 } });
+    const beforeId = m.getLayer("pl-sites-dot") ? "pl-sites-dot" : undefined;
+    m.addLayer({ id: "pl-scan", type: "raster", source: "pl-scan", paint: { "raster-opacity": pl.blinking ? 0 : pl.opacity, "raster-fade-duration": 0 } }, beforeId);
   } else { m.getSource("pl-scan").setCoordinates(coordinates); m.setLayoutProperty("pl-scan", "visibility", "visible"); }
 }
 async function plReset() {
@@ -4256,11 +6047,12 @@ async function plSave() {
   const err = $("#plErr"), cur = pl, btn = $("#plSave"), id = pl.entry.id;
   // col / row are pixels of the full-size picture, which is what the scan is laid out in here.
   const points = pl.pairs.map(p => [Math.round(p.col * 10) / 10, Math.round(p.row * 10) / 10, +p.lon.toFixed(7), +p.lat.toFixed(7)]);
+  const warp_mode = pl.warpMode || "auto";
   if (pl.mode === "align") {
     btn.disabled = true; btn.textContent = "Saving…";
     if ($("#plReset")) $("#plReset").disabled = true;
     try {
-      await api(`/api/library/${encodeURIComponent(id)}/align/points`, { method: "POST", body: { points } });
+      await api(`/api/library/${encodeURIComponent(id)}/align/points`, { method: "POST", body: { points, warp_mode } });
     } catch (e) {
       if (pl === cur) {
         err.textContent = e.message; btn.textContent = "Save alignment"; btn.disabled = false;
@@ -4280,7 +6072,7 @@ async function plSave() {
   if (y && !(year >= 1800 && year <= 2100)) { err.textContent = "The year should be between 1800 and 2100, or empty."; $("#plYear").focus(); return; }
   btn.disabled = true; btn.textContent = "Placing…";
   let lib;
-  try { lib = await api(`/api/library/custom/${encodeURIComponent(id)}/points`, { method: "POST", body: { points, title: name, year } }); }
+  try { lib = await api(`/api/library/custom/${encodeURIComponent(id)}/points`, { method: "POST", body: { points, title: name, year, warp_mode } }); }
   catch (e) { if (pl === cur) { err.textContent = e.message; btn.textContent = "Place map"; btn.disabled = false; } return; }
   applyLibrary(lib);
   // The placement may have been closed (or another opened) while this was in flight; only close our own.
@@ -4295,10 +6087,10 @@ async function plSave() {
 // bar, not Settings (which no longer shows it).
 function setBase(k) { S.base = k; store.set("base", k); applyBase(); renderMapbar(); }
 // Shows the chosen base map on one map, tuned for the theme. Also used by the Placement screen's map of today.
-function setBasePaint(m) {
+function setBasePaint(m, baseKey = S.base) {
   const dark = isDark();
   for (const b of Object.keys(BASES)) {
-    m.setLayoutProperty(`base-${b}`, "visibility", b === S.base ? "visible" : "none");
+    m.setLayoutProperty(`base-${b}`, "visibility", b === baseKey ? "visible" : "none");
     // Dark street map: invert lightness and rotate hue back, so land is dark and water stays blue (like Apple Maps).
     // Land ends up dark grey, not black, so the "Today" half of a comparison still reads.
     const inv = dark && b === "osm";
@@ -4348,15 +6140,18 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { ap
 document.addEventListener("keydown", e => {
   if (placeOpen()) return; // the Placement screen has its own keys
   const typing = e.target.closest?.("input, textarea, select");
-  if (e.key === "/" && !typing) { e.preventDefault(); q.focus(); q.select(); }
+  if (e.key === "/" && !typing && S.view.name !== "settings") { e.preventDefault(); q.focus(); q.select(); }
   else if (e.key === "Escape") {
+    if ($(".aer-lightbox")) { e.preventDefault(); closeLightbox(); return; }
     const open = ["popStyle", "popLayers", "popMaps"].find(id => !$("#" + id).hidden);
     if (open) { const a = $("#" + open)._anchor; closePopovers(); a?.focus(); return; }
     // An open confirm box ("Remove this map?") closes first, like its Cancel button.
     const cancel = e.target.closest?.(".confirm-box")?.querySelector('[data-act$="Cancel"], #delNo');
     if (cancel) { e.preventDefault(); cancel.click(); return; }
     if (typing) return;
-    if (S.placing) endPlacing(); else if (S.view.name !== "home") back();
+    if (S.placing) endPlacing();
+    else if (S.profilingFrom) endProfiling();
+    else if (S.view.name !== "home") back();
   }
 });
 
@@ -4388,7 +6183,7 @@ function checkEmptyKinds() {
   catalogReady = api("/catalog.json", { cache: "no-store" }).then(c => (c.layers || []).filter(l => l.bounds))
     .catch(() => { toast("The old-map catalogue could not be loaded."); return []; })
     .then(layers => {
-      S.catalog = layers; S.eras = buildEras(S.catalog); S.catalogLoaded = true;
+      S.catalog = layers; S.eras = buildEras(visualLayers()); S.catalogLoaded = true;
       const saved = store.get("era", null);
       const [lon, lat] = viewCenter();
       S.eraA = saved === "today" ? null : (eraById(saved) && eraCovers(eraById(saved), lon, lat) ? saved : defaultEra());
@@ -4446,7 +6241,112 @@ function checkEmptyKinds() {
   m.once("idle", checkEmptyKinds);
   loadSources();
   loadRecords();
+  loadHub();
+  loadTerrainSources();
   await loadCases();
   if (S.caseId) await selectCase(S.caseId);
   if (S.view.name === "home") render();
+  startRemoteBridge();
 })();
+
+// ================================================================ remote MCP bridge
+function remoteSnapshot() {
+  const m = primary();
+  if (!m) return null;
+  const c = m.getCenter(), b = m.getBounds();
+  return {
+    center: [+c.lng.toFixed(6), +c.lat.toFixed(6)],
+    zoom: +m.getZoom().toFixed(2),
+    bounds: [+b.getWest().toFixed(6), +b.getSouth().toFixed(6), +b.getEast().toFixed(6), +b.getNorth().toFixed(6)],
+    base: S.base,
+    era: S.eraA,
+    opacity: S.opacity,
+    view: S.view.name,
+    placement_open: !!pl,
+    placement_id: pl?.entry?.id || null,
+  };
+}
+async function runRemoteCommand(action, params = {}) {
+  const m = primary();
+  if (action === "navigate") {
+    if (Array.isArray(params.bounds) && params.bounds.length === 4) {
+      m.fitBounds([[params.bounds[0], params.bounds[1]], [params.bounds[2], params.bounds[3]]], { padding: 40, duration: 0, maxZoom: 16 });
+    } else if (typeof params.lon === "number" && typeof params.lat === "number") {
+      m.jumpTo({ center: [params.lon, params.lat], zoom: typeof params.zoom === "number" ? params.zoom : Math.max(m.getZoom(), 12) });
+    } else throw new Error("navigate requires bounds or lon & lat.");
+    await new Promise(res => { m.once("idle", res); setTimeout(res, 1500); });
+    return { ok: true };
+  }
+  if (action === "set_layer") {
+    if (params.base && ["sat", "osm", "topo", "oam"].includes(params.base)) setBase(params.base);
+    if ("era_id" in params) setEra(params.era_id || null, "A");
+    if (typeof params.opacity === "number") {
+      S.opacity = Math.max(0, Math.min(1, params.opacity));
+      store.set("opacity", S.opacity);
+      const op = $("#opacity"); if (op) op.value = String(Math.round(S.opacity * 100));
+      const ov = $("#opVal"); if (ov) ov.textContent = `${Math.round(S.opacity * 100)}%`;
+      applyEra();
+    }
+    await new Promise(res => { m.once("idle", res); setTimeout(res, 1000); });
+    return { ok: true };
+  }
+  if (action === "open_view") {
+    const v = params.view || "home";
+    if (v === "aerials" || v === "aerial") {
+      openAerial(params.tab || null);
+    } else if (v === "library") openLibrary();
+    else if (v === "settings") openSettings();
+    else if (v === "cases") show("cases");
+    else show("home");
+    return { ok: true, view: S.view.name };
+  }
+  if (action === "screenshot") {
+    const target = (pl && pl.todayReady) ? pl.today : m;
+    const maxSide = Math.max(320, Math.min(2048, +params.max_side || 1280));
+    const dataUrl = await new Promise(res => {
+      let done = false;
+      const grab = () => {
+        if (done) return;
+        done = true;
+        const src = target.getCanvas();
+        const scale = Math.min(1, maxSide / Math.max(src.width, src.height, 1));
+        const tmp = document.createElement("canvas");
+        tmp.width = Math.max(32, Math.round(src.width * scale));
+        tmp.height = Math.max(32, Math.round(src.height * scale));
+        tmp.getContext("2d").drawImage(src, 0, 0, tmp.width, tmp.height);
+        res(tmp.toDataURL("image/jpeg", 0.85));
+      };
+      target.once("render", grab);
+      target.triggerRepaint();
+      setTimeout(grab, 400);
+    });
+    const tb = target.getBounds();
+    return {
+      image_b64: dataUrl,
+      bounds: [+tb.getWest().toFixed(6), +tb.getSouth().toFixed(6), +tb.getEast().toFixed(6), +tb.getNorth().toFixed(6)],
+    };
+  }
+  throw new Error(`Unknown remote action: ${action}`);
+}
+function startRemoteBridge() {
+  const pushState = () => api("/api/remote/state", { method: "POST", body: remoteSnapshot() || {} }).catch(() => {});
+  pushState();
+  (async function loop() {
+    while (true) {
+      try {
+        const res = await api("/api/remote/poll", { cache: "no-store" });
+        const cmd = res?.cmd;
+        if (cmd) {
+          try {
+            const result = await runRemoteCommand(cmd.action, cmd.params);
+            await api("/api/remote/reply", { method: "POST", body: { id: cmd.id, result, state: remoteSnapshot() } });
+          } catch (err) {
+            await api("/api/remote/reply", { method: "POST", body: { id: cmd.id, error: err?.message || String(err), state: remoteSnapshot() } });
+          }
+        }
+      } catch {
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+  })();
+}

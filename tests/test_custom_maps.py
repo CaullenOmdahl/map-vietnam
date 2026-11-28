@@ -462,6 +462,83 @@ def test_settings_say_where_the_data_is_and_how_much_space_it_takes(web, tmp_pat
     base, lib = web
     status, body, _ = request(f"{base}/api/settings")
     assert status == 200 and body["data_folder"] == str(lib.root)
-    assert set(body["disk"]) == {"maps", "records", "downloads", "total"}
+    assert set(body["disk"]) == {"maps", "records", "downloads", "base_cache", "total"}
     upload(base, write_geotiff(tmp_path / "g.tif"))
     assert request(f"{base}/api/settings")[1]["disk"]["maps"] > 0
+
+
+def test_a_float_lidar_dem_geotiff_is_tiled_as_lossless_terrarium_dem(lib, tmp_path):
+    path = tmp_path / "lidar_dtm.tif"
+    elev = np.full((1, 32, 48), 14.75, np.float32)
+    with rasterio.open(
+        path,
+        "w",
+        driver="GTiff",
+        width=48,
+        height=32,
+        count=1,
+        dtype="float32",
+        crs="EPSG:4326",
+        transform=from_origin(105.70, 10.10, 0.001, 0.001),
+        nodata=-9999.0,
+    ) as ds:
+        ds.write(elev)
+    entry = ingest(lib, tmp_path, path, title="Cao Lanh LiDAR DTM")
+    assert entry["kind"] == "dem"
+    lib.add([entry["id"]])
+    lib.run_pending()
+    assert lib.state_of(entry["id"]) == "installed"
+    (layer,) = json.loads((lib.root / "web" / "catalog.json").read_text(encoding="utf-8"))["layers"]
+    assert layer["encoding"] == "terrarium" and layer["title"] == "Cao Lanh LiDAR DTM"
+    assert tiling.sample_dem_mbtiles(lib.tiles_path(entry["id"]), 105.72, 10.085) == pytest.approx(14.75, abs=0.05)
+
+
+def test_scan_with_eight_plus_gcps_builds_with_thin_plate_spline(lib, tmp_path):
+    """8+ control points automatically enable Thin Plate Spline (`tps=True`) and build cleanly."""
+    from PIL import Image
+
+    img_path = tmp_path / "shdai_aerial.jpg"
+    Image.new("RGB", (128, 128), (155, 140, 120)).save(img_path, format="JPEG")
+    entry = ingest(lib, tmp_path, img_path, title="SHDAI 8-GCP Aerial", year="1953")
+    assert entry["kind"] == "scan"
+    gcps = [
+        [0, 0, 105.50, 10.50],
+        [127, 0, 105.60, 10.50],
+        [127, 127, 105.60, 10.40],
+        [0, 127, 105.50, 10.40],
+        [64, 64, 105.551, 10.449],
+        [32, 96, 105.525, 10.425],
+        [96, 32, 105.575, 10.475],
+        [32, 32, 105.525, 10.475],
+    ]
+    lib.place_custom(entry["id"], gcps, "SHDAI 8-GCP Aerial", 1953)
+    ctrl = json.loads(lib.custom.control_path(entry["id"]).read_text(encoding="utf-8"))
+    assert ctrl.get("tps") is True
+    lib.run_pending()
+    assert lib.state_of(entry["id"]) == "installed"
+    assert lib.tiles_path(entry["id"]).is_file()
+
+
+def test_oblique_homography_warp_persists_warp_mode_and_builds(lib, tmp_path):
+    """4 keystone GCPs with `warp_mode='homography'` warp oblique aerials projectively and tile."""
+    from PIL import Image
+
+    arr = np.zeros((120, 160, 3), np.uint8)
+    arr[..., 0] = 180
+    arr[20:100, 30:130, 1] = 210
+    img_path = tmp_path / "oblique_1969.jpg"
+    Image.fromarray(arr).save(img_path, format="JPEG")
+    entry = ingest(lib, tmp_path, img_path, title="1969 Oblique Aerial", year="1969")
+    # Trapezoid keystone mimicking a camera tilted northward
+    gcps = [
+        [0, 0, 105.51, 10.50],
+        [160, 0, 105.59, 10.50],
+        [160, 120, 105.57, 10.42],
+        [0, 120, 105.53, 10.42],
+    ]
+    lib.place_custom(entry["id"], gcps, "1969 Oblique Aerial", 1969, warp_mode="homography")
+    ctrl = json.loads(lib.custom.control_path(entry["id"]).read_text(encoding="utf-8"))
+    assert ctrl["warp_mode"] == "homography"
+    lib.run_pending()
+    assert lib.state_of(entry["id"]) == "installed"
+    assert lib.tiles_path(entry["id"]).is_file()

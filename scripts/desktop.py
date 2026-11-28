@@ -45,6 +45,14 @@ from urllib.parse import urlsplit
 
 import paths
 
+try:
+    import certifi as _certifi
+
+    os.environ.setdefault("SSL_CERT_FILE", _certifi.where())
+    os.environ.setdefault("CURL_CA_BUNDLE", _certifi.where())
+except ImportError:
+    pass
+
 TITLE = "Map Vietnam"
 WINDOW_ICON_NAMES = {"win32": "map-vietnam.ico", "linux": "map-vietnam.png"}
 WINDOW_SIZE = (1280, 820)
