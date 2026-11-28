@@ -23,11 +23,11 @@ RUN grep -Ev '^(pywebview|bottle|pytest)==' /app/requirements.txt > /tmp/require
     && pip install --no-cache-dir -r /tmp/requirements-hub.txt \
     && rm -f /tmp/requirements-hub.txt
 
-# Optional learned Auto-GCP matcher (SuperPoint + LightGlue, ONNX Runtime CPU).
-# Off by default: the SuperPoint weights are licensed for non-commercial research use only
-# (Magic Leap), so client images must opt in explicitly with `--build-arg AUTO_GCP_WEIGHTS=superpoint`.
-# Without the weights the Hub falls back to the built-in NumPy matcher.
-ARG AUTO_GCP_WEIGHTS=none
+# Learned Auto-GCP matcher (SuperPoint + LightGlue, ONNX Runtime CPU). The SuperPoint weights are
+# licensed for non-commercial research use only (Magic Leap); Map Vietnam is non-commercial, so they
+# ship by default. Build with `--build-arg AUTO_GCP_WEIGHTS=none` to leave them out; the Hub then
+# falls back to the built-in NumPy matcher.
+ARG AUTO_GCP_WEIGHTS=superpoint
 ARG AUTO_GCP_MODEL_URL=https://github.com/fabio-sim/LightGlue-ONNX/releases/download/v2.0/superpoint_lightglue_pipeline.onnx
 ARG AUTO_GCP_MODEL_SHA256=228994cea8c010146fa2aef933baa3ffaa4bcdc522bc8aa560087fcff8134526
 ENV AUTO_GCP_MODEL_DIR=/opt/auto-gcp

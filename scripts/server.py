@@ -32,6 +32,10 @@ GET /api/library, and GET /api/settings reports where the data is kept and how m
   POST /api/library/custom/<id>/points {"points": [[col, row, lon, lat], ...], "title", "year"}
         col/row are pixels of the full-size working image; 3 or more points; queues the build
   POST /api/library/custom/<id>/edit {"title", "year"}                    rename / re-date a map
+  POST /api/library/custom/<id>/chain {"confidence_threshold"} -> strip-chaining plan from this
+        placed survey frame: {"mission", "anchor", "proposals": [...], "stops": [...]}
+  POST /api/library/custom/<id>/chain {"apply": [{"id", "points"}, ...]} places those frames
+        (warp "homography") and queues their builds -> the library listing
   GET  /api/settings -> {"data_folder", "disk": {"maps", "records", "downloads", "total"}} (bytes)
 
 Record sources (scripts/records.py). Nothing is downloaded unless one of these asks for it, only
@@ -105,6 +109,7 @@ import library
 import paths
 import records
 import store
+import strip_chain
 import terrain_aerial
 import tiling
 from hub import auto_gcp
@@ -121,7 +126,7 @@ MAX_BODY_BYTES = 1 << 20  # the API's JSON bodies are tiny; refuse anything bigg
 UPLOAD_PATH = "/api/library/custom"  # raw-file upload routes (not JSON)
 CASE_IMPORT_PATH = "/api/cases/import"
 UPLOAD_BLOCK = 1 << 20
-CUSTOM_PATH = re.compile(r"library/custom/(custom_[0-9a-f]{10})/(preview|points|edit)")
+CUSTOM_PATH = re.compile(r"library/custom/(custom_[0-9a-f]{10})/(preview|points|edit|chain)")
 ALIGN_PATH = re.compile(r"library/([A-Za-z0-9_-]+)/align/(prepare|preview|points|reset)")
 # How long a removal request waits for the removal to finish before it answers, so the answer
 # usually shows the source already gone; a removal queued behind a running job answers sooner.
@@ -1162,7 +1167,7 @@ class Handler(SimpleHTTPRequestHandler):
         if method == "POST" and p == "library/custom":
             return self.upload_custom_map()
         m = CUSTOM_PATH.fullmatch(p)
-        if m and (method, m[2]) in (("GET", "preview"), ("POST", "points"), ("POST", "edit")):
+        if m and (method, m[2]) in (("GET", "preview"), ("POST", "points"), ("POST", "edit"), ("POST", "chain")):
             return self.custom_map_api(m[1], m[2])
         am = ALIGN_PATH.fullmatch(p)
         if am and ((method == "GET" and am[2] == "preview") or (method == "POST" and am[2] != "preview")):
@@ -1226,7 +1231,9 @@ class Handler(SimpleHTTPRequestHandler):
             if entry["kind"] != "scan" or not path.exists():
                 raise custom_maps.NoSuchMap()
             return self.send_jpeg(path)
-        b = self.body()
+        b = self.body(max_bytes=4 << 20) if action == "chain" else self.body()
+        if action == "chain":
+            return self.strip_chain_api(entry, b)
         if action == "points":
             lib.place_custom(
                 map_id, b.get("points"), b.get("title"), b.get("year"), warp_mode=b.get("warp_mode", "auto")
@@ -1236,6 +1243,52 @@ class Handler(SimpleHTTPRequestHandler):
             lib.custom.edit(map_id, b.get("title"), b.get("year"))
             lib.write_catalog()
         self.send_json(lib.listing())
+
+    def strip_chain_api(self, anchor, b):
+        """Plan (or apply) placing the neighbouring frames of `anchor`'s survey strip."""
+        lib = self.library
+        if b.get("apply") is not None:
+            items = b["apply"]
+            if not isinstance(items, list) or not items:
+                raise ValueError("Send the frames to place.")
+            mission = strip_chain.strip_key(anchor)
+            for item in items:
+                target = lib.custom.get(str(item.get("id") or ""))
+                if mission is None or (strip_chain.strip_key(target) or (None,))[0] != mission[0]:
+                    raise ValueError("Only frames of the same survey strip can be chained.")
+                if target.get("points"):
+                    continue  # never overwrite a frame someone placed meanwhile
+                lib.place_custom(
+                    target["id"], item.get("points"), target["title"], target.get("year"), warp_mode="homography"
+                )
+            lib.start_worker()
+            return self.send_json(lib.listing())
+
+        thresh = float(b.get("confidence_threshold", auto_gcp.DEFAULT_CONFIDENCE_THRESHOLD))
+        use_hub = bool(self.hub.config().get("configured"))
+
+        def image_of(entry):
+            path = lib.custom.preview_path(entry["id"])
+            if not path.is_file():
+                path = lib.custom.work_image(entry["id"])
+            if not path.is_file():
+                raise custom_maps.NoSuchMap("The scan preview image is missing.")
+            return path.read_bytes(), (entry["image"]["width"], entry["image"]["height"])
+
+        def match(b_entry, a_entry):
+            nonlocal use_hub
+            b_bytes, b_size = image_of(b_entry)
+            a_bytes, a_size = image_of(a_entry)
+            if use_hub:
+                try:
+                    return self.hub.match_pair(a_bytes, b_bytes, a_size=a_size, b_size=b_size)
+                except hub_client.HubClientError:
+                    use_hub = False  # fall back to the local matcher for the rest of the walk
+            return auto_gcp.match_pair(a_bytes, b_bytes, a_size=a_size, b_size=b_size)
+
+        plan = strip_chain.plan_chain(lib.custom.entries(), anchor["id"], match, threshold=thresh)
+        plan["threshold"] = thresh
+        self.send_json(plan)
 
     def align_map_api(self, map_id, action):
         """The alignment routes of any installed map: prepare, preview, points, reset."""

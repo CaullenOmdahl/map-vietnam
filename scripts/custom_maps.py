@@ -461,11 +461,15 @@ class CustomMaps:
         elif wmode == "tps" or (wmode == "auto" and len(points) >= 8):
             control["tps"] = True
         write_json(self.control_path(map_id), control)
+        # Keep the imported title once renamed: it can carry identity (e.g. a survey strip's
+        # mission and frame number) that strip chaining still needs.
+        original = entry.get("original_title") or (entry["title"] if title != entry["title"] else None)
         return self.update(
             map_id,
             points=points,
             bounds=bounds,
             title=title,
+            **({"original_title": original} if original else {}),
             year=year,
             date=str(year) if year else "",
             warp_mode=wmode,

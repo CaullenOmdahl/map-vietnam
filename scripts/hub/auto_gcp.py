@@ -551,6 +551,123 @@ def _search_hypotheses(matcher, scan_gray, ref_gray, fractions, *, inlier_px, ro
     return best
 
 
+def _confidence(n_inliers, total_matches, quadrants_covered, rmse_px, inlier_px):
+    """4-factor score in [0, 1]: inlier count, inlier ratio, quadrant spread, and RMSE."""
+    s_inliers = min(1.0, n_inliers / 12.0)
+    s_ratio = min(1.0, (n_inliers / max(total_matches, 1)) / 0.45)
+    s_spread = quadrants_covered / 4.0
+    # A 4-point homography has 0 degrees of freedom (RMSE is identically ~0 for any 4 points).
+    dof_weight = 0.0 if n_inliers <= 4 else (0.4 if n_inliers == 5 else 1.0)
+    s_rmse = max(0.0, 1.0 - (rmse_px / float(inlier_px))) * dof_weight
+    raw_conf = 0.32 * s_inliers + 0.18 * s_ratio + 0.28 * s_spread + 0.22 * s_rmse
+    if n_inliers < 5:
+        raw_conf = min(raw_conf, 0.35)
+    return round(max(0.0, min(1.0, raw_conf)), 3)
+
+
+def _work_to_full(off, work_scale):
+    """3x3 matrix taking trimmed-work pixels to full-resolution pixels."""
+    k = 1.0 / work_scale
+    return np.array([[k, 0.0, off[0] * k], [0.0, k, off[1] * k], [0.0, 0.0, 1.0]], dtype=np.float64)
+
+
+def _spread_pick(pts, scores, w, h, n_max, grid=4):
+    """Indices of up to `n_max` points, best-scored first within each cell of a `grid` x `grid` layout."""
+    order = np.argsort(-np.asarray(scores))
+    seen, picked = set(), []
+    for i in order:
+        cell = (min(grid - 1, int(pts[i, 0] / w * grid)), min(grid - 1, int(pts[i, 1] / h * grid)))
+        if cell in seen:
+            continue
+        seen.add(cell)
+        picked.append(int(i))
+        if len(picked) >= n_max:
+            break
+    return picked
+
+
+def match_pair(
+    a_bytes,
+    b_bytes,
+    *,
+    a_size=None,
+    b_size=None,
+    max_points=12,
+    min_inliers=8,
+    inlier_px=4.0,
+):
+    """Match frame `b` onto overlapping frame `a` (e.g. neighbouring exposures of one survey strip).
+
+    `a_size` / `b_size` = `(W, H)` of the full-resolution pictures the previews stand for (the
+    pixels control points are stored in). Returns `H_b_to_a` (3x3 in those full-res pixels),
+    up to `max_points` well-spread `pairs` `[b_col, b_row, a_col, a_row, confidence]` with the `a`
+    side projected through the homography, and the same `confidence` / `inliers` / `rmse_px`
+    fields as `match_and_score`. `ok` is False when too few consistent matches survive.
+    """
+    onnx = _onnx_session()
+    side = ONNX_REF_SIDE if onnx else MAX_WORK_SIDE
+    a_gray, a_w0, a_h0, a_off = _load_work_gray(a_bytes, side, trim_border=True)
+    b_gray, b_w0, b_h0, b_off = _load_work_gray(b_bytes, side, trim_border=True)
+    a_full_w, a_full_h = (int(a_size[0]), int(a_size[1])) if a_size else (a_w0, a_h0)
+    b_full_w, b_full_h = (int(b_size[0]), int(b_size[1])) if b_size else (b_w0, b_h0)
+    a_scale = min(1.0, float(side) / max(a_w0, a_h0, 1)) * a_w0 / float(a_full_w)
+    b_scale = min(1.0, float(side) / max(b_w0, b_h0, 1)) * b_w0 / float(b_full_w)
+
+    if onnx is not None:
+        sess, backend = onnx
+        best = _search_hypotheses(lambda s_, r_: _match_onnx(sess, s_, r_), b_gray, a_gray, (1.0,), inlier_px=inlier_px)
+    else:
+        backend = "numpy_local"
+        best = _search_hypotheses(_match_numpy, b_gray, a_gray, (1.0,), inlier_px=inlier_px)
+
+    base = {"backend": backend, "ok": False, "pairs": [], "H_b_to_a": None, "confidence": 0.0, "inliers": 0}
+    if best is None or best["n"] < min_inliers:
+        base.update(
+            inliers=0 if best is None else best["n"],
+            total_matches=0 if best is None else int(len(best["pts_s"])),
+            reason="These frames do not share enough matching ground to chain them.",
+        )
+        return base
+
+    mask = best["mask"]
+    ps, errs = best["pts_s"][mask], best["errs"][mask]
+    ms = np.asarray(best["mscores"])[mask]
+    bh, bw = b_gray.shape
+    quadrants = _quadrants(ps, bw, bh)
+    rmse = math.sqrt(float(np.mean(errs**2)))
+    confidence = _confidence(int(mask.sum()), int(len(best["pts_s"])), quadrants, rmse, inlier_px)
+
+    T_a = _work_to_full(a_off, a_scale)
+    T_b = _work_to_full(b_off, b_scale)
+    H_full = T_a @ best["H"] @ np.linalg.inv(T_b)
+    H_full = H_full / H_full[2, 2]
+
+    per_pt = 0.45 * np.clip(ms, 0.0, 1.0) + 0.55 * np.exp(-0.35 * errs**2)
+    pick = _spread_pick(ps, per_pt, bw, bh, max(4, min(32, int(max_points))))
+    b_full = _reproject(T_b, ps[pick])
+    a_full = _reproject(H_full, b_full)
+    pairs = []
+    for (bc, br), (ac, ar), c in zip(b_full, a_full, per_pt[pick], strict=True):
+        if not (0 <= bc <= b_full_w and 0 <= br <= b_full_h):
+            continue
+        pairs.append(
+            [round(float(bc), 1), round(float(br), 1), round(float(ac), 2), round(float(ar), 2), round(float(c), 3)]
+        )
+    base.update(
+        ok=len(pairs) >= 4,
+        pairs=pairs,
+        H_b_to_a=[[float(v) for v in row] for row in H_full],
+        confidence=confidence,
+        confidence_pct=round(confidence * 100.0, 1),
+        inliers=int(mask.sum()),
+        total_matches=int(len(best["pts_s"])),
+        quadrants_covered=quadrants,
+        rmse_px=round(rmse, 2),
+        search={"rotation_deg": best["rotation_deg"], "tried": best.get("tried")},
+    )
+    return base
+
+
 def match_and_score(
     scan_bytes,
     ref_bytes,
@@ -699,16 +816,7 @@ def match_and_score(
 
     quadrants_covered = len({c["quadrant"] for c in candidates})
     rmse_px = math.sqrt(float(np.mean(errs[inlier_idxs] ** 2)))
-    s_inliers = min(1.0, n_inliers / 12.0)
-    s_ratio = min(1.0, (n_inliers / max(total_matches, 1)) / 0.45)
-    s_spread = quadrants_covered / 4.0
-    # A 4-point homography has 0 degrees of freedom (RMSE is identically ~0 for any 4 points).
-    dof_weight = 0.0 if n_inliers <= 4 else (0.4 if n_inliers == 5 else 1.0)
-    s_rmse = max(0.0, 1.0 - (rmse_px / float(inlier_px))) * dof_weight
-    raw_conf = 0.32 * s_inliers + 0.18 * s_ratio + 0.28 * s_spread + 0.22 * s_rmse
-    if n_inliers < 5:
-        raw_conf = min(raw_conf, 0.35)
-    confidence = round(max(0.0, min(1.0, raw_conf)), 3)
+    confidence = _confidence(n_inliers, total_matches, quadrants_covered, rmse_px, inlier_px)
 
     # Check if homography has significant projective perspective skew (ratio of bottom vs top width)
     top_l = _reproject(H, np.array([[0.0, 0.0]]))[0]

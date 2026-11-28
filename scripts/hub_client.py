@@ -669,6 +669,21 @@ class HubClient:
             body["scan_target_size"] = [int(scan_target_size[0]), int(scan_target_size[1])]
         return self._request_json(url, key, "/hub/v1/auto-gcp", method="POST", body=body, timeout=45)
 
+    def match_pair(self, a_bytes, b_bytes, *, a_size=None, b_size=None):
+        """Match overlapping survey frame `b` onto placed frame `a` on Hub `/hub/v1/match-pair`."""
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        body = {
+            "a_b64": base64.b64encode(a_bytes).decode("ascii"),
+            "b_b64": base64.b64encode(b_bytes).decode("ascii"),
+        }
+        if a_size:
+            body["a_size"] = [int(a_size[0]), int(a_size[1])]
+        if b_size:
+            body["b_size"] = [int(b_size[0]), int(b_size[1])]
+        return self._request_json(url, key, "/hub/v1/match-pair", method="POST", body=body, timeout=60)
+
     def proxy_post(self, route, body):
         url, key = self.credentials()
         if not (url and key):

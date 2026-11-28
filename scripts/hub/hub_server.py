@@ -414,7 +414,7 @@ class HubHandler(BaseHTTPRequestHandler):
                         "scopes": sorted(p.scopes),
                         "group_tag": p.group_tag,
                         "version": HUB_VERSION,
-                        "capabilities": {**self.storage.vault.status(), "auto_gcp": True},
+                        "capabilities": {**self.storage.vault.status(), "auto_gcp": True, "match_pair": True},
                         "stats": self.storage.stats(),
                     }
                 )
@@ -499,6 +499,17 @@ class HubHandler(BaseHTTPRequestHandler):
                     confidence_threshold=b.get("confidence_threshold", auto_gcp.DEFAULT_CONFIDENCE_THRESHOLD),
                     max_points=b.get("max_points", 12),
                     scan_target_size=b.get("scan_target_size"),
+                )
+                return self.send_json(res)
+
+            if method == "POST" and path == "/hub/v1/match-pair":
+                self.require_principal("read")
+                b = self.read_json_body(max_bytes=12 << 20)
+                res = auto_gcp.match_pair(
+                    auto_gcp.decode_image_b64(b.get("a_b64")),
+                    auto_gcp.decode_image_b64(b.get("b_b64")),
+                    a_size=b.get("a_size"),
+                    b_size=b.get("b_size"),
                 )
                 return self.send_json(res)
 

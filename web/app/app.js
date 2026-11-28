@@ -272,6 +272,7 @@ const icon = {
   back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
   search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  power: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8"/><path d="M6.6 6.6a7.5 7.5 0 1010.8 0"/></svg>',
   pin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
   grid: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="M4 12h16M12 4v16"/></svg>',
   plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
@@ -301,6 +302,7 @@ const startOpacity = () => Math.min(store.get("opacity", 0.6), 0.75);
 // target is the selection drawn on the map ({lon, lat, m: radius in metres, spot}); me is the device position.
 // kase is the open case (the name avoids the reserved word); view is the card shown, history the Back stack.
 const S = {
+  chain: null, // strip chaining: {id, busy, plan, err, applying}
   catalog: [], eras: [], eraA: null, eraB: "today", compare: false, opacity: startOpacity(),
   base: store.get("base", "osm"), years: null, hidden: new Set(store.get("hidden", [])), heat: store.get("heat", 0.5),
   ev: empty(), pn: empty(), sources: {}, target: null, me: null, watchId: null,
@@ -1808,12 +1810,13 @@ const recentMeta = r => r.kind === "gridref" ? `Grid square · ${r.datum === "wg
   : [kindOne(r), r.date ? fmtDay(r.date) : "", r.rid ? `${srcShort(r.src).split(" ")[0]} ${r.rid}` : ""].filter(Boolean).join(" · ");
 VIEWS.home = v => {
   const rec = recent();
+  const otherCases = S.cases.filter(c => c.id !== S.kase?.id), noCases = !S.cases.length;
   homeLastSig = homeSig();
   return `
     ${welcomeHTML()}
     ${S.kase ? `<div class="case-pill"><span class="sw site"></span><div class="grow"><span class="small-t muted">Open case</span><b>${esc(S.kase.name)}</b></div>
       <button class="btn small" data-act="openCase" data-id="${S.kase.id}">Open</button></div>` : ""}
-    <h3 class="section-title">Cases <span class="right case-head-acts"><button class="linkish" data-act="importKmlHome">Import KML/KMZ</button><button class="linkish" data-act="newCaseToggle">New case</button></span></h3>
+    <h3 class="section-title">Cases ${noCases ? "" : `<span class="right case-head-acts"><button class="linkish" data-act="importKmlHome">Import KML/KMZ</button><button class="linkish" data-act="newCaseToggle">New case</button></span>`}</h3>
     <input type="file" id="kmlFileHome" hidden accept=".kml,.kmz,application/vnd.google-earth.kml+xml,application/vnd.google-earth.kmz">
     <div class="group">
       <form id="newCase" class="inner stack" hidden>
@@ -1821,10 +1824,11 @@ VIEWS.home = v => {
         <label class="field"><span>One-line summary (optional)</span><input type="text" name="summary"></label>
         <div class="row"><button class="btn primary small" type="submit">Create case</button><button class="btn small" type="button" data-act="newCaseToggle">Cancel</button></div>
         <div class="err" role="alert"></div></form>
-      <ul class="list">${S.cases.filter(c => c.id !== S.kase?.id).length ? S.cases.filter(c => c.id !== S.kase?.id).map(c => `<li><span class="sw site"></span>
+      <ul class="list">${otherCases.length ? otherCases.map(c => `<li><span class="sw site"></span>
         <button class="main" data-act="openCase" data-id="${c.id}"><span class="t">${esc(c.name)}</span>
         <span class="m">${esc(c.summary || "No summary")}</span></button>${icon.chevR.replace("<svg", '<svg style="color:var(--faint)"')}</li>`).join("")
-        : S.kase ? "" : `<li class="empty">No cases yet. A case gathers evidence, candidate sites and notes for one investigation, and exports them for a GPS.</li>`}</ul>
+        : S.kase ? "" : `<li class="empty case-empty"><span>No cases yet. A case gathers evidence, candidate sites and notes for one investigation, and exports them for a GPS.</span>
+          <span class="row"><button class="btn small primary" data-act="newCaseToggle">${icon.plus}New case</button><button class="btn small" data-act="importKmlHome">${icon.upload}Import KML/KMZ</button></span></li>`}</ul>
     </div>
     ${rec.length ? `<h3 class="section-title">Recently viewed <span class="right"><button class="linkish" data-act="clearRecent">Clear</button></span></h3>
       <div class="group"><ul class="list">${rec.map(r => r.kind === "gridref"
@@ -1848,7 +1852,7 @@ VIEWS.home = v => {
     ${v.quit ? `<div class="confirm-box calm quit-box" role="alertdialog" aria-label="Quit Map Vietnam">
         <span>Quit Map Vietnam? The map stops working in this window until you start it again.${S.rec.busy || libBusyMaps().length ? " What is being added now stops; what was already downloaded is kept." : ""}</span>
         <div class="row"><button class="btn small primary" data-act="quit">Quit</button><button class="btn small" data-act="quitCancel">Cancel</button></div></div>`
-      : `<div class="home-links"><button class="linkish quit-link" data-act="openSettings">Settings</button><button class="linkish quit-link" data-act="quitAsk">Quit Map Vietnam</button></div>`}`;
+      : `<div class="home-links"><button class="btn small" data-act="openSettings">${icon.gear}Settings</button><button class="btn small" data-act="quitAsk">${icon.power}Quit Map Vietnam</button></div>`}`;
 };
 VIEWS.home.after = () => {
   $("#newCase")?.addEventListener("submit", async e => {
@@ -1876,7 +1880,13 @@ function aerialHomeLine() {
   parts.push("French aerials 1948–56 · spy satellites · LiDAR");
   return parts.join(" · ");
 }
-ACTIONS.newCaseToggle = () => { const f = $("#newCase"); if (!f) return; f.hidden = !f.hidden; if (!f.hidden) f.name.focus(); };
+ACTIONS.newCaseToggle = () => {
+  const f = $("#newCase"); if (!f) return;
+  f.hidden = !f.hidden;
+  // The empty state's own New case / Import buttons would repeat the open form, so they step aside while it is up.
+  const empty = $("#view .case-empty"); if (empty) empty.hidden = !f.hidden;
+  if (!f.hidden) f.name.focus(); else (empty?.querySelector('[data-act="newCaseToggle"]') || $('#view [data-act="newCaseToggle"]'))?.focus();
+};
 ACTIONS.importKmlHome = () => $("#kmlFileHome")?.click();
 ACTIONS.clearRecent = () => { store.set("recent", []); render(); };
 ACTIONS.recGrid = el => { q.value = el.dataset.ref; $("#qClear").hidden = false; openGridRef(el.dataset.ref, el.dataset.datum); };
@@ -2381,6 +2391,7 @@ VIEWS.era = v => {
         ${canEditHub ? `<button class="btn small danger" data-act="hubDelAsk" data-id="${e.id}">Delete from Hub</button>` : ""}
         <button class="btn small danger" data-act="eraRemove" data-id="${e.id}">${icon.trash}Remove locally</button>`}</div>
     ${pushBox}${delHubBox}
+    ${customScan && !e.hubStream ? chainHTML(lib) : ""}
     ${!eraInYears(e) ? `<p class="quiet-note">${icon.warn}<span>Outside your years (${esc(yearsText())}), so it is hidden on the map.</span></p>` : ""}
     <p class="small-t muted">Positions on old maps can be off by hundreds of metres or more. Check each sheet’s note.</p>
     <div class="group"><ul class="list">${e.layers.map(l => `<li style="display:block;padding:10px 14px"><div class="t" style="white-space:normal;font-weight:500">${esc(l.title)}</div>
@@ -2862,7 +2873,7 @@ function libDetail(m) {
   const acts = (m.custom ? `<button class="btn small" data-act="cmManage" data-id="${id}">Edit or place again</button>`
     : m.state === "installed" ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : "")
     + hubActs
-    + (m.state === "installed" ? `<button class="btn small danger" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button>` : "");
+    + (m.state === "installed" ? `<button class="btn small danger push-end" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button>` : "");
   const confirm = S.view.confirm === "remove:" + m.id ? `<div class="confirm-box" role="alertdialog" aria-label="Remove ${t}">
       <span>Remove <b>${t}</b> from this computer? This frees ${fmtMB(m.disk_bytes) || "its space"}. You can add it again later.</span>
       <div class="row"><button class="btn small danger solid" data-act="libRemove" data-id="${id}">Remove</button>
@@ -2872,7 +2883,7 @@ function libDetail(m) {
     ${maker ? `<p class="muted">${esc(maker)}</p>` : ""}
     ${size ? `<p class="muted">${esc(size)}</p>` : ""}
     ${m.error ? `<p class="err">${esc(m.error)}</p>` : ""}
-    <div class="row">${acts}<button class="btn small" data-act="libFit" data-id="${id}">Zoom to map</button></div>
+    <div class="row lib-acts"><button class="btn small" data-act="libFit" data-id="${id}">Zoom to map</button>${acts}</div>
     ${confirm}
     ${licence ? `<details><summary>Licence</summary><p class="muted">${esc(licence)}</p></details>` : ""}</div>`;
 }
@@ -2955,13 +2966,14 @@ VIEWS.library = v => {
         <input id="libQ" type="search" data-act="libQ" autocomplete="off" spellcheck="false" enterkeyhint="search"
           placeholder="Filter by place, sheet or year" aria-label="Filter old maps by place, sheet number or year" value="${esc(v.q || "")}"></label>
       ${md.kinds.length > 1 ? `<div class="seg lib-seg" role="group" aria-label="Show maps of one scale">${chip("all", "All", null)}${md.kinds.map(x => chip(x.k, x.label, x.n)).join("")}</div>` : ""}
-      ${n > 1 ? `<div class="lib-sort" role="group" aria-label="Order of the list"><span class="small-t muted">Order</span>
-        ${LIB_SORTS.map(([k, label]) => `<button class="linkish small-t" data-act="libSort" data-s="${k}" aria-pressed="${md.sort === k}">${k === "here" && typed ? "Nearest" : label}</button>`).join("")}</div>` : ""}
-      ${outlinesSeg()}
+      <div class="lib-opts">
+      ${n > 1 ? `<div class="lib-sort"><span class="small-t muted">Order</span><div class="seg small" role="group" aria-label="Order of the list">
+        ${LIB_SORTS.map(([k, label]) => `<button data-act="libSort" data-s="${k}" aria-pressed="${md.sort === k}">${k === "here" && typed ? "Nearest" : label}</button>`).join("")}</div></div>` : ""}
+      ${outlinesSeg()}</div>
     </div>
     ${busy.length ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span>
       <span class="grow"><b>Adding ${busy.length} map${busy.length === 1 ? "" : "s"}</b><span class="small-t muted" data-lib-left>${esc(leftText())}</span></span>
-      ${busy.length > 1 ? `<button class="linkish small-t" data-act="libStopAll">Stop all</button>` : ""}</div>${rows(busy)}` : ""}
+      ${busy.length > 1 ? `<button class="btn small" data-act="libStopAll">Stop all</button>` : ""}</div>${rows(busy)}` : ""}
     ${list("Could not be added", failed)}
     ${list("On this computer", installed)}
     ${available.length ? `<h3 class="sub-head">${typed ? "Can be added" : "Available here"}</h3>${bulk}${rows(available)}` : ""}
@@ -3327,7 +3339,7 @@ VIEWS.records = () => {
   return `${headHTML("Records", `<span>${esc(sub)}</span>`)}
     ${busy.length ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span>
       <span class="grow"><b>${adding ? `Adding ${adding} source${adding === 1 ? "" : "s"}` : "Removing"}</b><span class="small-t muted">One at a time. You can keep using the map.</span></span>
-      ${adding > 1 ? `<button class="linkish small-t" data-act="recStopAll">Stop all</button>` : ""}</div>${rows(busy)}` : ""}
+      ${adding > 1 ? `<button class="btn small" data-act="recStopAll">Stop all</button>` : ""}</div>${rows(busy)}` : ""}
     ${!busy.length && S.rec.busy ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span><span class="grow"><b>Busy in another window</b><span class="small-t muted">Records are being changed from a terminal or another Map Vietnam window.</span></span></div>` : ""}
     ${list("Could not be added", failed)}
     ${list("On this computer", added)}
@@ -3946,8 +3958,8 @@ function togglePopover(id, anchor) {
 // The Show/Hide pair for the sheet outlines, in the Old maps card (their only home: the outlines are
 // about the maps listed there, so they sit beside the list's other tools).
 function outlinesSeg() {
-  const on = outlinesOn(), b = (v, label) => `<button class="linkish small-t" data-act="outlines" data-on="${v}" aria-pressed="${on === !!v}">${label}</button>`;
-  return `<div class="lib-sort" role="group" aria-label="Sheet outlines on the map"><span class="small-t muted">Outlines</span>${b(1, "Show")}${b(0, "Hide")}</div>`;
+  const on = outlinesOn(), b = (v, label) => `<button data-act="outlines" data-on="${v}" aria-pressed="${on === !!v}">${label}</button>`;
+  return `<div class="lib-sort"><span class="small-t muted">Outlines</span><div class="seg small" role="group" aria-label="Sheet outlines on the map">${b(1, "Show")}${b(0, "Hide")}</div></div>`;
 }
 // The style popover holds only the base-map cards (switched often) and a way into Settings. Appearance,
 // the outlines and the Kaggle key each live in exactly one place instead: Settings for the first and
@@ -4226,13 +4238,89 @@ function cmDetail(m) {
       <label class="field"><span>Year (optional)</span><input type="number" name="myear" min="1800" max="2100" inputmode="numeric" placeholder="e.g. 1968" value="${m.year ? esc(m.year) : ""}"></label>
       <div class="row"><button class="btn small primary" type="submit">Save</button></div>
       <div class="err" role="alert"></div></form>
-    <div class="row">${m.state === "needs_points" ? "" : m.kind === "scan" ? `<button class="btn small" data-act="cmPlace" data-id="${id}">Place again</button>` : ready && m.kind !== "dem" ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : ""}
+    <div class="row lib-acts">${ready && m.bounds ? `<button class="btn small" data-act="cmFit" data-id="${id}">Zoom to map</button>` : ""}
+      ${m.state === "needs_points" ? "" : m.kind === "scan" ? `<button class="btn small" data-act="cmPlace" data-id="${id}">Place again</button>` : ready && m.kind !== "dem" ? `<button class="btn small" data-act="alignMap" data-id="${id}">Adjust alignment</button>` : ""}
       ${ready && m.kind === "dem" ? `<button class="btn small primary" data-act="useDem" data-id="${id}">Show relief</button>` : ""}
-      ${ready && m.bounds ? `<button class="btn small" data-act="cmFit" data-id="${id}">Zoom to map</button>` : ""}
       ${ready && S.hub.connected ? `<button class="btn small" data-act="hubPushOne" data-id="${id}" data-vis="hub">Cache to Hub</button>` : ""}
-      <button class="btn small danger" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button></div>
+      <button class="btn small danger push-end" data-act="libAskRemove" data-id="${id}">${icon.trash}Remove</button></div>
+    ${m.kind === "scan" && ready ? chainHTML(m) : ""}
     ${confirm}</div>`;
 }
+// ---------------------------------------------------------------- strip chaining
+// A survey frame's title names its mission and frame number (SHD: "…HV741__0002__V.jpg").
+const STRIP_RE = /(SHDAI__[A-Z0-9_]+?)__(\d{3,5})__/i;
+const stripOf = m => { const r = STRIP_RE.exec(m?.title || "") || STRIP_RE.exec(m?.original_title || ""); return r ? { mission: r[1].toUpperCase(), frame: +r[2] } : null; };
+const placedFrame = m => (m?.points || []).length >= 3;
+function stripSiblingsToPlace(m) {
+  const k = stripOf(m);
+  if (!k) return 0;
+  return (S.lib.maps || []).filter(x => x.custom && x.kind === "scan" && !placedFrame(x) && stripOf(x)?.mission === k.mission).length;
+}
+const fmtFrame = n => String(n).padStart(4, "0");
+function chainRefresh() { if (S.view.name === "settings") settingsRefresh(true); else rerenderKeepingFocus(); }
+function chainHTML(m) {
+  if (!placedFrame(m) || !stripOf(m)) return "";
+  const c = S.chain?.id === m.id ? S.chain : null, todo = stripSiblingsToPlace(m);
+  if (!c) {
+    return todo ? `<div class="chain-box"><p class="small-t muted">${todo} other frame${todo === 1 ? "" : "s"} of this strip ${todo === 1 ? "is" : "are"} not placed yet. Neighbouring frames overlap, so they can be placed from this one.</p>
+      <div class="row"><button class="btn small" data-act="chainPlan" data-id="${esc(m.id)}">Place strip neighbours</button></div></div>` : "";
+  }
+  if (c.busy) return `<div class="chain-box" role="status"><p class="small-t">Matching neighbouring frames along the strip…</p></div>`;
+  if (c.err) return `<div class="chain-box"><p class="err" role="alert">${esc(c.err)}</p><div class="row"><button class="btn small" data-act="chainClose">Close</button></div></div>`;
+  const plan = c.plan, ok = plan.proposals.filter(p => p.meets_threshold), low = plan.proposals.filter(p => !p.meets_threshold);
+  const name = id => S.lib.byId.get(id)?.title || id;
+  const row = p => `<li><b>Frame ${fmtFrame(p.frame)}</b> · ${p.confidence_pct}% · ${p.inliers} landmarks · from ${fmtFrame(p.from_frame)}${p.hops > 1 ? ` (${p.hops} hops)` : ""}
+      ${p.meets_threshold ? "" : ` <button class="linkish small-t" data-act="chainReview" data-id="${esc(p.id)}" data-anchor="${esc(m.id)}">Review in Placement</button>`}</li>`;
+  const stops = plan.stops.filter(st => !low.some(p => p.id === st.id));
+  return `<div class="chain-box" role="group" aria-label="Place strip neighbours">
+    ${c.placed ? `<p class="small-t">Placed ${c.placed} frame${c.placed === 1 ? "" : "s"} from this one; ${c.placed === 1 ? "it is" : "they are"} being built.</p>` : ""}
+    ${plan.proposals.length ? `<ul class="chain-list">${plan.proposals.map(row).join("")}</ul>` : c.placed ? "" : `<p class="small-t muted">No unplaced neighbouring frames could be matched.</p>`}
+    ${stops.map(st => `<p class="small-t muted">Stopped at frame ${fmtFrame(st.frame)} (${esc(name(st.id))}): ${esc(st.reason)} Place it by hand, then chain again.</p>`).join("")}
+    ${low.length ? `<p class="small-t muted">Below your ${Math.round(plan.threshold * 100)}% threshold: open it in Placement with the matched points filled in, check them, then save.</p>` : ""}
+    <div class="row">${ok.length ? `<button class="btn small primary" data-act="chainApply" data-id="${esc(m.id)}"${c.applying ? " disabled" : ""}>${c.applying ? "Placing…" : `Place ${ok.length} frame${ok.length === 1 ? "" : "s"}`}</button>` : ""}
+      <button class="btn small" data-act="chainClose">Close</button></div></div>`;
+}
+async function chainApply(anchorId, proposals) {
+  const lib = await api(`/api/library/custom/${encodeURIComponent(anchorId)}/chain`, { method: "POST", body: { apply: proposals.map(p => ({ id: p.id, points: p.points })) } });
+  applyLibrary(lib);
+  return proposals.length;
+}
+ACTIONS.chainPlan = async el => {
+  const id = el.dataset.id;
+  S.chain = { id, busy: true }; chainRefresh();
+  try {
+    const plan = await api(`/api/library/custom/${encodeURIComponent(id)}/chain`, { method: "POST", body: { confidence_threshold: autoGcpThresh() / 100 } });
+    if (S.chain?.id !== id) return;
+    const ok = plan.proposals.filter(p => p.meets_threshold);
+    if (autoGcpMode() === "auto" && ok.length) {
+      S.chain = { id, plan, applying: true }; chainRefresh();
+      const n = await chainApply(id, ok);
+      if (S.chain?.id !== id) return;
+      S.chain = { id, placed: n, plan: { ...plan, proposals: plan.proposals.filter(p => !p.meets_threshold) } };
+      toast(`Placed ${n} strip frame${n === 1 ? "" : "s"} automatically — they are being built.`, 5000);
+    } else S.chain = { id, plan };
+  } catch (e) { if (S.chain?.id === id) S.chain = { id, err: e.message || "Chaining failed." }; }
+  chainRefresh();
+};
+ACTIONS.chainApply = async el => {
+  const id = el.dataset.id, c = S.chain;
+  if (!c?.plan || c.id !== id) return;
+  const ok = c.plan.proposals.filter(p => p.meets_threshold);
+  S.chain = { ...c, applying: true }; chainRefresh();
+  try {
+    const n = await chainApply(id, ok);
+    toast(`Placing ${n} strip frame${n === 1 ? "" : "s"} — they will appear in Old maps when built.`, 5000);
+    S.chain = { id, placed: n, plan: { ...c.plan, proposals: c.plan.proposals.filter(p => !p.meets_threshold) } };
+  } catch (e) { S.chain = { ...c, applying: false, err: e.message || "Could not place the frames." }; }
+  chainRefresh();
+};
+ACTIONS.chainReview = el => {
+  const p = S.chain?.plan?.proposals.find(x => x.id === el.dataset.id), m = S.lib.byId.get(el.dataset.id);
+  if (!p || !m) return;
+  openPlacement({ ...m, points: p.points, warp_mode: "homography" }, el);
+};
+ACTIONS.chainClose = () => { S.chain = null; chainRefresh(); };
+
 function cmRow(m) {
   const sel = S.view.sel === m.id, id = esc(m.id);
   return `<li class="lib-row${sel ? " sel" : ""}" data-lib-row="${id}">
@@ -4284,7 +4372,7 @@ function hubAdminHTML() {
     <div class="row" style="justify-content:space-between"><b class="small-t">Server Administration</b><span class="hub-badge">Admin access</span></div>
     <p class="small-t muted" style="margin:0">Manage all Hub server keys, proprietary feeds, and user access directly from here — no Railway or server console needed.</p>
 
-    <details><summary class="small-t" style="cursor:pointer;font-weight:600">1. Server upstream archive keys (USGS, Kaggle, NASA)</summary>
+    <details class="set-disclose"><summary class="sub-head">Archive keys on the server (USGS, Kaggle, NASA)</summary>
       <form id="hubSecretsForm" class="stack" style="margin-top:10px" autocomplete="off">
         <div class="set-grid-2">
           <label class="field"><span>USGS EarthExplorer username (CORONA / KH-7 / KH-9)</span><input type="text" name="usgs_u" value="${esc(v.usgs_username || "")}" placeholder="EROS username"></label>
@@ -4302,7 +4390,7 @@ function hubAdminHTML() {
         <div class="err" id="hubSecErr" role="alert"></div>
       </form></details>
 
-    <details><summary class="small-t" style="cursor:pointer;font-weight:600">2. Proprietary &amp; keyed tile / LiDAR DEM feeds (${feeds.length})</summary>
+    <details class="set-disclose"><summary class="sub-head">Private tile &amp; LiDAR DEM feeds (${feeds.length})</summary>
       <div class="stack" style="margin-top:10px">
         ${feeds.length ? `<ul class="list">${feeds.map(f => `<li style="padding:8px 10px"><div class="grow">
           <div class="t">${esc(f.title)} <span class="small-t muted mono">(${esc(f.id)})</span></div>
@@ -4325,7 +4413,7 @@ function hubAdminHTML() {
         </form>
       </div></details>
 
-    <details ${newKey ? "open" : ""}><summary class="small-t" style="cursor:pointer;font-weight:600">3. User &amp; collaborator API keys (${keys.filter(k => k.active).length} active)</summary>
+    <details class="set-disclose" ${newKey ? "open" : ""}><summary class="sub-head">People &amp; API keys (${keys.filter(k => k.active).length} active)</summary>
       <div class="stack" style="margin-top:10px">
         ${newKey ? `<div class="confirm-box calm" role="status">
           <span><b>New key created for ${esc(newKey.label)}:</b> copy it now — for security it is never shown again.</span>
@@ -4371,12 +4459,12 @@ function hubSectionHTML() {
       <label class="switch"><input type="checkbox" data-act="hubAutoPush" ${h.auto_push ? "checked" : ""}><span class="tog" aria-hidden="true"></span><span>Automatically cache newly imported &amp; aligned local maps to Hub</span></label>
       <div class="row" style="flex-wrap:wrap;gap:8px">
         ${localInstalled.length ? `<label class="small-t muted" style="display:inline-flex;align-items:center;gap:6px">Share as
-          <select id="hubVisSel" aria-label="Visibility on Hub"><option value="hub">All Hub members</option><option value="group">My group</option><option value="private">Private</option></select></label>
+          <select class="txt compact" id="hubVisSel" aria-label="Visibility on Hub"><option value="hub">All Hub members</option><option value="group">My group</option><option value="private">Private</option></select></label>
           <button class="btn small primary" data-act="hubPushAll">Cache all ${localInstalled.length} local map${localInstalled.length === 1 ? "" : "s"} to Hub</button>` : ""}
         <button class="btn small" data-act="hubRefresh">Refresh</button>
         <button class="btn small" data-act="hubDisconnect">Disconnect</button>
       </div>
-      ${allHubLayers.length ? `<details><summary class="small-t" style="cursor:pointer;color:var(--accent)">Manage maps &amp; DEMs on Hub (${allHubLayers.length})</summary>
+      ${allHubLayers.length ? `<details class="set-disclose"><summary class="sub-head">Maps &amp; DEMs on the Hub (${allHubLayers.length})</summary>
         <ul class="list" style="margin-top:6px">${allHubLayers.slice(0, 60).map(l => {
           const canEdit = isAdmin || (l.owner_key_id && l.owner_key_id === h.me?.key_id);
           const isDem = l.encoding === "terrarium";
@@ -4386,7 +4474,7 @@ function hubSectionHTML() {
             <div class="row" style="gap:6px;flex-wrap:wrap">
               <button class="btn small" data-act="${isDem ? "useDem" : "setEra"}" data-id="${esc(l.id)}">${isDem ? "Show relief" : "Show"}</button>
               ${!l.installed_offline && !l.stream_only ? `<button class="btn small" data-act="hubPull" data-id="${esc(l.id)}">Keep offline</button>` : ""}
-              ${canEdit ? `<select aria-label="Visibility for ${esc(l.title)}" data-act="hubLayerVis" data-id="${esc(l.id)}" style="min-height:30px;font-size:12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);padding:0 6px">
+              ${canEdit ? `<select class="txt compact" aria-label="Visibility for ${esc(l.title)}" data-act="hubLayerVis" data-id="${esc(l.id)}">
                 ${["hub", "group", "private"].map(vv => `<option value="${vv}"${l.visibility === vv ? " selected" : ""}>${vv === "hub" ? "All Hub" : vv === "group" ? "Group" : "Private"}</option>`).join("")}</select>
                 <button class="btn small danger" data-act="hubDelLayer" data-id="${esc(l.id)}" aria-label="Delete ${esc(l.title)} from Hub" title="Delete from Hub">${icon.trash}</button>` : ""}
             </div></li>`;
@@ -4848,6 +4936,10 @@ function openLightbox({ preview, full, title, year, sourceUrl, bounds = "" }) {
 // Archive previews are hot-linked and some are refused: mark them so the card shows "No preview" instead of a
 // broken-image icon. (error does not bubble, hence the capture phase.)
 document.addEventListener("error", e => { if (e.target.matches?.(".aer-card img")) e.target.classList.add("broken"); }, true);
+document.addEventListener("click", e => {
+  const th = e.target.closest?.(".aer-card .aer-thumb");
+  if (th && !th.querySelector("img.broken")) th.closest(".aer-card").querySelector('[data-act="aerPreview"]')?.click();
+});
 
 async function runAerialSearch() {
   const tab = S.aerial.tab, b = viewBounds() || [105.4, 10.2, 105.9, 10.7];
@@ -4889,6 +4981,7 @@ VIEWS.aerial = () => {
       ["glo30_hand", "GLO-30 HAND Flood / Drainage Relief (30 m)", "Height Above Nearest Drainage — highlights dikes, levees, canals & dry ground."],
       ["eth_canopy_10m", "ETH Tree Canopy Height (10 m)", "Global canopy height calibrated with GEDI spaceborne LiDAR."],
     ];
+    const buildCost = "Downloads the area on screen; takes from a few seconds to a few minutes, depending on its size.";
     body = `
       <h3 class="sub-head">Spaceborne LiDAR laser shots (NASA GEDI)</h3>
       <div class="group"><div class="inner stack">
@@ -4902,7 +4995,8 @@ VIEWS.aerial = () => {
       <p class="small-t muted">Streams only the area on screen (up to 2.5° across) from Cloud-Optimized GeoTIFFs into lossless 1/256 m Terrarium tiles.</p>
       <div class="group"><ul class="list">${packs.map(([k, t, desc]) => `<li style="padding:10px 14px;align-items:center">
         <div class="grow"><div class="t">${esc(t)}</div><div class="m">${esc(desc)}</div></div>
-        <button class="btn small primary" data-act="buildDem" data-pack="${k}">Build here</button></li>`).join("")}</ul></div>
+        <button class="btn small" data-act="buildDem" data-pack="${k}">Build here</button></li>`).join("")}</ul></div>
+      <p class="small-t muted" style="margin:6px 2px 0">${esc(buildCost)}</p>
       <h3 class="sub-head">Direct LiDAR &amp; sortie index links at map centre</h3>
       <div class="group">
         <div class="kv-row"><span class="k">NARA RG 373 1°×1° aerial sortie index</span><span class="v mono">${esc(rgCode)}</span>
@@ -5196,10 +5290,7 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   const dark = isDark();
   document.body.insertAdjacentHTML("beforeend", `<div id="place" role="dialog" aria-modal="true" aria-labelledby="plTitle">
     <header class="pl-bar"><div class="pl-head"><div class="row" style="gap:8px;flex-wrap:wrap"><h2 id="plTitle" tabindex="-1">${isAlign ? "Adjust alignment" : "Place"} ${isAlign ? "— " : ""}${esc(entry.title)}</h2><span id="plConf" class="pl-conf" hidden></span></div><p id="plStep" class="pl-step" role="status"></p></div>
-      <div class="pl-btns">${isAlign && entry.adjusted ? `<button class="btn danger" id="plReset">Reset to original</button>` : ""}
-        <button class="btn" id="plAuto" title="Automatically find landmarks matching the reference map view">Auto-match</button>
-        <button class="btn" id="plUndo">Undo last</button><button class="btn" id="plClear">Clear</button>
-        <button class="btn" id="plCancel">Cancel</button><button class="btn primary" id="plSave" disabled>${isAlign ? "Save alignment" : "Place map"}</button></div></header>
+      <div class="pl-btns"><button class="btn" id="plCancel">Cancel</button><button class="btn primary" id="plSave" disabled>${isAlign ? "Save alignment" : "Place map"}</button></div></header>
     <div class="pl-panes">
       <section class="pl-pane" id="plScanPane" aria-label="${isAlign ? "Historical map" : "Your map"}"><span class="pl-tag">${isAlign ? "Historical map" : "Your map"}</span><div class="pl-map" id="plScan"></div>
         <svg class="pl-cross" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
@@ -5210,7 +5301,7 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
             <option value="today">Ref: Today’s map (2026)</option>
             ${refOpts.map(l => `<option value="${esc(l.id)}">Ref: ${esc(l.years || l.date || "")} ${esc(l.title)}</option>`).join("")}
           </select>
-          <button class="btn small" id="plBaseBtn" type="button" title="Switch reference base between Satellite imagery and Street map">${pl.refBase === "sat" ? "Street" : "Satellite"}</button>
+          <div class="seg pl-baseseg" role="group" aria-label="Reference base map">${[["sat", "Satellite"], ["osm", "Street"]].map(([k, l]) => `<button type="button" data-plbase="${k}" aria-pressed="${pl.refBase === k}">${l}</button>`).join("")}</div>
           <label class="pl-refop" id="plRefOpWrap" hidden><span>Ref</span><input type="range" id="plRefOp" min="15" max="100" value="85" aria-label="Reference map opacity"></label>
         </div>
         <div class="pl-map" id="plToday"></div>
@@ -5218,6 +5309,18 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
         <button class="btn small pl-mark" data-pl="today" aria-label="Mark the middle of reference map (the + sign)">Mark the +</button></section>
     </div>
     <div class="pl-tray">
+      <div class="pl-tools" role="group" aria-label="Matched spots">
+        <button class="btn small" id="plAuto" title="Automatically find landmarks matching the reference map view">Auto-match</button>
+        <button class="btn small" id="plUndo">Undo last</button>
+        <button class="btn small" id="plClear">Clear all…</button>
+        ${isAlign && entry.adjusted ? `<button class="btn small danger pl-reset" id="plReset">Reset to original…</button>` : ""}
+      </div>
+      <div class="confirm-box" id="plClearAsk" role="alertdialog" aria-label="Clear all matched spots" hidden>
+        <span>Remove all the spots you have matched? You start again from none.</span>
+        <div class="row"><button class="btn small danger solid" id="plClearYes">Clear all</button><button class="btn small" id="plClearNo">Keep them</button></div></div>
+      ${isAlign && entry.adjusted ? `<div class="confirm-box" id="plResetAsk" role="alertdialog" aria-label="Reset to the original alignment" hidden>
+        <span>Put this map back where it was first placed? Your saved adjustment is thrown away.</span>
+        <div class="row"><button class="btn small danger solid" id="plResetYes">Reset to original</button><button class="btn small" id="plResetNo">Keep my adjustment</button></div></div>` : ""}
       <ol id="plPairs" class="pl-pairs" aria-label="Matched spots"></ol>
       <div class="pl-fields${isAlign ? " align-mode" : ""}">
         ${isAlign ? `<div class="field"><span>Adjusting</span><div class="small-t muted" id="plMapInfo">${esc(entry.title)}${entry.year ? ` (${esc(entry.year)})` : ""}${entry.adjusted ? " · currently adjusted" : ""}</div></div>`
@@ -5256,19 +5359,27 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   const b = entry.bounds || (pl.pairs.length ? pl.pairs.reduce((a, p) => [Math.min(a[0], p.lon), Math.min(a[1], p.lat), Math.max(a[2], p.lon), Math.max(a[3], p.lat)], [180, 90, -180, -90]) : null);
   if (b && b[2] > b[0] && b[3] > b[1]) pl.today.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, duration: 0, maxZoom: 15 });
   $("#plUndo").onclick = () => { if (pl.pending) pl.pending = null; else pl.pairs.pop(); pl.autoMatch = null; plRender(); };
-  $("#plClear").onclick = () => { pl.pairs = []; pl.pending = null; pl.autoMatch = null; plRender(); };
+  // Clear and Reset each ask first in a box beside them; its Cancel puts focus back on the button.
+  const ask = (box, from, on) => { $$("#place .pl-tray .confirm-box").forEach(b => { if (b.id !== "plDiscard") b.hidden = true; }); $(box).hidden = !on; if (on) $(box).querySelector(".solid").focus(); else $(from)?.focus(); };
+  $("#plClear").onclick = () => { if (pl.pairs.length + (pl.pending ? 1 : 0) < 2) { pl.pairs = []; pl.pending = null; pl.autoMatch = null; plRender(); } else ask("#plClearAsk", "#plClear", true); };
+  $("#plClearYes").onclick = () => { pl.pairs = []; pl.pending = null; pl.autoMatch = null; $("#plClearAsk").hidden = true; plRender(); $("#plAuto").focus(); };
+  $("#plClearNo").onclick = () => ask("#plClearAsk", "#plClear", false);
   $("#plCancel").onclick = plAskCancel;
   $("#plYes").onclick = () => closePlacement();
   $("#plNo").onclick = () => { $("#plDiscard").hidden = true; pl.discard = false; $("#plCancel").focus(); };
   $("#plSave").onclick = plSave;
   $("#plAuto").onclick = plRunAutoMatch;
-  if ($("#plReset")) $("#plReset").onclick = plReset;
+  if ($("#plReset")) {
+    $("#plReset").onclick = () => ask("#plResetAsk", "#plReset", true);
+    $("#plResetYes").onclick = () => { $("#plResetAsk").hidden = true; plReset(); };
+    $("#plResetNo").onclick = () => ask("#plResetAsk", "#plReset", false);
+  }
   $("#plRefSel").onchange = e => plSetRef(e.target.value);
-  $("#plBaseBtn").onclick = () => {
-    pl.refBase = pl.refBase === "sat" ? "osm" : "sat";
-    $("#plBaseBtn").textContent = pl.refBase === "sat" ? "Street" : "Satellite";
+  $$("#place [data-plbase]").forEach(b => b.onclick = () => {
+    pl.refBase = b.dataset.plbase;
+    $$("#place [data-plbase]").forEach(x => x.setAttribute("aria-pressed", x === b));
     if (pl.todayReady) setBasePaint(pl.today, pl.refBase);
-  };
+  });
   $("#plRefOp").oninput = e => {
     pl.refOpacity = +e.target.value / 100;
     if (pl.todayReady && pl.today.getLayer("pl-ref")) pl.today.setPaintProperty("pl-ref", "raster-opacity", pl.refOpacity);
@@ -5284,7 +5395,12 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   };
   $$("#place .pl-mark").forEach(btn => btn.onclick = () => btn.dataset.pl === "scan" ? plClickScan(pl.scan.getCenter()) : plClickToday(pl.today.getCenter()));
   $("#plPairs").onclick = e => { const x = e.target.closest("[data-del]"); if (x) { pl.pairs.splice(+x.dataset.del, 1); plRender(); } };
-  pl.keys = e => { if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); plAskCancel(); } };
+  pl.keys = e => {
+    if (e.key !== "Escape") return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    const open = $$("#plClearAsk, #plResetAsk").find(b => !b.hidden);
+    if (open) open.querySelector(".solid + .btn").click(); else plAskCancel();
+  };
   document.addEventListener("keydown", pl.keys, true);
   pl.resize = () => { pl.scan.resize(); pl.today.resize(); };
   addEventListener("resize", pl.resize);
