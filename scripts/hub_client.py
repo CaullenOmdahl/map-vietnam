@@ -691,3 +691,56 @@ class HubClient:
         if not (url and key):
             return None
         return self._request_json(url, key, route, method="POST", body=body, timeout=30)
+
+    # ---- Shared survey-strip scans (`/hub/v1/scans`) ---------------------------------------------
+    def _need(self):
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        return url, key
+
+    def list_scans(self, mission=None):
+        """Every shared frame this key can see, or one mission's."""
+        url, key = self._need()
+        qs = f"?{urllib.parse.urlencode({'mission': mission})}" if mission else ""
+        return self._request_json(url, key, f"/hub/v1/scans{qs}", timeout=20).get("scans") or []
+
+    def push_scan(self, meta, image_path):
+        """Share one survey frame: its JPEG and `meta` (`mission`, `frame`, `filename`, `title`, `points`,
+        `points_size`, ...). Returns `{"scan", "created"}`."""
+        url, key = self._need()
+        body = Path(image_path).read_bytes()
+        meta_b64 = base64.b64encode(json.dumps(meta, ensure_ascii=False).encode("utf-8")).decode("ascii")
+        raw, _, _ = self._request_raw(
+            url,
+            key,
+            "/hub/v1/scans",
+            method="POST",
+            data=body,
+            headers={"Content-Type": "image/jpeg", "X-MapVietnam-Meta": meta_b64},
+            timeout=180,
+        )
+        return json.loads(raw.decode("utf-8"))
+
+    def scan_image(self, scan_id, which="work"):
+        """A shared frame's JPEG bytes (`work` as pushed, or the smaller `match` copy)."""
+        if not is_safe_id(scan_id):
+            raise HubClientError("Invalid scan id.")
+        url, key = self._need()
+        name = "match.jpg" if which == "match" else "work.jpg"
+        raw, _, _ = self._request_raw(url, key, f"/hub/v1/scans/{scan_id}/{name}", timeout=180)
+        return raw
+
+    def update_scan(self, scan_id, body):
+        """PATCH a shared frame's points (with `points_size`) and/or append a `chain` record."""
+        if not is_safe_id(scan_id):
+            raise HubClientError("Invalid scan id.")
+        url, key = self._need()
+        return self._request_json(url, key, f"/hub/v1/scans/{scan_id}", method="PATCH", body=body).get("scan")
+
+    def chain_scans(self, scan_id, body):
+        """Plan (`{"confidence_threshold"}`) or apply (`{"apply": [...]}`) strip chaining on the Hub."""
+        if not is_safe_id(scan_id):
+            raise HubClientError("Invalid scan id.")
+        url, key = self._need()
+        return self._request_json(url, key, f"/hub/v1/scans/{scan_id}/chain", method="POST", body=body, timeout=600)

@@ -117,6 +117,7 @@ import kml
 import library
 import paths
 import records
+import scan_sync
 import store
 import strip_chain
 import terrain_aerial
@@ -137,7 +138,7 @@ MAX_BODY_BYTES = 1 << 20  # the API's JSON bodies are tiny; refuse anything bigg
 UPLOAD_PATH = "/api/library/custom"  # raw-file upload routes (not JSON)
 CASE_IMPORT_PATH = "/api/cases/import"
 UPLOAD_BLOCK = 1 << 20
-CUSTOM_PATH = re.compile(r"library/custom/(custom_[0-9a-f]{10})/(preview|points|edit|chain)")
+CUSTOM_PATH = re.compile(r"library/custom/(custom_[0-9a-f]{10})/(preview|points|edit|chain|hub-pull)")
 ALIGN_PATH = re.compile(r"library/([A-Za-z0-9_-]+)/align/(prepare|preview|points|reset)")
 # How long a removal request waits for the removal to finish before it answers, so the answer
 # usually shows the source already gone; a removal queued behind a running job answers sooner.
@@ -1209,7 +1210,13 @@ class Handler(SimpleHTTPRequestHandler):
         if method == "POST" and p == "library/custom":
             return self.upload_custom_map()
         m = CUSTOM_PATH.fullmatch(p)
-        if m and (method, m[2]) in (("GET", "preview"), ("POST", "points"), ("POST", "edit"), ("POST", "chain")):
+        if m and (method, m[2]) in (
+            ("GET", "preview"),
+            ("POST", "points"),
+            ("POST", "edit"),
+            ("POST", "chain"),
+            ("POST", "hub-pull"),
+        ):
             return self.custom_map_api(m[1], m[2])
         am = ALIGN_PATH.fullmatch(p)
         if am and ((method == "GET" and am[2] == "preview") or (method == "POST" and am[2] != "preview")):
@@ -1276,38 +1283,60 @@ class Handler(SimpleHTTPRequestHandler):
         b = self.body(max_bytes=4 << 20) if action == "chain" else self.body()
         if action == "chain":
             return self.strip_chain_api(entry, b)
+        if action == "hub-pull":
+            # Teammates' frames of this strip that this computer does not have yet.
+            added = scan_sync.pull_mission(lib, self.hub, entry)
+            lib.start_worker()
+            return self.send_json({"pulled": len(added), "library": lib.listing()})
         if action == "points":
             lib.place_custom(
                 map_id, b.get("points"), b.get("title"), b.get("year"), warp_mode=b.get("warp_mode", "auto")
             )
             lib.start_worker()
+            if strip_chain.strip_key(entry):
+                self.hub_share_later(
+                    "share points", lambda: scan_sync.share_points(lib, self.hub, lib.custom.get(map_id))
+                )
         else:
             lib.custom.edit(map_id, b.get("title"), b.get("year"))
             lib.write_catalog()
         self.send_json(lib.listing())
 
+    def hub_share_later(self, what, fn):
+        """Run a Hub sharing step in the background when "share automatically" is on; failures are logged only
+        (the map is already saved on this computer)."""
+        cfg = self.hub.config()
+        if not (cfg.get("configured") and cfg.get("auto_push")):
+            return
+
+        def run():
+            try:
+                fn()
+            except Exception as e:  # best-effort: never break the local action
+                self.app_log.log("WARN", f"hub {what}", str(e), secrets=self._extra_secrets())
+
+        threading.Thread(target=run, name=f"hub-{what}", daemon=True).start()
+
     def strip_chain_api(self, anchor, b):
-        """Plan (or apply) placing the neighbouring frames of `anchor`'s survey strip."""
+        """Plan (or apply) placing the neighbouring frames of `anchor`'s survey strip.
+
+        With a Hub connected the plan runs there over the whole team's frames of the mission (after sharing this
+        computer's frames when "share automatically" is on), falling back to matching here."""
         lib = self.library
         if b.get("apply") is not None:
-            items = b["apply"]
-            if not isinstance(items, list) or not items:
-                raise ValueError("Send the frames to place.")
-            mission = strip_chain.strip_key(anchor)
-            for item in items:
-                target = lib.custom.get(str(item.get("id") or ""))
-                if mission is None or (strip_chain.strip_key(target) or (None,))[0] != mission[0]:
-                    raise ValueError("Only frames of the same survey strip can be chained.")
-                if target.get("points"):
-                    continue  # never overwrite a frame someone placed meanwhile
-                lib.place_custom(
-                    target["id"], item.get("points"), target["title"], target.get("year"), warp_mode="homography"
-                )
-            lib.start_worker()
-            return self.send_json(lib.listing())
+            return self.strip_chain_apply(anchor, b["apply"])
 
         thresh = float(b.get("confidence_threshold", auto_gcp.DEFAULT_CONFIDENCE_THRESHOLD))
-        use_hub = bool(self.hub.config().get("configured"))
+        cfg = self.hub.config()
+        use_hub = bool(cfg.get("configured"))
+        if use_hub:
+            try:
+                sync = scan_sync.sync_mission(lib, self.hub, anchor, push=bool(cfg.get("auto_push")))
+                if sync["placed_from_hub"]:
+                    lib.start_worker()
+                return self.send_json(scan_sync.hub_plan(lib, self.hub, lib.custom.get(anchor["id"]), sync, thresh))
+            except hub_client.HubClientError as e:
+                self.app_log.log("WARN", "chain", f"Chaining here instead of on the Hub: {e}")
 
         def image_of(entry):
             path = lib.custom.preview_path(entry["id"])
@@ -1331,6 +1360,72 @@ class Handler(SimpleHTTPRequestHandler):
         plan = strip_chain.plan_chain(lib.custom.entries(), anchor["id"], match, threshold=thresh)
         plan["threshold"] = thresh
         self.send_json(plan)
+
+    def strip_chain_apply(self, anchor, items):
+        """Place chained frames here (recording where each placement came from) and, for frames only teammates
+        have, on the Hub."""
+        lib = self.library
+        if not isinstance(items, list) or not items:
+            raise ValueError("Send the frames to place.")
+        mission = strip_chain.strip_key(anchor)
+        local, remote = [], []
+        for item in items:
+            if item.get("remote"):
+                remote.append(item)
+                continue
+            target = lib.custom.get(str(item.get("id") or ""))
+            if mission is None or (strip_chain.strip_key(target) or (None,))[0] != mission[0]:
+                raise ValueError("Only frames of the same survey strip can be chained.")
+            local.append((item, target))
+        placed = []
+        for item, target in local:
+            if target.get("points"):
+                continue  # never overwrite a frame someone placed meanwhile
+            lib.place_custom(
+                target["id"], item.get("points"), target["title"], target.get("year"), warp_mode="homography"
+            )
+            history = {
+                "from_id": str(item.get("from_id") or anchor["id"]),
+                "from_frame": item.get("from_frame"),
+                "confidence": item.get("confidence"),
+                "inliers": item.get("inliers"),
+                "at": store.now(),
+            }
+            lib.custom.update(target["id"], chain=history)
+            placed.append((target["id"], history))
+        lib.start_worker()
+
+        def share():
+            for map_id, history in placed:
+                from_entry = next((e for e in lib.custom.entries() if e["id"] == history["from_id"]), None)
+                hub_from = scan_sync.hub_id(from_entry) if from_entry else history["from_id"]
+                scan_sync.share_points(lib, self.hub, lib.custom.get(map_id), chain={**history, "from_id": hub_from})
+
+        if placed:
+            self.hub_share_later("share chain", share)
+        listing = lib.listing()
+        if remote:
+            try:
+                self.hub.chain_scans(
+                    scan_sync.hub_id(anchor),
+                    {
+                        "apply": [
+                            {
+                                "id": it.get("hub_id") or it.get("id"),
+                                "points": it.get("points"),
+                                "from_id": it.get("from_hub_id"),
+                                "from_frame": it.get("from_frame"),
+                                "confidence": it.get("confidence"),
+                                "inliers": it.get("inliers"),
+                            }
+                            for it in remote
+                        ]
+                    },
+                )
+                listing["hub_placed"] = len(remote)
+            except hub_client.HubClientError as e:
+                listing["hub_error"] = str(e)
+        return self.send_json(listing)
 
     def align_map_api(self, map_id, action):
         """The alignment routes of any installed map: prepare, preview, points, reset."""
@@ -1930,7 +2025,12 @@ class Handler(SimpleHTTPRequestHandler):
                     vals = [float(x) for x in vb]
                     if vals[0] < vals[2] and vals[1] < vals[3]:
                         changes["bounds"] = vals
-                self.library.custom.update(entry["id"], **changes)
+                entry = self.library.custom.update(entry["id"], **changes)
+            if strip_chain.strip_key(entry):
+                lib_ = self.library
+                self.hub_share_later(
+                    "share frame", lambda: scan_sync.push_frame(lib_, self.hub, lib_.custom.get(entry["id"]))
+                )
             listing = self.library.listing()
             return self.send_json(
                 {"map": next(m for m in listing["maps"] if m["id"] == entry["id"]), "library": listing}

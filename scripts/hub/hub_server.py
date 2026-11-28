@@ -48,6 +48,7 @@ from hub.auth import (  # noqa: E402
     utc_now,
 )
 from hub.polite import is_safe_id  # noqa: E402
+from hub.scans import HubScans, ScanError  # noqa: E402
 from hub.storage import MAX_HUB_UPLOAD_BYTES, HubStorage, HubStorageError  # noqa: E402
 
 HUB_VERSION = "0.3.0"
@@ -60,6 +61,7 @@ MEDIA_ROUTE_RE = re.compile(r"^/hub/v1/media/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})$"
 PROP_ROUTE_RE = re.compile(r"^/hub/v1/admin/proprietary/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})$")
 JOB_ROUTE_RE = re.compile(r"^/hub/v1/jobs/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})$")
 KEY_ROUTE_RE = re.compile(r"^/hub/v1/admin/keys/([A-Za-z0-9_-]{4,16})$")
+SCAN_ROUTE_RE = re.compile(r"^/hub/v1/scans/([A-Za-z0-9][A-Za-z0-9_.-]{0,95})(?:/(work\.jpg|match\.jpg|chain))?$")
 UPLOAD_CHUNK = 1 << 20
 MAX_JSON_BYTES = 2 << 20
 IMMUTABLE_CACHE_CONTROL = "private, max-age=31536000, immutable"
@@ -334,6 +336,7 @@ class HubHandler(BaseHTTPRequestHandler):
     storage: HubStorage = None
     jobs: HubJobRunner = None
     hub_log: AppLogger = None
+    scans: HubScans = None
 
     def log_message(self, fmt, *args):
         return  # Keep stdout clean and never log URLs or headers carrying tokens.
@@ -414,7 +417,12 @@ class HubHandler(BaseHTTPRequestHandler):
                         "scopes": sorted(p.scopes),
                         "group_tag": p.group_tag,
                         "version": HUB_VERSION,
-                        "capabilities": {**self.storage.vault.status(), "auto_gcp": True, "match_pair": True},
+                        "capabilities": {
+                            **self.storage.vault.status(),
+                            "auto_gcp": True,
+                            "match_pair": True,
+                            "shared_scans": True,
+                        },
                         "stats": self.storage.stats(),
                     }
                 )
@@ -513,6 +521,18 @@ class HubHandler(BaseHTTPRequestHandler):
                     b_size=b.get("b_size"),
                 )
                 return self.send_json(res)
+
+            if path == "/hub/v1/scans":
+                if method == "GET":
+                    p = self.require_principal("read")
+                    return self.send_json({"scans": self.scans.list(p, q.get("mission") or None)})
+                if method == "POST":
+                    p = self.require_principal("upload")
+                    return self.receive_scan(p, q)
+
+            m_scan = SCAN_ROUTE_RE.fullmatch(path)
+            if m_scan:
+                return self.scan_route(method, m_scan.group(1), m_scan.group(2))
 
             if method == "GET" and path == "/hub/v1/lidar":
                 self.require_principal("read")
@@ -743,6 +763,87 @@ class HubHandler(BaseHTTPRequestHandler):
                 self.wfile.write(chunk)
                 remaining -= len(chunk)
 
+    def receive_scan(self, principal, q):
+        """POST /hub/v1/scans: a survey frame's JPEG as the body, its mission / frame / points in
+        `X-MapVietnam-Meta` (base64 JSON)."""
+        try:
+            size = int(self.headers.get("Content-Length") or "")
+        except ValueError:
+            size = -1
+        if size <= 0 or size > MAX_HUB_UPLOAD_BYTES:
+            self.close_connection = True
+            raise ScanError("Send the frame's JPEG with a valid Content-Length.")
+        meta_b64 = self.headers.get("X-MapVietnam-Meta") or ""
+        try:
+            meta = json.loads(base64.b64decode(meta_b64).decode("utf-8")) if meta_b64 else {}
+        except (ValueError, UnicodeDecodeError):
+            self.close_connection = True
+            raise ScanError("The X-MapVietnam-Meta header is not base64 JSON.") from None
+        if not isinstance(meta, dict):
+            raise ScanError("The X-MapVietnam-Meta header must hold a JSON object.")
+        if q.get("visibility"):
+            meta["visibility"] = q["visibility"]
+        body = self.rfile.read(size)
+        if len(body) != size:
+            self.close_connection = True
+            raise ScanError("Upload ended before Content-Length bytes arrived.")
+        scan, created = self.scans.put(meta, body, principal)
+        return self.send_json({"scan": scan, "created": created}, HTTPStatus.CREATED if created else HTTPStatus.OK)
+
+    def scan_route(self, method, scan_id, sub):
+        """GET / PATCH / DELETE one shared frame, its pictures, and chaining over its mission."""
+        if sub in ("work.jpg", "match.jpg"):
+            if method != "GET":
+                return self.send_json({"error": "Route not found."}, HTTPStatus.NOT_FOUND)
+            p = self.require_principal("read")
+            if self.scans.get(scan_id, p) is None:
+                return self.send_json({"error": "Scan not found."}, HTTPStatus.NOT_FOUND)
+            path = self.scans.image_path(scan_id, "match" if sub == "match.jpg" else "work")
+            if not path.is_file():
+                return self.send_json({"error": "Scan picture missing."}, HTTPStatus.NOT_FOUND)
+            body = path.read_bytes()
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "image/jpeg")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", IMMUTABLE_CACHE_CONTROL)
+            self.end_headers()
+            self.wfile.write(body)
+            return None
+        if sub == "chain":
+            if method != "POST":
+                return self.send_json({"error": "Route not found."}, HTTPStatus.NOT_FOUND)
+            b = self.read_json_body(max_bytes=4 << 20)
+            if b.get("apply") is not None:
+                p = self.require_principal("upload")
+                placed = self.scans.chain_apply(scan_id, b["apply"], p)
+                if placed is None:
+                    return self.send_json({"error": "Scan not found."}, HTTPStatus.NOT_FOUND)
+                return self.send_json({"placed": placed})
+            p = self.require_principal("read")
+            thresh = float(b.get("confidence_threshold", auto_gcp.DEFAULT_CONFIDENCE_THRESHOLD))
+            plan = self.scans.chain_plan(scan_id, p, threshold=thresh, match_pair=auto_gcp.match_pair)
+            if plan is None:
+                return self.send_json({"error": "Scan not found."}, HTTPStatus.NOT_FOUND)
+            return self.send_json(plan)
+        if method == "GET":
+            p = self.require_principal("read")
+            scan = self.scans.get(scan_id, p)
+            if scan is None:
+                return self.send_json({"error": "Scan not found."}, HTTPStatus.NOT_FOUND)
+            return self.send_json({"scan": scan})
+        if method == "PATCH":
+            p = self.require_principal("upload")
+            scan = self.scans.update(scan_id, self.read_json_body(), p)
+            if scan is None:
+                return self.send_json({"error": "Scan not found."}, HTTPStatus.NOT_FOUND)
+            return self.send_json({"scan": scan})
+        if method == "DELETE":
+            p = self.require_principal("upload")
+            if not self.scans.delete(scan_id, p):
+                return self.send_json({"error": "Scan not found."}, HTTPStatus.NOT_FOUND)
+            return self.send_json({"deleted": scan_id})
+        return self.send_json({"error": "Route not found."}, HTTPStatus.NOT_FOUND)
+
     def receive_pushed_pack(self, principal, q):
         """Receive a locally built `.mbtiles` pack pushed from a desktop client and cache it forever."""
         try:
@@ -951,7 +1052,11 @@ def make_hub_server(
     storage = HubStorage(root=data_root, env=env, pacer=pacer, allow_loopback=allow_loopback)
     jobs = HubJobRunner(storage, app_root=app_root)
     hub_log = AppLogger(storage.root / "logs" / "hub.log", echo_stderr=True)
-    handler = type("BoundHubHandler", (HubHandler,), {"storage": storage, "jobs": jobs, "hub_log": hub_log})
+    handler = type(
+        "BoundHubHandler",
+        (HubHandler,),
+        {"storage": storage, "jobs": jobs, "hub_log": hub_log, "scans": HubScans(storage)},
+    )
     return HubHTTPServer((host, int(port)), handler, storage, jobs)
 
 

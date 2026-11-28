@@ -4327,6 +4327,10 @@ function chainHTML(m) {
   if (!placedFrame(m) || !stripOf(m)) return "";
   const c = S.chain?.id === m.id ? S.chain : null, todo = stripSiblingsToPlace(m);
   if (!c) {
+    if (!todo && S.hub.connected) {
+      return `<div class="chain-box"><p class="small-t muted">Teammates may have shared more frames of this strip on the Hub. Chaining there places them from this one.</p>
+      <div class="row"><button class="btn small" data-act="chainPlan" data-id="${esc(m.id)}">Chain on the Hub</button></div></div>`;
+    }
     return todo ? `<div class="chain-box"><p class="small-t muted">${todo} other frame${todo === 1 ? "" : "s"} of this strip ${todo === 1 ? "is" : "are"} not placed yet. Neighbouring frames overlap, so they can be placed from this one.</p>
       <div class="row"><button class="btn small" data-act="chainPlan" data-id="${esc(m.id)}">Place strip neighbours</button></div></div>` : "";
   }
@@ -4334,22 +4338,40 @@ function chainHTML(m) {
   if (c.err) return `<div class="chain-box"><p class="err" role="alert">${esc(c.err)}</p><div class="row"><button class="btn small" data-act="chainClose">Close</button></div></div>`;
   const plan = c.plan, ok = plan.proposals.filter(p => p.meets_threshold), low = plan.proposals.filter(p => !p.meets_threshold);
   const name = id => S.lib.byId.get(id)?.title || id;
-  const row = p => `<li><b>Frame ${fmtFrame(p.frame)}</b> · ${p.confidence_pct}% · ${p.inliers} landmarks · from ${fmtFrame(p.from_frame)}${p.hops > 1 ? ` (${p.hops} hops)` : ""}
-      ${p.meets_threshold ? "" : ` <button class="linkish small-t" data-act="chainReview" data-id="${esc(p.id)}" data-anchor="${esc(m.id)}">Review in Placement</button>`}</li>`;
+  const row = p => `<li><b>Frame ${fmtFrame(p.frame)}</b> · ${p.confidence_pct}% · ${p.inliers} landmarks · from ${fmtFrame(p.from_frame)}${p.hops > 1 ? ` (${p.hops} hops)` : ""}${p.remote ? ` · <span class="muted">a teammate's frame, placed on the Hub</span>` : ""}
+      ${p.meets_threshold || p.remote ? "" : ` <button class="linkish small-t" data-act="chainReview" data-id="${esc(p.id)}" data-anchor="${esc(m.id)}">Review in Placement</button>`}</li>`;
+  const team = plan.hub ? `<p class="small-t muted">Matched on the Hub across the team's frames of this strip${plan.pushed ? `; shared ${plan.pushed} of yours` : ""}${plan.placed_from_hub ? `; ${plan.placed_from_hub} already placed by teammates` : ""}.</p>` : "";
+  const pull = plan.team_frames ? `<button class="btn small" data-act="chainPull" data-id="${esc(m.id)}"${c.pulling ? " disabled" : ""}>${c.pulling ? "Downloading…" : `Get ${plan.team_frames} team frame${plan.team_frames === 1 ? "" : "s"}`}</button>` : "";
   const stops = plan.stops.filter(st => !low.some(p => p.id === st.id));
   return `<div class="chain-box" role="group" aria-label="Place strip neighbours">
     ${c.placed ? `<p class="small-t">Placed ${c.placed} frame${c.placed === 1 ? "" : "s"} from this one; ${c.placed === 1 ? "it is" : "they are"} being built.</p>` : ""}
+    ${team}
     ${plan.proposals.length ? `<ul class="chain-list">${plan.proposals.map(row).join("")}</ul>` : c.placed ? "" : `<p class="small-t muted">No unplaced neighbouring frames could be matched.</p>`}
     ${stops.map(st => `<p class="small-t muted">Stopped at frame ${fmtFrame(st.frame)} (${esc(name(st.id))}): ${esc(st.reason)} Place it by hand, then chain again.</p>`).join("")}
     ${low.length ? `<p class="small-t muted">Below your ${Math.round(plan.threshold * 100)}% threshold: open it in Placement with the matched points filled in, check them, then save.</p>` : ""}
     <div class="row">${ok.length ? `<button class="btn small primary" data-act="chainApply" data-id="${esc(m.id)}"${c.applying ? " disabled" : ""}>${c.applying ? "Placing…" : `Place ${ok.length} frame${ok.length === 1 ? "" : "s"}`}</button>` : ""}
-      <button class="btn small" data-act="chainClose">Close</button></div></div>`;
+      ${pull}<button class="btn small" data-act="chainClose">Close</button></div></div>`;
 }
 async function chainApply(anchorId, proposals) {
-  const lib = await api(`/api/library/custom/${encodeURIComponent(anchorId)}/chain`, { method: "POST", body: { apply: proposals.map(p => ({ id: p.id, points: p.points })) } });
+  const keep = ["id", "points", "from_id", "from_frame", "confidence", "inliers", "remote", "hub_id", "from_hub_id"];
+  const apply = proposals.map(p => Object.fromEntries(keep.filter(k => p[k] !== undefined).map(k => [k, p[k]])));
+  const lib = await api(`/api/library/custom/${encodeURIComponent(anchorId)}/chain`, { method: "POST", body: { apply } });
   applyLibrary(lib);
+  if (lib.hub_error) toast(`Placed here, but the Hub could not place the teammates' frames: ${lib.hub_error}`, 7000);
   return proposals.length;
 }
+ACTIONS.chainPull = async el => {
+  const id = el.dataset.id, c = S.chain;
+  if (!c?.plan || c.id !== id) return;
+  S.chain = { ...c, pulling: true }; chainRefresh();
+  try {
+    const res = await api(`/api/library/custom/${encodeURIComponent(id)}/hub-pull`, { method: "POST", body: {} });
+    applyLibrary(res.library);
+    toast(`Downloaded ${res.pulled} team frame${res.pulled === 1 ? "" : "s"} of this strip.`, 5000);
+    S.chain = { ...c, pulling: false, plan: { ...c.plan, team_frames: 0 } };
+  } catch (e) { S.chain = { ...c, pulling: false, err: e.message || "Could not download the team's frames." }; }
+  chainRefresh();
+};
 ACTIONS.chainPlan = async el => {
   const id = el.dataset.id;
   S.chain = { id, busy: true }; chainRefresh();

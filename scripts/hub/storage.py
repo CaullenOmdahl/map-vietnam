@@ -762,6 +762,12 @@ class HubStorage:
                 "SELECT COUNT(*), COALESCE(SUM(size_bytes), 0) FROM hub_layers"
             ).fetchone()
             media_count = db.execute("SELECT COUNT(*) FROM hub_media").fetchone()[0]
+            try:
+                scan_count, scan_bytes = db.execute(
+                    "SELECT COUNT(*), COALESCE(SUM(size_bytes), 0) FROM hub_scans"
+                ).fetchone()
+            except sqlite3.OperationalError:  # no shared scans table on a bare storage object
+                scan_count, scan_bytes = 0, 0
         try:
             usage = shutil.disk_usage(self.root)
             disk_total, disk_free = int(usage.total), int(usage.free)
@@ -775,6 +781,8 @@ class HubStorage:
             "layers": int(layer_count),
             "layer_bytes": int(layer_bytes),
             "media_items": int(media_count),
+            "scans": int(scan_count),
+            "scan_bytes": int(scan_bytes),
             "disk_total_bytes": disk_total,
             "disk_free_bytes": disk_free,
         }
