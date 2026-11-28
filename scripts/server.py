@@ -989,6 +989,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({"id": cur.lastrowid}, HTTPStatus.CREATED)
         if p == "cases/import" and method == "POST":
             return self.import_case_kml(q, db)
+        if p.startswith("remote/"):
+            return self.remote_api(method, p)
         if not m:
             return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
         cid, sub, sub_id, fmt = int(m[1]), m[2], m[3], m[4]
@@ -1444,6 +1446,29 @@ class Handler(SimpleHTTPRequestHandler):
             res = lib.reset_alignment(map_id)
         lib.start_worker()
         self.send_json(res)
+
+    def remote_api(self, method, p):
+        """Live viewer control bridge (`/api/remote/*`) for MCP/AI harnesses."""
+        bridge = self.remote
+        if method == "GET" and p == "remote/state":
+            return self.send_json(bridge.status())
+        if method == "GET" and p == "remote/poll":
+            return self.send_json(bridge.poll(timeout=15.0))
+        if method == "POST" and p == "remote/state":
+            bridge.update_state(self.body())
+            return self.send_json({"ok": True})
+        if method == "POST" and p == "remote/reply":
+            b = self.body(max_bytes=12 << 20)
+            return self.send_json(
+                bridge.reply(int(b["id"]), result=b.get("result"), error=b.get("error"), state=b.get("state"))
+            )
+        if method == "POST" and p == "remote/command":
+            b = self.body()
+            try:
+                return self.send_json(bridge.send_command(b.get("action") or "", b.get("params") or {}))
+            except (ConnectionError, TimeoutError) as e:
+                return self.send_json({"error": str(e)}, HTTPStatus.SERVICE_UNAVAILABLE)
+        return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
 
     def settings(self):
         """GET /api/settings: where the data is kept and how much space each kind takes."""
@@ -2025,6 +2050,13 @@ class Handler(SimpleHTTPRequestHandler):
                     vals = [float(x) for x in vb]
                     if vals[0] < vals[2] and vals[1] < vals[3]:
                         changes["bounds"] = vals
+                v_lbl = str(b.get("vicinity_label") or "").strip()[:120]
+                if v_lbl:
+                    changes["vicinity_label"] = v_lbl
+                p_url = str(b.get("plot_url") or "").strip()[:800]
+                if p_url.startswith("https://") or (allow_lb and p_url.startswith("http://127.0.0.1:")):
+                    changes["plot_url"] = p_url
+                    changes["plot_label"] = str(b.get("plot_label") or "Flight index").strip()[:40]
                 entry = self.library.custom.update(entry["id"], **changes)
             if strip_chain.strip_key(entry):
                 lib_ = self.library
@@ -2237,12 +2269,107 @@ class MapServer(ThreadingHTTPServer):
 
     def _stop(self):
         try:
+            if getattr(self, "remote", None) is not None:
+                self.remote.stop()
+            if getattr(self, "_url_file", None) is not None:
+                with contextlib.suppress(OSError):
+                    self._url_file.unlink(missing_ok=True)
             self.records.stop()
             self.library.stop()
             if self.base_cache is not None:
                 self.base_cache.stop()
         finally:
             self.shutdown()
+
+
+class RemoteBridge:
+    """In-memory command/state bridge between the open browser viewer and local AI/MCP clients."""
+
+    def __init__(self):
+        self._cond = threading.Condition()
+        self._state = None
+        self._state_at = 0.0
+        self._last_poll_at = 0.0
+        self._seq = 0
+        self._pending = None  # {"id", "action", "params"}
+        self._replies = {}  # id -> {"result", "error", "state"}
+        self._stopped = False
+
+    def stop(self):
+        with self._cond:
+            self._stopped = True
+            self._cond.notify_all()
+
+    def update_state(self, state):
+        import time
+
+        with self._cond:
+            if isinstance(state, dict):
+                self._state = state
+                self._state_at = time.monotonic()
+            self._last_poll_at = time.monotonic()
+
+    def status(self):
+        import time
+
+        with self._cond:
+            now = time.monotonic()
+            connected = (now - self._last_poll_at) < 25.0 and self._last_poll_at > 0
+            age = round(now - self._state_at, 1) if self._state_at else None
+            return {"connected": connected, "state": self._state, "age_s": age}
+
+    def poll(self, timeout=15.0):
+        import time
+
+        with self._cond:
+            self._last_poll_at = time.monotonic()
+            end = self._last_poll_at + timeout
+            while self._pending is None and not self._stopped:
+                rem = end - time.monotonic()
+                if rem <= 0:
+                    return {"cmd": None}
+                self._cond.wait(timeout=rem)
+            if self._stopped or self._pending is None:
+                return {"cmd": None}
+            cmd = self._pending
+            self._pending = None
+            return {"cmd": cmd}
+
+    def reply(self, cmd_id, *, result=None, error=None, state=None):
+        import time
+
+        with self._cond:
+            if isinstance(state, dict):
+                self._state = state
+                self._state_at = time.monotonic()
+            self._last_poll_at = time.monotonic()
+            self._replies[cmd_id] = {"result": result, "error": error, "state": self._state}
+            self._cond.notify_all()
+            return {"ok": True}
+
+    def send_command(self, action, params=None, timeout=12.0):
+        import time
+
+        with self._cond:
+            now = time.monotonic()
+            if self._last_poll_at <= 0 or (now - self._last_poll_at) > 25.0:
+                raise ConnectionError("No live Map Vietnam viewer tab is connected.")
+            self._seq += 1
+            cmd_id = self._seq
+            self._pending = {"id": cmd_id, "action": str(action), "params": params or {}}
+            self._cond.notify_all()
+            end = now + timeout
+            while cmd_id not in self._replies and not self._stopped:
+                rem = end - time.monotonic()
+                if rem <= 0:
+                    if self._pending and self._pending["id"] == cmd_id:
+                        self._pending = None
+                    raise TimeoutError("Timed out waiting for the live Map Vietnam viewer to respond.")
+                self._cond.wait(timeout=rem)
+            rep = self._replies.pop(cmd_id, None) or {"error": "Server stopped."}
+            if rep.get("error"):
+                raise ValueError(str(rep["error"]))
+            return {"ok": True, "result": rep.get("result"), "state": rep.get("state")}
 
 
 def make_server(
@@ -2279,6 +2406,7 @@ def make_server(
     pacer = HostPacer()
     flight = SingleFlight()
     alog = app_log.AppLogger(lib.root / "logs" / "app.log")
+    remote = RemoteBridge()
     handler = type(
         "BoundHandler",
         (Handler,),
@@ -2290,13 +2418,21 @@ def make_server(
             "hub": hc,
             "app_log": alog,
             "base_cache": cache,
+            "remote": remote,
             "local_pacer": pacer,
             "local_flight": flight,
             "allow_loopback": bool(allow_loopback),
         },
     )
     srv = MapServer(("127.0.0.1", port), partial(handler, directory=str(web)))
-    srv.library, srv.records, srv.hub, srv.base_cache = lib, rec, hc, cache
+    srv.library, srv.records, srv.hub, srv.base_cache, srv.remote = lib, rec, hc, cache, remote
+    srv._url_file = None
+    if not os.environ.get("PYTEST_CURRENT_TEST"):
+        url_file = Path.home() / ".cache" / "map-vietnam" / "server_url"
+        with contextlib.suppress(OSError):
+            url_file.parent.mkdir(parents=True, exist_ok=True)
+            url_file.write_text(f"http://127.0.0.1:{srv.server_address[1]}\n", encoding="utf-8")
+            srv._url_file = url_file
     return srv
 
 

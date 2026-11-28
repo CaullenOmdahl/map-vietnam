@@ -170,3 +170,36 @@ def test_aerial_search_falls_back_to_the_archive_when_the_hub_is_down(desk, monk
     assert res["missions"] == [{"title": "Thanh Hoa"}]
     logs = call(base, "/api/logs")
     assert any("Hub unreachable" in ln for ln in logs["lines"])
+
+
+def test_landsat_mss_builds_geotiff_url_and_prefers_l1tp():
+    payload = {
+        "features": [
+            {
+                "id": "LM02_L1GS_136053_19751229_02_T2",
+                "bbox": [102.1, 9.0, 104.2, 11.0],
+                "properties": {"datetime": "1975-12-29T02:42:34Z", "eo:cloud_cover": 1.0, "platform": "landsat-2"},
+                "assets": {
+                    "rendered_preview": {
+                        "href": "https://planetarycomputer.microsoft.com/api/data/v1/item/preview.png?collection=landsat-c2-l1&item=LM02_L1GS_136053_19751229_02_T2"
+                    }
+                },
+            },
+            {
+                "id": "LM02_L1TP_136053_19751123_02_T2",
+                "bbox": [102.2, 9.2, 104.3, 11.2],
+                "properties": {"datetime": "1975-11-23T02:42:56Z", "eo:cloud_cover": 5.0, "platform": "landsat-2"},
+                "assets": {
+                    "rendered_preview": {
+                        "href": "https://planetarycomputer.microsoft.com/api/data/v1/item/preview.png?collection=landsat-c2-l1&item=LM02_L1TP_136053_19751123_02_T2"
+                    }
+                },
+            },
+        ]
+    }
+    res = terrain_aerial.search_landsat_mss(
+        [103.8, 9.9, 104.2, 10.5], fetch_fn=lambda *a, **k: (json.dumps(payload).encode(), "application/json")
+    )
+    assert [s["processing_level"] for s in res["scenes"]] == ["L1TP", "L1GS"]
+    assert "/item/preview.tif?" in res["scenes"][0]["geotiff_url"]
+    assert res["scenes"][0]["geotiff_url"].endswith("&max_size=2048")

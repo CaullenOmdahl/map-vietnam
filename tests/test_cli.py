@@ -26,6 +26,7 @@ SCRIPTS = [
     "scripts/l7014_meta.py",
     "scripts/library.py",
     "scripts/map_library_catalogue.py",
+    "scripts/mcp_server.py",
     "scripts/place_sheets.py",
     "scripts/records.py",
     "scripts/server.py",

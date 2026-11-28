@@ -1000,14 +1000,27 @@ def search_landsat_mss(bbox, date_from="1972-07-01", date_to="1975-12-31", max_c
         if cloud is not None and float(cloud) > float(max_cloud):
             continue
         assets = ft.get("assets") or {}
+        preview_url = (assets.get("rendered_preview") or assets.get("thumbnail") or {}).get("href") or ""
+        # Planetary Computer's TiTiler serves the same false-colour composite as a real UTM-georeferenced
+        # RGBA GeoTIFF (`/preview.tif`) so Map Vietnam can reproject it accurately instead of hand-placing a PNG.
+        geotiff_url = ""
+        if "/item/preview.png?" in preview_url:
+            geotiff_url = preview_url.replace("/item/preview.png?", "/item/preview.tif?", 1) + "&max_size=2048"
+        scene_id = str(ft.get("id") or "")
+        level = str(props.get("landsat:correction") or "")
+        if not level:
+            m_lvl = re.search(r"_(L1[A-Z]{2})_", scene_id)
+            level = m_lvl.group(1) if m_lvl else ""
         scenes.append(
             {
-                "id": ft.get("id"),
+                "id": scene_id,
                 "datetime": props.get("datetime") or "",
                 "platform": props.get("platform") or "landsat-mss",
+                "processing_level": level,
                 "cloud_cover": cloud,
                 "bbox": ft.get("bbox"),
-                "preview_url": (assets.get("rendered_preview") or assets.get("thumbnail") or {}).get("href") or "",
+                "preview_url": preview_url,
+                "geotiff_url": geotiff_url,
                 "bands": {
                     k: (assets.get(k) or {}).get("href")
                     for k in ("green", "red", "nir08", "nir09")
@@ -1016,6 +1029,13 @@ def search_landsat_mss(bbox, date_from="1972-07-01", date_to="1975-12-31", max_c
                 "licence": "Public domain (USGS / NASA Landsat Collection 2)",
             }
         )
+    # Prefer L1TP (precision terrain-corrected) scenes over L1GS (systematic/ephemeris-only), then least cloud.
+    scenes.sort(
+        key=lambda s: (
+            0 if s["processing_level"] == "L1TP" else 1,
+            s["cloud_cover"] if s["cloud_cover"] is not None else 999,
+        )
+    )
     return {"scenes": scenes}
 
 

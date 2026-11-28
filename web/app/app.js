@@ -4989,11 +4989,20 @@ ACTIONS.importAerial = async el => {
   let gcps = null, bounds = null;
   if (el.dataset.gcps) { try { gcps = JSON.parse(el.dataset.gcps); } catch { gcps = null; } }
   if (el.dataset.bounds) { try { bounds = JSON.parse(el.dataset.bounds); } catch { bounds = null; } }
-  const body = { url, title, year, gcps, bounds, kind: el.dataset.kind === "map" ? "map" : "photo", source_width: +el.dataset.sw || undefined, source_height: +el.dataset.sh || undefined };
+  const body = {
+    url, title, year, gcps, bounds,
+    kind: el.dataset.kind === "map" ? "map" : "photo",
+    vicinity_label: el.dataset.vicinity || undefined,
+    plot_url: el.dataset.plotUrl || undefined,
+    plot_label: el.dataset.plotLabel || undefined,
+    source_width: +el.dataset.sw || undefined,
+    source_height: +el.dataset.sh || undefined,
+  };
   const prev = el.textContent; el.disabled = true; el.textContent = "Importing…";
   try {
     const r = await api("/api/aerial/import", { method: "POST", body });
     closeLightbox();
+    if (pl) closePlacement(true);
     applyLibrary(r.library);
     if (r.map.state === "needs_points") {
       toast("Imported frame. Match 3+ spots (4+ for oblique, 8+ for spline warp).", 5000);
@@ -5024,7 +5033,7 @@ function closeLightbox() {
   if (lightboxOpener?.isConnected) lightboxOpener.focus({ preventScroll: true });
   lightboxOpener = null;
 }
-function openLightbox({ preview, full, title, year, sourceUrl, bounds = "" }) {
+function openLightbox({ preview, full, title, year, sourceUrl, bounds = "", kind = "" }) {
   const opener = document.activeElement;
   closeLightbox();
   if (!safeUrl(preview)) return;
@@ -5033,7 +5042,7 @@ function openLightbox({ preview, full, title, year, sourceUrl, bounds = "" }) {
     <img src="${esc(preview)}" alt="${esc(title)}">
     <div class="aer-lb-bar">
       <b>${esc(title)}</b>${year ? `<span>(${esc(year)})</span>` : ""}
-      ${safeUrl(full) ? `<button class="btn small primary" data-act="importAerial" data-url="${esc(full)}" data-title="${esc(title)}" data-year="${esc(year)}" data-bounds="${esc(bounds)}">Import &amp; place on map</button>` : ""}
+      ${safeUrl(full) ? `<button class="btn small primary" data-act="importAerial" data-url="${esc(full)}" data-title="${esc(title)}" data-year="${esc(year)}" data-bounds="${esc(bounds)}"${kind ? ` data-kind="${esc(kind)}"` : ""}>Import &amp; place on map</button>` : ""}
       ${safeUrl(sourceUrl) ? `<a class="btn small" href="${esc(sourceUrl)}" target="_blank" rel="noopener">Archive record</a>` : ""}
       <button class="btn small" id="aerLbClose">Close</button>
     </div></div>`);
@@ -5141,7 +5150,12 @@ VIEWS.aerial = () => {
         (ms.length ? ms.map(m => {
           const yr = (m.date || "").slice(0, 4);
           const bStr = m.bounds ? JSON.stringify(m.bounds) : "";
+          const vLbl = m.vicinity?.label || "";
           const plot0 = (m.plots || []).find(p => /__PLOT/i.test(p.name)) || (m.plots || [])[0];
+          const pUrl = plot0 && safeUrl(plot0.full_url) ? plot0.full_url : "";
+          const pLbl = plot0?.label || "Flight index";
+          const mCode = (m.title || "").match(/\b([A-Z]{1,4}\d{2,5}[A-Z]?)\b/)?.[1] || "";
+          const plotPlaced = mCode && (S.lib.maps || []).some(l => l.state === "installed" && /\b(plot|flight index)\b/i.test(l.title || "") && (l.title || "").includes(mCode));
           const all = m.frames || m.sample_frames || [], open = S.aerial.allFrames?.has(m.doi);
           const thumbs = [...(m.plots || []).map(p => ({ ...p, isPlot: true })), ...(open ? all : all.slice(0, 8))];
           const more = all.length > 8 ? `<button class="btn small" data-act="aerAllFrames" data-doi="${esc(m.doi)}" aria-expanded="${!!open}">${open ? "Show fewer frames" : `Show all ${fmtInt(all.length)} frames`}</button>` : "";
@@ -5152,14 +5166,15 @@ VIEWS.aerial = () => {
             ${m.vicinity || plot0 ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:4px">
               ${m.vicinity ? `<span class="hub-badge" title="Worked out from the mission's title and description">Near ${esc(m.vicinity.label)}</span>
                 <button class="btn small" data-act="aerGoArea" data-bounds="${esc(bStr)}">Go to area</button>` : ""}
-              ${plot0 && safeUrl(plot0.full_url) ? `<button class="btn small" data-act="importAerial" data-url="${esc(plot0.full_url)}" data-title="${esc(m.title + " FLIGHT INDEX")}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}" data-kind="map">Place flight-index card first</button>` : ""}
+              ${plotPlaced ? `<span class="hub-badge">Flight index placed</span>`
+                : (pUrl ? `<button class="btn small primary" data-act="importAerial" data-url="${esc(pUrl)}" data-title="${esc(m.title + " FLIGHT INDEX")}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}" data-vicinity="${esc(vLbl)}" data-kind="map">1. Place ${esc(pLbl.toLowerCase())} first</button>` : "")}
             </div>` : ""}
             ${thumbs.length ? `<div class="aer-grid">${thumbs.map(f => `<div class="aer-card">
               <div class="aer-thumb">${safeUrl(f.preview_url) ? `<img loading="lazy" src="${esc(f.preview_url)}" alt="${esc(f.label || f.name)}">` : ""}</div>
               <div class="aer-cap"><span class="mono" title="${esc(f.name)}">${esc(f.label || (f.isPlot ? "Flight index" : f.name.slice(-14)))}</span>
                 <div class="aer-acts">
                   <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(f.preview_url)}" data-full="${esc(f.full_url)}" data-title="${esc(m.title + " — " + (f.label || f.name))}" data-year="${esc(yr)}" data-src="${esc(m.source_url)}" data-bounds="${esc(bStr)}">View</button>
-                  <button class="linkish small-t" data-act="importAerial" data-url="${esc(f.full_url)}" data-title="${esc(m.title + " " + f.name)}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}"${f.isPlot ? ` data-kind="map"` : ""}>Place</button>
+                  <button class="linkish small-t" data-act="importAerial" data-url="${esc(f.full_url)}" data-title="${esc(m.title + " " + f.name)}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}" data-vicinity="${esc(vLbl)}"${f.isPlot ? ` data-kind="map"` : (pUrl ? ` data-plot-url="${esc(pUrl)}" data-plot-label="${esc(pLbl)}"` : "")}>Place</button>
                 </div></div></div>`).join("")}</div>` : ""}
             ${more ? `<div class="row" style="margin-top:8px">${more}</div>` : ""}
           </div></div>`;
@@ -5185,11 +5200,13 @@ VIEWS.aerial = () => {
       listHTML = `<p class="small-t muted" style="margin:8px 2px">${sc.length} wartime Landsat 1–2 MSS multispectral scenes (1972–1975, ≤35% cloud).</p>` +
         (sc.length ? `<div class="aer-grid">${sc.map(s => {
           const lb = Array.isArray(s.bbox) && s.bbox.length === 4 ? JSON.stringify(s.bbox) : "";
+          const impUrl = safeUrl(s.geotiff_url) ? s.geotiff_url : s.preview_url;
+          const lvl = s.processing_level === "L1TP" ? "terrain-corrected" : s.processing_level === "L1GS" ? "uncorrected L1GS" : "";
           return `<div class="aer-card">
           <div class="aer-thumb">${safeUrl(s.preview_url) ? `<img loading="lazy" src="${esc(s.preview_url)}" alt="${esc(s.id)}">` : ""}</div>
-          <div class="aer-cap"><b>${esc((s.datetime || "").slice(0, 10))}</b><span>Cloud ${s.cloud_cover != null ? Math.round(s.cloud_cover) + "%" : "?"} · ${esc(s.platform)}</span>
-            ${safeUrl(s.preview_url) ? `<div class="aer-acts"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.preview_url)}" data-full="${esc(s.preview_url)}" data-title="${esc(s.id)}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">View</button>
-              <button class="linkish small-t" data-act="importAerial" data-url="${esc(s.preview_url)}" data-title="${esc("Landsat MSS " + (s.datetime || "").slice(0, 10))}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">Place</button></div>` : ""}
+          <div class="aer-cap"><b>${esc((s.datetime || "").slice(0, 10))}</b><span>${esc([`Cloud ${s.cloud_cover != null ? Math.round(s.cloud_cover) + "%" : "?"}`, lvl || s.platform].filter(Boolean).join(" · "))}</span>
+            ${safeUrl(impUrl) ? `<div class="aer-acts"><button class="linkish small-t" data-act="aerPreview" data-preview="${esc(s.preview_url)}" data-full="${esc(impUrl)}" data-title="${esc(s.id)}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">View</button>
+              <button class="linkish small-t" data-act="importAerial" data-url="${esc(impUrl)}" data-title="${esc("Landsat MSS " + (s.datetime || "").slice(0, 10))}" data-year="${esc((s.datetime || "").slice(0, 4))}" data-bounds="${esc(lb)}">${s.geotiff_url ? "Add GeoTIFF" : "Place"}</button></div>` : ""}
           </div></div>`;
         }).join("")}</div>` : `<p class="muted">No clear 1972–75 Landsat MSS scenes in this box.</p>`);
     } else if (tab === "oam" && res) {
@@ -5429,6 +5446,7 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
             ${refOpts.map(l => `<option value="${esc(l.id)}">Ref: ${esc(l.years || l.date || "")} ${esc(l.title)}</option>`).join("")}
           </select>
           <div class="seg pl-baseseg" role="group" aria-label="Reference base map">${[["sat", "Satellite"], ["osm", "Street"]].map(([k, l]) => `<button type="button" data-plbase="${k}" aria-pressed="${pl.refBase === k}">${l}</button>`).join("")}</div>
+          ${subject === "photo" && safeUrl(entry.plot_url) ? `<button type="button" class="btn small" id="plPlotBtn" style="pointer-events:auto" title="View this mission's flight-index card to see where each frame sits">${esc(entry.plot_label || "Flight index")}</button>` : ""}
           <label class="pl-refop" id="plRefOpWrap" hidden><span>Ref</span><input type="range" id="plRefOp" min="15" max="100" value="85" aria-label="Reference map opacity"></label>
         </div>
         <div class="pl-map" id="plToday"></div>
@@ -5484,10 +5502,20 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   pl.today.on("click", e => plClickToday(e.lngLat));
   pl.today.on("load", () => {
     pl.todayReady = true; setBasePaint(pl.today, pl.refBase); plDrawSites(); plDraw();
-    // A map is best matched against an old sheet of the same area, when one is on this computer or the Hub.
+    // Draw a subtle dashed mission-area box while unplaced so the user sees the search region.
+    if (b && b[2] > b[0] && b[3] > b[1] && !pl.pairs.length) {
+      const [w0, s0, e0, n0] = b;
+      pl.today.addSource("pl-vicinity", { type: "geojson", data: { type: "Feature", geometry: { type: "LineString", coordinates: [[w0, s0], [e0, s0], [e0, n0], [w0, n0], [w0, s0]] } } });
+      pl.today.addLayer({ id: "pl-vicinity", type: "line", source: "pl-vicinity", paint: { "line-color": "#d97706", "line-width": 2, "line-dasharray": [4, 3], "line-opacity": 0.85 } });
+    }
+    // A map is best matched against an old sheet of the same area; an aerial photo against its mission's placed flight-index card.
     if (pl.subject === "map" && b) {
       const sheet = refOpts.find(l => Array.isArray(l.bounds) && boxesOverlap(l.bounds, b) && !String(l.id).startsWith("custom_") && l.encoding !== "terrarium");
       if (sheet) { $("#plRefSel").value = sheet.id; plSetRef(sheet.id); }
+    } else if (pl.subject === "photo") {
+      const mCode = (entry.original_title || entry.title || "").match(/\b([A-Z]{1,4}\d{2,5}[A-Z]?)\b/)?.[1] || "";
+      const plotRef = mCode && refOpts.find(l => /\b(plot|flight index)\b/i.test(l.title || "") && (l.title || "").includes(mCode));
+      if (plotRef) { $("#plRefSel").value = plotRef.id; plSetRef(plotRef.id); }
     }
   });
   [pl.scan, pl.today].forEach(m => { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation?.(); wireTrackpad(m, false); });
@@ -5497,6 +5525,17 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
     pl.subject = e.target.value === "map" ? "map" : "photo";
     if (pl.subject === "map" && pl.warpMode === "homography") { pl.warpMode = "auto"; $("#plWarp").value = "auto"; plRender(); }
   };
+  const plotBtn = $("#plPlotBtn");
+  if (plotBtn && safeUrl(entry.plot_url)) {
+    plotBtn.onclick = () => openLightbox({
+      preview: entry.plot_url,
+      full: entry.plot_url,
+      title: `${(entry.title || "").replace(/\s+SHDAI__.*$/, "")} FLIGHT INDEX`.trim(),
+      year: entry.year ? String(entry.year) : "",
+      bounds: b ? JSON.stringify(b) : "",
+      kind: "map",
+    });
+  }
   $("#plUndo").onclick = () => { if (pl.pending) pl.pending = null; else pl.pairs.pop(); pl.autoMatch = null; plRender(); };
   // Clear and Reset each ask first in a box beside them; its Cancel puts focus back on the button.
   const ask = (box, from, on) => { $$("#place .pl-tray .confirm-box").forEach(b => { if (b.id !== "plDiscard") b.hidden = true; }); $(box).hidden = !on; if (on) $(box).querySelector(".solid").focus(); else $(from)?.focus(); };
@@ -5645,6 +5684,7 @@ async function plRunAutoMatch() {
   const m = pl.today, scanVis = m.getLayer("pl-scan") ? m.getLayoutProperty("pl-scan", "visibility") : "none";
   try {
     if (m.getLayer("pl-scan")) m.setLayoutProperty("pl-scan", "visibility", "none");
+    if (m.getLayer("pl-vicinity")) m.setLayoutProperty("pl-vicinity", "visibility", "none");
     if (m.getLayer("pl-sites-dot")) m.setLayoutProperty("pl-sites-dot", "visibility", "none");
     if (m.getLayer("pl-sites-lbl")) m.setLayoutProperty("pl-sites-lbl", "visibility", "none");
     await new Promise(res => { m.once("render", res); m.triggerRepaint(); setTimeout(res, 120); });
@@ -5657,6 +5697,7 @@ async function plRunAutoMatch() {
     const b = m.getBounds();
     const ref_bounds = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
     if (m.getLayer("pl-scan") && scanVis !== "none") m.setLayoutProperty("pl-scan", "visibility", scanVis || "visible");
+    if (m.getLayer("pl-vicinity")) m.setLayoutProperty("pl-vicinity", "visibility", "visible");
     if (m.getLayer("pl-sites-dot")) m.setLayoutProperty("pl-sites-dot", "visibility", "visible");
     if (m.getLayer("pl-sites-lbl")) m.setLayoutProperty("pl-sites-lbl", "visibility", "visible");
     const thresh = autoGcpThresh() / 100;
@@ -5716,7 +5757,12 @@ function plRender() {
   const minPts = pl.warpMode === "auto" ? 3 : 4;
   let step;
   if (pl.pending) step = `<b>Spot ${n + 1}, step 2.</b> Now click the same spot on the reference map.`;
-  else if (n < minPts) step = `<b>1.</b> Click a spot on your map. <b>2.</b> Click the same spot on the reference map (or click <b>Auto-match</b>). ${n ? `${n} matched, ${minPts} needed.` : "Use corners, road crossings or trees."}`;
+  else if (n < minPts) {
+    const hint = pl.subject === "photo" && !n && (pl.entry.vicinity_label || pl.entry.plot_url)
+      ? `${pl.entry.vicinity_label ? `<b>Mission area:</b> Near ${esc(pl.entry.vicinity_label)}. ` : ""}${pl.entry.plot_url ? `Click <b>${esc(pl.entry.plot_label || "Flight index")}</b> on the map to see where this frame sits on the flight track, zoom in to that spot, then ` : ""}`
+      : "";
+    step = `${hint}<b>1.</b> Click a spot on your map. <b>2.</b> Click the same spot on the reference map (or click <b>Auto-match</b>). ${n ? `${n} matched, ${minPts} needed.` : "Use corners, road crossings or trees."}`;
+  }
   else if (!fit) step = "Those spots are in a line or very close together. Add one further away from the others.";
   else step = `Your map now lies over the reference map. Check the roads and rivers line up; drag the slider to compare. ${plFitNote(n, fit)}Add more spots to improve it, then ${pl.mode === "align" ? "save the alignment" : "place the map"}.`;
   $("#plStep").innerHTML = step;
@@ -5967,4 +6013,104 @@ function checkEmptyKinds() {
   await loadCases();
   if (S.caseId) await selectCase(S.caseId);
   if (S.view.name === "home") render();
+  startRemoteBridge();
 })();
+
+// ================================================================ remote MCP bridge
+function remoteSnapshot() {
+  const m = primary();
+  if (!m) return null;
+  const c = m.getCenter(), b = m.getBounds();
+  return {
+    center: [+c.lng.toFixed(6), +c.lat.toFixed(6)],
+    zoom: +m.getZoom().toFixed(2),
+    bounds: [+b.getWest().toFixed(6), +b.getSouth().toFixed(6), +b.getEast().toFixed(6), +b.getNorth().toFixed(6)],
+    base: S.base,
+    era: S.eraA,
+    opacity: S.opacity,
+    view: S.view.name,
+    placement_open: !!pl,
+    placement_id: pl?.entry?.id || null,
+  };
+}
+async function runRemoteCommand(action, params = {}) {
+  const m = primary();
+  if (action === "navigate") {
+    if (Array.isArray(params.bounds) && params.bounds.length === 4) {
+      m.fitBounds([[params.bounds[0], params.bounds[1]], [params.bounds[2], params.bounds[3]]], { padding: 40, duration: 0, maxZoom: 16 });
+    } else if (typeof params.lon === "number" && typeof params.lat === "number") {
+      m.jumpTo({ center: [params.lon, params.lat], zoom: typeof params.zoom === "number" ? params.zoom : Math.max(m.getZoom(), 12) });
+    } else throw new Error("navigate requires bounds or lon & lat.");
+    await new Promise(res => { m.once("idle", res); setTimeout(res, 1500); });
+    return { ok: true };
+  }
+  if (action === "set_layer") {
+    if (params.base && ["sat", "osm", "topo", "oam"].includes(params.base)) setBase(params.base);
+    if ("era_id" in params) setEra(params.era_id || null, "A");
+    if (typeof params.opacity === "number") {
+      S.opacity = Math.max(0, Math.min(1, params.opacity));
+      store.set("opacity", S.opacity);
+      const op = $("#opacity"); if (op) op.value = String(Math.round(S.opacity * 100));
+      const ov = $("#opVal"); if (ov) ov.textContent = `${Math.round(S.opacity * 100)}%`;
+      applyEra();
+    }
+    await new Promise(res => { m.once("idle", res); setTimeout(res, 1000); });
+    return { ok: true };
+  }
+  if (action === "open_view") {
+    const v = params.view || "home";
+    if (v === "aerials") {
+      if (params.tab) S.aerial.tab = params.tab;
+      openAerials();
+    } else if (v === "library") openLibrary();
+    else if (v === "settings") openSettings();
+    else if (v === "cases") show("cases");
+    else show("home");
+    return { ok: true, view: S.view.name };
+  }
+  if (action === "screenshot") {
+    const target = (pl && pl.todayReady) ? pl.today : m;
+    const maxSide = Math.max(320, Math.min(2048, +params.max_side || 1280));
+    const dataUrl = await new Promise(res => {
+      let done = false;
+      const grab = () => {
+        if (done) return;
+        done = true;
+        const src = target.getCanvas();
+        const scale = Math.min(1, maxSide / Math.max(src.width, src.height, 1));
+        const tmp = document.createElement("canvas");
+        tmp.width = Math.max(32, Math.round(src.width * scale));
+        tmp.height = Math.max(32, Math.round(src.height * scale));
+        tmp.getContext("2d").drawImage(src, 0, 0, tmp.width, tmp.height);
+        res(tmp.toDataURL("image/jpeg", 0.85));
+      };
+      target.once("render", grab);
+      target.triggerRepaint();
+      setTimeout(grab, 400);
+    });
+    return { image_b64: dataUrl };
+  }
+  throw new Error(`Unknown remote action: ${action}`);
+}
+function startRemoteBridge() {
+  const pushState = () => api("/api/remote/state", { method: "POST", body: remoteSnapshot() || {} }).catch(() => {});
+  pushState();
+  (async function loop() {
+    while (true) {
+      try {
+        const res = await api("/api/remote/poll", { cache: "no-store" });
+        const cmd = res?.cmd;
+        if (cmd) {
+          try {
+            const result = await runRemoteCommand(cmd.action, cmd.params);
+            await api("/api/remote/reply", { method: "POST", body: { id: cmd.id, result, state: remoteSnapshot() } });
+          } catch (err) {
+            await api("/api/remote/reply", { method: "POST", body: { id: cmd.id, error: err?.message || String(err), state: remoteSnapshot() } });
+          }
+        }
+      } catch {
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
+  })();
+}
