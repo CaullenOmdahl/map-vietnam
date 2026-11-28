@@ -17,6 +17,7 @@ import io
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -28,6 +29,9 @@ PROTOCOL_VERSION = "2024-11-05"
 SERVER_INFO = {"name": "map-vietnam", "version": "0.1.0"}
 URL_FILE = Path.home() / ".cache" / "map-vietnam" / "server_url"
 DEFAULT_URL = "http://127.0.0.1:8765"
+SUPPORTED_LOCAL_EXTS = frozenset({".jpg", ".jpeg", ".png", ".tif", ".tiff", ".pdf", ".webp"})
+ACTIVE_BUILD_STATES = frozenset({"queued", "downloading", "building"})
+POLL_INTERVAL_S = 1.0
 
 
 def resolve_base_url():
@@ -75,6 +79,48 @@ def _api(method, route, *, body=None, params=None, timeout=30):
 def _api_json(method, route, *, body=None, params=None, timeout=30):
     raw, _ = _api(method, route, body=body, params=params, timeout=timeout)
     return json.loads(raw.decode("utf-8"))
+
+
+def _api_stream_file(route, file_path, *, params=None, timeout=300):
+    """Stream a local file to a Map Vietnam upload endpoint with Content-Length."""
+    base = resolve_base_url()
+    qs = f"?{urllib.parse.urlencode(params)}" if params else ""
+    url = f"{base}{route}{qs}"
+    size = file_path.stat().st_size
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/octet-stream",
+        "Content-Length": str(size),
+    }
+    try:
+        with open(file_path, "rb") as fh:
+            req = urllib.request.Request(url, data=fh, method="POST", headers=headers)
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raw = e.read().decode("utf-8", errors="replace")
+        try:
+            msg = json.loads(raw).get("error") or f"HTTP {e.code}"
+        except ValueError:
+            msg = raw[:300] or f"HTTP {e.code}"
+        raise RuntimeError(f"Map Vietnam API error ({e.code}): {msg}") from None
+    except urllib.error.URLError as e:
+        raise RuntimeError(
+            f"Could not reach Map Vietnam at {base} ({e.reason}). Start Map Vietnam (or scripts/server.py) first."
+        ) from None
+
+
+def _boxes_overlap(a, b):
+    return (
+        isinstance(a, (list, tuple))
+        and len(a) == 4
+        and isinstance(b, (list, tuple))
+        and len(b) == 4
+        and float(a[0]) < float(b[2])
+        and float(a[2]) > float(b[0])
+        and float(a[1]) < float(b[3])
+        and float(a[3]) > float(b[1])
+    )
 
 
 def _resize_jpeg(raw_bytes, max_side=1280):
@@ -336,6 +382,140 @@ TOOLS = [
             },
         },
     },
+    {
+        "name": "import_local_files",
+        "description": "Batch-import local map/aerial files or directories (.jpg, .jpeg, .png, .tif, .tiff, .pdf, .webp) into Map Vietnam.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "paths": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "minItems": 1,
+                    "description": "Local file paths or directories to scan and upload",
+                },
+                "recursive": {"type": "boolean", "default": False, "description": "Recurse into subdirectories"},
+                "year": {"type": ["string", "integer"], "description": "Optional year applied to all imported maps"},
+                "title_prefix": {"type": "string", "description": "Optional prefix prepended to each file stem title"},
+                "max_files": {"type": "integer", "default": 50, "minimum": 1, "maximum": 500},
+            },
+            "required": ["paths"],
+        },
+    },
+    {
+        "name": "batch_import_aerials",
+        "description": "Import up to 40 historical aerial scans or archive GeoTIFFs sequentially in one MCP call.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 40,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "url": {"type": "string"},
+                            "title": {"type": "string"},
+                            "year": {"type": ["string", "integer"]},
+                            "kind": {"type": "string", "enum": ["photo", "map"]},
+                            "bounds": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+                            "vicinity_label": {"type": "string"},
+                            "plot_url": {"type": "string"},
+                            "plot_label": {"type": "string"},
+                        },
+                        "required": ["url", "title"],
+                    },
+                },
+            },
+            "required": ["items"],
+        },
+    },
+    {
+        "name": "manage_maps",
+        "description": "Add catalogue maps (by ids or overlapping bbox + optional series), remove maps by ids, or edit a custom map's title/year.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string", "enum": ["add", "remove", "edit"]},
+                "ids": {"type": "array", "items": {"type": "string"}, "description": "Map ids for add or remove"},
+                "bbox": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 4,
+                    "maxItems": 4,
+                    "description": "[west, south, east, north] for action='add' to auto-queue overlapping catalogue maps",
+                },
+                "series": {
+                    "type": "string",
+                    "enum": ["l7014", "sgi100k"],
+                    "description": "Optional catalogue series filter when adding by bbox",
+                },
+                "map_id": {"type": "string", "description": "Custom map id for action='edit'"},
+                "title": {"type": "string", "description": "New title for action='edit'"},
+                "year": {"type": ["string", "integer"], "description": "New year for action='edit'"},
+            },
+            "required": ["action"],
+        },
+    },
+    {
+        "name": "wait_for_builds",
+        "description": "Wait until specified map builds leave queued/downloading/building states and return their final states, bounds, and errors.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "ids": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+                "timeout_s": {"type": "number", "default": 60, "minimum": 1, "maximum": 300},
+            },
+            "required": ["ids"],
+        },
+    },
+    {
+        "name": "auto_match_map",
+        "description": "Run automatic control-point matching (/api/auto-gcp) for a custom scan against the live viewer viewport (or explicit ref_bounds), optionally placing it when confidence meets threshold.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "map_id": {"type": "string"},
+                "confidence_threshold": {"type": "number", "default": 0.75, "minimum": 0, "maximum": 1},
+                "kind": {"type": "string", "enum": ["photo", "map"], "default": "photo"},
+                "auto_place": {"type": "boolean", "default": False},
+                "ref_bounds": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 4,
+                    "maxItems": 4,
+                    "description": "Optional [west, south, east, north]; defaults to live viewer viewport bounds",
+                },
+            },
+            "required": ["map_id"],
+        },
+    },
+    {
+        "name": "build_strip_mosaic",
+        "description": "Stitch all placed frames of a survey strip into one composite .mbtiles mosaic layer.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "map_id": {"type": "string", "description": "Any placed custom map id belonging to the survey strip"},
+                "title": {"type": "string", "description": "Optional title for the composite mosaic layer"},
+                "year": {"type": ["string", "integer"], "description": "Optional year for the composite mosaic layer"},
+            },
+            "required": ["map_id"],
+        },
+    },
+    {
+        "name": "push_to_hub",
+        "description": "Push one or more installed maps to the connected Map Vietnam Hub with the given visibility.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "ids": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+                "visibility": {"type": "string", "enum": ["hub", "group", "private"], "default": "hub"},
+            },
+            "required": ["ids"],
+        },
+    },
 ]
 
 
@@ -524,6 +704,269 @@ def call_tool(name, args):
         if "lon" in args and "lat" in args:
             return _text(_api_json("GET", "/api/terrain/elevation", params={"lon": args["lon"], "lat": args["lat"]}))
         raise ValueError("Provide either lon & lat or line=[[lon, lat], ...].")
+
+    if name == "import_local_files":
+        raw_paths = args.get("paths")
+        if isinstance(raw_paths, str):
+            raw_paths = [raw_paths]
+        if not isinstance(raw_paths, list) or not raw_paths:
+            raise ValueError("paths must be a non-empty list of file or directory paths.")
+        recursive = bool(args.get("recursive", False))
+        year = str(args.get("year") or "").strip()
+        title_prefix = str(args.get("title_prefix") or "").strip()
+        max_files = max(1, min(500, int(args.get("max_files") or 50)))
+
+        files = []
+        seen = set()
+        errors = []
+        for raw_p in raw_paths:
+            p = Path(str(raw_p)).expanduser()
+            if not p.exists():
+                errors.append({"path": str(raw_p), "error": "Path does not exist."})
+                continue
+            if p.is_dir():
+                candidates = sorted(p.rglob("*") if recursive else p.iterdir())
+                for f in candidates:
+                    if len(files) >= max_files:
+                        break
+                    if not f.is_file() or f.name.startswith("."):
+                        continue
+                    if f.suffix.lower() not in SUPPORTED_LOCAL_EXTS:
+                        continue
+                    rp = str(f.resolve())
+                    if rp not in seen:
+                        seen.add(rp)
+                        files.append(f)
+            elif p.is_file():
+                if p.suffix.lower() not in SUPPORTED_LOCAL_EXTS:
+                    errors.append({"path": str(p), "error": f"Unsupported file extension: {p.suffix or '(none)'}"})
+                    continue
+                if len(files) < max_files:
+                    rp = str(p.resolve())
+                    if rp not in seen:
+                        seen.add(rp)
+                        files.append(p)
+            else:
+                errors.append({"path": str(raw_p), "error": "Path is not a regular file or directory."})
+
+        imported = []
+        for f in files:
+            title = f"{title_prefix} {f.stem}".strip() if title_prefix else f.stem
+            params = {"filename": f.name, "title": title, "year": year}
+            try:
+                res = _api_stream_file("/api/library/custom", f, params=params, timeout=300)
+                m = res.get("map") or {}
+                imported.append(
+                    {
+                        "id": m.get("id"),
+                        "title": m.get("title"),
+                        "kind": m.get("kind"),
+                        "state": m.get("state"),
+                        "bounds": m.get("bounds"),
+                        "image": m.get("image"),
+                    }
+                )
+            except Exception as e:
+                errors.append({"path": str(f), "error": str(e)})
+        return _text({"imported": imported, "errors": errors})
+
+    if name == "batch_import_aerials":
+        items = args.get("items")
+        if not isinstance(items, list) or not items:
+            raise ValueError("items must be a non-empty list.")
+        if len(items) > 40:
+            raise ValueError("At most 40 items are allowed per batch_import_aerials call.")
+        imported = []
+        errors = []
+        allowed = ("url", "title", "year", "kind", "bounds", "vicinity_label", "plot_url", "plot_label")
+        for item in items:
+            if not isinstance(item, dict) or not item.get("url") or not item.get("title"):
+                errors.append({"item": item, "error": "Each item must include url and title."})
+                continue
+            body = {k: item[k] for k in allowed if k in item}
+            try:
+                res = _api_json("POST", "/api/aerial/import", body=body, timeout=120)
+                imported.append(res.get("map"))
+            except Exception as e:
+                errors.append({"url": item.get("url"), "title": item.get("title"), "error": str(e)})
+        return _text({"imported": imported, "errors": errors})
+
+    if name == "manage_maps":
+        action = str(args.get("action") or "").strip().lower()
+        if action == "add":
+            ids = list(args.get("ids") or [])
+            already_installed = []
+            if args.get("bbox") is not None:
+                bbox = [float(v) for v in args["bbox"][:4]]
+                series_filter = (args.get("series") or "").strip().lower()
+                lib = _api_json("GET", "/api/library")
+                for m in lib.get("maps") or []:
+                    if m.get("custom"):
+                        continue
+                    if series_filter and (m.get("series") or "").lower() != series_filter:
+                        continue
+                    extent = m.get("outline") or m.get("bounds")
+                    if not _boxes_overlap(extent, bbox):
+                        continue
+                    mid = m.get("id")
+                    if not mid:
+                        continue
+                    if m.get("state") == "available":
+                        if mid not in ids:
+                            ids.append(mid)
+                    elif m.get("state") == "installed":
+                        already_installed.append(mid)
+            elif not ids:
+                raise ValueError("action='add' requires ids=[...] or bbox=[w,s,e,n].")
+            if not ids:
+                return _text(
+                    {
+                        "ok": True,
+                        "action": "add",
+                        "queued_ids": [],
+                        "already_installed": already_installed,
+                    }
+                )
+            res = _api_json("POST", "/api/library/add", body={"ids": [str(i) for i in ids]})
+            wanted = set(ids)
+            affected = [
+                {"id": m.get("id"), "title": m.get("title"), "state": m.get("state"), "series": m.get("series")}
+                for m in (res.get("maps") or [])
+                if m.get("id") in wanted
+            ]
+            out = {"ok": True, "action": "add", "queued_ids": ids, "maps": affected}
+            if already_installed:
+                out["already_installed"] = already_installed
+            return _text(out)
+        if action == "remove":
+            ids = args.get("ids")
+            if not isinstance(ids, list) or not ids:
+                raise ValueError("action='remove' requires a non-empty ids list.")
+            _api_json("POST", "/api/library/remove", body={"ids": [str(i) for i in ids]})
+            return _text({"ok": True, "action": "remove", "removed_ids": [str(i) for i in ids]})
+        if action == "edit":
+            map_id = str(args.get("map_id") or "").strip()
+            if not map_id:
+                raise ValueError("action='edit' requires map_id.")
+            mid = urllib.parse.quote(map_id, safe="")
+            body = {k: args[k] for k in ("title", "year") if k in args}
+            res = _api_json("POST", f"/api/library/custom/{mid}/edit", body=body)
+            updated = next((m for m in (res.get("maps") or []) if m.get("id") == map_id), None)
+            return _text({"ok": True, "action": "edit", "map": updated})
+        raise ValueError(f"Unsupported manage_maps action: {action!r}. Use add, remove, or edit.")
+
+    if name == "wait_for_builds":
+        ids = args.get("ids")
+        if not isinstance(ids, list) or not ids:
+            raise ValueError("ids must be a non-empty list of map ids.")
+        ids = [str(i) for i in ids]
+        timeout_s = max(1.0, min(300.0, float(args.get("timeout_s") or 60)))
+        start = time.monotonic()
+        deadline = start + timeout_s
+        final_maps = []
+        timed_out = False
+        while True:
+            lib = _api_json("GET", "/api/library")
+            by_id = {m.get("id"): m for m in (lib.get("maps") or [])}
+            final_maps = []
+            still_active = False
+            for mid in ids:
+                m = by_id.get(mid)
+                if m is None:
+                    final_maps.append(
+                        {"id": mid, "state": "missing", "bounds": None, "error": "Map not found in library."}
+                    )
+                    continue
+                st = m.get("state")
+                if st in ACTIVE_BUILD_STATES:
+                    still_active = True
+                final_maps.append(
+                    {
+                        "id": mid,
+                        "title": m.get("title"),
+                        "state": st,
+                        "bounds": m.get("bounds"),
+                        "progress": m.get("progress"),
+                        "error": m.get("error"),
+                    }
+                )
+            if not still_active:
+                break
+            now = time.monotonic()
+            if now >= deadline:
+                timed_out = True
+                break
+            time.sleep(min(POLL_INTERVAL_S, max(0.0, deadline - now)))
+        errors = [{"id": m["id"], "error": m["error"]} for m in final_maps if m.get("error")]
+        return _text(
+            {
+                "completed": not timed_out,
+                "timed_out": timed_out,
+                "elapsed_s": round(time.monotonic() - start, 2),
+                "maps": final_maps,
+                "errors": errors,
+            }
+        )
+
+    if name == "auto_match_map":
+        map_id = str(args.get("map_id") or "").strip()
+        if not map_id:
+            raise ValueError("map_id is required.")
+        shot = _api_json("POST", "/api/remote/command", body={"action": "screenshot", "params": {"max_side": 1280}})
+        ref_b64 = (shot.get("result") or {}).get("image_b64") or ""
+        if not ref_b64:
+            raise RuntimeError("Live viewer did not return a reference screenshot.")
+        ref_bounds = args.get("ref_bounds")
+        if ref_bounds is None:
+            ref_bounds = (shot.get("result") or {}).get("bounds") or (shot.get("state") or {}).get("bounds")
+        if not isinstance(ref_bounds, list) or len(ref_bounds) != 4:
+            raise RuntimeError(
+                "Could not determine viewport bounds from live viewer; pass ref_bounds=[west, south, east, north]."
+            )
+        body = {
+            "id": map_id,
+            "ref_b64": ref_b64,
+            "ref_bounds": [float(v) for v in ref_bounds[:4]],
+            "confidence_threshold": float(args.get("confidence_threshold", 0.75)),
+            "kind": "map" if str(args.get("kind") or "").lower() == "map" else "photo",
+        }
+        res = _api_json("POST", "/api/auto-gcp", body=body, timeout=180)
+        auto_placed = False
+        placed_map = None
+        if bool(args.get("auto_place", False)) and res.get("meets_threshold") and res.get("points"):
+            mid = urllib.parse.quote(map_id, safe="")
+            placed_res = _api_json("POST", f"/api/library/custom/{mid}/points", body={"points": res["points"]})
+            placed_map = next((m for m in (placed_res.get("maps") or []) if m.get("id") == map_id), None)
+            auto_placed = True
+        out = {**res, "auto_placed": auto_placed}
+        if placed_map is not None:
+            out["map"] = placed_map
+        return _text(out)
+
+    if name == "build_strip_mosaic":
+        map_id = str(args.get("map_id") or "").strip()
+        if not map_id:
+            raise ValueError("map_id is required.")
+        mid = urllib.parse.quote(map_id, safe="")
+        body = {k: args[k] for k in ("title", "year") if k in args}
+        return _text(_api_json("POST", f"/api/library/custom/{mid}/mosaic", body=body, timeout=300))
+
+    if name == "push_to_hub":
+        ids = args.get("ids")
+        if not isinstance(ids, list) or not ids:
+            raise ValueError("ids must be a non-empty list of map ids.")
+        vis = str(args.get("visibility") or "hub")
+        pushed = []
+        errors = []
+        for mid in ids:
+            mid_s = str(mid)
+            try:
+                res = _api_json("POST", "/api/hub/push", body={"id": mid_s, "visibility": vis}, timeout=180)
+                layers = res.get("pushed") or []
+                pushed.append(layers[0] if layers else {"id": mid_s, "visibility": vis})
+            except Exception as e:
+                errors.append({"id": mid_s, "error": str(e)})
+        return _text({"pushed": pushed, "errors": errors})
 
     raise ValueError(f"Unknown tool: {name}")
 
