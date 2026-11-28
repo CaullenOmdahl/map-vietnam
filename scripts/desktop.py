@@ -46,13 +46,13 @@ from urllib.parse import urlsplit
 import paths
 
 TITLE = "Map Vietnam"
-WINDOW_ICON = paths.APP_ROOT / "packaging" / "icons" / "map-vietnam.png"
+WINDOW_ICON_NAMES = {"win32": "map-vietnam.ico", "linux": "map-vietnam.png"}
 WINDOW_SIZE = (1280, 820)
 MIN_SIZE = (360, 560)  # small enough for the viewer's phone-like layout
 STOP_TIMEOUT_S = 40  # a server stopping ends its jobs first (each waits for its child process)
 
-EXPORT_PATH = re.compile(r"^/api/cases/[^/]+/export\.(gpx|kml|geojson)$")
-EXPORT_TYPES = {"gpx": "GPX", "kml": "KML", "geojson": "GeoJSON"}
+EXPORT_PATH = re.compile(r"^/api/cases/[^/]+/export\.(gpx|kml|kmz|geojson)$")
+EXPORT_TYPES = {"gpx": "GPX", "kml": "KML", "kmz": "KMZ", "geojson": "GeoJSON"}
 HAPTIC_PATTERNS = ("generic", "alignment", "level")
 
 
@@ -186,7 +186,7 @@ SHIM = r"""
 (() => {
   if (window.__mapVietnamShim) return;
   window.__mapVietnamShim = true;
-  const EXPORT = /^\/api\/cases\/[^/]+\/export\.(gpx|kml|geojson)$/;
+  const EXPORT = /^\/api\/cases\/[^/]+\/export\.(gpx|kml|kmz|geojson)$/;
   const say = text => { try { toast(text, 5000); } catch (e) {} };
   const api = () => window.pywebview && window.pywebview.api;
   const onClick = event => {
@@ -297,6 +297,17 @@ def window_toolkit(frozen=None, platform=None, has_pyside=None):
     return "qt" if has_pyside else None
 
 
+def window_icon(platform=None):
+    """The runtime window icon for this platform, or None. WinForms requires an ICO, Linux uses
+    a PNG, and macOS takes its icon from the app bundle."""
+    platform = sys.platform if platform is None else platform
+    name = WINDOW_ICON_NAMES["linux"] if platform.startswith("linux") else WINDOW_ICON_NAMES.get(platform)
+    if not name:
+        return None
+    icon_path = paths.APP_ROOT / "packaging" / "icons" / name
+    return icon_path if icon_path.is_file() else None
+
+
 def use_pyside():
     """Ask QtPy (which pywebview's Qt window goes through) for PySide6, the LGPL binding this app is
     allowed to ship. Without this, a machine that also has PyQt installed could win. An explicit
@@ -342,8 +353,8 @@ def open_window(url, srv, thread):
 
     threading.Thread(target=close_when_server_stops, name="close-window", daemon=True).start()
     use_pyside()
-    # The window's icon on Linux (taskbar, window switcher); Windows and macOS take it from the program.
-    icon = {"icon": str(WINDOW_ICON)} if WINDOW_ICON.exists() else {}
+    icon_path = window_icon()
+    icon = {"icon": str(icon_path)} if icon_path else {}
     webview.start(gui=window_toolkit(), **icon)  # returns when the window has closed
     return True
 

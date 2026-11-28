@@ -3,7 +3,7 @@
 #
 #   packaging/build.sh                      the Windows installer and the Linux download
 #   packaging/build.sh windows              Map-Vietnam-<version>-Setup.exe
-#   packaging/build.sh linux                Map-Vietnam-<version>-linux-x86_64.tar.gz
+#   packaging/build.sh linux                Map-Vietnam-<version>-linux-x86_64.tar.gz + .deb, .rpm, .pkg.tar.zst
 #   MAC_HOST=my-mac packaging/build.sh mac  Map-Vietnam-<version>-macos-<arch>.dmg, built over SSH
 #   MAC_HOST=my-mac packaging/build.sh all  all three
 #
@@ -80,6 +80,18 @@ build_linux() {
     pyinstaller packaging/map-vietnam.spec --noconfirm --log-level WARN
     xvfb-run -a python packaging/smoke_test.py 'dist/Map Vietnam/Map Vietnam'
     tar -czf '/out/Map-Vietnam-$VERSION-linux-x86_64.tar.gz' -C dist 'Map Vietnam'
+    python -c '
+from pathlib import Path
+from PIL import Image
+out = Path(\"dist/icons\")
+out.mkdir(parents=True, exist_ok=True)
+with Image.open(\"packaging/icons/map-vietnam.png\") as img:
+    for size in (256, 512):
+        img.resize((size, size), Image.LANCZOS).save(out / f\"map-vietnam-{size}.png\")
+'
+    VERSION='$VERSION' nfpm package --config packaging/linux/nfpm.yaml --packager deb --target '/out/map-vietnam_${VERSION}_amd64.deb'
+    VERSION='$VERSION' nfpm package --config packaging/linux/nfpm.yaml --packager rpm --target '/out/map-vietnam-${VERSION}-1.x86_64.rpm'
+    VERSION='$VERSION' nfpm package --config packaging/linux/nfpm.yaml --packager archlinux --target '/out/map-vietnam-${VERSION}-1-x86_64.pkg.tar.zst'
   "
 }
 

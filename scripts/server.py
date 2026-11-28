@@ -61,12 +61,16 @@ No key is needed up front: a source whose download Kaggle refused for want of on
   GET  /api/search?q=cao lanh | WS683427 [&near=lon,lat]         -> grid-ref hit and/or matching evidence,
                                                                     nearest first, with province context
   GET  /api/cases                     POST /api/cases {name, summary}
-  GET  /api/cases/<id>                (items, sites, notes)      DELETE /api/cases/<id>
+  POST /api/cases/import?filename=<name>[&case_id=<id>][&name=<case name>]
+        body: raw .kml or .kmz bytes (application/octet-stream) -> {"case", "imported", "library"}
+  GET  /api/cases/<id>                (items, sites, shapes, notes)  DELETE /api/cases/<id>
   POST /api/cases/<id>/items {evidence_id, note}    DELETE /api/cases/<id>/items/<evidence_id>
   POST /api/cases/<id>/sites {name, lon, lat, uncertainty_m, rationale}
   DELETE /api/cases/<id>/sites/<site_id>
+  POST /api/cases/<id>/shapes {name, kind, geometry, description, folder, color, date_start, date_end}
+  DELETE /api/cases/<id>/shapes/<shape_id>
   POST /api/cases/<id>/notes {body}           DELETE /api/cases/<id>/notes/<note_id>
-  GET  /api/cases/<id>/export.geojson | export.kml | export.gpx
+  GET  /api/cases/<id>/export.geojson | export.kml | export.kmz | export.gpx
 
 Usage: .venv/bin/python scripts/server.py [--port 8765] [--db data/evidence.sqlite]
 """
@@ -80,6 +84,7 @@ import re
 import signal
 import sqlite3
 import sys
+import tempfile
 import threading
 import traceback
 import unicodedata
@@ -94,6 +99,7 @@ from urllib.parse import parse_qs, urlparse
 import custom_maps
 import gridref
 import hub_client
+import kml
 import library
 import paths
 import records
@@ -110,7 +116,8 @@ MAX_TILE_ZOOM = 24
 # Sec-Fetch-Site values of requests made by this server's own pages (or typed by the user).
 OWN_FETCH_SITES = {"same-origin", "none"}
 MAX_BODY_BYTES = 1 << 20  # the API's JSON bodies are tiny; refuse anything bigger
-UPLOAD_PATH = "/api/library/custom"  # the one route whose body is a raw file, not JSON
+UPLOAD_PATH = "/api/library/custom"  # raw-file upload routes (not JSON)
+CASE_IMPORT_PATH = "/api/cases/import"
 UPLOAD_BLOCK = 1 << 20
 CUSTOM_PATH = re.compile(r"library/custom/(custom_[0-9a-f]{10})/(preview|points|edit)")
 ALIGN_PATH = re.compile(r"library/([A-Za-z0-9_-]+)/align/(prepare|preview|points|reset)")
@@ -443,7 +450,7 @@ def search(db, q, limit=20, near=None):
 
 
 def case_detail(db, cid):
-    """A case with its pinned records (each with its case note), sites and notes; None if absent."""
+    """A case with its pinned records (each with its case note), sites, shapes and notes; None if absent."""
     c = db.execute("select * from cases where id = ?", (cid,)).fetchone()
     if not c:
         return None
@@ -454,12 +461,122 @@ def case_detail(db, cid):
     ).fetchall()
     sites = db.execute("select * from sites where case_id = ? order by id", (cid,)).fetchall()
     notes = db.execute("select * from notes where case_id = ? order by id", (cid,)).fetchall()
+    shapes = []
+    for r in db.execute("select * from shapes where case_id = ? order by id", (cid,)):
+        d = dict(r)
+        d["geometry"] = json.loads(d.pop("geometry_json"))
+        shapes.append(d)
     return {
         **dict(c),
         "items": [dict(r) for r in items],
         "sites": [dict(r) for r in sites],
+        "shapes": shapes,
         "notes": [dict(r) for r in notes],
     }
+
+
+def _iter_coords(geom):
+    """Yield (lon, lat) pairs from a GeoJSON LineString or Polygon geometry."""
+    gtype = geom.get("type")
+    coords = geom.get("coordinates") or []
+    if gtype == "LineString":
+        for pt in coords:
+            yield pt[0], pt[1]
+    elif gtype == "Polygon":
+        for ring in coords:
+            for pt in ring:
+                yield pt[0], pt[1]
+
+
+def validate_shape_geometry(kind, geom):
+    """Validate and normalise a LineString or Polygon GeoJSON geometry dict."""
+    if kind not in ("line", "polygon"):
+        raise ValueError("kind must be 'line' or 'polygon'")
+    if not isinstance(geom, dict):
+        raise ValueError("geometry must be a GeoJSON object")
+    expected_type = "LineString" if kind == "line" else "Polygon"
+    if geom.get("type") != expected_type:
+        raise ValueError(f"geometry.type must be {expected_type}")
+    coords = geom.get("coordinates")
+    if not isinstance(coords, list):
+        raise ValueError("geometry.coordinates must be a list")
+
+    def clean_ring(raw, min_pts, close=False):
+        if not isinstance(raw, list) or len(raw) < min_pts:
+            raise ValueError(f"geometry needs at least {min_pts} coordinates")
+        out = []
+        for pt in raw:
+            if not isinstance(pt, (list, tuple)) or len(pt) < 2:
+                raise ValueError("each coordinate must be [lon, lat]")
+            lon, lat = float(pt[0]), float(pt[1])
+            if not (math.isfinite(lon) and math.isfinite(lat) and -180.0 <= lon <= 180.0 and -90.0 <= lat <= 90.0):
+                raise ValueError("coordinate out of range")
+            out.append([lon, lat])
+        if close and out[0] != out[-1]:
+            out.append(list(out[0]))
+        return out
+
+    if kind == "line":
+        return {"type": "LineString", "coordinates": clean_ring(coords, 2)}
+    if not coords:
+        raise ValueError("polygon needs at least an outer ring")
+    rings = [clean_ring(coords[0], 3, close=True)]
+    for hole in coords[1:]:
+        rings.append(clean_ring(hole, 3, close=True))
+    return {"type": "Polygon", "coordinates": rings}
+
+
+def case_kmz_overlays(case, lib):
+    """Collect custom map overlays intersecting `case` for bundling inside export.kmz."""
+    if lib is None:
+        return []
+    lons, lats = [], []
+    for s in case.get("sites") or []:
+        lons.append(s["lon"])
+        lats.append(s["lat"])
+    for e in case.get("items") or []:
+        lons.append(e["lon"])
+        lats.append(e["lat"])
+    for sh in case.get("shapes") or []:
+        for lon, lat in _iter_coords(sh.get("geometry") or {}):
+            lons.append(lon)
+            lats.append(lat)
+    if not lons:
+        return []
+    pad = 0.05
+    w, s, e, n = min(lons) - pad, min(lats) - pad, max(lons) + pad, max(lats) + pad
+
+    overlays = []
+    total_bytes = 0
+    for entry in lib.custom.entries():
+        b = entry.get("bounds")
+        if not b or len(b) != 4:
+            continue
+        mw, ms, me, mn = b
+        if me < w or mw > e or mn < s or ms > n:
+            continue
+        img_path = lib.custom.preview_path(entry["id"])
+        if not img_path.is_file():
+            img_path = lib.custom.work_image(entry["id"])
+        if not img_path.is_file():
+            continue
+        data = img_path.read_bytes()
+        if total_bytes + len(data) > (50 << 20) or len(overlays) >= kml.MAX_OVERLAYS:
+            break
+        corners = None
+        if entry.get("points") and entry.get("image"):
+            corners = custom_maps.placed_corners(entry["points"], entry["image"]["width"], entry["image"]["height"])
+        overlays.append(
+            {
+                "name": entry["title"],
+                "href": f"files/{entry['id']}{img_path.suffix.lower()}",
+                "image_bytes": data,
+                "corners_lonlat": corners,
+                "bounds": b,
+            }
+        )
+        total_bytes += len(data)
+    return overlays
 
 
 def export_points(case):
@@ -489,45 +606,54 @@ def export_points(case):
     return pts
 
 
-def export(case, fmt):
-    """(content type, text) of a case exported as `fmt`: "geojson", "kml" or "gpx".
+def export(case, fmt, overlays=()):
+    """(content type, text-or-bytes) of a case exported as `fmt`: "geojson", "kml", "kmz" or "gpx".
 
     Every format carries the hazard warning and the case notes; each point says how far
     (its uncertainty radius) the true position may lie from it.
     """
     pts = export_points(case)
+    shapes = case.get("shapes") or []
     title = f"{case['name']} ({HAZARD})"
     notes = [n["body"] for n in case["notes"]]
     notes_text = escape("\n".join(notes))
     if fmt == "geojson":
+        features = [
+            {
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [p["lon"], p["lat"]]},
+                "properties": {"name": p["name"], "uncertainty_m": p["r"], "description": p["desc"]},
+            }
+            for p in pts
+        ]
+        features += [
+            {
+                "type": "Feature",
+                "geometry": sh["geometry"],
+                "properties": {
+                    "name": sh["name"],
+                    "kind": sh["kind"],
+                    "description": sh.get("description") or "",
+                    "folder": sh.get("folder") or "",
+                    "color": sh.get("color") or "",
+                },
+            }
+            for sh in shapes
+        ]
         return "application/geo+json", json.dumps(
             {
                 "type": "FeatureCollection",
                 "name": case["name"],
                 "warning": HAZARD,
                 "notes": notes,
-                "features": [
-                    {
-                        "type": "Feature",
-                        "geometry": {"type": "Point", "coordinates": [p["lon"], p["lat"]]},
-                        "properties": {"name": p["name"], "uncertainty_m": p["r"], "description": p["desc"]},
-                    }
-                    for p in pts
-                ],
+                "features": features,
             },
             indent=1,
         )
     if fmt == "kml":
-        marks = "".join(
-            f"<Placemark><name>{escape(p['name'])}</name><description>{escape(p['desc'])} "
-            f"(within {p['r']:.0f} m)</description><Point><coordinates>{p['lon']},{p['lat']}</coordinates>"
-            f"</Point></Placemark>"
-            for p in pts
-        )
-        return "application/vnd.google-earth.kml+xml", (
-            f'<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document>'
-            f"<name>{escape(title)}</name><description>{notes_text}</description>{marks}</Document></kml>"
-        )
+        return "application/vnd.google-earth.kml+xml", kml.export_kml(case, hazard=HAZARD)
+    if fmt == "kmz":
+        return "application/vnd.google-earth.kmz", kml.export_kmz(case, hazard=HAZARD, overlays=overlays)
     if fmt == "gpx":
         # GPS units truncate long waypoint names; keep the start, which carries the place name.
         wpts = "".join(
@@ -535,9 +661,21 @@ def export(case, fmt):
             f"<desc>{escape(p['desc'])} (within {p['r']:.0f} m)</desc></wpt>"
             for p in pts
         )
+        trks = []
+        for sh in shapes:
+            geom = sh.get("geometry") or {}
+            coords = geom.get("coordinates") or []
+            pts_seq = coords[0] if geom.get("type") == "Polygon" and coords else coords
+            if len(pts_seq) >= 2:
+                trkpts = "".join(f'<trkpt lat="{pt[1]}" lon="{pt[0]}"></trkpt>' for pt in pts_seq)
+                trks.append(
+                    f"<trk><name>{escape(sh['name'][:60])}</name>"
+                    f"<desc>{escape(sh.get('description') or '')}</desc><trkseg>{trkpts}</trkseg></trk>"
+                )
         return "application/gpx+xml", (
             f'<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="MapVietnam" '
-            f'xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>{escape(title)}</name><desc>{notes_text}</desc></metadata>{wpts}</gpx>'
+            f'xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>{escape(title)}</name>'
+            f"<desc>{notes_text}</desc></metadata>{wpts}{''.join(trks)}</gpx>"
         )
     raise ValueError(f"unknown export format {fmt!r}")
 
@@ -587,6 +725,18 @@ class Handler(SimpleHTTPRequestHandler):
         body = (obj if isinstance(obj, str) else json.dumps(obj, ensure_ascii=False)).encode()
         self.send_response(status)
         self.send_header("Content-Type", ctype + "; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def send_bytes(self, body, status=200, ctype="application/octet-stream", filename=None):
+        """Send binary bytes (e.g. a .kmz archive), never cached."""
+        self.send_response(status)
+        self.send_header("Content-Type", ctype)
+        if filename:
+            safe = re.sub(r'[^A-Za-z0-9._ -]+', "_", filename).strip() or "export.kmz"
+            self.send_header("Content-Disposition", f'attachment; filename="{safe}"')
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
@@ -644,7 +794,7 @@ class Handler(SimpleHTTPRequestHandler):
         ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
         # A file upload is raw bytes. Like JSON, that type cannot be sent by a plain cross-site
         # form, and a script on another site needs a CORS preflight this server never grants.
-        if method == "POST" and urlparse(self.path).path == UPLOAD_PATH and ctype == "application/octet-stream":
+        if method == "POST" and urlparse(self.path).path in (UPLOAD_PATH, CASE_IMPORT_PATH) and ctype == "application/octet-stream":
             return None
         if method == "POST" and ctype != "application/json":
             return HTTPStatus.UNSUPPORTED_MEDIA_TYPE, "send the request body as application/json"
@@ -715,7 +865,10 @@ class Handler(SimpleHTTPRequestHandler):
 
     def dispatch(self, method, p, q, db):
         """Answer API path `p` (without the /api/ prefix) with query parameters `q`."""
-        m = re.fullmatch(r"cases/(\d{1,18})(?:/(items|sites|notes)(?:/(\d{1,18}))?|/export\.(geojson|kml|gpx))?", p)
+        m = re.fullmatch(
+            r"cases/(\d{1,18})(?:/(items|sites|notes|shapes)(?:/(\d{1,18}))?|/export\.(geojson|kml|kmz|gpx))?",
+            p,
+        )
         if method == "GET" and p == "sources":
             return self.send_json(
                 [
@@ -765,6 +918,8 @@ class Handler(SimpleHTTPRequestHandler):
                 (text_field(b, "name").strip(), text_field(b, "summary", False) or "", store.now()),
             )
             return self.send_json({"id": cur.lastrowid}, HTTPStatus.CREATED)
+        if p == "cases/import" and method == "POST":
+            return self.import_case_kml(q, db)
         if not m:
             return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
         cid, sub, sub_id, fmt = int(m[1]), m[2], m[3], m[4]
@@ -772,6 +927,9 @@ class Handler(SimpleHTTPRequestHandler):
         if case is None:
             return self.send_json({"error": "no such case"}, HTTPStatus.NOT_FOUND)
         if method == "GET" and fmt:
+            if fmt == "kmz":
+                ctype, data = export(case, fmt, overlays=case_kmz_overlays(case, self.library))
+                return self.send_bytes(data, ctype=ctype, filename=f"{case['name']}.kmz")
             ctype, text = export(case, fmt)
             return self.send_json(text, ctype=ctype)
         if method == "GET" and not sub:
@@ -801,6 +959,36 @@ class Handler(SimpleHTTPRequestHandler):
             )
         elif method == "DELETE" and sub == "sites" and sub_id:
             db.execute("delete from sites where case_id = ? and id = ?", (cid, int(sub_id)))
+        elif method == "POST" and sub == "shapes":
+            b = self.body()
+            kind = text_field(b, "kind")
+            geom = validate_shape_geometry(kind, b.get("geometry"))
+            color = text_field(b, "color", False)
+            if color is not None and color != "" and not kml.HEX_COLOR_RE.match(color):
+                raise ValueError("color must be a #rrggbb hex string")
+            ds = text_field(b, "date_start", False)
+            de = text_field(b, "date_end", False)
+            for d in (ds, de):
+                if d and not store.DATE_RE.match(d):
+                    raise ValueError("dates must be YYYY, YYYY-MM or YYYY-MM-DD")
+            db.execute(
+                "insert into shapes (case_id, name, kind, geometry_json, description, folder, color, date_start, date_end, created_at) "
+                "values (?,?,?,?,?,?,?,?,?,?)",
+                (
+                    cid,
+                    text_field(b, "name").strip(),
+                    kind,
+                    json.dumps(geom),
+                    text_field(b, "description", False),
+                    text_field(b, "folder", False),
+                    color or None,
+                    ds or None,
+                    de or None,
+                    store.now(),
+                ),
+            )
+        elif method == "DELETE" and sub == "shapes" and sub_id:
+            db.execute("delete from shapes where case_id = ? and id = ?", (cid, int(sub_id)))
         elif method == "POST" and sub == "notes":
             db.execute(
                 "insert into notes (case_id, body, created_at) values (?,?,?)",
@@ -812,6 +1000,124 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
         db.commit()
         self.send_json(case_detail(db, cid))
+
+    def import_case_kml(self, q, db):
+        """POST /api/cases/import: parse a Google Earth .kml or .kmz upload into a case."""
+        try:
+            size = int(self.headers.get("Content-Length") or "")
+        except ValueError:
+            size = -1
+        if size <= 0:
+            self.close_connection = True
+            return self.send_json({"error": "Send the file's contents with a Content-Length."}, HTTPStatus.BAD_REQUEST)
+        if size > kml.MAX_KMZ_BYTES:
+            self.close_connection = True
+            return self.send_json(
+                {"error": "That KML/KMZ file is larger than 200 MB, which is more than Map Vietnam allows."},
+                HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+            )
+        fd, tmp_name = tempfile.mkstemp(prefix="mv-kml-", suffix=".tmp")
+        os.close(fd)
+        tmp_path = Path(tmp_name)
+        try:
+            with open(tmp_path, "wb") as f:
+                left = size
+                while left:
+                    block = self.rfile.read(min(UPLOAD_BLOCK, left))
+                    if not block:
+                        raise kml.KmlError("The upload was cut short. Please try adding the file again.")
+                    f.write(block)
+                    left -= len(block)
+            parsed = kml.parse_kml_or_kmz(tmp_path, q.get("filename", ""))
+        except BaseException:
+            self.close_connection = True
+            raise
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+        created_new = False
+        if q.get("case_id"):
+            cid = int(q["case_id"])
+            if case_detail(db, cid) is None:
+                return self.send_json({"error": "no such case"}, HTTPStatus.NOT_FOUND)
+        else:
+            existing = {r[0] for r in db.execute("select name from cases")}
+            base_name = (q.get("name") or parsed["name"] or "Imported KML").strip()[:200] or "Imported KML"
+            name = base_name
+            n = 2
+            while name in existing:
+                name = f"{base_name[:190]} ({n})"
+                n += 1
+            summary = parsed["description"].splitlines()[0][:200] if parsed["description"] else ""
+            cur = db.execute(
+                "insert into cases (name, summary, created_at) values (?,?,?)",
+                (name, summary, store.now()),
+            )
+            cid = cur.lastrowid
+            if parsed["description"]:
+                db.execute(
+                    "insert into notes (case_id, body, created_at) values (?,?,?)",
+                    (cid, parsed["description"], store.now()),
+                )
+            created_new = True
+
+        now_ts = store.now()
+        for s in parsed["sites"]:
+            db.execute(
+                "insert into sites (case_id, name, lon, lat, uncertainty_m, rationale, created_at) "
+                "values (?,?,?,?,?,?,?)",
+                (cid, s["name"], s["lon"], s["lat"], s["uncertainty_m"], s["rationale"], now_ts),
+            )
+        for sh in parsed["shapes"]:
+            db.execute(
+                "insert into shapes (case_id, name, kind, geometry_json, description, folder, color, date_start, date_end, created_at) "
+                "values (?,?,?,?,?,?,?,?,?,?)",
+                (
+                    cid,
+                    sh["name"],
+                    sh["kind"],
+                    json.dumps(sh["geometry"]),
+                    sh["description"],
+                    sh["folder"],
+                    sh["color"],
+                    sh["date_start"],
+                    sh["date_end"],
+                    now_ts,
+                ),
+            )
+        db.commit()
+
+        warnings = list(parsed["warnings"])
+        added_ids = []
+        if parsed["overlays"] and self.library is not None:
+            for ov in parsed["overlays"]:
+                part = self.library.custom.incoming_path()
+                try:
+                    part.write_bytes(ov["image_bytes"])
+                    entry = self.library.custom.ingest_placed_overlay(
+                        part, ov["filename"], ov["name"], ov["corners_lonlat"], ov["year"]
+                    )
+                    added_ids.append(entry["id"])
+                except (custom_maps.CustomMapError, OSError) as e:
+                    part.unlink(missing_ok=True)
+                    warnings.append(f"Overlay '{ov['name']}' could not be added: {e}")
+            if added_ids:
+                self.library.add(added_ids)
+                self.library.start_worker()
+
+        return self.send_json(
+            {
+                "case": case_detail(db, cid),
+                "imported": {
+                    "sites": len(parsed["sites"]),
+                    "shapes": len(parsed["shapes"]),
+                    "overlays": len(added_ids),
+                    "warnings": warnings,
+                },
+                "library": self.library.listing() if added_ids else None,
+            },
+            HTTPStatus.CREATED if created_new else HTTPStatus.OK,
+        )
 
     def library_api(self, method, p):
         """The /api/library routes (see the module docstring)."""

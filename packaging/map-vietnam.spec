@@ -131,8 +131,11 @@ datas = [
     (str(SCRIPTS), "scripts"),  # the sources run_script_from_argv loads by path
     (str(ROOT / "LICENSE"), "."),
     (str(ROOT / "NOTICE"), "."),
-    (str(ROOT / "packaging" / "icons" / "map-vietnam.png"), "packaging/icons"),  # the Linux window's icon
 ]
+if sys.platform == "win32":
+    datas.append((str(ROOT / "packaging" / "icons" / "map-vietnam.ico"), "packaging/icons"))
+elif sys.platform.startswith("linux"):
+    datas.append((str(ROOT / "packaging" / "icons" / "map-vietnam.png"), "packaging/icons"))
 LICENCES = licence_files() + globals().get("QT_LICENCES", [])
 missing = {"rasterio", "numpy", "pillow", "pypdf", "pypdfium2", "pyproj", "certifi", "pywebview"} - {
     dest.split("/")[1] for _, dest in LICENCES

@@ -19,7 +19,7 @@ WORKDIR /app
 
 # Install the pinned geospatial & raster wheels shared with the desktop app (skipping desktop GUI pywebview).
 COPY requirements.txt /app/requirements.txt
-RUN grep -Ev '^(pywebview|pytest)==' /app/requirements.txt > /tmp/requirements-hub.txt \
+RUN grep -Ev '^(pywebview|bottle|pytest)==' /app/requirements.txt > /tmp/requirements-hub.txt \
     && pip install --no-cache-dir -r /tmp/requirements-hub.txt \
     && rm -f /tmp/requirements-hub.txt
 

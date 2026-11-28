@@ -198,6 +198,128 @@ def test_slim_evidence_and_case_delete(base):
     assert all(c["id"] != cid for c in call(f"{base}/api/cases"))
 
 
+def test_shapes_export_and_kml_kmz_import_round_trip(maps, tmp_path):
+    import io
+    import zipfile
+
+    from PIL import Image
+
+    base, lib = maps
+    # Import a KML into a brand-new case.
+    kml_doc = b"""<?xml version="1.0" encoding="UTF-8"?>
+    <kml xmlns="http://www.opengis.net/kml/2.2">
+      <Document>
+        <name>REFNO 0543</name>
+        <description>Initial packet notes</description>
+        <Placemark>
+          <name>Eyewitness ridge</name>
+          <description>Observer bearing (within 250 m)</description>
+          <Point><coordinates>105.63,10.46,0</coordinates></Point>
+        </Placemark>
+        <Placemark>
+          <name>Search box</name>
+          <Style><LineStyle><color>ff00ff00</color></LineStyle></Style>
+          <Polygon><outerBoundaryIs><LinearRing><coordinates>
+            105.60,10.44 105.66,10.44 105.66,10.48 105.60,10.48 105.60,10.44
+          </coordinates></LinearRing></outerBoundaryIs></Polygon>
+        </Placemark>
+      </Document>
+    </kml>"""
+
+    req = urllib.request.Request(
+        f"{base}/api/cases/import?filename=refno.kml",
+        data=kml_doc,
+        method="POST",
+        headers={"Content-Type": "application/octet-stream"},
+    )
+    with urllib.request.urlopen(req) as r:
+        assert r.status == 201
+        res = json.loads(r.read().decode())
+    cid = res["case"]["id"]
+    assert res["case"]["name"] == "REFNO 0543"
+    assert res["imported"] == {"sites": 1, "shapes": 1, "overlays": 0, "warnings": []}
+    assert res["case"]["sites"][0]["uncertainty_m"] == 250.0
+    assert res["case"]["shapes"][0]["color"] == "#00ff00"
+
+    # Re-importing with the same name creates a disambiguated case.
+    req2 = urllib.request.Request(
+        f"{base}/api/cases/import?filename=refno.kml",
+        data=kml_doc,
+        method="POST",
+        headers={"Content-Type": "application/octet-stream"},
+    )
+    with urllib.request.urlopen(req2) as r:
+        assert json.loads(r.read().decode())["case"]["name"] == "REFNO 0543 (2)"
+
+    # Add a LineString shape directly and verify GPX, GeoJSON, KML, and KMZ exports.
+    added = call(
+        f"{base}/api/cases/{cid}/shapes",
+        "POST",
+        {
+            "name": "Flight leg",
+            "kind": "line",
+            "geometry": {"type": "LineString", "coordinates": [[105.61, 10.45], [105.64, 10.47]]},
+            "color": "#0284c7",
+        },
+    )
+    assert len(added["shapes"]) == 2
+    assert "<trk><name>Flight leg</name>" in call(f"{base}/api/cases/{cid}/export.gpx")
+    gj = call(f"{base}/api/cases/{cid}/export.geojson")
+    assert any(f["geometry"]["type"] == "LineString" for f in gj["features"])
+
+    # Import a KMZ containing a GroundOverlay into the existing case, and verify it builds as a custom map
+    # and is re-bundled when exporting .kmz.
+    buf = io.BytesIO()
+    Image.new("RGB", (120, 90), (200, 180, 140)).save(buf, "PNG")
+    kmz_buf = io.BytesIO()
+    with zipfile.ZipFile(kmz_buf, "w") as zf:
+        zf.writestr(
+            "doc.kml",
+            """<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Recon</name>
+            <GroundOverlay><name>1968 Recon Frame</name><Icon><href>files/recon.png</href></Icon>
+            <LatLonBox><north>10.48</north><south>10.44</south><east>105.66</east><west>105.60</west></LatLonBox>
+            </GroundOverlay></Document></kml>""",
+        )
+        zf.writestr("files/recon.png", buf.getvalue())
+
+    req_kmz = urllib.request.Request(
+        f"{base}/api/cases/import?filename=recon.kmz&case_id={cid}",
+        data=kmz_buf.getvalue(),
+        method="POST",
+        headers={"Content-Type": "application/octet-stream"},
+    )
+    with urllib.request.urlopen(req_kmz) as r:
+        assert r.status == 200
+        kmz_res = json.loads(r.read().decode())
+    assert kmz_res["imported"]["overlays"] == 1
+    assert any(m["title"] == "1968 Recon Frame" for m in kmz_res["library"]["maps"])
+
+    with urllib.request.urlopen(f"{base}/api/cases/{cid}/export.kmz") as r:
+        assert r.headers["Content-Type"] == "application/vnd.google-earth.kmz"
+        exported_kmz = r.read()
+    with zipfile.ZipFile(io.BytesIO(exported_kmz), "r") as zf:
+        names = zf.namelist()
+        assert "doc.kml" in names
+        assert any(n.startswith("files/custom_") for n in names)
+        doc_kml = zf.read("doc.kml").decode("utf-8")
+        assert "<GroundOverlay>" in doc_kml and "1968 Recon Frame" in doc_kml
+
+    # Deleting a shape removes it cleanly; invalid KML gets 400 and wrong Content-Type gets 415.
+    sid = added["shapes"][1]["id"]
+    after_del = call(f"{base}/api/cases/{cid}/shapes/{sid}", "DELETE")
+    assert len(after_del["shapes"]) == 1
+    assert status_of(f"{base}/api/cases/import?filename=bad.kml", "POST", {"x": 1}) == 400
+    assert (
+        status_of(
+            f"{base}/api/cases/import?filename=bad.kml",
+            "POST",
+            {"x": 1},
+            headers={"Content-Type": "text/plain"},
+        )
+        == 415
+    )
+
+
 def test_exports_carry_notes_and_plain_names_and_notes_can_be_deleted(base):
     cid = call(f"{base}/api/cases", "POST", {"name": "N"})["id"]
     ev_id = call(f"{base}/api/evidence?kinds=air_strike")["features"][0]["properties"]["id"]

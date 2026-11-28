@@ -265,6 +265,7 @@ const icon = {
   warn: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18v.5"/></svg>',
   ext: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg>',
   dl: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+  upload: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>',
   copy: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3"/></svg>',
   near: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/></svg>',
   doc: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>',
@@ -391,7 +392,7 @@ function addOverlays(m) {
   for (const k of EV_KINDS) if (k !== "air_strike") { const im = shapeImage(k); m.addImage(`k-${k}`, im.data, { pixelRatio: im.pixelRatio }); }
   for (const l of visualLayers()) addEraLayer(m, l);
   addFootprintLayers(m);
-  for (const id of ["ev", "pn", "sel", "gridsq", "gridsq-c", "sites", "draft", "near", "hover", "line", "meacc", "me", "spot", "lidar", "transect-vis", "transect-occ"]) m.addSource(id, { type: "geojson", data: lastData[id] || empty() });
+  for (const id of ["ev", "pn", "sel", "gridsq", "gridsq-c", "shapes", "sites", "draft", "near", "hover", "line", "meacc", "me", "spot", "lidar", "transect-vis", "transect-occ"]) m.addSource(id, { type: "geojson", data: lastData[id] || empty() });
   const color = ["match", ["get", "kind"], ...Object.entries(KINDS).flatMap(([k, v]) => [k, v.color]), "#888"];
   const isStrike = ["==", ["get", "kind"], "air_strike"];
 
@@ -447,6 +448,17 @@ function addOverlays(m) {
   m.addLayer({ id: "gridsq-halo", type: "line", source: "gridsq", paint: { "line-color": "#fff", "line-width": 6, "line-opacity": 0.85 } });
   m.addLayer({ id: "gridsq-line", type: "line", source: "gridsq", paint: { "line-color": "#b45309", "line-width": 3 } });
   m.addLayer({ id: "gridsq-dot", type: "circle", source: "gridsq-c", paint: { "circle-radius": 4, "circle-color": "#b45309", "circle-stroke-color": "#fff", "circle-stroke-width": 2 } });
+  m.addLayer({ id: "shape-fill", type: "fill", source: "shapes", filter: ["==", ["geometry-type"], "Polygon"],
+    paint: { "fill-color": ["coalesce", ["get", "color"], "#0284c7"], "fill-opacity": 0.16 } });
+  m.addLayer({ id: "shape-outline", type: "line", source: "shapes", filter: ["==", ["geometry-type"], "Polygon"],
+    paint: { "line-color": ["coalesce", ["get", "color"], "#0284c7"], "line-width": 2.2 } });
+  m.addLayer({ id: "shape-line-halo", type: "line", source: "shapes", filter: ["==", ["geometry-type"], "LineString"],
+    paint: { "line-color": "#fff", "line-width": 5, "line-opacity": 0.75 } });
+  m.addLayer({ id: "shape-line", type: "line", source: "shapes", filter: ["==", ["geometry-type"], "LineString"],
+    paint: { "line-color": ["coalesce", ["get", "color"], "#0284c7"], "line-width": 3 } });
+  m.addLayer({ id: "shape-label", type: "symbol", source: "shapes",
+    layout: { "text-field": ["get", "name"], "text-font": ["Noto Sans Medium"], "text-size": 12, "text-offset": [0, 0.8], "text-optional": true },
+    paint: { "text-color": "#0c4a6e", "text-halo-color": "#fff", "text-halo-width": 1.8 } });
   m.addLayer({ id: "site-ring-halo", type: "circle", source: "sites", paint: { "circle-radius": ringPx(), "circle-color": "rgba(0,0,0,0)",
     "circle-stroke-color": "#fff", "circle-stroke-width": 5, "circle-stroke-opacity": 0.6, "circle-pitch-alignment": "map" } });
   m.addLayer({ id: "site-ring", type: "circle", source: "sites", paint: { "circle-radius": ringPx(), "circle-color": "#c0267a", "circle-opacity": 0.12,
@@ -502,7 +514,7 @@ function updateHeat() { eachMap(m => { m.setPaintProperty("strike-heat", "heatma
 function hitTest(m, p) {
   const r = coarse ? 22 : 14;
   const box = [[p.x - r, p.y - r], [p.x + r, p.y + r]];
-  const layers = ["site-dot", "ev-sym", "strike-dot", "pn-dot", "pn-label"].filter(id => m.getLayer(id));
+  const layers = ["site-dot", "shape-line", "shape-fill", "ev-sym", "strike-dot", "pn-dot", "pn-label"].filter(id => m.getLayer(id));
   // strike-dot's minzoom is the threshold: every dot you can see can be tapped.
   return m.queryRenderedFeatures(box, { layers }).filter(f => f.layer.id !== "strike-dot" || m.getZoom() >= 11.5);
 }
@@ -1507,6 +1519,8 @@ function onMapClick(m, e) {
   const hits = hitTest(m, e.point);
   const sites = hits.filter(f => f.layer.id === "site-dot");
   if (sites.length) return openSite(+sites[0].properties.id);
+  const shapes = hits.filter(f => f.layer.id === "shape-line" || f.layer.id === "shape-fill");
+  if (shapes.length) return openShape(+shapes[0].properties.id);
   const seen = new Set(), recs = [];
   for (const f of hits) { const id = +f.properties.id; if (seen.has(id)) continue; seen.add(id); recs.push(f); }
   if (recs.length) {
@@ -1768,7 +1782,8 @@ VIEWS.home = v => {
     ${welcomeHTML()}
     ${S.kase ? `<div class="case-pill"><span class="sw site"></span><div class="grow"><span class="small-t muted">Open case</span><b>${esc(S.kase.name)}</b></div>
       <button class="btn small" data-act="openCase" data-id="${S.kase.id}">Open</button></div>` : ""}
-    <h3 class="section-title">Cases <span class="right"><button class="linkish" data-act="newCaseToggle">New case</button></span></h3>
+    <h3 class="section-title">Cases <span class="right case-head-acts"><button class="linkish" data-act="importKmlHome">Import KML/KMZ</button><button class="linkish" data-act="newCaseToggle">New case</button></span></h3>
+    <input type="file" id="kmlFileHome" hidden accept=".kml,.kmz,application/vnd.google-earth.kml+xml,application/vnd.google-earth.kmz">
     <div class="group">
       <form id="newCase" class="inner stack" hidden>
         <label class="field"><span>Name</span><input type="text" name="name" required placeholder="e.g. UH-1 loss, Cao Lãnh, May 1968"></label>
@@ -1814,6 +1829,7 @@ VIEWS.home.after = () => {
       await loadCases(); await selectCase(id); toast("Case created"); show("case", { id });
     } catch (x) { err.textContent = x.message; }
   });
+  $("#kmlFileHome")?.addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) importKmlFile(f); });
 };
 // "2 on this computer · adding 1", or an invitation when there are none yet.
 function libHomeLine() {
@@ -1830,6 +1846,7 @@ function aerialHomeLine() {
   return parts.join(" · ");
 }
 ACTIONS.newCaseToggle = () => { const f = $("#newCase"); if (!f) return; f.hidden = !f.hidden; if (!f.hidden) f.name.focus(); };
+ACTIONS.importKmlHome = () => $("#kmlFileHome")?.click();
 ACTIONS.clearRecent = () => { store.set("recent", []); render(); };
 ACTIONS.recGrid = el => { q.value = el.dataset.ref; $("#qClear").hidden = false; openGridRef(el.dataset.ref, el.dataset.datum); };
 
@@ -3415,25 +3432,106 @@ async function selectCase(id) {
   drawCase();
 }
 function drawCase() {
-  const sites = S.kase?.sites || [];
+  const sites = S.kase?.sites || [], shapes = S.kase?.shapes || [];
   setData("sites", { type: "FeatureCollection", features: sites.map(s => ({ type: "Feature", geometry: { type: "Point", coordinates: [s.lon, s.lat] },
     properties: { id: s.id, name: s.name, uncertainty_m: s.uncertainty_m, r0: r0Of(s.uncertainty_m, s.lat) } })) });
+  setData("shapes", { type: "FeatureCollection", features: shapes.map(sh => ({ type: "Feature", geometry: sh.geometry,
+    properties: { id: sh.id, name: sh.name, kind: sh.kind, color: sh.color || "#0284c7" } })) });
+}
+function shapeMetrics(geom) {
+  if (!geom || !geom.coordinates) return "";
+  if (geom.type === "LineString") {
+    let m = 0; const pts = geom.coordinates;
+    for (let i = 1; i < pts.length; i++) m += distBearing(pts[i - 1], pts[i]).d;
+    return `${fmtM(m)} path · ${pts.length} pts`;
+  }
+  if (geom.type === "Polygon" && geom.coordinates[0]?.length >= 3) {
+    const ring = geom.coordinates[0];
+    let perim = 0;
+    for (let i = 1; i < ring.length; i++) perim += distBearing(ring[i - 1], ring[i]).d;
+    const lat0 = ring.reduce((a, p) => a + p[1], 0) / ring.length;
+    const kx = 111319.9 * Math.cos(lat0 * Math.PI / 180), ky = 111132.9;
+    let area2 = 0;
+    for (let i = 0; i < ring.length - 1; i++) area2 += (ring[i][0] * kx) * (ring[i + 1][1] * ky) - (ring[i + 1][0] * kx) * (ring[i][1] * ky);
+    const km2 = Math.abs(area2) / 2e6;
+    return `${km2 >= 1 ? km2.toFixed(1) + " km²" : Math.round(km2 * 1e6).toLocaleString("en-US") + " m²"} · ${fmtM(perim)} perimeter`;
+  }
+  return "";
+}
+function shapeBounds(geom) {
+  const pts = geom?.type === "LineString" ? geom.coordinates : geom?.type === "Polygon" ? (geom.coordinates || []).flat() : [];
+  if (!pts.length) return null;
+  let w = 180, s = 90, e = -180, n = -90;
+  for (const [lon, lat] of pts) { if (lon < w) w = lon; if (lon > e) e = lon; if (lat < s) s = lat; if (lat > n) n = lat; }
+  return [[w, s], [e, n]];
+}
+function fitCaseGeometry(c) {
+  let w = 180, s = 90, e = -180, n = -90, any = false;
+  const addPt = (lon, lat) => { any = true; if (lon < w) w = lon; if (lon > e) e = lon; if (lat < s) s = lat; if (lat > n) n = lat; };
+  for (const st of c?.sites || []) addPt(st.lon, st.lat);
+  for (const sh of c?.shapes || []) {
+    const b = shapeBounds(sh.geometry);
+    if (b) { addPt(b[0][0], b[0][1]); addPt(b[1][0], b[1][1]); }
+  }
+  if (!any) return;
+  if (w === e && s === n) flyToTarget(w, s, 250);
+  else eachMap(m => m.fitBounds([[w, s], [e, n]], { padding: mapPadding(), maxZoom: MAX_FLY_ZOOM, duration: reduceMotion ? 0 : 600 }));
+}
+const KMZ_MAX_BYTES = 200 * 1024 * 1024;
+function importKmlFile(file, caseId = null) {
+  const lower = file.name.toLowerCase();
+  if (!lower.endsWith(".kml") && !lower.endsWith(".kmz")) { toast("Choose a Google Earth .kml or .kmz file."); return; }
+  if (file.size > KMZ_MAX_BYTES) { toast("That KML/KMZ file is larger than 200 MB."); return; }
+  const qs = new URLSearchParams({ filename: file.name });
+  if (caseId != null) qs.set("case_id", String(caseId));
+  toast(`Importing ${file.name}…`, 4000);
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", "/api/cases/import?" + qs);
+  xhr.setRequestHeader("Content-Type", "application/octet-stream");
+  xhr.onload = async () => {
+    let r = null;
+    try { r = JSON.parse(xhr.responseText); } catch { /* handled below */ }
+    if ((xhr.status !== 200 && xhr.status !== 201) || !r?.case) { toast((r && r.error) || "Could not import that KML/KMZ file.", 5000); return; }
+    if (r.library) applyLibrary(r.library);
+    await loadCases();
+    S.caseId = r.case.id; store.set("caseId", S.caseId); S.kase = r.case;
+    drawCase();
+    S.history = []; show("case", { id: r.case.id }, { push: false });
+    fitCaseGeometry(r.case);
+    const imp = r.imported || {};
+    const parts = [
+      imp.sites ? `${imp.sites} site${imp.sites === 1 ? "" : "s"}` : "",
+      imp.shapes ? `${imp.shapes} path${imp.shapes === 1 ? "" : "s"}/area${imp.shapes === 1 ? "" : "s"}` : "",
+      imp.overlays ? `${imp.overlays} map overlay${imp.overlays === 1 ? "" : "s"}` : "",
+    ].filter(Boolean);
+    const warn = imp.warnings?.length ? ` (${imp.warnings[0]})` : "";
+    toast(`Imported ${parts.join(", ") || "KML"}${warn}`, imp.warnings?.length ? 6500 : 4500);
+  };
+  xhr.onerror = () => toast("The import was interrupted. Check that Map Vietnam is still running.", 5000);
+  xhr.send(file);
 }
 VIEWS.case = () => {
   const c = S.kase;
   if (!c) return headHTML("Case") + `<p class="muted">This case is no longer available.</p>`;
-  return `${headHTML(esc(c.name), `<span class="sw site"></span><span>Case · ${c.items.length} record${c.items.length === 1 ? "" : "s"} · ${c.sites.length} site${c.sites.length === 1 ? "" : "s"}</span>`)}
+  const shapes = c.shapes || [];
+  return `${headHTML(esc(c.name), `<span class="sw site"></span><span>Case · ${c.items.length} record${c.items.length === 1 ? "" : "s"} · ${c.sites.length} site${c.sites.length === 1 ? "" : "s"}${shapes.length ? ` · ${shapes.length} shape${shapes.length === 1 ? "" : "s"}` : ""}</span>`)}
     ${c.summary ? `<p style="margin:8px 0 0">${esc(c.summary)}</p>` : ""}
     <div class="actions">
       <button class="act primary" data-act="place"><span class="ci">${icon.pin}</span><span>Place site</span></button>
+      <button class="act" data-act="importKmlCase"><span class="ci">${icon.upload}</span><span>Import KML</span></button>
       <button class="act" data-act="scrollTo" data-to="caseNotes"><span class="ci">${icon.note}</span><span>Notes</span></button>
       <button class="act" data-act="scrollTo" data-to="caseExport"><span class="ci">${icon.dl}</span><span>Export</span></button>
       <button class="act" data-act="closeCase" aria-label="Close case (it stays saved)" title="Close this case; everything in it stays saved"><span class="ci">${icon.folder}</span><span>Close case</span></button>
     </div>
+    <input type="file" id="kmlFileCase" hidden accept=".kml,.kmz,application/vnd.google-earth.kml+xml,application/vnd.google-earth.kmz">
     <h3 class="section-title">Candidate sites <span class="right">${c.sites.length}</span></h3>
     <div class="group"><ul class="list">${c.sites.map(s => `<li><span class="sw site"></span>
       <button class="main" data-act="site" data-id="${s.id}"><span class="t">${esc(s.name)}</span><span class="m">±${fmtM(s.uncertainty_m)}${s.rationale ? " · " + esc(s.rationale) : ""}</span></button></li>`).join("")
       || `<li class="empty">No sites yet. Use “Place site”, or open a record or grid square and choose “Place candidate site here”.</li>`}</ul></div>
+    ${shapes.length ? `<h3 class="section-title">Paths &amp; areas <span class="right">${shapes.length}</span></h3>
+    <div class="group"><ul class="list">${shapes.map(sh => `<li><span class="sw" style="background:${esc(sh.color || "#0284c7")}"></span>
+      <button class="main" data-act="shape" data-id="${sh.id}"><span class="t">${esc(sh.name)}</span>
+      <span class="m">${esc(shapeMetrics(sh.geometry))}${sh.folder ? " · " + esc(sh.folder) : ""}</span></button></li>`).join("")}</ul></div>` : ""}
     <h3 class="section-title">Evidence <span class="right">${c.items.length}</span></h3>
     <div class="group"><ul class="list">${c.items.map(e => `<li>${symSVG(e.kind)}
       <button class="main" data-act="rec" data-id="${e.id}"><span class="t">${esc(cleanTitle(e.title))}</span><span class="m">${esc(kindOne(e))} · ${esc(fmtDate(e.date_start, e.date_end))} · ±${fmtM(e.uncertainty_m || 0)}${e.withdrawn_reason ? ` · <em>withdrawn: ${esc(e.withdrawn_reason)}</em>` : ""}</span></button>
@@ -3447,7 +3545,8 @@ VIEWS.case = () => {
         <div><button class="btn small" type="submit">Add note</button></div></form></div></div>
     <h3 class="section-title" id="caseExport">Field export</h3>
     <div class="group"><div class="inner" style="padding-top:12px">
-      <div class="row">${["gpx", "kml", "geojson"].map(f => `<a class="btn small" href="/api/cases/${c.id}/export.${f}" download="${esc(c.name)}.${f}">${icon.dl} ${f.toUpperCase()}</a>`).join("")}</div>
+      <div class="row">${["kmz", "kml", "gpx", "geojson"].map(f => `<a class="btn small" href="/api/cases/${c.id}/export.${f}" download="${esc(c.name)}.${f}">${icon.dl} ${f.toUpperCase()}</a>`).join("")}</div>
+      <p class="small-t muted" style="margin:8px 0 0">KMZ and KML are ready for Google Earth Pro (uncertainty rings, timelines, paths, and overlapping custom overlays in KMZ).</p>
       <p class="quiet-note">${icon.warn}<span>Exports list casualty, aircraft-loss and air-strike locations. Strike areas may hold unexploded ordnance. Think about who will read an export before you share it.</span></p></div></div>
     <div id="delSlot" style="margin-top:22px"><button class="btn danger small" data-act="delAsk">${icon.trash} Delete case…</button></div>`;
 };
@@ -3457,7 +3556,9 @@ VIEWS.case.after = () => {
     const body = e.target.body.value.trim(); if (!body) return;
     try { S.kase = await api(`/api/cases/${S.kase.id}/notes`, { method: "POST", body: { body } }); render(); toast("Note added"); } catch (x) { toast(x.message); }
   });
+  $("#kmlFileCase")?.addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) importKmlFile(f, S.kase.id); });
 };
+ACTIONS.importKmlCase = () => $("#kmlFileCase")?.click();
 ACTIONS.scrollTo = el => jumpTo($("#" + el.dataset.to));
 ACTIONS.closeCase = async () => { const n = S.kase?.name; await selectCase(null); show("home"); toast(`“${n}” saved`); };
 ACTIONS.rmNote = async el => {
@@ -3477,7 +3578,7 @@ ACTIONS.rmItem = async el => {
 ACTIONS.delAsk = () => {
   const c = S.kase, slot = $("#delSlot");
   slot.innerHTML = `<div class="confirm-box" role="alertdialog" aria-labelledby="delQ"><div id="delQ"><b>Delete “${esc(c.name)}”?</b><br>
-    <span class="small-t muted">Its ${c.items.length} linked record${c.items.length === 1 ? "" : "s"}, ${c.sites.length} site${c.sites.length === 1 ? "" : "s"} and ${c.notes.length} note${c.notes.length === 1 ? "" : "s"} go with it. The evidence itself stays. This can’t be undone.</span></div>
+    <span class="small-t muted">Its ${c.items.length} linked record${c.items.length === 1 ? "" : "s"}, ${c.sites.length} site${c.sites.length === 1 ? "" : "s"}${(c.shapes || []).length ? `, ${c.shapes.length} shape${c.shapes.length === 1 ? "" : "s"}` : ""} and ${c.notes.length} note${c.notes.length === 1 ? "" : "s"} go with it. The evidence itself stays. This can’t be undone.</span></div>
     <div class="row"><button class="btn danger solid small" id="delYes">Delete case</button><button class="btn small" id="delNo">Keep</button></div><div class="err" role="alert"></div></div>`;
   $("#delNo").focus();
   $("#delNo").addEventListener("click", () => render());
@@ -3487,7 +3588,49 @@ ACTIONS.delAsk = () => {
   });
 };
 ACTIONS.site = el => openSite(+el.dataset.id);
+ACTIONS.shape = el => openShape(+el.dataset.id);
 ACTIONS.place = () => startPlacing();
+
+function openShape(id) {
+  const sh = (S.kase?.shapes || []).find(x => x.id === id);
+  if (!sh) return;
+  const b = shapeBounds(sh.geometry);
+  if (b) eachMap(m => m.fitBounds(b, { padding: mapPadding(), maxZoom: MAX_FLY_ZOOM, duration: reduceMotion ? 0 : 600 }));
+  show("shape", { id, sh });
+}
+VIEWS.shape = v => `${headHTML(esc(v.sh.name), `<span class="sw" style="background:${esc(v.sh.color || "#0284c7")}"></span><span>${v.sh.kind === "polygon" ? "Area" : "Path"} · ${esc(S.kase?.name || "")}</span>`)}
+  <div id="navSlot">${navHTML()}</div>
+  <div class="group" style="margin-top:14px">
+    <div class="kv-row"><span class="k">Geometry</span><span class="v">${esc(shapeMetrics(v.sh.geometry) || v.sh.kind)}</span></div>
+    ${v.sh.folder ? `<div class="kv-row"><span class="k">Folder</span><span class="v">${esc(v.sh.folder)}</span></div>` : ""}
+    ${v.sh.date_start ? `<div class="kv-row"><span class="k">Date</span><span class="v">${esc(fmtDate(v.sh.date_start, v.sh.date_end))}</span></div>` : ""}
+    <div class="kv-row"><span class="k">Notes</span><span class="v">${esc(v.sh.description || "—")}</span></div>
+  </div>
+  <div class="row" style="margin-top:14px"><button class="btn small" data-act="goShape" data-id="${v.sh.id}">Show on map</button>
+    <span id="rmShape"><button class="btn small danger" data-act="rmShapeAsk">Remove…</button></span></div>`;
+ACTIONS.goShape = el => {
+  const sh = (S.kase?.shapes || []).find(x => x.id === +el.dataset.id);
+  const b = sh && shapeBounds(sh.geometry);
+  if (b) eachMap(m => m.fitBounds(b, { padding: mapPadding(), maxZoom: MAX_FLY_ZOOM, duration: reduceMotion ? 0 : 600 }));
+};
+ACTIONS.rmShapeAsk = () => {
+  $("#rmShape").innerHTML = `<span class="row"><span class="small-t">Remove this ${S.view.sh.kind === "polygon" ? "area" : "path"}?</span><button class="btn small danger solid" id="rmShapeYes">Remove</button><button class="btn small" id="rmShapeNo">Keep</button></span>`;
+  $("#rmShapeNo").focus();
+  $("#rmShapeYes").addEventListener("click", async () => {
+    const sh = S.view.sh, cid = S.kase.id;
+    try {
+      S.kase = await api(`/api/cases/${cid}/shapes/${sh.id}`, { method: "DELETE" }); drawCase(); S.history = []; show("case", { id: cid }, { push: false });
+      toast("Removed", 6000, async () => {
+        S.kase = await api(`/api/cases/${cid}/shapes`, {
+          method: "POST",
+          body: { name: sh.name, kind: sh.kind, geometry: sh.geometry, description: sh.description || "", folder: sh.folder || "", color: sh.color || "", date_start: sh.date_start || "", date_end: sh.date_end || "" },
+        });
+        drawCase(); if (S.view.name === "case") render();
+      });
+    } catch (x) { toast(x.message); }
+  });
+  $("#rmShapeNo").addEventListener("click", () => render());
+};
 
 function openSite(id) {
   const s = S.kase?.sites.find(x => x.id === id);
