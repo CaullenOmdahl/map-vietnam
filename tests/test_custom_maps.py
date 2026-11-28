@@ -517,3 +517,28 @@ def test_scan_with_eight_plus_gcps_builds_with_thin_plate_spline(lib, tmp_path):
     lib.run_pending()
     assert lib.state_of(entry["id"]) == "installed"
     assert lib.tiles_path(entry["id"]).is_file()
+
+
+def test_oblique_homography_warp_persists_warp_mode_and_builds(lib, tmp_path):
+    """4 keystone GCPs with `warp_mode='homography'` warp oblique aerials projectively and tile."""
+    from PIL import Image
+
+    arr = np.zeros((120, 160, 3), np.uint8)
+    arr[..., 0] = 180
+    arr[20:100, 30:130, 1] = 210
+    img_path = tmp_path / "oblique_1969.jpg"
+    Image.fromarray(arr).save(img_path, format="JPEG")
+    entry = ingest(lib, tmp_path, img_path, title="1969 Oblique Aerial", year="1969")
+    # Trapezoid keystone mimicking a camera tilted northward
+    gcps = [
+        [0, 0, 105.51, 10.50],
+        [160, 0, 105.59, 10.50],
+        [160, 120, 105.57, 10.42],
+        [0, 120, 105.53, 10.42],
+    ]
+    lib.place_custom(entry["id"], gcps, "1969 Oblique Aerial", 1969, warp_mode="homography")
+    ctrl = json.loads(lib.custom.control_path(entry["id"]).read_text(encoding="utf-8"))
+    assert ctrl["warp_mode"] == "homography"
+    lib.run_pending()
+    assert lib.state_of(entry["id"]) == "installed"
+    assert lib.tiles_path(entry["id"]).is_file()

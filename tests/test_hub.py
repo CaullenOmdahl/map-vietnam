@@ -812,3 +812,121 @@ def test_zero_touch_railway_password_and_full_desktop_admin_workflow(tmp_path, m
         desk_srv.quit()
         hub_srv.stop_gracefully()
         archive.close()
+
+
+def test_auto_gcp_perspective_match_confidence_gate_and_hub_endpoint(tmp_path, monkeypatch):
+    """Verify auto_gcp matches landmarks with confidence gating and runs across `/hub/v1/auto-gcp` and `/api/auto-gcp`."""
+    import base64
+    import io
+    import urllib.request
+
+    import server
+    import store
+    from fakeweb import FakeArchive, make_library
+    from hub import auto_gcp
+    from PIL import Image, ImageDraw
+
+    # Build a rich synthetic map scene with distinct road crossings, blocks, and diagonal avenues
+    ref_img = Image.new("RGB", (480, 480), (218, 212, 195))
+    draw = ImageDraw.Draw(ref_img)
+    rng = np.random.default_rng(7)
+    for _ in range(95):
+        x0 = int(rng.integers(25, 420))
+        y0 = int(rng.integers(25, 420))
+        w = int(rng.integers(14, 42))
+        h = int(rng.integers(14, 42))
+        c = int(rng.integers(45, 165))
+        draw.rectangle([x0, y0, x0 + w, y0 + h], fill=(c, c + 12, c - 8), outline=(35, 35, 35), width=2)
+    for k in range(40, 460, 58):
+        draw.line([(0, k), (480, (k + 22) % 480)], fill=(55, 50, 45), width=3)
+        draw.line([(k, 0), ((k + 18) % 480, 480)], fill=(65, 60, 55), width=3)
+    draw.line([(20, 40), (450, 430)], fill=(25, 25, 25), width=4)
+    draw.line([(440, 30), (30, 440)], fill=(40, 40, 40), width=4)
+
+    ref_buf = io.BytesIO()
+    ref_img.save(ref_buf, format="JPEG", quality=92)
+    ref_bytes = ref_buf.getvalue()
+
+    # Apply a slight perspective keystone + brightness contrast shift simulating an old tilted aerial
+    coeffs = (0.94, 0.03, 18.0, -0.02, 0.96, 14.0, -0.00012, 0.00008)
+    scan_img = ref_img.transform((440, 440), Image.Transform.PERSPECTIVE, coeffs, Image.Resampling.BILINEAR)
+    scan_gray = scan_img.convert("L").convert("RGB")
+    scan_buf = io.BytesIO()
+    scan_gray.save(scan_buf, format="JPEG", quality=90)
+    scan_bytes = scan_buf.getvalue()
+
+    ref_bounds = [105.60, 10.40, 105.70, 10.50]
+    res = auto_gcp.match_and_score(scan_bytes, ref_bytes, ref_bounds, confidence_threshold=0.65, max_points=12)
+    assert res["meets_threshold"] is True, res
+    assert res["confidence"] >= 0.65
+    assert res["inliers"] >= 6
+    assert res["quadrants_covered"] >= 3
+    assert len(res["points"]) >= 6
+    confs = [p["confidence"] for p in res["points"]]
+    assert confs == sorted(confs, reverse=True)
+
+    # Random noise scan must fail the confidence gate and trigger human-in-the-loop fallback
+    noise_arr = rng.integers(0, 255, (320, 320, 3), dtype=np.uint8)
+    noise_buf = io.BytesIO()
+    Image.fromarray(noise_arr).save(noise_buf, format="JPEG", quality=85)
+    bad = auto_gcp.match_and_score(noise_buf.getvalue(), ref_bytes, ref_bounds, confidence_threshold=0.70)
+    assert bad["meets_threshold"] is False
+    assert bad["confidence"] < 0.45
+
+    # End-to-end via Hub `/hub/v1/auto-gcp` + Desktop `POST /api/auto-gcp` using stored custom scan preview
+    hub_srv = make_hub_server(
+        host="127.0.0.1",
+        port=0,
+        data_root=tmp_path / "vol",
+        env={"HUB_ADMIN_PASSWORD": "test-pass-auto-gcp"},
+        pacer=HostPacer(default_interval=0.0),
+    )
+    threading.Thread(target=hub_srv.serve_forever, daemon=True).start()
+    archive = FakeArchive()
+    lib = make_library(tmp_path / "desk", archive, monkeypatch)
+    db_path = tmp_path / "desk" / "e.sqlite"
+    store.connect(db_path).close()
+    desk_srv = server.make_server(0, db_path, map_library=lib)
+    threading.Thread(target=desk_srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{desk_srv.server_address[1]}"
+
+    def call(route, method="GET", body=None):
+        data = json.dumps(body).encode("utf-8") if body is not None else None
+        req = urllib.request.Request(
+            f"{base}{route}", data=data, method=method, headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return json.loads(r.read().decode("utf-8"))
+
+    try:
+        st = call(
+            "/api/hub/config",
+            "POST",
+            {"url": f"127.0.0.1:{hub_srv.server_address[1]}", "api_key": "test-pass-auto-gcp"},
+        )
+        assert st["me"]["capabilities"]["auto_gcp"] is True
+
+        part = lib.custom.incoming_path()
+        part.write_bytes(scan_bytes)
+        entry = lib.custom.ingest(part, "oblique_1969.jpg", "1969 Oblique", "1969")
+        matched = call(
+            "/api/auto-gcp",
+            "POST",
+            {
+                "id": entry["id"],
+                "mode": "custom",
+                "ref_b64": base64.b64encode(ref_bytes).decode("ascii"),
+                "ref_bounds": ref_bounds,
+                "confidence_threshold": 0.65,
+                "max_points": 12,
+            },
+        )
+        assert matched["meets_threshold"] is True and matched["inliers"] >= 6
+        assert all(
+            0 <= pt["col"] <= entry["image"]["width"] and 0 <= pt["row"] <= entry["image"]["height"]
+            for pt in matched["points"]
+        )
+    finally:
+        desk_srv.quit()
+        hub_srv.stop_gracefully()
+        archive.close()

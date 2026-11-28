@@ -106,6 +106,7 @@ import records
 import store
 import terrain_aerial
 import tiling
+from hub import auto_gcp
 from hub.polite import HostPacer, SingleFlight, is_safe_id, polite_fetch_bytes
 
 WEB = paths.APP_ROOT / "web"  # the viewer, shipped with the app; the data under web/ is elsewhere (see Handler)
@@ -735,17 +736,17 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", ctype)
         if filename:
-            safe = re.sub(r'[^A-Za-z0-9._ -]+', "_", filename).strip() or "export.kmz"
+            safe = re.sub(r"[^A-Za-z0-9._ -]+", "_", filename).strip() or "export.kmz"
             self.send_header("Content-Disposition", f'attachment; filename="{safe}"')
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
 
-    def body(self):
+    def body(self, max_bytes=MAX_BODY_BYTES):
         """The request's JSON body, which must be an object ({} if empty)."""
         n = int(self.headers.get("Content-Length") or 0)
-        if not 0 <= n <= MAX_BODY_BYTES:
+        if not 0 <= n <= max_bytes:
             raise ValueError("request body too large" if n > 0 else "bad Content-Length")
         data = json.loads(self.rfile.read(n) or b"{}")
         if not isinstance(data, dict):
@@ -794,7 +795,11 @@ class Handler(SimpleHTTPRequestHandler):
         ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
         # A file upload is raw bytes. Like JSON, that type cannot be sent by a plain cross-site
         # form, and a script on another site needs a CORS preflight this server never grants.
-        if method == "POST" and urlparse(self.path).path in (UPLOAD_PATH, CASE_IMPORT_PATH) and ctype == "application/octet-stream":
+        if (
+            method == "POST"
+            and urlparse(self.path).path in (UPLOAD_PATH, CASE_IMPORT_PATH)
+            and ctype == "application/octet-stream"
+        ):
             return None
         if method == "POST" and ctype != "application/json":
             return HTTPStatus.UNSUPPORTED_MEDIA_TYPE, "send the request body as application/json"
@@ -826,6 +831,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.elevation_api(q)
             elif p == "transect" and method == "POST":
                 self.transect_api()
+            elif p == "auto-gcp" and method == "POST":
+                self.auto_gcp_api()
             elif p == "lidar" and method == "GET":
                 self.lidar_api(q)
             elif p == "media" or p == "media/delete":
@@ -1207,7 +1214,9 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_jpeg(path)
         b = self.body()
         if action == "points":
-            lib.place_custom(map_id, b.get("points"), b.get("title"), b.get("year"))
+            lib.place_custom(
+                map_id, b.get("points"), b.get("title"), b.get("year"), warp_mode=b.get("warp_mode", "auto")
+            )
             lib.start_worker()
         else:
             lib.custom.edit(map_id, b.get("title"), b.get("year"))
@@ -1226,7 +1235,7 @@ class Handler(SimpleHTTPRequestHandler):
         if action == "prepare":
             return self.send_json(lib.prepare_alignment(map_id))
         if action == "points":
-            res = lib.save_alignment(map_id, b.get("points"))
+            res = lib.save_alignment(map_id, b.get("points"), warp_mode=b.get("warp_mode", "auto"))
         else:
             res = lib.reset_alignment(map_id)
         lib.start_worker()
@@ -1595,6 +1604,70 @@ class Handler(SimpleHTTPRequestHandler):
             dem_path=chosen_dem,
             canopy_path=canopy_path,
             remote_cog=bool(b.get("remote_cog", False) and chosen_dem is None),
+        )
+        self.send_json(res)
+
+    def auto_gcp_api(self):
+        """POST /api/auto-gcp: match Placement scan against reference viewport on Hub or locally."""
+        b = self.body(max_bytes=12 << 20)
+        ref_b64 = b.get("ref_b64") or b.get("ref_image_b64")
+        ref_bytes = auto_gcp.decode_image_b64(ref_b64)
+        ref_bounds = b.get("ref_bounds")
+        if not isinstance(ref_bounds, list) or len(ref_bounds) != 4:
+            raise ValueError("ref_bounds must be [west, south, east, north].")
+        ref_bounds = [float(v) for v in ref_bounds]
+        thresh = float(b.get("confidence_threshold", auto_gcp.DEFAULT_CONFIDENCE_THRESHOLD))
+        max_pts = int(b.get("max_points", 12))
+
+        target_size = None
+        if b.get("scan_b64"):
+            scan_bytes = auto_gcp.decode_image_b64(b["scan_b64"])
+            if b.get("scan_target_size"):
+                target_size = b["scan_target_size"]
+        else:
+            map_id = str(b.get("id") or "").strip()
+            mode = str(b.get("mode") or "custom").lower()
+            lib = self.library
+            if mode == "align":
+                if not is_safe_id(map_id):
+                    raise ValueError("Invalid map id.")
+                img_path = lib.alignment_preview_path(map_id)
+                if not img_path.is_file():
+                    img_path = lib.alignment_work_path(map_id)
+                info = lib.prepare_alignment(map_id)
+                dims = info["image"]
+                target_size = (dims["width"], dims["height"])
+            else:
+                entry = lib.custom.get(map_id)
+                img_path = lib.custom.preview_path(map_id)
+                if not img_path.is_file():
+                    img_path = lib.custom.work_image(map_id)
+                dims = entry["image"]
+                target_size = (dims["width"], dims["height"])
+            if not img_path.is_file():
+                raise custom_maps.NoSuchMap("The scan preview image is missing.")
+            scan_bytes = img_path.read_bytes()
+
+        if self.hub.config().get("configured"):
+            try:
+                res = self.hub.auto_gcp(
+                    scan_bytes,
+                    ref_bytes,
+                    ref_bounds,
+                    confidence_threshold=thresh,
+                    max_points=max_pts,
+                    scan_target_size=target_size,
+                )
+                return self.send_json(res)
+            except hub_client.HubClientError:
+                pass
+        res = auto_gcp.match_and_score(
+            scan_bytes,
+            ref_bytes,
+            ref_bounds,
+            confidence_threshold=thresh,
+            max_points=max_pts,
+            scan_target_size=target_size,
         )
         self.send_json(res)
 

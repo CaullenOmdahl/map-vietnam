@@ -638,6 +638,31 @@ class HubClient:
         qs = f"?{urllib.parse.urlencode(params)}" if params else ""
         return self._request_json(url, key, f"{route}{qs}", timeout=30)
 
+    def auto_gcp(
+        self,
+        scan_bytes,
+        ref_bytes,
+        ref_bounds,
+        *,
+        confidence_threshold=0.80,
+        max_points=12,
+        scan_target_size=None,
+    ):
+        """Send compressed scan & reference viewport images to Hub `/hub/v1/auto-gcp`."""
+        url, key = self.credentials()
+        if not (url and key):
+            raise HubClientError("Not connected to a Hub server.")
+        body = {
+            "scan_b64": base64.b64encode(scan_bytes).decode("ascii"),
+            "ref_b64": base64.b64encode(ref_bytes).decode("ascii"),
+            "ref_bounds": [float(v) for v in ref_bounds],
+            "confidence_threshold": float(confidence_threshold),
+            "max_points": int(max_points),
+        }
+        if scan_target_size:
+            body["scan_target_size"] = [int(scan_target_size[0]), int(scan_target_size[1])]
+        return self._request_json(url, key, "/hub/v1/auto-gcp", method="POST", body=body, timeout=45)
+
     def proxy_post(self, route, body):
         url, key = self.credentials()
         if not (url and key):

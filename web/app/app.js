@@ -584,6 +584,12 @@ function setScrollMode(m) {
   store.set("scrollMode", m === "trackpad" || m === "wheel" ? m : "auto");
   settingsRefresh(true);
 }
+const autoGcpThresh = () => {
+  const v = +store.get("autoGcpThresh", 80);
+  return Number.isFinite(v) ? Math.min(95, Math.max(50, Math.round(v))) : 80;
+};
+const autoGcpMode = () => store.get("autoGcpMode", "review") === "auto" ? "auto" : "review";
+const AUTO_GCP_MODES = [["review", "Review in Placement"], ["auto", "Auto-build ≥ threshold"]];
 function isMouseWheelEvent(e) {
   if (!e || e.ctrlKey || e.metaKey) return false;
   if ((e.deltaMode || 0) !== 0) return true;
@@ -4116,7 +4122,7 @@ function storageHTML() {
 }
 
 const settingsSig = () => JSON.stringify([S.lib.loaded, S.lib.err, customMaps().map(m => [m.id, m.state, m.title, m.year, m.kind, !!m.bounds, m.error]),
-  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, store.get("theme", "auto"), scrollMode(), S.rec.key, S.eraA,
+  S.view.sel, S.view.confirm, S.view.keyOpen, !!S.cm.up, S.cm.err, store.get("theme", "auto"), scrollMode(), autoGcpThresh(), autoGcpMode(), S.rec.key, S.eraA,
   S.hub.configured, S.hub.connected, S.hub.url, S.hub.auto_push, S.hub.layers?.length || 0, S.hub.err, S.hub.admin, S.hub.justCreatedKey, S.localKeys]);
 let settingsLastSig = "";
 // Redraws the card when something it shows changed; otherwise only moves the progress rings. A field being typed in is
@@ -4493,9 +4499,11 @@ ACTIONS.useDem = el => {
   toast("Showing bare-earth relief");
 };
 
+ACTIONS.autoGcpMode = el => { store.set("autoGcpMode", el.dataset.m === "auto" ? "auto" : "review"); settingsRefresh(true); };
+
 VIEWS.settings = v => {
   settingsLastSig = settingsSig();
-  const theme = store.get("theme", "auto"), mode = scrollMode(), mine = customMaps();
+  const theme = store.get("theme", "auto"), mode = scrollMode(), agMode = autoGcpMode(), agThresh = autoGcpThresh(), mine = customMaps();
   const seg = (label, inner) => `<div class="set-row"><span class="set-k">${label}</span><div class="seg" role="group" aria-label="${label}">${inner}</div></div>`;
   return `<div class="settings-wrap">
     ${headHTML("Settings", "Preferences, Intermediary Hub server, archive keys, custom maps & storage")}
@@ -4516,8 +4524,10 @@ VIEWS.settings = v => {
           <div class="group" style="margin-top:0">
             ${seg("Appearance", ["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${theme === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join(""))}
             ${seg("Scrolling", SCROLL_MODES.map(([k, label]) => `<button data-act="scrollMode" data-m="${k}" aria-pressed="${mode === k}">${label}</button>`).join(""))}
+            ${seg("Auto-GCP on match", AUTO_GCP_MODES.map(([k, label]) => `<button data-act="autoGcpMode" data-m="${k}" aria-pressed="${agMode === k}">${label}</button>`).join(""))}
+            <div class="set-row"><span class="set-k">Confidence threshold</span><div class="row" style="gap:8px;align-items:center"><input type="range" id="setThresh" min="50" max="95" step="5" value="${agThresh}" style="width:120px" aria-label="Auto-GCP confidence threshold"><span id="setThreshVal" class="mono small-t">${agThresh}%</span></div></div>
           </div>
-          <p class="small-t muted" style="margin:0">Automatic pans on two-finger trackpad slides and zooms on notched scroll wheels. Pick Trackpad or Mouse wheel explicitly for smooth-scroll mice (like Magic Mouse) or remote desktop sessions.</p>
+          <p class="small-t muted" style="margin:0">Automatic pans on two-finger trackpad slides and zooms on notched scroll wheels. Pick Trackpad or Mouse wheel explicitly for smooth-scroll mice or remote desktop sessions. Matches below ${agThresh}% always pause in Placement for human verification.</p>
         </section>
         <section class="settings-card">
           <h3 class="sub-head">My maps &amp; LiDAR DEMs</h3>
@@ -4539,6 +4549,11 @@ VIEWS.settings = v => {
   </div>`;
 };
 VIEWS.settings.after = () => {
+  $("#setThresh")?.addEventListener("input", e => {
+    const v = Math.min(95, Math.max(50, Math.round(+e.target.value)));
+    store.set("autoGcpThresh", v);
+    const lbl = $("#setThreshVal"); if (lbl) lbl.textContent = v + "%";
+  });
   $("#cmFile")?.addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) cmUpload(f); });
   $$("#view .cm-edit").forEach(f => f.addEventListener("submit", cmSaveEdit));
   $("#hubForm")?.addEventListener("submit", async e => {
@@ -5007,6 +5022,60 @@ function fitAffine(pairs, w, h) {
   return { at, rms: Math.sqrt(sq / pairs.length) };
 }
 
+// Solves n x n linear system M x = y via partial-pivoted Gaussian elimination.
+function solveLinearN(M, y) {
+  const n = y.length, A = M.map((r, i) => [...r, y[i]]);
+  for (let col = 0; col < n; col++) {
+    let piv = col;
+    for (let r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv = r;
+    if (!Number.isFinite(A[piv][col]) || Math.abs(A[piv][col]) < 1e-10) return null;
+    [A[col], A[piv]] = [A[piv], A[col]];
+    const d = A[col][col];
+    for (let c = col; c <= n; c++) A[col][c] /= d;
+    for (let r = 0; r < n; r++) if (r !== col && A[r][col]) {
+      const f = A[r][col];
+      for (let c = col; c <= n; c++) A[r][c] -= f * A[col][c];
+    }
+  }
+  return A.map(r => r[n]);
+}
+
+// Fits a normalized projective homography for 4+ GCPs (handles camera tilt / perspective keystone).
+function fitHomography(pairs, w, h) {
+  if (pairs.length < 4) return null;
+  const n = pairs.length;
+  const cx = pairs.reduce((s, p) => s + p.lon, 0) / n, cy = pairs.reduce((s, p) => s + p.lat, 0) / n;
+  const sp = Math.max(1e-5, ...pairs.map(p => Math.hypot(p.lon - cx, p.lat - cy)));
+  const M = Array.from({ length: 8 }, () => Array(8).fill(0)), b = Array(8).fill(0);
+  for (const p of pairs) {
+    const u = p.col / w, v = p.row / h, x = (p.lon - cx) / sp, y = (p.lat - cy) / sp;
+    const eqs = [
+      [[u, v, 1, 0, 0, 0, -u * x, -v * x], x],
+      [[0, 0, 0, u, v, 1, -u * y, -v * y], y],
+    ];
+    for (const [r, rhs] of eqs) {
+      for (let i = 0; i < 8; i++) {
+        b[i] += r[i] * rhs;
+        for (let j = 0; j < 8; j++) M[i][j] += r[i] * r[j];
+      }
+    }
+  }
+  const hVec = solveLinearN(M, b);
+  if (!hVec) return null;
+  const [h0, h1, h2, h3, h4, h5, h6, h7] = hVec;
+  const at = (col, row) => {
+    const u = col / w, v = row / h, d = h6 * u + h7 * v + 1;
+    if (!Number.isFinite(d) || Math.abs(d) < 1e-4) return [cx, cy];
+    return [cx + sp * (h0 * u + h1 * v + h2) / d, cy + sp * (h3 * u + h4 * v + h5) / d];
+  };
+  const sq = pairs.reduce((a, p) => { const [x, y] = at(p.col, p.row); return a + ((x - p.lon) * 111320 * Math.cos(p.lat * Math.PI / 180)) ** 2 + ((y - p.lat) * 110540) ** 2; }, 0);
+  return { at, rms: Math.sqrt(sq / n) };
+}
+
+function plRefLayers(excludeId) {
+  return visualLayers().filter(l => l.id !== excludeId);
+}
+
 function openPlacement(entry, openerOrOpts = document.activeElement) {
   if (pl || !entry?.image) { if (!entry?.image) toast("This map has no picture to place."); return; }
   closePopovers();
@@ -5015,29 +5084,41 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   const opener = opts.opener || document.activeElement, mode = opts.mode || "custom", isAlign = mode === "align";
   const w = entry.image.width, h = entry.image.height;
   const url = entry.preview_url || `/api/library/custom/${encodeURIComponent(entry.id)}/preview`;
-  pl = { entry, mode, w, h, k: PL_SCALE / Math.max(w, h), url,
+  const refOpts = plRefLayers(entry.id);
+  pl = { entry, mode, w, h, k: PL_SCALE / Math.max(w, h), url, refId: "today", refOpacity: 0.85, warpMode: entry.warp_mode || "auto",
+    autoMatch: null, autoBusy: false,
     pairs: (entry.points || []).map(([col, row, lon, lat]) => ({ col, row, lon, lat })), pending: null, opacity: 0.6, marks: [], todayReady: false, opener, discard: false };
   const dark = isDark();
   document.body.insertAdjacentHTML("beforeend", `<div id="place" role="dialog" aria-modal="true" aria-labelledby="plTitle">
-    <header class="pl-bar"><div class="pl-head"><h2 id="plTitle" tabindex="-1">${isAlign ? "Adjust alignment" : "Place"} ${isAlign ? "— " : ""}${esc(entry.title)}</h2><p id="plStep" class="pl-step" role="status"></p></div>
+    <header class="pl-bar"><div class="pl-head"><div class="row" style="gap:8px;flex-wrap:wrap"><h2 id="plTitle" tabindex="-1">${isAlign ? "Adjust alignment" : "Place"} ${isAlign ? "— " : ""}${esc(entry.title)}</h2><span id="plConf" class="pl-conf" hidden></span></div><p id="plStep" class="pl-step" role="status"></p></div>
       <div class="pl-btns">${isAlign && entry.adjusted ? `<button class="btn danger" id="plReset">Reset to original</button>` : ""}
+        <button class="btn" id="plAuto" title="Automatically find landmarks matching the reference map view">Auto-match</button>
         <button class="btn" id="plUndo">Undo last</button><button class="btn" id="plClear">Clear</button>
         <button class="btn" id="plCancel">Cancel</button><button class="btn primary" id="plSave" disabled>${isAlign ? "Save alignment" : "Place map"}</button></div></header>
     <div class="pl-panes">
       <section class="pl-pane" id="plScanPane" aria-label="${isAlign ? "Historical map" : "Your map"}"><span class="pl-tag">${isAlign ? "Historical map" : "Your map"}</span><div class="pl-map" id="plScan"></div>
         <svg class="pl-cross" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
         <button class="btn small pl-mark" data-pl="scan" aria-label="Mark the middle of this map (the + sign)">Mark the +</button></section>
-      <section class="pl-pane" id="plTodayPane" aria-label="Today’s map"><span class="pl-tag">Today’s map</span><div class="pl-map" id="plToday"></div>
+      <section class="pl-pane" id="plTodayPane" aria-label="Reference map">
+        <div class="pl-refbar">
+          <select id="plRefSel" aria-label="Reference layer for landmark alignment">
+            <option value="today">Ref: Today’s map (2026)</option>
+            ${refOpts.map(l => `<option value="${esc(l.id)}">Ref: ${esc(l.years || l.date || "")} ${esc(l.title)}</option>`).join("")}
+          </select>
+          <label class="pl-refop" id="plRefOpWrap" hidden><span>Ref</span><input type="range" id="plRefOp" min="15" max="100" value="85" aria-label="Reference map opacity"></label>
+        </div>
+        <div class="pl-map" id="plToday"></div>
         <svg class="pl-cross" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
-        <button class="btn small pl-mark" data-pl="today" aria-label="Mark the middle of today’s map (the + sign)">Mark the +</button></section>
+        <button class="btn small pl-mark" data-pl="today" aria-label="Mark the middle of reference map (the + sign)">Mark the +</button></section>
     </div>
     <div class="pl-tray">
       <ol id="plPairs" class="pl-pairs" aria-label="Matched spots"></ol>
-      <div class="pl-fields"${isAlign ? ` style="grid-template-columns:minmax(0,2fr) minmax(0,2fr)"` : ""}>
+      <div class="pl-fields${isAlign ? " align-mode" : ""}">
         ${isAlign ? `<div class="field"><span>Adjusting</span><div class="small-t muted" id="plMapInfo">${esc(entry.title)}${entry.year ? ` (${esc(entry.year)})` : ""}${entry.adjusted ? " · currently adjusted" : ""}</div></div>`
           : `<label class="field"><span>Name</span><input type="text" id="plName" maxlength="120" value="${esc(entry.title)}"></label>
              <label class="field"><span>Year (optional)</span><input type="number" id="plYear" min="1800" max="2100" inputmode="numeric" placeholder="e.g. 1968" value="${entry.year ? esc(entry.year) : ""}"></label>`}
-        <label class="field pl-op"><span>See-through <span id="plOpVal" class="mono">60%</span></span><input type="range" id="plOp" min="10" max="100" value="60" disabled aria-label="Opacity of your map over today’s map"></label>
+        <label class="field"><span>Warp</span><select id="plWarp" aria-label="Warp model"><option value="auto"${pl.warpMode === "auto" ? " selected" : ""}>Auto (Affine / TPS)</option><option value="homography"${pl.warpMode === "homography" ? " selected" : ""}>Oblique / Perspective (4+ pts)</option><option value="tps"${pl.warpMode === "tps" ? " selected" : ""}>Thin Plate Spline (4+ pts)</option></select></label>
+        <label class="field pl-op"><span>See-through <span id="plOpVal" class="mono">60%</span></span><input type="range" id="plOp" min="10" max="100" value="60" disabled aria-label="Opacity of your map over reference map"></label>
       </div>
       <div class="err" id="plErr" role="alert"></div>
       <div class="confirm-box" id="plDiscard" role="alertdialog" aria-label="Discard your matched spots" hidden>
@@ -5058,24 +5139,30 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   pl.scan.on("error", e => { if (/image|Failed|404|decode/i.test(String(e?.error?.message || ""))) $("#plErr").textContent = "The picture of your map could not be loaded."; });
   const c = primary().getCenter();
   pl.today = new maplibregl.Map({
-    ...common, container: "plToday", style: makeStyle(), center: c, zoom: primary().getZoom(),
+    ...common, container: "plToday", style: makeStyle(), center: c, zoom: primary().getZoom(), preserveDrawingBuffer: true,
     maxTileCacheSize: isDesk() ? 512 : 128, maxTileCacheZoomLevels: 10,
   });
   pl.today.addControl(ctl(), "top-right");
   pl.today.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
   pl.today.on("click", e => plClickToday(e.lngLat));
-  pl.today.on("load", () => { pl.todayReady = true; setBasePaint(pl.today); plDraw(); });
+  pl.today.on("load", () => { pl.todayReady = true; setBasePaint(pl.today); plDrawSites(); plDraw(); });
   [pl.scan, pl.today].forEach(m => { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation?.(); wireTrackpad(m, false); });
   const b = entry.bounds || (pl.pairs.length ? pl.pairs.reduce((a, p) => [Math.min(a[0], p.lon), Math.min(a[1], p.lat), Math.max(a[2], p.lon), Math.max(a[3], p.lat)], [180, 90, -180, -90]) : null);
   if (b && b[2] > b[0] && b[3] > b[1]) pl.today.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, duration: 0, maxZoom: 15 });
-  $("#plUndo").onclick = () => { if (pl.pending) pl.pending = null; else pl.pairs.pop(); plRender(); };
-  $("#plClear").onclick = () => { pl.pairs = []; pl.pending = null; plRender(); };
+  $("#plUndo").onclick = () => { if (pl.pending) pl.pending = null; else pl.pairs.pop(); pl.autoMatch = null; plRender(); };
+  $("#plClear").onclick = () => { pl.pairs = []; pl.pending = null; pl.autoMatch = null; plRender(); };
   $("#plCancel").onclick = plAskCancel;
   $("#plYes").onclick = () => closePlacement();
   $("#plNo").onclick = () => { $("#plDiscard").hidden = true; pl.discard = false; $("#plCancel").focus(); };
   $("#plSave").onclick = plSave;
-  $("#plSave").onclick = plSave;
+  $("#plAuto").onclick = plRunAutoMatch;
   if ($("#plReset")) $("#plReset").onclick = plReset;
+  $("#plRefSel").onchange = e => plSetRef(e.target.value);
+  $("#plRefOp").oninput = e => {
+    pl.refOpacity = +e.target.value / 100;
+    if (pl.todayReady && pl.today.getLayer("pl-ref")) pl.today.setPaintProperty("pl-ref", "raster-opacity", pl.refOpacity);
+  };
+  $("#plWarp").onchange = e => { pl.warpMode = e.target.value; plRender(); };
   let prevPlOp = Math.round(pl.opacity * 100);
   $("#plOp").oninput = e => {
     const v = Math.round(+e.target.value);
@@ -5128,41 +5215,151 @@ function plClickToday(ll) {
   plRender();
 }
 // A numbered pin; each pair has its own colour so the two halves of a pair are easy to match by eye.
-function plPin(n, pending = false) {
+function plPin(n, pending = false, conf = null) {
   const el = document.createElement("div");
-  el.className = "pl-pin" + (pending ? " pending" : "");
+  const cls = pending ? " pending" : (conf == null ? "" : conf >= 0.75 ? " conf-hi" : " conf-mid");
+  el.className = "pl-pin" + cls;
   el.style.setProperty("--pc", `hsl(${(n * 67) % 360} 65% 36%)`);
   el.textContent = n;
+  if (conf != null) el.title = `Match confidence: ${Math.round(conf * 100)}%`;
   return el;
 }
-function plFit() { return fitAffine(pl.pairs, pl.w, pl.h); }
+function plFit() {
+  if (!pl) return null;
+  if (pl.warpMode === "homography" && pl.pairs.length >= 4) return fitHomography(pl.pairs, pl.w, pl.h) || fitAffine(pl.pairs, pl.w, pl.h);
+  return fitAffine(pl.pairs, pl.w, pl.h);
+}
+function plDrawSites() {
+  if (!pl?.todayReady) return;
+  const m = pl.today, sites = S.kase?.sites || [];
+  const data = {
+    type: "FeatureCollection",
+    features: sites.map(s => ({ type: "Feature", geometry: { type: "Point", coordinates: [s.lon, s.lat] }, properties: { name: s.name || "Site" } })),
+  };
+  if (!m.getSource("pl-sites")) {
+    m.addSource("pl-sites", { type: "geojson", data });
+    m.addLayer({ id: "pl-sites-dot", type: "circle", source: "pl-sites", paint: { "circle-radius": 6, "circle-color": "#d97706", "circle-stroke-width": 2, "circle-stroke-color": "#fff" } });
+    m.addLayer({ id: "pl-sites-lbl", type: "symbol", source: "pl-sites", layout: { "text-field": ["get", "name"], "text-size": 12, "text-offset": [0, 1.1], "text-anchor": "top", "text-font": ["Noto Sans Medium"] },
+      paint: { "text-color": "#111", "text-halo-color": "#fff", "text-halo-width": 1.5 } });
+  } else {
+    m.getSource("pl-sites").setData(data);
+  }
+}
+function plSetRef(id) {
+  if (!pl) return;
+  pl.refId = id || "today";
+  const wrap = $("#plRefOpWrap"); if (wrap) wrap.hidden = pl.refId === "today";
+  if (!pl.todayReady) return;
+  const m = pl.today;
+  if (m.getLayer("pl-ref")) m.removeLayer("pl-ref");
+  if (m.getSource("pl-ref")) m.removeSource("pl-ref");
+  if (pl.refId === "today") return;
+  const era = eraById(pl.refId);
+  if (!era) return;
+  m.addSource("pl-ref", { type: "raster", tiles: [era.tiles], tileSize: 256, minzoom: era.minzoom ?? 0, maxzoom: era.maxzoom ?? 18, bounds: era.bounds });
+  const beforeId = m.getLayer("pl-scan") ? "pl-scan" : (m.getLayer("pl-sites-dot") ? "pl-sites-dot" : undefined);
+  m.addLayer({ id: "pl-ref", type: "raster", source: "pl-ref", paint: { "raster-opacity": pl.refOpacity, "raster-fade-duration": 0 } }, beforeId);
+  if (era.bounds && era.bounds[2] > era.bounds[0] && era.bounds[3] > era.bounds[1]) {
+    const b = m.getBounds();
+    const curB = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    if (!boxesOverlap(curB, era.bounds)) m.fitBounds([[era.bounds[0], era.bounds[1]], [era.bounds[2], era.bounds[3]]], { padding: 40, maxZoom: 15 });
+  }
+}
+async function plRunAutoMatch() {
+  if (!pl || pl.autoBusy || !pl.todayReady) return;
+  const btn = $("#plAuto"), err = $("#plErr"), cur = pl;
+  pl.autoBusy = true; err.textContent = ""; btn.disabled = true; btn.textContent = "Matching…";
+  const m = pl.today, scanVis = m.getLayer("pl-scan") ? m.getLayoutProperty("pl-scan", "visibility") : "none";
+  try {
+    if (m.getLayer("pl-scan")) m.setLayoutProperty("pl-scan", "visibility", "none");
+    if (m.getLayer("pl-sites-dot")) m.setLayoutProperty("pl-sites-dot", "visibility", "none");
+    if (m.getLayer("pl-sites-lbl")) m.setLayoutProperty("pl-sites-lbl", "visibility", "none");
+    await new Promise(res => { m.once("render", res); m.triggerRepaint(); setTimeout(res, 120); });
+    const srcCanvas = m.getCanvas(), scale = Math.min(1, 1280 / Math.max(srcCanvas.width, srcCanvas.height, 1));
+    const tmp = document.createElement("canvas");
+    tmp.width = Math.max(32, Math.round(srcCanvas.width * scale));
+    tmp.height = Math.max(32, Math.round(srcCanvas.height * scale));
+    tmp.getContext("2d").drawImage(srcCanvas, 0, 0, tmp.width, tmp.height);
+    const ref_b64 = tmp.toDataURL("image/jpeg", 0.86);
+    const b = m.getBounds();
+    const ref_bounds = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+    if (m.getLayer("pl-scan") && scanVis !== "none") m.setLayoutProperty("pl-scan", "visibility", scanVis || "visible");
+    if (m.getLayer("pl-sites-dot")) m.setLayoutProperty("pl-sites-dot", "visibility", "visible");
+    if (m.getLayer("pl-sites-lbl")) m.setLayoutProperty("pl-sites-lbl", "visibility", "visible");
+    const thresh = autoGcpThresh() / 100;
+    const res = await api("/api/auto-gcp", {
+      method: "POST",
+      body: { id: cur.entry.id, mode: cur.mode, ref_b64, ref_bounds, confidence_threshold: thresh, max_points: 12 },
+    });
+    if (pl !== cur) return;
+    pl.autoMatch = res;
+    if (res.points?.length) {
+      pl.pairs = res.points.map(pt => ({ col: pt.col, row: pt.row, lon: pt.lon, lat: pt.lat, conf: pt.confidence }));
+      pl.pending = null;
+      if (pl.warpMode === "auto" && res.recommended_warp === "homography") {
+        pl.warpMode = "homography";
+        const wEl = $("#plWarp"); if (wEl) wEl.value = "homography";
+      }
+    }
+    plRender();
+    if (!res.points?.length) {
+      err.textContent = res.reason || "No reliable matching landmarks found here. Zoom closer, pick an intermediate reference layer, or place spots manually.";
+    } else if (res.meets_threshold && autoGcpMode() === "auto" && pl.pairs.length >= 4) {
+      toast(`Auto-matched ${res.confidence_pct}% (${res.inliers} landmarks) — building…`, 5000);
+      await plSave();
+    } else if (res.meets_threshold) {
+      toast(`High-confidence match (${res.confidence_pct}%, ${res.inliers} landmarks) — review points & click Save`, 5000);
+    } else {
+      toast(`Below ${Math.round(thresh * 100)}% threshold (${res.confidence_pct}%) — please verify or add corners manually`, 6000);
+    }
+  } catch (e) {
+    if (m.getLayer("pl-scan") && scanVis !== "none") m.setLayoutProperty("pl-scan", "visibility", scanVis || "visible");
+    if (m.getLayer("pl-sites-dot")) m.setLayoutProperty("pl-sites-dot", "visibility", "visible");
+    if (m.getLayer("pl-sites-lbl")) m.setLayoutProperty("pl-sites-lbl", "visibility", "visible");
+    if (pl === cur) err.textContent = e.message || "Auto-match failed.";
+  } finally {
+    if (pl === cur) pl.autoBusy = false;
+    if (btn.isConnected) { btn.disabled = false; btn.textContent = "Auto-match"; }
+  }
+}
 function plRender() {
   const n = pl.pairs.length, fit = plFit();
   pl.marks.forEach(m => m.remove()); pl.marks = [];
   pl.pairs.forEach((p, i) => {
-    pl.marks.push(new maplibregl.Marker({ element: plPin(i + 1) }).setLngLat(plToLL(p.col, p.row)).addTo(pl.scan));
-    pl.marks.push(new maplibregl.Marker({ element: plPin(i + 1) }).setLngLat([p.lon, p.lat]).addTo(pl.today));
+    pl.marks.push(new maplibregl.Marker({ element: plPin(i + 1, false, p.conf ?? null) }).setLngLat(plToLL(p.col, p.row)).addTo(pl.scan));
+    pl.marks.push(new maplibregl.Marker({ element: plPin(i + 1, false, p.conf ?? null) }).setLngLat([p.lon, p.lat]).addTo(pl.today));
   });
   if (pl.pending) pl.marks.push(new maplibregl.Marker({ element: plPin(n + 1, true) }).setLngLat(plToLL(pl.pending.col, pl.pending.row)).addTo(pl.scan));
+  const cBadge = $("#plConf");
+  if (cBadge) {
+    if (pl.autoMatch && pl.autoMatch.confidence != null) {
+      cBadge.hidden = false;
+      cBadge.classList.toggle("ok", !!pl.autoMatch.meets_threshold);
+      cBadge.textContent = `${pl.autoMatch.confidence_pct}% match · ${pl.autoMatch.inliers} inliers · ${pl.autoMatch.quadrants_covered}/4 corners`;
+    } else {
+      cBadge.hidden = true;
+    }
+  }
+  const minPts = pl.warpMode === "auto" ? 3 : 4;
   let step;
-  if (pl.pending) step = `<b>Spot ${n + 1}, step 2.</b> Now click the same spot on today’s map.`;
-  else if (n < 3) step = `<b>1.</b> Click a spot on your map. <b>2.</b> Click the same spot on today’s map. ${n ? `${n} matched, at least 3 needed. Spread them out.` : "Use corners, road crossings or bridges."}`;
+  if (pl.pending) step = `<b>Spot ${n + 1}, step 2.</b> Now click the same spot on the reference map.`;
+  else if (n < minPts) step = `<b>1.</b> Click a spot on your map. <b>2.</b> Click the same spot on the reference map (or click <b>Auto-match</b>). ${n ? `${n} matched, ${minPts} needed.` : "Use corners, road crossings or trees."}`;
   else if (!fit) step = "Those spots are in a line or very close together. Add one further away from the others.";
-  else step = `Your map now lies over today’s map. Check the roads and rivers line up; drag the slider to compare. ${n >= 4 ? `Spots are off by about ${fit.rms < 10 ? "under 10" : Math.round(fit.rms)} m on average. ` : ""}Add more spots to improve it, then ${pl.mode === "align" ? "save the alignment" : "place the map"}.`;
+  else step = `Your map now lies over the reference map. Check the roads and rivers line up; drag the slider to compare. ${n >= 4 ? `Spots are off by about ${fit.rms < 10 ? "under 10" : Math.round(fit.rms)} m on average. ` : ""}Add more spots to improve it, then ${pl.mode === "align" ? "save the alignment" : "place the map"}.`;
   $("#plStep").innerHTML = step;
   $("#plScanPane").classList.toggle("want", !pl.pending);
   $("#plTodayPane").classList.toggle("want", !!pl.pending);
   $("#plPairs").innerHTML = pl.pairs.map((p, i) => `<li><span class="pl-pin sm" style="--pc:hsl(${((i + 1) * 67) % 360} 65% 36%)">${i + 1}</span>
-    <span class="mono">${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}</span>
+    <span class="mono">${p.lat.toFixed(4)}, ${p.lon.toFixed(4)}</span>${p.conf != null ? `<span class="small-t muted">${Math.round(p.conf * 100)}%</span>` : ""}
     <button class="round flat small" data-del="${i}" aria-label="Delete spot ${i + 1}">${icon.close}</button></li>`).join("");
   $("#plUndo").disabled = !n && !pl.pending;
   $("#plClear").disabled = !n && !pl.pending;
-  $("#plSave").disabled = !fit;
+  $("#plSave").disabled = !fit || n < minPts;
   $("#plOp").disabled = !fit;
   $("#plErr").textContent = "";
   plDraw();
 }
-// The live preview: the scan's four corners at the fitted places, as an image layer over today's map.
+// The live preview: the scan's four corners at the fitted places, as an image layer over the reference map.
 function plDraw() {
   if (!pl?.todayReady) return;
   const m = pl.today, fit = plFit();
@@ -5170,7 +5367,8 @@ function plDraw() {
   const coordinates = [fit.at(0, 0), fit.at(pl.w, 0), fit.at(pl.w, pl.h), fit.at(0, pl.h)];
   if (!m.getSource("pl-scan")) {
     m.addSource("pl-scan", { type: "image", url: pl.url, coordinates });
-    m.addLayer({ id: "pl-scan", type: "raster", source: "pl-scan", paint: { "raster-opacity": pl.opacity, "raster-fade-duration": 0 } });
+    const beforeId = m.getLayer("pl-sites-dot") ? "pl-sites-dot" : undefined;
+    m.addLayer({ id: "pl-scan", type: "raster", source: "pl-scan", paint: { "raster-opacity": pl.opacity, "raster-fade-duration": 0 } }, beforeId);
   } else { m.getSource("pl-scan").setCoordinates(coordinates); m.setLayoutProperty("pl-scan", "visibility", "visible"); }
 }
 async function plReset() {
@@ -5197,11 +5395,12 @@ async function plSave() {
   const err = $("#plErr"), cur = pl, btn = $("#plSave"), id = pl.entry.id;
   // col / row are pixels of the full-size picture, which is what the scan is laid out in here.
   const points = pl.pairs.map(p => [Math.round(p.col * 10) / 10, Math.round(p.row * 10) / 10, +p.lon.toFixed(7), +p.lat.toFixed(7)]);
+  const warp_mode = pl.warpMode || "auto";
   if (pl.mode === "align") {
     btn.disabled = true; btn.textContent = "Saving…";
     if ($("#plReset")) $("#plReset").disabled = true;
     try {
-      await api(`/api/library/${encodeURIComponent(id)}/align/points`, { method: "POST", body: { points } });
+      await api(`/api/library/${encodeURIComponent(id)}/align/points`, { method: "POST", body: { points, warp_mode } });
     } catch (e) {
       if (pl === cur) {
         err.textContent = e.message; btn.textContent = "Save alignment"; btn.disabled = false;
@@ -5221,7 +5420,7 @@ async function plSave() {
   if (y && !(year >= 1800 && year <= 2100)) { err.textContent = "The year should be between 1800 and 2100, or empty."; $("#plYear").focus(); return; }
   btn.disabled = true; btn.textContent = "Placing…";
   let lib;
-  try { lib = await api(`/api/library/custom/${encodeURIComponent(id)}/points`, { method: "POST", body: { points, title: name, year } }); }
+  try { lib = await api(`/api/library/custom/${encodeURIComponent(id)}/points`, { method: "POST", body: { points, title: name, year, warp_mode } }); }
   catch (e) { if (pl === cur) { err.textContent = e.message; btn.textContent = "Place map"; btn.disabled = false; } return; }
   applyLibrary(lib);
   // The placement may have been closed (or another opened) while this was in flight; only close our own.

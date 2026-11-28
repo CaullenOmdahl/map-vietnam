@@ -36,6 +36,7 @@ import paths  # noqa: E402
 import terrain_aerial  # noqa: E402
 import tiling  # noqa: E402
 
+from hub import auto_gcp  # noqa: E402
 from hub.auth import (  # noqa: E402
     DEFAULT_CLIENT_SCOPES,
     AuthError,
@@ -346,12 +347,12 @@ class HubHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
-    def read_json_body(self):
+    def read_json_body(self, max_bytes=MAX_JSON_BYTES):
         try:
             length = int(self.headers.get("Content-Length") or "0")
         except ValueError:
             length = -1
-        if length < 0 or length > MAX_JSON_BYTES:
+        if length < 0 or length > max_bytes:
             raise ValueError("JSON request body is missing or too large.")
         raw = self.rfile.read(length) if length else b"{}"
         data = json.loads(raw.decode("utf-8"))
@@ -411,7 +412,7 @@ class HubHandler(BaseHTTPRequestHandler):
                         "scopes": sorted(p.scopes),
                         "group_tag": p.group_tag,
                         "version": HUB_VERSION,
-                        "capabilities": self.storage.vault.status(),
+                        "capabilities": {**self.storage.vault.status(), "auto_gcp": True},
                         "stats": self.storage.stats(),
                     }
                 )
@@ -483,6 +484,21 @@ class HubHandler(BaseHTTPRequestHandler):
             if method == "POST" and path == "/hub/v1/transect":
                 p = self.require_principal("read")
                 return self.serve_transect(p, self.read_json_body())
+
+            if method == "POST" and path == "/hub/v1/auto-gcp":
+                self.require_principal("read")
+                b = self.read_json_body(max_bytes=12 << 20)
+                scan_bytes = auto_gcp.decode_image_b64(b.get("scan_b64"))
+                ref_bytes = auto_gcp.decode_image_b64(b.get("ref_b64"))
+                res = auto_gcp.match_and_score(
+                    scan_bytes,
+                    ref_bytes,
+                    b["ref_bounds"],
+                    confidence_threshold=b.get("confidence_threshold", auto_gcp.DEFAULT_CONFIDENCE_THRESHOLD),
+                    max_points=b.get("max_points", 12),
+                    scan_target_size=b.get("scan_target_size"),
+                )
+                return self.send_json(res)
 
             if method == "GET" and path == "/hub/v1/lidar":
                 self.require_principal("read")

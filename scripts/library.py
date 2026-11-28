@@ -530,7 +530,7 @@ class Library:
             self._wake.notify_all()
         return queued
 
-    def place_custom(self, map_id, points, title, year):
+    def place_custom(self, map_id, points, title, year, warp_mode="auto"):
         """Save the control points of one of the user's scans (custom_maps.save_points) and queue
         its build, even if it is built already (placing it again rebuilds it). LibraryError if it
         is being made right now; nothing is saved then."""
@@ -538,7 +538,7 @@ class Library:
             job = self._jobs.get(map_id)
             if job and job.state != "failed":
                 raise LibraryError("This map is being made right now. Wait until it is ready, then place it again.")
-            entry = self.custom.save_points(map_id, points, title, year)
+            entry = self.custom.save_points(map_id, points, title, year, warp_mode=warp_mode)
             self.cancel_path(map_id).unlink(missing_ok=True)
             self._jobs[map_id] = Job(entry, rebuild=True)
             self._queue.append(map_id)
@@ -588,17 +588,21 @@ class Library:
             "year": str(entry.get("year") or entry.get("date") or ""),
             "image": image_dims,
             "points": points,
+            "warp_mode": state.get("warp_mode", "auto") if isinstance(state, dict) else "auto",
             "bounds": bounds or entry.get("bounds"),
             "original_bounds": entry.get("bounds"),
             "adjusted": self.has_alignment(map_id),
             "preview_url": f"/api/library/{map_id}/align/preview",
         }
 
-    def save_alignment(self, map_id, points):
+    def save_alignment(self, map_id, points, warp_mode="auto"):
         """Save user alignment control points for `map_id` and queue a rebuild from `work.jpg`."""
         entry = self.entry(map_id)
         if entry.get("custom") and entry.get("kind") == "scan":
             raise LibraryError("Use Place on map to adjust this custom image.")
+        wmode = str(warp_mode or "auto").lower()
+        if wmode not in ("auto", "homography", "tps", "affine"):
+            wmode = "auto"
         with self._lock:
             job = self._jobs.get(map_id)
             if job and job.state != "failed":
@@ -629,13 +633,19 @@ class Library:
                 "image": str(work),
                 "crs": "EPSG:4326",
                 "gcps": pts,
+                "warp_mode": wmode,
                 "max_zoom": max_zoom,
                 "meta": meta,
             }
-            if len(pts) < custom_maps.POLYNOMIAL_POINTS:
+            if wmode == "affine" or (wmode == "auto" and len(pts) < custom_maps.POLYNOMIAL_POINTS):
                 control["order"] = 1
+            elif wmode == "tps" or (wmode == "auto" and len(pts) >= 8):
+                control["tps"] = True
             write_json(self.alignment_control_path(map_id), control)
-            write_json(self.alignment_state_path(map_id), {"image": image_dims, "points": pts, "bounds": bounds})
+            write_json(
+                self.alignment_state_path(map_id),
+                {"image": image_dims, "points": pts, "bounds": bounds, "warp_mode": wmode},
+            )
             self.cancel_path(map_id).unlink(missing_ok=True)
             self._jobs[map_id] = Job(entry, rebuild=True)
             self._queue.append(map_id)

@@ -429,13 +429,16 @@ class CustomMaps:
         year = parse_year(year)
         return self.update(map_id, title=clean_title(title, entry["title"]), year=year, date=str(year) if year else "")
 
-    def save_points(self, map_id, points, title, year):
+    def save_points(self, map_id, points, title, year, warp_mode="auto"):
         """Save a scan's control points and its control file; returns the new entry. The caller
         queues the build."""
         entry = self.get(map_id)
         if entry["kind"] != "scan":
             raise CustomMapError("This map was placed automatically from its own file; it has no points to set.")
         points = clean_points(points, entry["image"])
+        wmode = str(warp_mode or "auto").lower()
+        if wmode not in ("auto", "homography", "tps", "affine"):
+            wmode = "auto"
         year = parse_year(year)
         title = clean_title(title, entry["title"])
         bounds = placed_bounds(points, entry["image"]["width"], entry["image"]["height"])
@@ -443,6 +446,7 @@ class CustomMaps:
             "image": self.work_image(map_id).relative_to(self.data_root).as_posix(),
             "crs": "EPSG:4326",
             "gcps": points,
+            "warp_mode": wmode,
             "max_zoom": min(MAX_ZOOM, native_zoom_for(bounds, entry["image"]["width"])),
             "meta": {
                 "title": title,
@@ -452,12 +456,20 @@ class CustomMaps:
                 "source": CREDIT,
             },
         }
-        if len(points) < POLYNOMIAL_POINTS:
+        if wmode == "affine" or (wmode == "auto" and len(points) < POLYNOMIAL_POINTS):
             control["order"] = 1
-        elif len(points) >= 8:
+        elif wmode == "tps" or (wmode == "auto" and len(points) >= 8):
             control["tps"] = True
         write_json(self.control_path(map_id), control)
-        return self.update(map_id, points=points, bounds=bounds, title=title, year=year, date=str(year) if year else "")
+        return self.update(
+            map_id,
+            points=points,
+            bounds=bounds,
+            title=title,
+            year=year,
+            date=str(year) if year else "",
+            warp_mode=wmode,
+        )
 
     def record_built(self, map_id, bounds):
         """Remember the extent the build actually covers (None keeps what the entry has)."""
