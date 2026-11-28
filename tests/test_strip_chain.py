@@ -2,6 +2,7 @@
 
 import io
 import json
+import math
 import threading
 import urllib.error
 import urllib.request
@@ -13,6 +14,7 @@ from hub import auto_gcp
 from PIL import Image, ImageDraw, ImageOps
 
 STEP = 400  # synthetic frames advance 400 px down the strip
+COS_20 = math.cos(math.radians(20.0))
 
 
 def frame(n, mission="HV999", placed=None, w=1000, h=1000):
@@ -25,9 +27,9 @@ def frame(n, mission="HV999", placed=None, w=1000, h=1000):
     }
 
 
-def anchor_points():
-    # lon = 105 + col * 1e-5, lat = 20 - row * 1e-5
-    return [[c, r, 105 + c * 1e-5, 20 - r * 1e-5] for c, r in ((0, 0), (1000, 0), (1000, 1000), (0, 1000))]
+def anchor_points(lon0=105.0, lat0=20.0):
+    # Metric square pixels at lat 20 deg: dlon = 1e-5 / cos(20 deg), dlat = -1e-5
+    return [[c, r, lon0 + c * 1e-5 / COS_20, lat0 - r * 1e-5] for c, r in ((0, 0), (1000, 0), (1000, 1000), (0, 1000))]
 
 
 def test_strip_key_parses_shdai_titles():
@@ -42,7 +44,8 @@ def test_plan_chain_walks_both_ways_keeps_user_frames_and_stops_on_low_confidenc
     conf = {0: 0.9, 2: 0.95, 3: 0.92, 5: 0.9, 6: 0.4, 7: 0.99}
     frames = [frame(n) for n in range(0, 8)]
     frames[1]["points"] = anchor_points()
-    frames[4]["points"] = [[c, r, lon + 0.01, lat] for c, r, lon, lat in anchor_points()]
+    # Frame 4 is placed 3 * STEP south of frame 1, with a +0.01 lon shift.
+    frames[4]["points"] = anchor_points(lon0=105.01, lat0=20.0 - 3 * STEP * 1e-5)
     calls = []
 
     def fake_match(b, a):
@@ -54,6 +57,8 @@ def test_plan_chain_walks_both_ways_keeps_user_frames_and_stops_on_low_confidenc
 
     plan = strip_chain.plan_chain(frames, frames[1]["id"], fake_match, threshold=0.8)
     got = {p["frame"]: p for p in plan["proposals"]}
+    assert plan["anchors"] == [1, 4]
+    assert plan["adjusted"] is True
     assert sorted(got) == [0, 2, 3, 5, 6]
     assert 4 not in got and 7 not in got  # user's frame kept; nothing past the stop
     assert (got[2]["from_frame"], got[2]["hops"]) == (1, 1)
@@ -61,12 +66,14 @@ def test_plan_chain_walks_both_ways_keeps_user_frames_and_stops_on_low_confidenc
     assert (got[5]["from_frame"], got[5]["hops"]) == (4, 1)  # chain re-anchors on the user's frame
     assert got[6]["meets_threshold"] is False
     assert [s["frame"] for s in plan["stops"]] == [6]
-    # Frame 3 pixel (100, 100) is frame 1 pixel (100, 900) -> lat 20 - 0.009, through two hops.
+    # Frame 3 is bracketed by anchors 1 and 4: lon is distributed between Frame 1 and Frame 4's +0.01 shift,
+    # and lat stays near 19.991 (slight rotation because 4-DOF similarity bridges the lateral offset without shear).
     c, r, lon, lat = got[3]["points"][0]
     assert (c, r) == (100, 100)
-    assert lon == pytest.approx(105.001, abs=1e-6) and lat == pytest.approx(19.991, abs=1e-6)
+    assert lat == pytest.approx(19.991, abs=1e-3)
+    assert 105.001 < lon < 105.011
     # Frame 5 inherits the user's +0.01 lon offset of frame 4, not the anchor's.
-    assert got[5]["points"][0][2] == pytest.approx(105.011, abs=1e-6)
+    assert got[5]["points"][0][2] == pytest.approx(105.01 + 100 * 1e-5 / COS_20, abs=1e-5)
     assert (7, 6) not in calls
 
 
@@ -133,7 +140,7 @@ def test_chain_route_plans_and_places_neighbour(tmp_path, monkeypatch):
         ids.append(e["id"])
     w = lib.custom.get(ids[0])["image"]["width"]
     k = w / 600.0
-    pts = [[c * k, r * k, 105 + c * 1e-5, 20 - r * 1e-5] for c, r in ((0, 0), (600, 0), (600, 600), (0, 600))]
+    pts = [[c * k, r * k, 105 + c * 1e-5 / COS_20, 20 - r * 1e-5] for c, r in ((0, 0), (600, 0), (600, 600), (0, 600))]
     lib.custom.save_points(ids[0], pts, "f1", 1952)
 
     db = tmp_path / "desk" / "e.sqlite"
@@ -161,7 +168,7 @@ def test_chain_route_plans_and_places_neighbour(tmp_path, monkeypatch):
         [prop] = plan["proposals"]
         assert prop["id"] == ids[1] and prop["meets_threshold"] is True
         c, r, lon, lat = prop["points"][0]
-        assert lon == pytest.approx(105 + (c / k) * 1e-5, abs=4e-5)
+        assert lon == pytest.approx(105 + (c / k) * 1e-5 / COS_20, abs=4e-5)
         assert lat == pytest.approx(20 - (r / k + 240) * 1e-5, abs=4e-5)
 
         listing = post(f"/api/library/custom/{ids[0]}/chain", {"apply": [{"id": prop["id"], "points": prop["points"]}]})
@@ -173,3 +180,158 @@ def test_chain_route_plans_and_places_neighbour(tmp_path, monkeypatch):
     finally:
         srv.quit()
         archive.close()
+
+
+def _synthetic_frame_transform(frame_idx, *, scale=1.2e-5, theta_deg=25.0, lon0=107.0, lat0=16.5):
+    """True metric 4-DOF similarity `(c, r) -> (lon, lat)` for frame `frame_idx` along a rotated strip."""
+    cos_lat = math.cos(math.radians(lat0))
+    th = math.radians(theta_deg)
+    a = scale * math.cos(th)
+    b = scale * math.sin(th)
+    # Strip advances STEP pixels along the frame's +row axis each exposure.
+    r_offset = (frame_idx - 1) * STEP
+    tx = lon0 * cos_lat + b * r_offset
+    ty = lat0 - a * r_offset
+    return a, b, tx, ty, cos_lat
+
+
+def _apply_true(tf, c, r):
+    a, b, tx, ty, cos_lat = tf
+    e = a * c + b * r + tx
+    n = b * c - a * r + ty
+    return e / cos_lat, n
+
+
+def test_similarity_from_points_preserves_aspect_ratio_and_zero_shear():
+    """4-DOF similarity fit has exact 1:1 metric aspect ratio and zero shear on rotated/scaled frames."""
+    rng = np.random.default_rng(42)
+    tf = _synthetic_frame_transform(1, scale=1.4e-5, theta_deg=37.0, lon0=106.5, lat0=16.0)
+    true_scale = 1.4e-5
+    cos_lat = tf[4]
+    pts = []
+    for c, r in ((50, 80), (920, 110), (880, 910), (90, 870), (500, 480), (260, 640)):
+        lon, lat = _apply_true(tf, c, r)
+        # Add realistic ~1.5 px equivalent noise in ground coords.
+        lon += float(rng.normal(0.0, 1.5 * true_scale / cos_lat))
+        lat += float(rng.normal(0.0, 1.5 * true_scale))
+        pts.append([c, r, lon, lat])
+
+    coef = strip_chain.similarity_from_points(pts)
+    assert coef is not None
+    # Convert 2x2 linear part back into metric (lon * cos_lat, lat) space.
+    mean_lat = float(np.mean([p[3] for p in pts]))
+    c_lat = math.cos(math.radians(mean_lat))
+    col_vec = np.array([coef[0, 0] * c_lat, coef[0, 1]])
+    row_vec = np.array([coef[1, 0] * c_lat, coef[1, 1]])
+    s_col = float(np.linalg.norm(col_vec))
+    s_row = float(np.linalg.norm(row_vec))
+    assert s_col == pytest.approx(s_row, rel=1e-12)
+    assert float(np.dot(col_vec, row_vec)) == pytest.approx(0.0, abs=1e-18)
+    assert s_col == pytest.approx(true_scale, rel=0.01)
+
+    # Degenerate inputs return None.
+    assert strip_chain.similarity_from_points([[0, 0, 105.0, 20.0]]) is None
+    assert strip_chain.similarity_from_points([[5, 5, 105.0, 20.0], [5, 5, 105.0, 20.0]]) is None
+
+
+def test_ten_frame_strip_single_anchor_no_scale_drift():
+    """Chaining 10 overlapping rotated frames from 1 anchor with match noise preserves scale without drift."""
+    rng = np.random.default_rng(7)
+    true_scale = 1.2e-5
+    frames = [frame(n) for n in range(1, 11)]
+    tf1 = _synthetic_frame_transform(1, scale=true_scale, theta_deg=25.0)
+    frames[0]["points"] = [[c, r, *_apply_true(tf1, c, r)] for c, r in ((0, 0), (1000, 0), (1000, 1000), (0, 1000))]
+    overlap_pts = [(120, 80), (500, 100), (880, 90), (150, 320), (520, 340), (860, 310), (200, 520), (820, 510)]
+
+    def noisy_match(b, a):
+        nb, na = strip_chain.strip_key(b)[1], strip_chain.strip_key(a)[1]
+        shift = STEP * (nb - na)
+        pairs = []
+        for c, r in overlap_pts:
+            ac = c + float(rng.normal(0.0, 0.5))
+            ar = r + shift + float(rng.normal(0.0, 0.5))
+            pairs.append([c, r, ac, ar, 0.92])
+        return {"ok": True, "pairs": pairs, "confidence": 0.92, "confidence_pct": 92.0, "inliers": len(pairs)}
+
+    plan = strip_chain.plan_chain(frames, frames[0]["id"], noisy_match, threshold=0.8)
+    assert plan["adjusted"] is False
+    assert plan["anchors"] == [1]
+    assert len(plan["proposals"]) == 9
+
+    for prop in plan["proposals"]:
+        coef = strip_chain.similarity_from_points(prop["points"])
+        assert coef is not None
+        mean_lat = float(np.mean([p[3] for p in prop["points"]]))
+        c_lat = math.cos(math.radians(mean_lat))
+        col_vec = np.array([coef[0, 0] * c_lat, coef[0, 1]])
+        row_vec = np.array([coef[1, 0] * c_lat, coef[1, 1]])
+        s_col = float(np.linalg.norm(col_vec))
+        s_row = float(np.linalg.norm(row_vec))
+        # No shear, 1:1 aspect ratio, and scale stays within 2% of true scale even after 9 hops.
+        assert s_col == pytest.approx(s_row, rel=1e-9)
+        assert float(np.dot(col_vec, row_vec)) == pytest.approx(0.0, abs=1e-16)
+        assert s_col == pytest.approx(true_scale, rel=0.02)
+
+
+def test_ten_frame_strip_two_anchors_bundle_adjustment_reduces_error():
+    """With anchors at Frame 1 and Frame 10, bundle adjustment distributes per-hop drift globally."""
+    true_scale = 1.2e-5
+    tfs = {n: _synthetic_frame_transform(n, scale=true_scale, theta_deg=20.0) for n in range(1, 11)}
+    overlap_pts = [(100, 100), (500, 100), (900, 100), (100, 500), (500, 300), (900, 500)]
+
+    # Inject consistent per-hop bias + random jitter so single-anchor cantilevering drifts noticeably by mid-strip.
+    rng = np.random.default_rng(123)
+    pair_noise = {}
+    for n in range(1, 10):
+        # Systematic +4 px col bias, -3 px row bias + 1.5 px jitter per consecutive pair (n+1 <-> n).
+        noise = [(4.0 + float(rng.normal(0.0, 1.5)), -3.0 + float(rng.normal(0.0, 1.5))) for _ in overlap_pts]
+        pair_noise[(n + 1, n)] = noise
+
+    def biased_match(b, a):
+        nb, na = strip_chain.strip_key(b)[1], strip_chain.strip_key(a)[1]
+        shift = STEP * (nb - na)
+        key = (nb, na) if (nb, na) in pair_noise else (na, nb)
+        sign = 1.0 if (nb, na) in pair_noise else -1.0
+        pairs = []
+        for (c, r), (dc, dr) in zip(overlap_pts, pair_noise[key], strict=True):
+            pairs.append([c, r, c + sign * dc, r + shift + sign * dr, 0.95])
+        return {"ok": True, "pairs": pairs, "confidence": 0.95, "confidence_pct": 95.0, "inliers": len(pairs)}
+
+    # 1. Single-anchor cantilever from Frame 1 only.
+    frames_1 = [frame(n) for n in range(1, 11)]
+    frames_1[0]["points"] = [
+        [c, r, *_apply_true(tfs[1], c, r)] for c, r in ((0, 0), (1000, 0), (1000, 1000), (0, 1000))
+    ]
+    plan_single = strip_chain.plan_chain(frames_1, frames_1[0]["id"], biased_match, threshold=0.8)
+    assert plan_single["adjusted"] is False
+
+    # 2. Dual-anchor bundle adjustment with Frame 1 AND Frame 10 placed.
+    frames_2 = [frame(n) for n in range(1, 11)]
+    frames_2[0]["points"] = [
+        [c, r, *_apply_true(tfs[1], c, r)] for c, r in ((0, 0), (1000, 0), (1000, 1000), (0, 1000))
+    ]
+    frames_2[9]["points"] = [
+        [c, r, *_apply_true(tfs[10], c, r)] for c, r in ((0, 0), (1000, 0), (1000, 1000), (0, 1000))
+    ]
+    plan_dual = strip_chain.plan_chain(frames_2, frames_2[0]["id"], biased_match, threshold=0.8)
+    assert plan_dual["adjusted"] is True
+    assert plan_dual["anchors"] == [1, 10]
+
+    def mid_strip_rmse(plan):
+        cos_lat = tfs[1][4]
+        sq_errs = []
+        for prop in plan["proposals"]:
+            fn = prop["frame"]
+            if fn not in (4, 5, 6, 7):
+                continue
+            coef = strip_chain.similarity_from_points(prop["points"])
+            lon, lat = (float(v) for v in np.array([500.0, 500.0, 1.0]) @ coef)
+            tlon, tlat = _apply_true(tfs[fn], 500.0, 500.0)
+            de = (lon - tlon) * cos_lat
+            dn = lat - tlat
+            sq_errs.append(de * de + dn * dn)
+        return math.sqrt(float(np.mean(sq_errs)))
+
+    err_single = mid_strip_rmse(plan_single)
+    err_dual = mid_strip_rmse(plan_dual)
+    assert err_dual < err_single * 0.25, f"Expected dual-anchor RMSE ({err_dual:.3e}) << single ({err_single:.3e})"
