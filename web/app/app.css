@@ -470,7 +470,10 @@ body.no-old-maps.lib-open #mapbar { display: none; }
   .linkish { padding-inline: 6px; }
 }
 /* Progress ring with a stop square; spins while waiting or when the size is unknown. */
-.lib-ring { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; cursor: pointer; color: var(--accent); }
+.lib-ring { flex: none; width: 64px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 999px; background: none; cursor: pointer; color: var(--accent); }
+/* Pinned to the bottom of the card while maps are being added, so its arrival never moves the rows being clicked. */
+.lib-busy-bar { position: sticky; bottom: 0; z-index: 2; margin-top: 12px; padding-bottom: 4px; background: linear-gradient(to bottom, transparent, var(--surface) 14px); }
+.lib-busy-bar .lib-status { box-shadow: var(--shadow); }
 .lib-ring:hover { background: var(--surface-3); }
 .lib-ring svg { width: 28px; height: 28px; transform: rotate(-90deg); }
 .lib-ring .track { stroke: var(--line); stroke-width: 2.5; }
@@ -652,8 +655,8 @@ body.settings-open #mapbar, body.settings-open #filterPill, body.settings-open #
 .pl-pairs { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .pl-pairs:empty { display: none; }
 .pl-pairs li { display: flex; align-items: center; gap: 6px; padding: 2px 6px 2px 6px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); font-size: 12.5px; }
-.pl-fields { display: grid; grid-template-columns: minmax(0, 2fr) 110px minmax(0, 1.4fr) minmax(0, 1.8fr); gap: 10px; align-items: end; }
-.pl-fields.align-mode { grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1.8fr); }
+.pl-fields { display: grid; grid-template-columns: minmax(0, 2fr) 110px minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(0, 1.6fr); gap: 10px; align-items: end; }
+.pl-fields.align-mode { grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(0, 1.6fr); }
 .pl-fields input[type=text], .pl-fields input[type=number], .pl-fields select { width: 100%; }
 .pl-op input { width: 100%; }
 @media (max-width: 799px) {

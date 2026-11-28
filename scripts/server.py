@@ -411,11 +411,35 @@ def title_index(db):
     return rows
 
 
+COORD_RE = re.compile(r"^\s*(-?\d{1,3}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)\s*$")
+
+
+def parse_coordinates(q):
+    """(lon, lat) from decimal degrees typed as "lat, lon" (the usual order) or "lon, lat"; None otherwise.
+
+    Over Vietnam the two orders cannot be confused: latitudes are 8-24 and longitudes 102-110, so a pair
+    whose first number is over 90 is read as lon, lat."""
+    m = COORD_RE.match(q or "")
+    if not m or "." not in q:
+        return None
+    a, b = float(m.group(1)), float(m.group(2))
+    if abs(a) <= 90 and abs(b) <= 180 and not (abs(a) > abs(b) and abs(b) <= 90):
+        return b, a
+    if abs(b) <= 90 and abs(a) <= 180:
+        return a, b
+    return None
+
+
 def search(db, q, limit=20, near=None):
-    """One box for everything: a grid reference, or a name among the evidence titles.
+    """One box for everything: decimal coordinates, a grid reference, a built-in place (wartime towns and French
+    sheet names, which work before any records are downloaded), or a name among the evidence titles.
     Names are ranked nearest-first to `near` (lon, lat), prefix matches ahead of the rest."""
     q = q.strip()
     out = []
+    ll = parse_coordinates(q)
+    if ll:
+        out.append({"type": "coord", "label": f"{ll[1]:.5f}, {ll[0]:.5f}", "lon": ll[0], "lat": ll[1]})
+        return out
     try:
         lon, lat, r = gridref.to_wgs84(q, datum="indian1960")
         out.append(
@@ -430,6 +454,7 @@ def search(db, q, limit=20, near=None):
         )
     except ValueError:
         pass  # not a grid reference: a name search only
+    builtin = [{"type": "place", **p} for p in terrain_aerial.builtin_places(q, limit=6)]
     if len(q) >= 2:
         fq = fold(q)
         # At most 2,000 candidates are ranked; ids are fetched 500 at a time to stay well under
@@ -464,6 +489,9 @@ def search(db, q, limit=20, near=None):
                 )
             )
         out += [h for _, h in sorted(hits, key=lambda t: t[0])[:limit]]
+    # Built-in places stand in for the place-name records until those are downloaded.
+    if not any(h.get("kind") == "placename" for h in out):
+        out += builtin
     return out
 
 
@@ -1794,6 +1822,7 @@ class Handler(SimpleHTTPRequestHandler):
                 raise custom_maps.NoSuchMap("The scan preview image is missing.")
             scan_bytes = img_path.read_bytes()
 
+        kind = "map" if str(b.get("kind") or "").lower() == "map" else "photo"
         if self.hub.config().get("configured"):
             try:
                 res = self.hub.auto_gcp(
@@ -1803,6 +1832,7 @@ class Handler(SimpleHTTPRequestHandler):
                     confidence_threshold=thresh,
                     max_points=max_pts,
                     scan_target_size=target_size,
+                    kind=kind,
                 )
                 return self.send_json(res)
             except hub_client.HubClientError:
@@ -1814,6 +1844,7 @@ class Handler(SimpleHTTPRequestHandler):
             confidence_threshold=thresh,
             max_points=max_pts,
             scan_target_size=target_size,
+            kind=kind,
         )
         self.send_json(res)
 
@@ -1891,11 +1922,15 @@ class Handler(SimpleHTTPRequestHandler):
                 self.library.add([entry["id"]])
                 self.library.start_worker()
             else:
+                # What the picture is (a printed map or flight-index card is matched north-up, an aerial frame in
+                # any heading) and where its mission was flown, so Placement opens in the right place.
+                changes = {"subject": "map" if b.get("kind") == "map" else "photo"}
                 vb = b.get("bounds")
                 if isinstance(vb, list) and len(vb) == 4:
                     vals = [float(x) for x in vb]
                     if vals[0] < vals[2] and vals[1] < vals[3]:
-                        self.library.custom.update(entry["id"], bounds=vals)
+                        changes["bounds"] = vals
+                self.library.custom.update(entry["id"], **changes)
             listing = self.library.listing()
             return self.send_json(
                 {"map": next(m for m in listing["maps"] if m["id"] == entry["id"]), "library": listing}
@@ -1905,7 +1940,12 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({"error": "not found"}, HTTPStatus.NOT_FOUND)
         provider = p.removeprefix("aerial/")
         if self.hub.config()["configured"] and provider in ("nakala", "oam", "landsat", "allmaps", "usgs"):
-            return self.send_json(self.hub.proxy_get(f"/hub/v1/aerial/{provider}", q))
+            # The Hub keeps its answers forever; when it cannot be reached, ask the archive directly instead of
+            # failing the search.
+            try:
+                return self.send_json(self.hub.proxy_get(f"/hub/v1/aerial/{provider}", q))
+            except hub_client.HubClientError as e:
+                self.app_log.log("WARN", f"aerial/{provider}", f"Hub unreachable, searching directly: {e}")
         if provider == "nakala":
             return self.send_json(
                 terrain_aerial.search_nakala_aerials(

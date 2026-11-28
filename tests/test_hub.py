@@ -346,7 +346,9 @@ def test_nakala_oam_and_allmaps_parsers_extract_plots_and_gcps():
 
     nk = terrain_aerial.search_nakala_aerials("Phu Dien", fetch_fn=fake_fetch)
     assert nk["total"] == 1 and len(nk["missions"][0]["plots"]) == 1 and nk["missions"][0]["frame_count"] == 1
-    assert "iiif/10.34847/nkl.05674b20/bbb222" in nk["missions"][0]["plots"][0]["preview_url"]
+    # NAKALA's IIIF server fails on flight-index cards, so the (small) card itself is the preview; frames use IIIF.
+    assert nk["missions"][0]["plots"][0]["preview_url"] == "https://api.nakala.fr/data/10.34847/nkl.05674b20/bbb222"
+    assert "iiif/10.34847/nkl.05674b20/aaa111" in nk["missions"][0]["frames"][0]["preview_url"]
 
     oam = terrain_aerial.search_openaerialmap([105.5, 20.5, 106.0, 21.2], fetch_fn=fake_fetch)
     assert oam["items"][0]["gsd_m"] == 0.045 and "{z}/{x}/{y}" in oam["items"][0]["xyz_tiles"]

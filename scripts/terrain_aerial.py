@@ -21,6 +21,7 @@ infinite write-once cache and vaulted credentials when connected:
 import json
 import math
 import re
+import statistics
 import unicodedata
 import urllib.parse
 import warnings
@@ -559,6 +560,7 @@ _FIRST_INDOCHINA_PLACES = {
     "dong hoi": ([106.48, 17.36, 106.74, 17.60], "Đồng Hới"),
     "vinh": ([105.56, 18.56, 105.82, 18.80], "Vinh"),
     "thanh hoa": ([105.66, 19.68, 105.92, 19.92], "Thanh Hóa"),
+    "tho xuan": ([105.35, 19.82, 105.60, 20.02], "Thọ Xuân"),
     "qui nhon": ([109.10, 13.66, 109.34, 13.90], "Quy Nhơn"),
     "quy nhon": ([109.10, 13.66, 109.34, 13.90], "Quy Nhơn"),
     "nha trang": ([109.08, 12.14, 109.32, 12.36], "Nha Trang"),
@@ -608,6 +610,11 @@ _SHDAI_REGIONS = (
     ),
 )
 _SGI_INDEX_CACHE = {}
+# The SGI 1:100,000 series is a regular grid: 0.8 grad (0.7262 deg as placed) wide, 0.5 grad (0.4505 deg) tall,
+# numbered west to east along each row and row by row southwards, each row starting where Indochina does.
+# Columns and rows below are measured from the placed catalogue sheets (scripts/place_sheets.py).
+SGI_LON0, SGI_COL_W, SGI_NORTH0, SGI_ROW_H = 101.484, 0.7262, 23.422, 0.4505
+_SHEET_SUFFIXES = ("", "E", "W", "EW")
 
 
 def _fold_place(text):
@@ -617,12 +624,17 @@ def _fold_place(text):
 
 
 def _sgi_vicinity_index(catalogue_path=None):
+    """(sheets_by_num, sheet_places, grid) from the catalogue's `sgi100k` sheets.
+
+    `grid` (see `_sgi_row_model`) places sheets the catalogue lacks (`sgi_sheet_bounds`).
+    """
     cat_file = Path(catalogue_path) if catalogue_path else (paths.APP_ROOT / "data" / "sources" / "map_library.json")
     key = str(cat_file)
     if key in _SGI_INDEX_CACHE:
         return _SGI_INDEX_CACHE[key]
     sheets_by_num = {}
     sheet_places = []
+    offsets = {}
     if cat_file.is_file():
         data = json.loads(cat_file.read_text(encoding="utf-8"))
         for entry in data.get("maps", []):
@@ -632,8 +644,10 @@ def _sgi_vicinity_index(catalogue_path=None):
             if not (isinstance(b, list) and len(b) == 4):
                 continue
             title = str(entry.get("title") or "")
-            m = re.search(r"feuille\s+(\d+)", title, re.I)
-            if m:
+            # "feuille 9A" (Hanoi) is a different sheet from "feuille 9" (Cao Bang): only plain numbers and their
+            # east / west halves count as sheet N.
+            m = re.search(r"feuille\s+(\d+)\s*([A-Za-z]*)\)", title, re.I)
+            if m and m.group(2).upper() in _SHEET_SUFFIXES:
                 num = int(m.group(1))
                 cur = sheets_by_num.get(num)
                 if cur is None:
@@ -642,6 +656,14 @@ def _sgi_vicinity_index(catalogue_path=None):
                     cb = cur["bounds"]
                     cur["bounds"] = [min(cb[0], b[0]), min(cb[1], b[1]), max(cb[2], b[2]), max(cb[3], b[3])]
                     cur["ids"].append(entry["id"])
+                if b[3] - b[1] > 0.3:  # full-height sheets only: coastal fragments would skew the rows
+                    # Half sheets (a few are titled without their E / W) sit half a column east or on the line.
+                    half = 0.25 if b[2] - b[0] < 0.5 else 0.0
+                    col_f = (b[0] - SGI_LON0) / SGI_COL_W - half
+                    col = round(col_f)
+                    row = round((SGI_NORTH0 - b[3]) / SGI_ROW_H)
+                    east_half = half and col_f - col > 0.1
+                    offsets.setdefault(row, []).append((num - col, num, b[0], bool(east_half)))
             clean_name = re.sub(r"\([^)]*\)", "", title)
             folded = _fold_place(clean_name)
             for suf in (" est", " ouest", " nord", " sud"):
@@ -649,28 +671,160 @@ def _sgi_vicinity_index(catalogue_path=None):
                     folded = folded[: -len(suf)].strip()
             if len(folded) >= 5:
                 sheet_places.append((folded, list(b), clean_name.strip() or title, entry["id"]))
-    _SGI_INDEX_CACHE[key] = (sheets_by_num, sheet_places)
+    row_offsets = _sgi_row_model(offsets)
+    _SGI_INDEX_CACHE[key] = (sheets_by_num, sheet_places, row_offsets)
     return _SGI_INDEX_CACHE[key]
+
+
+def _sgi_row_model(samples):
+    """{"width": line coefficients of column width by row, "cols": {sheet number: (row, column west)}}.
+
+    Sheets are a fixed angle wide on the old projection, which comes out a little narrower in longitude in the
+    south (0.68 deg) than in the north (0.73 deg); the width is fitted once across well-sampled rows.
+    """
+    rows = {}
+    for row, items in samples.items():
+        pts = {}
+        for _o, num, west, east_half in items:
+            pts.setdefault(num, []).append((west, east_half))
+        # West edge of each numbered column (an east half starts half a column in), whole columns only for fitting.
+        wests = {n: statistics.median(w for w, e in v if not e) for n, v in pts.items() if any(not e for _w, e in v)}
+        rows[row] = {"pts": pts, "wests": wests}
+
+    def robust_slope(wests):
+        """Median of pairwise slopes (Theil-Sen): one mislabelled sheet cannot tilt the row."""
+        nums = sorted(wests)
+        slopes = [(wests[b] - wests[a]) / (b - a) for i, a in enumerate(nums) for b in nums[i + 1 :] if b - a >= 1]
+        slopes = [s for s in slopes if 0.6 < s < 0.8]
+        return statistics.median(slopes) if len(slopes) >= 2 else None
+
+    # Width varies smoothly with latitude, so fit it once across all well-sampled rows (>= 3 columns) and
+    # read each row's width off that line instead of trusting sparse rows.
+    fit = [(row, robust_slope(r["wests"])) for row, r in rows.items() if len(r["wests"]) >= 3]
+    fit = [(row, s) for row, s in fit if s is not None]
+    if len(fit) >= 3:
+        xs = np.array([f[0] for f in fit], dtype=float)
+        ys = np.array([f[1] for f in fit])
+        coef = np.polyfit(xs, ys, 1)
+        keep = np.abs(np.polyval(coef, xs) - ys) < 0.02
+        if keep.sum() >= 3:
+            coef = np.polyfit(xs[keep], ys[keep], 1)
+    else:
+        coef = np.array([0.0, SGI_COL_W])
+    cols = {}
+    for row, r in rows.items():
+        w = _sgi_width(coef, row)
+        for n, v in r["pts"].items():
+            cols[n] = (row, float(statistics.median(west - (w / 2 if e else 0.0) for west, e in v)))
+    return {"width": [float(c) for c in coef], "cols": cols}
+
+
+def _sgi_width(coef, row):
+    """Column width (degrees of longitude) of SGI row `row` from the fitted width line, clamped to sane values."""
+    return float(min(0.76, max(0.66, np.polyval(coef, row))))
+
+
+def _sgi_infer(num, grid, exclude=None):
+    """(row, west) of sheet `num` stepped from its nearest numbered neighbour, or None when unsure.
+
+    Numbering runs west to east along a row and jumps at sea or borders, so a sheet is stepped from the closest
+    known number rather than from a row start. When the neighbours sit on different rows, the sheet is stepped
+    from each and kept only if exactly one lands in Indochina without covering a known sheet (sheet 80: from 76
+    it lands south-west of Thanh Hoa, from 86 it would be in Burma).
+    """
+    cols = {n: v for n, v in grid["cols"].items() if n != exclude}
+    lower = max((n for n in cols if n < num), default=None)
+    higher = min((n for n in cols if n > num), default=None)
+    if lower is None or higher is None:
+        return None
+
+    def step_from(base):
+        row, west0 = cols[base]
+        w = _sgi_width(grid["width"], row)
+        west = west0 + (num - base) * w
+        if not 100.5 <= west <= 109.6 or any(r == row and abs(x - west) < 0.5 * w for r, x in cols.values()):
+            return None
+        return row, west
+
+    if cols[lower][0] == cols[higher][0]:
+        return step_from(lower if num - lower <= higher - num else higher)
+    found = [f for f in (step_from(lower), step_from(higher)) if f is not None]
+    return found[0] if len(found) == 1 else None
+
+
+def sgi_sheet_bounds(num, *, catalogue_path=None):
+    """[w, s, e, n] of SGI 1:100,000 sheet `num`: the catalogue's own, or worked out from the sheet grid.
+
+    Returns (bounds, inferred) or (None, False).
+    """
+    sheets_by_num, _, grid = _sgi_vicinity_index(catalogue_path)
+    if num in sheets_by_num:
+        return sheets_by_num[num]["bounds"], False
+    found = _sgi_infer(num, grid)
+    if found is None:
+        return None, False
+    row, west = found
+    width = _sgi_width(grid["width"], row)
+    north = SGI_NORTH0 - row * SGI_ROW_H
+    return [round(west, 4), round(north - SGI_ROW_H, 4), round(west + width, 4), round(north, 4)], True
+
+
+def builtin_places(query, limit=8):
+    """Places the app knows without any downloaded records: wartime towns and the SGI sheet names.
+
+    Each is {"title", "lon", "lat", "bounds", "source"}; matched on accent-folded words, so "tho xuan" or
+    "dien bien" work on a new profile."""
+    fq = _fold_place(query)
+    if len(fq) < 3:
+        return []
+    out, seen = [], set()
+    for name, (bounds, label) in _FIRST_INDOCHINA_PLACES.items():
+        if fq in name and label not in seen:
+            seen.add(label)
+            out.append({"title": label, "bounds": bounds, "source": "town"})
+    _, sheet_places, _ = _sgi_vicinity_index()
+    for pname, bounds, label, _sid in sheet_places:
+        if fq in pname and label not in seen:
+            seen.add(label)
+            out.append({"title": f"{label} (French 1:100,000 sheet)", "bounds": bounds, "source": "sgi100k"})
+    for p in out:
+        w, s, e, n = p["bounds"]
+        p["lon"], p["lat"] = round((w + e) / 2, 5), round((s + n) / 2, 5)
+    out.sort(key=lambda p: (not _fold_place(p["title"]).startswith(fq), len(p["title"])))
+    return out[:limit]
+
+
+_SHEET_REF_RE = re.compile(
+    r"\b(?:feuilles?|carte|sgi|sheet)\s*(?:n\s*[°ºo]?\.?\s*)?[:#]?\s*(\d{1,3})(?:\s*(?:bis|[EW]{1,2}))?\b", re.I
+)
 
 
 def resolve_shdai_vicinity(title, description="", *, catalogue_path=None):
     """Best-effort geographic vicinity resolver for un-georeferenced NAKALA `SHDAI` missions."""
     combined = f"{title or ''} {description or ''}"
-    sheets_by_num, sheet_places = _sgi_vicinity_index(catalogue_path)
+    sheets_by_num, sheet_places, _ = _sgi_vicinity_index(catalogue_path)
 
-    # 1. Explicit SGI 1:100k sheet references (feuille N / carte N)
-    sheet_nums = []
-    for m in re.finditer(r"\b(?:feuille|feuilles|carte|sgi|sheet)s?\s*[:#]?\s*(\d{1,3})\b", combined, re.I):
+    # 1. Explicit SGI 1:100k sheet references ("feuille 80", "Feuille N° 80 EW", "carte 71"), including sheets
+    #    the catalogue lacks, placed from the sheet grid.
+    found = []
+    for m in _SHEET_REF_RE.finditer(combined):
         num = int(m.group(1))
-        if num in sheets_by_num:
-            sheet_nums.append(num)
-    if sheet_nums:
-        bs = [sheets_by_num[n]["bounds"] for n in sheet_nums]
+        bounds, inferred = sgi_sheet_bounds(num, catalogue_path=catalogue_path)
+        if bounds:
+            found.append((num, bounds, inferred))
+    if found:
+        bs = [b for _, b, _ in found]
         merged = [min(b[0] for b in bs), min(b[1] for b in bs), max(b[2] for b in bs), max(b[3] for b in bs)]
-        ids = [i for n in sheet_nums for i in sheets_by_num[n]["ids"]]
+        labels, ids = [], []
+        for num, _, inferred in dict((f[0], f) for f in found).values():
+            if inferred:
+                labels.append(f"SGI sheet {num} (from the sheet grid)")
+            else:
+                labels.append(sheets_by_num[num]["label"])
+                ids += sheets_by_num[num]["ids"]
         return {
             "bounds": [round(v, 4) for v in merged],
-            "label": ", ".join(sheets_by_num[n]["label"] for n in dict.fromkeys(sheet_nums)),
+            "label": ", ".join(labels),
             "source": "sgi100k_sheet",
             "sheet_ids": ids,
         }
@@ -727,18 +881,33 @@ def search_nakala_aerials(query="", page=1, size=15, *, fetch_fn):
             sha1 = f.get("sha1") or ""
             if not sha1 or not fname.lower().endswith((".jpg", ".jpeg", ".tif", ".tiff", ".png")):
                 continue
+            size = int(f.get("size") or 0)
+            full_url = f"https://api.nakala.fr/data/{doi}/{sha1}"
+            is_plot = "__PLOT" in fname.upper() or "__TAPE" in fname.upper()
+            frame_no = re.search(r"__(\d{3,5})__", fname)
             entry = {
                 "name": fname,
+                "label": (
+                    ("Flight index" if "__PLOT" in fname.upper() else "Film label")
+                    if is_plot
+                    else (f"Frame {int(frame_no.group(1))}" if frame_no else fname.rsplit(".", 1)[0][-16:])
+                ),
                 "sha1": sha1,
-                "bytes": f.get("size") or 0,
-                "preview_url": f"https://api.nakala.fr/iiif/{doi}/{sha1}/full/,900/0/default.jpg",
-                "full_url": f"https://api.nakala.fr/data/{doi}/{sha1}",
-                "iiif_info": f"https://api.nakala.fr/iiif/{doi}/{sha1}/info.json",
+                "bytes": size,
+                # NAKALA's IIIF server fails (HTTP 500) on the flight-index cards; they are small JPEGs, so the
+                # card itself is the preview.
+                "preview_url": (
+                    full_url
+                    if is_plot and 0 < size <= 4_000_000
+                    else f"https://api.nakala.fr/iiif/{doi}/{sha1}/full/,900/0/default.jpg"
+                ),
+                "full_url": full_url,
             }
-            if "__PLOT" in fname.upper() or "__TAPE" in fname.upper():
+            if is_plot:
                 plots.append(entry)
             else:
                 frames.append(entry)
+        frames.sort(key=lambda e: e["name"])
         title = titles[0] if titles else doi
         desc = descs[-1] if descs else ""
         vicinity = resolve_shdai_vicinity(title, desc)
@@ -756,6 +925,7 @@ def search_nakala_aerials(query="", page=1, size=15, *, fetch_fn):
                 "bounds": vicinity["bounds"] if vicinity else None,
                 "plots": plots,
                 "sample_frames": frames[:24],
+                "frames": frames,
             }
         )
     return {"total": data.get("totalResults", len(missions)), "page": page, "missions": missions}

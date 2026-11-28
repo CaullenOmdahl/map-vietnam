@@ -653,6 +653,7 @@ class HubClient:
         confidence_threshold=0.80,
         max_points=12,
         scan_target_size=None,
+        kind="photo",
     ):
         """Send compressed scan & reference viewport images to Hub `/hub/v1/auto-gcp`."""
         url, key = self.credentials()
@@ -664,6 +665,7 @@ class HubClient:
             "ref_bounds": [float(v) for v in ref_bounds],
             "confidence_threshold": float(confidence_threshold),
             "max_points": int(max_points),
+            "kind": "map" if kind == "map" else "photo",
         }
         if scan_target_size:
             body["scan_target_size"] = [int(scan_target_size[0]), int(scan_target_size[1])]

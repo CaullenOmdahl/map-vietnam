@@ -2773,7 +2773,9 @@ function libModel() {
     words, kinds, kind, sort, shown,
     adding: S.lib.maps.filter(m => m.state in rank).sort((a, b) => rank[a.state] - rank[b.state]), // wherever they are
     installed: libGroup(shown.filter(m => m.state === "installed").sort(order)),
-    available: libGroup(shown.filter(m => m.state === "available").sort(order)),
+    // A map being added keeps its row where it was (with its progress ring), so the rows around it do not jump
+    // while someone is clicking Add down the list.
+    available: libGroup(shown.filter(m => m.state === "available" || LIB_BUSY.has(m.state)).sort(order)),
   };
 }
 // Rows from maps in order: a map alone, or the editions of one sheet together (newest first) at the place of the
@@ -2948,7 +2950,7 @@ VIEWS.library = v => {
   const list = (title, items) => items.length ? `<h3 class="sub-head">${title}</h3>${rows(items)}` : "";
   // "Add all": the newest edition of each sheet listed. A quiet button for a few maps; above BULK_ASK it asks first;
   // above BULK_MAX it asks to zoom in.
-  const av = md.available.map(r => r.group ? r.maps.find(m => m.state === "available") : r), avBytes = av.reduce((a, m) => a + (m.bytes || 0), 0);
+  const av = md.available.map(r => r.group ? r.maps.find(m => m.state === "available") : r).filter(m => m && m.state === "available"), avBytes = av.reduce((a, m) => a + (m.bytes || 0), 0);
   let bulk = "";
   if (av.length > BULK_MAX) bulk = "";
   else if (v.confirm === "bulk") bulk = `<div class="confirm-box calm" role="alertdialog" aria-label="Add ${av.length} maps">
@@ -2957,8 +2959,10 @@ VIEWS.library = v => {
   else if (av.length >= 2) bulk = `<button class="btn lib-bulk" data-act="libAddAll">${icon.plus}<span>Add all ${av.length} maps ${typed ? "listed" : "here"}</span><span class="muted">${fmtMB(avBytes)}</span></button>`;
   const used = S.lib.maps.filter(m => m.state === "installed").reduce((a, m) => a + (m.disk_bytes || 0), 0);
   const chip = (k, label, count) => `<button data-act="libKind" data-s="${k}" aria-pressed="${md.kind === k}">${esc(label)}${count != null ? ` <span class="n">${fmtInt(count)}</span>` : ""}</button>`;
-  // The filter, the scale chips and the sort come first and stay put; the maps on their way follow under one status
-  // line (it is their heading), then the ones that failed, then the rest.
+  // The filter, the scale chips and the sort come first and stay put; the maps that failed follow, then the rest.
+  // Maps on their way stay in their rows; their status line sticks to the bottom of the card, where appearing does
+  // not push anything down, with rows only for maps being added somewhere off screen.
+  const shownIds = new Set(md.shown.map(m => m.id)), busyElsewhere = busy.filter(m => !shownIds.has(m.id));
   return `${headHTML("Old maps", `<span>${esc(sub)}</span>`)}
     ${legacyHTML()}
     <div class="lib-tools">
@@ -2971,9 +2975,6 @@ VIEWS.library = v => {
         ${LIB_SORTS.map(([k, label]) => `<button data-act="libSort" data-s="${k}" aria-pressed="${md.sort === k}">${k === "here" && typed ? "Nearest" : label}</button>`).join("")}</div></div>` : ""}
       ${outlinesSeg()}</div>
     </div>
-    ${busy.length ? `<div class="lib-status"><span class="spin" aria-hidden="true"></span>
-      <span class="grow"><b>Adding ${busy.length} map${busy.length === 1 ? "" : "s"}</b><span class="small-t muted" data-lib-left>${esc(leftText())}</span></span>
-      ${busy.length > 1 ? `<button class="btn small" data-act="libStopAll">Stop all</button>` : ""}</div>${rows(busy)}` : ""}
     ${list("Could not be added", failed)}
     ${list("On this computer", installed)}
     ${available.length ? `<h3 class="sub-head">${typed ? "Can be added" : "Available here"}</h3>${bulk}${rows(available)}` : ""}
@@ -2981,7 +2982,10 @@ VIEWS.library = v => {
     ${hidden > 0 ? `<p class="small-t muted lib-bulk-note">${fmtInt(hidden)} more ${typed ? "match" : "cover this view"}. Zoom in, pick a scale or type a place to narrow the list.</p>` : ""}
     ${S.lib.loaded && !n && !S.lib.err && typed ? `<p class="muted">Check the spelling, or <button class="linkish" data-act="libClear">clear the filter</button> to see the maps on screen.</p>` : ""}
     ${S.lib.loaded && !n && !S.lib.err && !typed ? `<p class="muted">Move the map over Vietnam, or type a place above, to find old maps.</p>` : ""}
-    <p class="foot-note">Maps come from public archives and stay on this computer. Nothing downloads until you add it.${used ? ` Old maps use ${fmtMB(used)} here.` : ""}</p>`;
+    <p class="foot-note">Maps come from public archives and stay on this computer. Nothing downloads until you add it.${used ? ` Old maps use ${fmtMB(used)} here.` : ""}</p>
+    ${busy.length ? `<div class="lib-busy-bar">${busyElsewhere.length ? rows(busyElsewhere) : ""}<div class="lib-status"><span class="spin" aria-hidden="true"></span>
+      <span class="grow"><b>Adding ${busy.length} map${busy.length === 1 ? "" : "s"}</b><span class="small-t muted" data-lib-left>${esc(leftText())}</span></span>
+      ${busy.length > 1 ? `<button class="btn small" data-act="libStopAll">Stop all</button>` : ""}</div></div>` : ""}`;
 };
 let libQTimer = null;
 VIEWS.library.after = () => {
@@ -3850,9 +3854,10 @@ async function runSearch(pickFirst = false) {
     if (req !== qReq) return;
     const ft = fold(text);
     for (const it of raw) {
-      if (it.type === "gridref") { it.group = "grid"; continue; }
+      if (it.type === "gridref" || it.type === "coord") { it.group = "grid"; continue; }
       it.distance_km ??= distBearing([c.lng, c.lat], [it.lon, it.lat]).d / 1000;
       it.dir = compass(distBearing([c.lng, c.lat], [it.lon, it.lat]).b);
+      if (it.type === "place") { it.group = "place"; it.score = it.distance_km; continue; }
       const nameHit = fold(cleanTitle(it.title)).includes(ft);
       it.group = it.kind !== "placename" ? "rec" : nameHit ? "place" : "district";
       it.score = it.distance_km; // strictly nearest first within each group, as the distances on each row say
@@ -3870,6 +3875,11 @@ async function runSearch(pickFirst = false) {
       if (it.type === "gridref") { html += `<li role="option" id="res${i}" data-i="${i}"><span class="r-ico" style="background:#d97706">${icon.grid}</span>
         <div class="r-main"><div class="r-title mono">${esc(text.toUpperCase())}</div><div class="r-meta">Grid square · Indian 1960 (wartime map datum)</div></div>
         <span class="r-dist">${esc(fmtKm(it.distance_km))}</span></li>`; return; }
+      if (it.type === "coord") { html += `<li role="option" id="res${i}" data-i="${i}"><span class="r-ico" style="background:#d97706">${icon.pin}</span>
+        <div class="r-main"><div class="r-title mono">${esc(it.label)}</div><div class="r-meta">Latitude, longitude · WGS84</div></div></li>`; return; }
+      if (it.type === "place") { html += `<li role="option" id="res${i}" data-i="${i}"><span class="r-ico" style="background:var(--accent)">${icon.map}</span>
+        <div class="r-main"><div class="r-title">${esc(it.title)}</div><div class="r-meta">${it.source === "sgi100k" ? "Area of a French map sheet" : "Town"} · known without downloads</div></div>
+        <span class="r-dist">${esc(fmtKm(it.distance_km))}<span class="r-dir">${esc(it.dir || "")}</span></span></li>`; return; }
       const k = KINDS[it.kind] || KINDS.other;
       const ctx = it.context || "";
       const meta = [kindOne(it), ctx, it.date_start ? fmtDay(it.date_start) : ""].filter(Boolean).join(" · ");
@@ -3901,9 +3911,17 @@ function closeResults(clearItems = true) {
 }
 async function pickResult(it) {
   closeResults(); q.blur(); $("#qCancel").hidden = true;
-  if (it.type !== "gridref") q.value = cleanTitle(it.title); // like Apple Maps: the box shows what's open
+  if (it.type === "place") q.value = it.title;
+  else if (it.type === "coord") q.value = it.label;
+  else if (it.type !== "gridref") q.value = cleanTitle(it.title); // like Apple Maps: the box shows what's open
   if (!isDesk()) setSheet("half");
   if (it.type === "gridref") return openGridRef(q.value.trim());
+  if (it.type === "coord") { flyToTarget(it.lon, it.lat, 0); return openSpot(it.lon, it.lat); }
+  if (it.type === "place") {
+    const [w, s, e, n] = it.bounds;
+    primary().fitBounds([[w, s], [e, n]], { padding: mapPadding(), maxZoom: 13, duration: reduceMotion ? 0 : 700 });
+    return;
+  }
   openEvidence(it.id, { ...it, title: it.title }, { fly: true });
 }
 
@@ -4930,13 +4948,26 @@ ACTIONS.buildDem = async el => {
   } catch (e) { S.aerial.err = e.message; render(); }
   finally { if (el.isConnected) { el.disabled = false; el.textContent = prev; } }
 };
+ACTIONS.aerAllFrames = el => {
+  const doi = el.dataset.doi; if (!doi) return;
+  S.aerial.allFrames ??= new Set();
+  if (S.aerial.allFrames.has(doi)) S.aerial.allFrames.delete(doi); else S.aerial.allFrames.add(doi);
+  rerenderKeepingFocus();
+};
+ACTIONS.aerGoArea = el => {
+  let b = null;
+  try { b = JSON.parse(el.dataset.bounds || "null"); } catch { b = null; }
+  if (!Array.isArray(b) || b.length !== 4) return;
+  if (!isDesk()) setSheet("peek");
+  primary().fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: mapPadding(), maxZoom: 13, duration: reduceMotion ? 0 : 700 });
+};
 ACTIONS.importAerial = async el => {
   const url = el.dataset.url, title = el.dataset.title || "Historical aerial", year = el.dataset.year || "";
   if (!url || el.disabled) return;
   let gcps = null, bounds = null;
   if (el.dataset.gcps) { try { gcps = JSON.parse(el.dataset.gcps); } catch { gcps = null; } }
   if (el.dataset.bounds) { try { bounds = JSON.parse(el.dataset.bounds); } catch { bounds = null; } }
-  const body = { url, title, year, gcps, bounds, source_width: +el.dataset.sw || undefined, source_height: +el.dataset.sh || undefined };
+  const body = { url, title, year, gcps, bounds, kind: el.dataset.kind === "map" ? "map" : "photo", source_width: +el.dataset.sw || undefined, source_height: +el.dataset.sh || undefined };
   const prev = el.textContent; el.disabled = true; el.textContent = "Importing…";
   try {
     const r = await api("/api/aerial/import", { method: "POST", body });
@@ -5009,7 +5040,7 @@ document.addEventListener("click", e => {
 async function runAerialSearch() {
   const tab = S.aerial.tab, b = viewBounds() || [105.4, 10.2, 105.9, 10.7];
   const bbox = b.map(v => v.toFixed(3)).join(",");
-  S.aerial.loading = true; S.aerial.err = ""; render();
+  S.aerial.loading = true; S.aerial.err = ""; S.aerial.allFrames = new Set(); render();
   try {
     if (tab === "nakala") S.aerial.res = await api(`/api/aerial/nakala?q=${encodeURIComponent(S.aerial.q || "")}&size=10`);
     else if (tab === "usgs") S.aerial.res = await api(`/api/aerial/usgs?bbox=${bbox}&dataset=${encodeURIComponent(S.aerial.usgsDs || "corona")}`);
@@ -5088,23 +5119,27 @@ VIEWS.aerial = () => {
         (ms.length ? ms.map(m => {
           const yr = (m.date || "").slice(0, 4);
           const bStr = m.bounds ? JSON.stringify(m.bounds) : "";
-          const plot0 = (m.plots || [])[0];
-          const thumbs = [...(m.plots || []).map(p => ({ ...p, isPlot: true })), ...(m.sample_frames || []).slice(0, 8)];
+          const plot0 = (m.plots || []).find(p => /__PLOT/i.test(p.name)) || (m.plots || [])[0];
+          const all = m.frames || m.sample_frames || [], open = S.aerial.allFrames?.has(m.doi);
+          const thumbs = [...(m.plots || []).map(p => ({ ...p, isPlot: true })), ...(open ? all : all.slice(0, 8))];
+          const more = all.length > 8 ? `<button class="btn small" data-act="aerAllFrames" data-doi="${esc(m.doi)}" aria-expanded="${!!open}">${open ? "Show fewer frames" : `Show all ${fmtInt(all.length)} frames`}</button>` : "";
           return `<div class="group" style="margin-top:10px"><div class="inner">
             <div class="t" style="font-weight:600">${esc(m.title)}</div>
             <div class="small-t muted">${esc([m.date || "1948–56", m.squadron, `${m.frame_count} frames`, m.licence].filter(Boolean).join(" · "))}
               ${safeUrl(m.source_url) ? ` · <a href="${esc(m.source_url)}" target="_blank" rel="noopener">NAKALA DOI</a>` : ""}</div>
             ${m.vicinity || plot0 ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:4px">
-              ${m.vicinity ? `<span class="hub-badge">Vicinity: ${esc(m.vicinity.label)}</span>` : ""}
-              ${plot0 && safeUrl(plot0.full_url) ? `<button class="btn small" data-act="importAerial" data-url="${esc(plot0.full_url)}" data-title="${esc(m.title + " FLIGHT INDEX")}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}">Place flight-index card first</button>` : ""}
+              ${m.vicinity ? `<span class="hub-badge" title="Worked out from the mission's title and description">Near ${esc(m.vicinity.label)}</span>
+                <button class="btn small" data-act="aerGoArea" data-bounds="${esc(bStr)}">Go to area</button>` : ""}
+              ${plot0 && safeUrl(plot0.full_url) ? `<button class="btn small" data-act="importAerial" data-url="${esc(plot0.full_url)}" data-title="${esc(m.title + " FLIGHT INDEX")}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}" data-kind="map">Place flight-index card first</button>` : ""}
             </div>` : ""}
             ${thumbs.length ? `<div class="aer-grid">${thumbs.map(f => `<div class="aer-card">
-              <div class="aer-thumb">${safeUrl(f.preview_url) ? `<img loading="lazy" src="${esc(f.preview_url)}" alt="${esc(f.name)}">` : ""}</div>
-              <div class="aer-cap"><span class="mono" title="${esc(f.isPlot ? "Flight-index card" : f.name)}">${esc(f.isPlot ? "Flight index" : f.name.slice(-14))}</span>
+              <div class="aer-thumb">${safeUrl(f.preview_url) ? `<img loading="lazy" src="${esc(f.preview_url)}" alt="${esc(f.label || f.name)}">` : ""}</div>
+              <div class="aer-cap"><span class="mono" title="${esc(f.name)}">${esc(f.label || (f.isPlot ? "Flight index" : f.name.slice(-14)))}</span>
                 <div class="aer-acts">
-                  <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(f.preview_url)}" data-full="${esc(f.full_url)}" data-title="${esc(m.title + " — " + f.name)}" data-year="${esc(yr)}" data-src="${esc(m.source_url)}" data-bounds="${esc(bStr)}">View</button>
-                  <button class="linkish small-t" data-act="importAerial" data-url="${esc(f.full_url)}" data-title="${esc(m.title + " " + f.name)}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}">Place</button>
+                  <button class="linkish small-t" data-act="aerPreview" data-preview="${esc(f.preview_url)}" data-full="${esc(f.full_url)}" data-title="${esc(m.title + " — " + (f.label || f.name))}" data-year="${esc(yr)}" data-src="${esc(m.source_url)}" data-bounds="${esc(bStr)}">View</button>
+                  <button class="linkish small-t" data-act="importAerial" data-url="${esc(f.full_url)}" data-title="${esc(m.title + " " + f.name)}" data-year="${esc(yr)}" data-bounds="${esc(bStr)}"${f.isPlot ? ` data-kind="map"` : ""}>Place</button>
                 </div></div></div>`).join("")}</div>` : ""}
+            ${more ? `<div class="row" style="margin-top:8px">${more}</div>` : ""}
           </div></div>`;
         }).join("") : `<p class="muted">No SHD missions matched that query.</p>`);
     } else if (tab === "usgs" && res) {
@@ -5349,7 +5384,12 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   const w = entry.image.width, h = entry.image.height;
   const url = entry.preview_url || `/api/library/custom/${encodeURIComponent(entry.id)}/preview`;
   const refOpts = plRefLayers(entry.id);
-  pl = { entry, mode, w, h, k: PL_SCALE / Math.max(w, h), url, refId: "today", refOpacity: 0.85, refBase: mode === "custom" ? "sat" : S.base, warpMode: entry.warp_mode || "auto",
+  // A printed map (or a flight-index card) is drawn north-up and flat: it is matched upright, against an old sheet
+  // or the street map. An aerial photo can face any way and is matched against satellite imagery.
+  const subject = entry.subject === "map" || entry.subject === "photo" ? entry.subject
+    : isAlign || /\b(plot|flight index|tape|feuille|carte|sheet|map)\b/i.test(entry.title || "") ? "map" : "photo";
+  pl = { entry, mode, w, h, k: PL_SCALE / Math.max(w, h), url, refId: "today", refOpacity: 0.85, subject,
+    refBase: subject === "photo" ? "sat" : S.base, warpMode: entry.warp_mode || "auto",
     autoMatch: null, autoBusy: false,
     pairs: (entry.points || []).map(([col, row, lon, lat]) => ({ col, row, lon, lat })), pending: null, opacity: 0.6, marks: [], todayReady: false, opener, discard: false };
   const dark = isDark();
@@ -5391,6 +5431,7 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
         ${isAlign ? `<div class="field"><span>Adjusting</span><div class="small-t muted" id="plMapInfo">${esc(entry.title)}${entry.year ? ` (${esc(entry.year)})` : ""}${entry.adjusted ? " · currently adjusted" : ""}</div></div>`
           : `<label class="field"><span>Name</span><input type="text" id="plName" maxlength="120" value="${esc(entry.title)}"></label>
              <label class="field"><span>Year (optional)</span><input type="number" id="plYear" min="1800" max="2100" inputmode="numeric" placeholder="e.g. 1968" value="${entry.year ? esc(entry.year) : ""}"></label>`}
+        <label class="field"><span>This picture is</span><select id="plSubject" aria-label="What the picture is"><option value="photo"${subject === "photo" ? " selected" : ""}>An aerial photo</option><option value="map"${subject === "map" ? " selected" : ""}>A printed map</option></select></label>
         <label class="field"><span>Warp</span><select id="plWarp" aria-label="Warp model"><option value="auto"${pl.warpMode === "auto" ? " selected" : ""}>Auto (Affine / TPS)</option><option value="homography"${pl.warpMode === "homography" ? " selected" : ""}>Oblique / Perspective (4+ pts)</option><option value="tps"${pl.warpMode === "tps" ? " selected" : ""}>Thin Plate Spline (4+ pts)</option></select></label>
         <label class="field pl-op"><span>See-through <span id="plOpVal" class="mono">60%</span></span><input type="range" id="plOp" min="10" max="100" value="60" disabled aria-label="Opacity of your map over reference map"></label>
       </div>
@@ -5419,10 +5460,21 @@ function openPlacement(entry, openerOrOpts = document.activeElement) {
   pl.today.addControl(ctl(), "top-right");
   pl.today.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
   pl.today.on("click", e => plClickToday(e.lngLat));
-  pl.today.on("load", () => { pl.todayReady = true; setBasePaint(pl.today, pl.refBase); plDrawSites(); plDraw(); });
+  pl.today.on("load", () => {
+    pl.todayReady = true; setBasePaint(pl.today, pl.refBase); plDrawSites(); plDraw();
+    // A map is best matched against an old sheet of the same area, when one is on this computer or the Hub.
+    if (pl.subject === "map" && b) {
+      const sheet = refOpts.find(l => Array.isArray(l.bounds) && boxesOverlap(l.bounds, b) && !String(l.id).startsWith("custom_") && l.encoding !== "terrarium");
+      if (sheet) { $("#plRefSel").value = sheet.id; plSetRef(sheet.id); }
+    }
+  });
   [pl.scan, pl.today].forEach(m => { m.touchZoomRotate.disableRotation(); m.keyboard.disableRotation?.(); wireTrackpad(m, false); });
   const b = entry.bounds || (pl.pairs.length ? pl.pairs.reduce((a, p) => [Math.min(a[0], p.lon), Math.min(a[1], p.lat), Math.max(a[2], p.lon), Math.max(a[3], p.lat)], [180, 90, -180, -90]) : null);
   if (b && b[2] > b[0] && b[3] > b[1]) pl.today.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, duration: 0, maxZoom: 15 });
+  $("#plSubject").onchange = e => {
+    pl.subject = e.target.value === "map" ? "map" : "photo";
+    if (pl.subject === "map" && pl.warpMode === "homography") { pl.warpMode = "auto"; $("#plWarp").value = "auto"; plRender(); }
+  };
   $("#plUndo").onclick = () => { if (pl.pending) pl.pending = null; else pl.pairs.pop(); pl.autoMatch = null; plRender(); };
   // Clear and Reset each ask first in a box beside them; its Cancel puts focus back on the button.
   const ask = (box, from, on) => { $$("#place .pl-tray .confirm-box").forEach(b => { if (b.id !== "plDiscard") b.hidden = true; }); $(box).hidden = !on; if (on) $(box).querySelector(".solid").focus(); else $(from)?.focus(); };
@@ -5516,6 +5568,13 @@ function plPin(n, pending = false, conf = null) {
   if (conf != null) el.title = `Match confidence: ${Math.round(conf * 100)}%`;
   return el;
 }
+function plFitNote(n, fit) {
+  // A perspective warp passes exactly through any 4 spots (a plain one through any 3), so the leftover error
+  // only means something once there are more spots than the warp needs.
+  const exact = pl.warpMode === "homography" ? 4 : 3;
+  if (n <= exact) return `${n} spots always fit exactly, so add ${n === exact ? "another" : "more"} to check the fit. `;
+  return `Spots are off by about ${fit.rms < 10 ? "under 10" : Math.round(fit.rms)} m on average. `;
+}
 function plFit() {
   if (!pl) return null;
   if (pl.warpMode === "homography" && pl.pairs.length >= 4) return fitHomography(pl.pairs, pl.w, pl.h) || fitAffine(pl.pairs, pl.w, pl.h);
@@ -5581,14 +5640,14 @@ async function plRunAutoMatch() {
     const thresh = autoGcpThresh() / 100;
     const res = await api("/api/auto-gcp", {
       method: "POST",
-      body: { id: cur.entry.id, mode: cur.mode, ref_b64, ref_bounds, confidence_threshold: thresh, max_points: 12 },
+      body: { id: cur.entry.id, mode: cur.mode, ref_b64, ref_bounds, confidence_threshold: thresh, max_points: 12, kind: cur.subject },
     });
     if (pl !== cur) return;
     pl.autoMatch = res;
     if (res.points?.length) {
       pl.pairs = res.points.map(pt => ({ col: pt.col, row: pt.row, lon: pt.lon, lat: pt.lat, conf: pt.confidence }));
       pl.pending = null;
-      if (pl.warpMode === "auto" && res.recommended_warp === "homography") {
+      if (pl.subject === "photo" && pl.warpMode === "auto" && res.recommended_warp === "homography") {
         pl.warpMode = "homography";
         const wEl = $("#plWarp"); if (wEl) wEl.value = "homography";
       }
@@ -5637,7 +5696,7 @@ function plRender() {
   if (pl.pending) step = `<b>Spot ${n + 1}, step 2.</b> Now click the same spot on the reference map.`;
   else if (n < minPts) step = `<b>1.</b> Click a spot on your map. <b>2.</b> Click the same spot on the reference map (or click <b>Auto-match</b>). ${n ? `${n} matched, ${minPts} needed.` : "Use corners, road crossings or trees."}`;
   else if (!fit) step = "Those spots are in a line or very close together. Add one further away from the others.";
-  else step = `Your map now lies over the reference map. Check the roads and rivers line up; drag the slider to compare. ${n >= 4 ? `Spots are off by about ${fit.rms < 10 ? "under 10" : Math.round(fit.rms)} m on average. ` : ""}Add more spots to improve it, then ${pl.mode === "align" ? "save the alignment" : "place the map"}.`;
+  else step = `Your map now lies over the reference map. Check the roads and rivers line up; drag the slider to compare. ${plFitNote(n, fit)}Add more spots to improve it, then ${pl.mode === "align" ? "save the alignment" : "place the map"}.`;
   $("#plStep").innerHTML = step;
   $("#plScanPane").classList.toggle("want", !pl.pending);
   $("#plTodayPane").classList.toggle("want", !!pl.pending);

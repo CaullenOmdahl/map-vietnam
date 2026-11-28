@@ -498,6 +498,29 @@ def _quadrants(pts, w, h):
     return len({(0 if x < w / 2.0 else 1) + (0 if y < h / 2.0 else 2) for x, y in pts})
 
 
+def _hull_fraction(pts, w, h):
+    """Area of the convex hull of `pts` as a fraction of the w x h picture (0 when fewer than 3 points)."""
+    p = sorted({(float(x), float(y)) for x, y in pts})
+    if len(p) < 3 or w <= 0 or h <= 0:
+        return 0.0
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    lower, upper = [], []
+    for q in p:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], q) <= 0:
+            lower.pop()
+        lower.append(q)
+    for q in reversed(p):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], q) <= 0:
+            upper.pop()
+        upper.append(q)
+    hull = lower[:-1] + upper[:-1]
+    area = 0.5 * abs(sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(hull, hull[1:] + hull[:1], strict=True)))
+    return min(1.0, area / float(w * h))
+
+
 def _search_hypotheses(matcher, scan_gray, ref_gray, fractions, *, inlier_px, rotations=ROTATIONS):
     """Try each 90-degree heading x scan scale; return the best RANSAC hypothesis.
 
@@ -551,8 +574,10 @@ def _search_hypotheses(matcher, scan_gray, ref_gray, fractions, *, inlier_px, ro
     return best
 
 
-def _confidence(n_inliers, total_matches, quadrants_covered, rmse_px, inlier_px):
-    """4-factor score in [0, 1]: inlier count, inlier ratio, quadrant spread, and RMSE."""
+def _confidence(n_inliers, total_matches, quadrants_covered, rmse_px, inlier_px, hull_frac=None):
+    """Score in [0, 1] from inlier count, inlier ratio, quadrant spread and RMSE, cut down when the matched
+    points cover little of the picture: points bunched on one corner (or on a printed label) fit any warp there
+    and say nothing about the rest, so they must not read as a sure match."""
     s_inliers = min(1.0, n_inliers / 12.0)
     s_ratio = min(1.0, (n_inliers / max(total_matches, 1)) / 0.45)
     s_spread = quadrants_covered / 4.0
@@ -562,7 +587,44 @@ def _confidence(n_inliers, total_matches, quadrants_covered, rmse_px, inlier_px)
     raw_conf = 0.32 * s_inliers + 0.18 * s_ratio + 0.28 * s_spread + 0.22 * s_rmse
     if n_inliers < 5:
         raw_conf = min(raw_conf, 0.35)
+    if quadrants_covered <= 2:
+        raw_conf = min(raw_conf, 0.5)
+    if hull_frac is not None:
+        # Full weight once the points span 30% of the picture; down to 55% for a single cluster.
+        raw_conf *= 0.55 + 0.45 * min(1.0, hull_frac / 0.3)
     return round(max(0.0, min(1.0, raw_conf)), 3)
+
+
+def _warp_shape_problem(corners, scan_w, scan_h, is_map):
+    """Why the matched warp cannot be right, or None. `corners` are the scan's TL, TR, BR, BL in reference pixels.
+
+    Vertical survey frames and printed maps keep their shape: square corners, near-equal opposite sides and the
+    picture's own aspect. A handful of chance matches can still fit a homography that folds or stretches the
+    frame across the map, so a match that does that is rejected however many points agree with it.
+    """
+    q = np.asarray(corners, dtype=np.float64)
+    edges = np.roll(q, -1, axis=0) - q
+    lengths = np.linalg.norm(edges, axis=1)
+    if lengths.min() < 1e-6:
+        return "folded"
+    cross = edges[:, 0] * np.roll(edges, -1, axis=0)[:, 1] - edges[:, 1] * np.roll(edges, -1, axis=0)[:, 0]
+    if not (np.all(cross > 0) or np.all(cross < 0)):
+        return "folded"
+    max_side_ratio, max_angle_off = (1.15, 12.0) if is_map else (1.35, 20.0)
+    if max(lengths[0], lengths[2]) / min(lengths[0], lengths[2]) > max_side_ratio:
+        return "skewed"
+    if max(lengths[1], lengths[3]) / min(lengths[1], lengths[3]) > max_side_ratio:
+        return "skewed"
+    for i in range(4):
+        a, b = -edges[i - 1], edges[i]
+        cos = float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+        if abs(math.degrees(math.acos(max(-1.0, min(1.0, cos)))) - 90.0) > max_angle_off:
+            return "sheared"
+    aspect = ((lengths[0] + lengths[2]) / 2.0) / ((lengths[1] + lengths[3]) / 2.0)
+    want = scan_w / float(max(scan_h, 1))
+    if max(aspect / want, want / aspect) > 1.4:
+        return "stretched"
+    return None
 
 
 def _work_to_full(off, work_scale):
@@ -635,7 +697,9 @@ def match_pair(
     bh, bw = b_gray.shape
     quadrants = _quadrants(ps, bw, bh)
     rmse = math.sqrt(float(np.mean(errs**2)))
-    confidence = _confidence(int(mask.sum()), int(len(best["pts_s"])), quadrants, rmse, inlier_px)
+    confidence = _confidence(
+        int(mask.sum()), int(len(best["pts_s"])), quadrants, rmse, inlier_px, _hull_fraction(ps, bw, bh)
+    )
 
     T_a = _work_to_full(a_off, a_scale)
     T_b = _work_to_full(b_off, b_scale)
@@ -678,17 +742,24 @@ def match_and_score(
     min_inliers=5,
     inlier_px=6.5,
     scan_target_size=None,
+    kind="photo",
 ):
     """Detect and score GCP correspondences from `scan_bytes` onto `ref_bytes` (`ref_bounds=[w,s,e,n]`).
 
     Returns ranked points in full-resolution scan pixels (using `scan_target_size=(W, H)` when
     a downscaled preview was sent) + WGS84 lon/lat (exact Web Mercator inverse from `ref_bounds`),
     overall `confidence` in `[0.0, 1.0]`, and `meets_threshold` for HITL gating.
+
+    `kind="map"` is for printed maps and flight-index cards: they are drawn north-up and flat, so only the
+    upright heading is tried and a perspective warp is never recommended. `kind="photo"` (aerial frames) searches
+    all four flight headings.
     """
     if len(ref_bounds) != 4 or not (ref_bounds[0] < ref_bounds[2] and ref_bounds[1] < ref_bounds[3]):
         raise ValueError("ref_bounds must be [west, south, east, north] with west < east and south < north.")
     threshold = max(0.25, min(0.99, float(confidence_threshold)))
     max_points = max(4, min(32, int(max_points)))
+    is_map = str(kind or "photo").lower() == "map"
+    rotations = (0,) if is_map else ROTATIONS
 
     onnx = _onnx_session()
     work_side = ONNX_REF_SIDE if onnx else MAX_WORK_SIDE
@@ -708,12 +779,22 @@ def match_and_score(
     if onnx is not None:
         sess, backend = onnx
         best = _search_hypotheses(
-            lambda s, r: _match_onnx(sess, s, r), scan_gray, ref_gray, ONNX_SCAN_FRACTIONS, inlier_px=inlier_px
+            lambda s, r: _match_onnx(sess, s, r),
+            scan_gray,
+            ref_gray,
+            ONNX_SCAN_FRACTIONS,
+            inlier_px=inlier_px,
+            rotations=rotations,
         )
     else:
         backend = "numpy_local"
         best = _search_hypotheses(
-            lambda s, r: _match_numpy(s, r), scan_gray, ref_gray, NUMPY_SCAN_FRACTIONS, inlier_px=inlier_px
+            lambda s, r: _match_numpy(s, r),
+            scan_gray,
+            ref_gray,
+            NUMPY_SCAN_FRACTIONS,
+            inlier_px=inlier_px,
+            rotations=rotations,
         )
 
     if best is None:
@@ -816,7 +897,8 @@ def match_and_score(
 
     quadrants_covered = len({c["quadrant"] for c in candidates})
     rmse_px = math.sqrt(float(np.mean(errs[inlier_idxs] ** 2)))
-    confidence = _confidence(n_inliers, total_matches, quadrants_covered, rmse_px, inlier_px)
+    hull_frac = _hull_fraction(pts_s[inlier_idxs], work_scan_w, work_scan_h)
+    confidence = _confidence(n_inliers, total_matches, quadrants_covered, rmse_px, inlier_px, hull_frac)
 
     # Check if homography has significant projective perspective skew (ratio of bottom vs top width)
     top_l = _reproject(H, np.array([[0.0, 0.0]]))[0]
@@ -826,7 +908,35 @@ def match_and_score(
     w_top = float(np.linalg.norm(top_r - top_l))
     w_bot = float(np.linalg.norm(bot_r - bot_l))
     skew_ratio = max(w_top, w_bot) / max(1e-3, min(w_top, w_bot))
-    recommended_warp = "homography" if skew_ratio > 1.08 else ("tps" if len(picked) >= 8 else "auto")
+    shape_problem = _warp_shape_problem([top_l, top_r, bot_r, bot_l], work_scan_w, work_scan_h, is_map)
+    if shape_problem:
+        low_conf = round(min(confidence, 0.2), 3)
+        return {
+            "points": [],
+            "confidence": low_conf,
+            "confidence_pct": round(low_conf * 100.0, 1),
+            "meets_threshold": False,
+            "threshold": threshold,
+            "inliers": n_inliers,
+            "total_matches": total_matches,
+            "quadrants_covered": quadrants_covered,
+            "coverage": round(hull_frac, 3),
+            "kind": "map" if is_map else "photo",
+            "rmse_px": round(rmse_px, 2),
+            "backend": backend,
+            "search": search,
+            "recommended_warp": "auto",
+            "shape_problem": shape_problem,
+            "reason": (
+                f"The landmarks that matched would leave your {'map' if is_map else 'photo'} {shape_problem} out of shape, "
+                "so they are chance look-alikes. Zoom the reference map to roughly the area the picture covers, "
+                "or place a few spots by hand."
+            ),
+        }
+    if is_map:
+        recommended_warp = "tps" if len(picked) >= 8 else "auto"
+    else:
+        recommended_warp = "homography" if skew_ratio > 1.08 else ("tps" if len(picked) >= 8 else "auto")
 
     return {
         "points": picked,
@@ -837,6 +947,8 @@ def match_and_score(
         "inliers": n_inliers,
         "total_matches": total_matches,
         "quadrants_covered": quadrants_covered,
+        "coverage": round(hull_frac, 3),
+        "kind": "map" if is_map else "photo",
         "rmse_px": round(rmse_px, 2),
         "backend": backend,
         "search": search,

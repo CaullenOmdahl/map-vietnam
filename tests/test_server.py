@@ -780,11 +780,27 @@ def test_slim_evidence_reads_only_what_the_map_draws(base):
 
 
 def test_search_follows_changes_to_the_store_made_behind_its_back(base):
-    assert [h["title"] for h in call(f"{base}/api/search?q=saigon")] == ["Saigon"]
+    def records(q):  # built-in places (always there) are not records
+        return [h["title"] for h in call(f"{base}/api/search?q={q}") if h["type"] == "evidence"]
+
+    assert records("saigon") == ["Saigon"]
     db = store.connect(DB["path"])
     store.sync_source(db, "t", [])  # another process (the command line) removes every record
     db.close()
-    assert call(f"{base}/api/search?q=saigon") == []
+    assert records("saigon") == []
+
+
+def test_search_finds_coordinates_and_built_in_places_without_records(base):
+    # Decimal degrees, in either order, become a spot to fly to.
+    for q in ("19.94,%20105.50", "105.50%2019.94"):
+        (hit,) = call(f"{base}/api/search?q={q}")
+        assert hit["type"] == "coord" and (hit["lon"], hit["lat"]) == (105.5, 19.94)
+    # Wartime towns and French sheet names work before any place-name records are downloaded.
+    hits = call(f"{base}/api/search?q=dien%20bien")
+    places = [h for h in hits if h["type"] == "place"]
+    assert places and places[0]["title"] == "Điện Biên Phủ"
+    w, s, e, n = places[0]["bounds"]
+    assert w < places[0]["lon"] < e and s < places[0]["lat"] < n
 
 
 def status_of(url, method="GET", body=None, headers=None):

@@ -499,6 +499,7 @@ class HubHandler(BaseHTTPRequestHandler):
                     confidence_threshold=b.get("confidence_threshold", auto_gcp.DEFAULT_CONFIDENCE_THRESHOLD),
                     max_points=b.get("max_points", 12),
                     scan_target_size=b.get("scan_target_size"),
+                    kind=b.get("kind", "photo"),
                 )
                 return self.send_json(res)
 
