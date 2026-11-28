@@ -41,8 +41,8 @@
 // ================================================================ constants
 // Today's base maps (raster XYZ tiles, Web Mercator).
 const BASES = {
-  osm: { name: "Street map", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors', maxzoom: 19 },
-  sat: { name: "Satellite", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], attribution: "Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community", maxzoom: 19 },
+  osm: { name: "Street map", tiles: ["/base/osm/{z}/{x}/{y}"], attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors', maxzoom: 19 },
+  sat: { name: "Satellite", tiles: ["/base/sat/{z}/{x}/{y}"], attribution: "Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community", maxzoom: 19 },
 };
 // Each evidence kind gets its own colour and shape (shape paths are in a 24×24 box).
 const SHAPES = {
@@ -314,8 +314,8 @@ const isDark = () => { const t = document.documentElement.dataset.theme; return 
 function makeStyle() {
   return {
     version: 8,
-    glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
-    sources: Object.fromEntries(Object.entries(BASES).map(([k, b]) => [k, { type: "raster", tileSize: 256, tiles: b.tiles, attribution: b.attribution, maxzoom: b.maxzoom }])),
+    glyphs: "/fonts/{fontstack}/{range}.pbf",
+    sources: Object.fromEntries(Object.entries(BASES).map(([k, b]) => [k, { type: "raster", tileSize: 256, tiles: b.tiles, attribution: b.attribution, maxzoom: 19 }])),
     layers: Object.keys(BASES).map(k => ({ id: `base-${k}`, type: "raster", source: k, layout: { visibility: k === S.base ? "visible" : "none" } })),
   };
 }
@@ -3265,7 +3265,7 @@ ACTIONS.quit = async () => {
   prefetchStopAll();
   try { await api("/api/quit", { method: "POST", body: {} }); }
   catch (e) { toast("Could not quit: " + e.message, 5000); return; }
-  stopped = true; clearTimeout(recTimer); clearTimeout(libTimer);
+  stopped = true; clearTimeout(recTimer); clearTimeout(libTimer); clearTimeout(S.cache.timer);
   $("#gone").hidden = false;
   $("#goneTitle").focus();
 };
@@ -3813,14 +3813,36 @@ const customMaps = () => S.lib.maps.filter(m => m.custom);
 const sizeText = b => fmtMB(b) || "0 MB";
 // up: the upload in flight ({ name, loaded, total, xhr }); err: why the last one failed; disk: GET /api/settings.
 S.cm = { up: null, err: "", disk: null, diskErr: "" };
+const CACHE_LIMITS = [
+  [250 * 1024 * 1024, "250 MB"],
+  [500 * 1024 * 1024, "500 MB"],
+  [1024 ** 3, "1 GB"],
+  [2 * 1024 ** 3, "2 GB"],
+  [5 * 1024 ** 3, "5 GB"],
+  [10 * 1024 ** 3, "10 GB"],
+  [20 * 1024 ** 3, "20 GB"],
+];
+S.cache = { data: null, err: "", timer: null, basePick: "active", areaZ: 14, vnZ: 11, areaEst: null, vnEst: null, clearAsk: false };
 
+function cacheBases() {
+  if (S.cache.basePick === "both") return ["osm", "sat"];
+  if (S.cache.basePick === "osm" || S.cache.basePick === "sat") return [S.cache.basePick];
+  return [S.base];
+}
+function visibleBoundsBox() {
+  const b = primary()?.getBounds?.();
+  if (!b) return null;
+  const sw = b.getSouthWest(), ne = b.getNorthEast();
+  const w = Math.max(-180, sw.lng), s = Math.max(-85, sw.lat), e = Math.min(180, ne.lng), n = Math.min(85, ne.lat);
+  return e > w && n > s ? [w, s, e, n] : null;
+}
 function openSettings(sel = null) {
   const from = document.activeElement;
   closePopovers();
   show("settings", { sel, confirm: null, keyOpen: false });
   if (from && from !== document.body && !$("#panel").contains(from)) S.opener = from;
   focusCard();
-  loadLibrary(); loadSettings();
+  loadLibrary(); loadSettings(); loadCacheStatus();
   if (sel) reveal($(`#view [data-lib-row="${CSS.escape(sel)}"]`));
 }
 async function loadSettings() {
@@ -3829,12 +3851,116 @@ async function loadSettings() {
   const el = $("#setDisk");
   if (el && S.view.name === "settings") el.innerHTML = storageHTML();
 }
+async function loadCacheStatus() {
+  try {
+    S.cache.data = await api("/api/cache");
+    S.cache.err = "";
+  } catch (e) { S.cache.err = e.message; }
+  await refreshCacheEstimates();
+  scheduleCachePoll();
+  const el = $("#setCache");
+  if (el && S.view.name === "settings") { el.innerHTML = cacheSectionHTML(); wire(el); wireCacheControls(el); }
+}
+async function refreshCacheEstimates() {
+  const bases = cacheBases(), box = visibleBoundsBox();
+  try {
+    const [vn, area] = await Promise.all([
+      api("/api/cache/estimate", { method: "POST", body: { bases, bounds: "vietnam", min_z: 0, max_z: S.cache.vnZ } }),
+      box ? api("/api/cache/estimate", { method: "POST", body: { bases, bounds: box, min_z: 0, max_z: S.cache.areaZ } }) : Promise.resolve(null),
+    ]);
+    S.cache.vnEst = vn; S.cache.areaEst = area;
+  } catch { /* optional preview */ }
+}
+function scheduleCachePoll() {
+  clearTimeout(S.cache.timer);
+  if (S.cache.data?.job?.state !== "running" || S.view.name !== "settings" || stopped) return;
+  S.cache.timer = setTimeout(async () => {
+    try { S.cache.data = await api("/api/cache"); } catch { /* retry next tick */ }
+    if (S.view.name !== "settings") return;
+    const prog = $("#cacheProg");
+    if (S.cache.data?.job?.state === "running" && prog) {
+      prog.innerHTML = cacheJobHTML();
+      wire(prog);
+      scheduleCachePoll();
+    } else {
+      loadCacheStatus(); loadSettings();
+    }
+  }, 1200);
+}
+function cacheEstLine(est) {
+  if (!est) return "";
+  const mb = sizeText(est.estimated_bytes);
+  const warn = est.exceeds_tile_limit ? " · too many tiles" : est.exceeds_max_cache ? " · exceeds max cache size" : "";
+  return `${fmtInt(est.total_tiles)} tiles · ~${mb}${warn}`;
+}
+function cacheJobHTML() {
+  const j = S.cache.data?.job;
+  if (!j || j.state === "idle") return "";
+  if (j.state === "running") {
+    const pct = j.total ? Math.round(100 * j.done / j.total) : 0;
+    const extra = [j.skipped ? `${fmtInt(j.skipped)} cached` : "", j.failed ? `${fmtInt(j.failed)} failed` : "", j.bytes_added ? `+${sizeText(j.bytes_added)}` : ""].filter(Boolean).join(" · ");
+    return `<div class="lib-status" role="group" aria-label="Caching ${esc(j.label)}"><span class="spin" aria-hidden="true"></span>
+      <span class="grow"><b>Caching ${esc(j.label)}</b><span class="small-t muted">${fmtInt(j.done)} / ${fmtInt(j.total)} tiles (${pct}%)${extra ? " · " + esc(extra) : ""}</span>
+      <progress class="up-bar" max="${Math.max(1, j.total)}" value="${j.done}" aria-label="Cache download progress"></progress></span>
+      <button class="linkish small-t" data-act="cacheCancel">Stop</button></div>`;
+  }
+  const msg = j.state === "done" ? `Finished ${j.label}: ${fmtInt(j.done)} tiles (${sizeText(j.bytes_added)} new${j.failed ? `, ${j.failed} unavailable` : ""}).`
+    : j.state === "cancelled" ? `Stopped ${j.label} (${fmtInt(j.done)} / ${fmtInt(j.total)} checked).`
+    : `Failed ${j.label}: ${j.error || "network error"}`;
+  return `<p class="small-t ${j.state === "failed" ? "bad" : "muted"}">${esc(msg)}</p>`;
+}
+function cacheSectionHTML() {
+  const c = S.cache.data;
+  if (!c) return `<p class="small-t muted">${S.cache.err ? "Could not read offline cache: " + esc(S.cache.err) : "Checking…"}</p>`;
+  const by = c.by_base || {}, osm = by.osm || { tiles: 0, bytes: 0 }, sat = by.sat || { tiles: 0, bytes: 0 };
+  const running = c.job?.state === "running";
+  const areaWarn = S.cache.areaEst && (S.cache.areaEst.exceeds_max_cache || S.cache.areaEst.exceeds_tile_limit);
+  const vnWarn = S.cache.vnEst && (S.cache.vnEst.exceeds_max_cache || S.cache.vnEst.exceeds_tile_limit);
+  const seg = (label, inner) => `<div class="set-row"><span class="set-k">${label}</span><div class="seg" role="group" aria-label="${label}">${inner}</div></div>`;
+  return `<p class="small-t muted">MapLibre and visited base-map tiles are stored on this computer so the map still opens without internet.</p>
+    <div class="group">
+      ${seg("Cache as you browse", [[true, "On"], [false, "Off"]].map(([v, t]) => `<button data-act="cacheToggle" data-on="${v ? 1 : 0}" aria-pressed="${c.enabled === v}">${t}</button>`).join(""))}
+      <div class="set-row"><label class="set-k" for="cacheMaxSel">Maximum cache size</label>
+        <select id="cacheMaxSel" class="set-sel">${CACHE_LIMITS.map(([b, lbl]) => `<option value="${b}"${c.max_bytes === b ? " selected" : ""}>${lbl}</option>`).join("")}</select></div>
+      <div class="set-row"><span class="set-k">Stored now</span>
+        <span class="small-t muted">${esc(sizeText(c.used_bytes))} / ${esc(sizeText(c.max_bytes))} · Street ${fmtInt(osm.tiles)} · Satellite ${fmtInt(sat.tiles)}</span></div>
+      <div class="set-row"><span class="set-k">Base maps to save</span>
+        <select id="cacheBaseSel" class="set-sel">
+          <option value="active"${S.cache.basePick === "active" ? " selected" : ""}>Active (${esc(BASES[S.base].name)})</option>
+          <option value="osm"${S.cache.basePick === "osm" ? " selected" : ""}>Street map</option>
+          <option value="sat"${S.cache.basePick === "sat" ? " selected" : ""}>Satellite</option>
+          <option value="both"${S.cache.basePick === "both" ? " selected" : ""}>Both</option>
+        </select></div>
+      <div class="set-row"><div class="grow"><span class="set-k">Visible map area</span><div class="small-t muted">${esc(cacheEstLine(S.cache.areaEst) || "Pan the map to estimate")}</div></div>
+        <div class="row"><select id="cacheAreaZ" class="set-sel" aria-label="Visible area detail">${[[13, "Town (z13)"], [14, "Street (z14)"], [15, "Detailed (z15)"]].map(([z, l]) => `<option value="${z}"${S.cache.areaZ === z ? " selected" : ""}>${l}</option>`).join("")}</select>
+        <button class="btn small" data-act="cacheArea"${running || !S.cache.areaEst || areaWarn ? " disabled" : ""}>Cache area</button></div></div>
+      <div class="set-row"><div class="grow"><span class="set-k">All of Vietnam</span><div class="small-t muted">${esc(cacheEstLine(S.cache.vnEst))}</div></div>
+        <div class="row"><select id="cacheVnZ" class="set-sel" aria-label="All of Vietnam detail">${[[11, "Overview (z11)"], [12, "Towns (z12)"], [13, "Detailed (z13)"], [14, "Street (z14)"]].map(([z, l]) => `<option value="${z}"${S.cache.vnZ === z ? " selected" : ""}>${l}</option>`).join("")}</select>
+        <button class="btn small" data-act="cacheVietnam"${running || vnWarn ? " disabled" : ""}>Cache Vietnam</button></div></div>
+    </div>
+    <div id="cacheProg" style="width:100%">${cacheJobHTML()}</div>
+    <div class="err" id="cacheErr" role="alert">${esc(S.cache.err)}</div>
+    ${S.cache.clearAsk ? `<div class="confirm-box" role="alertdialog" aria-label="Clear base-map cache">
+      <span>Clear all ${fmtInt(c.tile_count)} cached base-map tiles (${esc(sizeText(c.used_bytes))})? Your downloaded historical maps and records are kept.</span>
+      <div class="row"><button class="btn small danger solid" data-act="cacheClearYes">Clear cache</button><button class="btn small" data-act="cacheClearNo">Keep</button></div></div>`
+      : c.tile_count ? `<button class="btn small danger" data-act="cacheClearAsk">Clear base-map cache…</button>` : ""}`;
+}
+function wireCacheControls(root) {
+  $("#cacheMaxSel", root)?.addEventListener("change", async e => {
+    try { S.cache.data = await api("/api/cache/config", { method: "POST", body: { max_bytes: +e.target.value } }); S.cache.err = ""; }
+    catch (x) { S.cache.err = x.message; }
+    await loadCacheStatus(); loadSettings();
+  });
+  $("#cacheBaseSel", root)?.addEventListener("change", async e => { S.cache.basePick = e.target.value; await loadCacheStatus(); });
+  $("#cacheAreaZ", root)?.addEventListener("change", async e => { S.cache.areaZ = +e.target.value; await loadCacheStatus(); });
+  $("#cacheVnZ", root)?.addEventListener("change", async e => { S.cache.vnZ = +e.target.value; await loadCacheStatus(); });
+}
 function storageHTML() {
   const s = S.cm.disk;
   if (!s) return `<p class="small-t muted">${S.cm.diskErr ? "Could not check the space used: " + esc(S.cm.diskErr) : "Checking…"}</p>`;
   const d = s.disk || {}, row = (k, v, cls = "") => `<div class="set-row"><span class="set-k">${k}</span><span class="${cls}">${v}</span></div>`;
   return `<div class="group">${row("Kept in", esc(s.data_folder), "mono set-path")}${row("Old maps", sizeText(d.maps))}${row("Records", sizeText(d.records))}
-    ${row("Downloads", sizeText(d.downloads))}${row("<b>Total</b>", `<b>${sizeText(d.total)}</b>`)}</div>
+    ${row("Downloads", sizeText(d.downloads))}${d.base_cache != null ? row("Base-map cache", sizeText(d.base_cache)) : ""}${row("<b>Total</b>", `<b>${sizeText(d.total)}</b>`)}</div>
     <p class="small-t muted">Downloads are the files maps were built from. Removing a map frees its space.</p>`;
 }
 
@@ -3930,6 +4056,8 @@ VIEWS.settings = v => {
       ${seg("Appearance", ["auto", "light", "dark"].map(x => `<button data-act="theme" data-theme="${x}" aria-pressed="${theme === x}">${x === "auto" ? "Automatic" : x[0].toUpperCase() + x.slice(1)}</button>`).join(""))}
       ${seg("Scrolling", SCROLL_MODES.map(([k, label]) => `<button data-act="scrollMode" data-m="${k}" aria-pressed="${mode === k}">${label}</button>`).join(""))}
     </div>
+    <h3 class="sub-head">Offline maps</h3>
+    <div id="setCache" class="set-block">${cacheSectionHTML()}</div>
     <h3 class="sub-head">Kaggle key</h3>
     <div class="set-block">${keySectionHTML()}</div>
     <h3 class="sub-head">My maps</h3>
@@ -3948,6 +4076,35 @@ VIEWS.settings.after = () => {
   $("#cmFile")?.addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) cmUpload(f); });
   $$("#view .cm-edit").forEach(f => f.addEventListener("submit", cmSaveEdit));
   wireKeyBox();
+  wireCacheControls($("#setCache"));
+};
+ACTIONS.cacheToggle = async el => {
+  try { S.cache.data = await api("/api/cache/config", { method: "POST", body: { enabled: el.dataset.on === "1" } }); S.cache.err = ""; }
+  catch (x) { S.cache.err = x.message; }
+  await loadCacheStatus();
+};
+ACTIONS.cacheArea = async () => {
+  const box = visibleBoundsBox(); if (!box) return;
+  try { S.cache.data = await api("/api/cache/prefetch", { method: "POST", body: { bases: cacheBases(), bounds: box, min_z: 0, max_z: S.cache.areaZ, label: "Visible area" } }); S.cache.err = ""; }
+  catch (x) { S.cache.err = x.message; }
+  await loadCacheStatus();
+};
+ACTIONS.cacheVietnam = async () => {
+  try { S.cache.data = await api("/api/cache/prefetch", { method: "POST", body: { bases: cacheBases(), bounds: "vietnam", min_z: 0, max_z: S.cache.vnZ, label: "All of Vietnam" } }); S.cache.err = ""; }
+  catch (x) { S.cache.err = x.message; }
+  await loadCacheStatus();
+};
+ACTIONS.cacheCancel = async () => {
+  try { S.cache.data = await api("/api/cache/cancel", { method: "POST", body: {} }); } catch (x) { S.cache.err = x.message; }
+  await loadCacheStatus(); loadSettings();
+};
+ACTIONS.cacheClearAsk = () => { S.cache.clearAsk = true; const el = $("#setCache"); if (el) { el.innerHTML = cacheSectionHTML(); wire(el); wireCacheControls(el); } };
+ACTIONS.cacheClearNo = () => { S.cache.clearAsk = false; const el = $("#setCache"); if (el) { el.innerHTML = cacheSectionHTML(); wire(el); wireCacheControls(el); } };
+ACTIONS.cacheClearYes = async () => {
+  S.cache.clearAsk = false;
+  try { S.cache.data = await api("/api/cache/clear", { method: "POST", body: {} }); S.cache.err = ""; toast("Base-map cache cleared"); }
+  catch (x) { S.cache.err = x.message; }
+  await loadCacheStatus(); loadSettings();
 };
 ACTIONS.openSettings = () => openSettings();
 ACTIONS.scrollMode = el => setScrollMode(el.dataset.m);

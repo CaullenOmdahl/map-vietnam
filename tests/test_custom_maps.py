@@ -462,6 +462,6 @@ def test_settings_say_where_the_data_is_and_how_much_space_it_takes(web, tmp_pat
     base, lib = web
     status, body, _ = request(f"{base}/api/settings")
     assert status == 200 and body["data_folder"] == str(lib.root)
-    assert set(body["disk"]) == {"maps", "records", "downloads", "total"}
+    assert set(body["disk"]) == {"maps", "records", "downloads", "base_cache", "total"}
     upload(base, write_geotiff(tmp_path / "g.tif"))
     assert request(f"{base}/api/settings")[1]["disk"]["maps"] > 0
