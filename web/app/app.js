@@ -358,6 +358,7 @@ function createMap(container, isPrimary) {
   // (padding is copied after creation so both halves of a comparison line up exactly)
   const m = new maplibregl.Map({
     container, style: makeStyle(), ...view, attributionControl: false, pitchWithRotate: false, maxPitch: 0, fadeDuration: reduceMotion ? 0 : 300,
+    preserveDrawingBuffer: !!isPrimary,
     // More tiles kept in memory, at more zoom levels: panning back, or zooming through a level already
     // seen, redraws without asking the network. This is all the remote base maps get (their tile policies
     // forbid prefetching); local old maps are prefetched as well, see "tile prefetch" below.
